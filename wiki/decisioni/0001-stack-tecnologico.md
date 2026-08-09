@@ -3,15 +3,15 @@ title: 0001 - Stack tecnologico
 tags: [adr, stack]
 stato: stabile
 creato: 2026-08-08
-aggiornato: 2026-08-08
-fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md]
+aggiornato: 2026-08-09
+fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md]
 ---
 
 # ADR 0001 — Stack tecnologico
 
 ## Decisione
 
-- **Backend**: Java Spring Boot, autenticazione JWT, migrazioni con Flyway, test con Testcontainers.
+- **Backend**: Java Spring Boot, autenticazione JWT, migrazioni con Flyway, ~~test con Testcontainers~~ — corretto il 2026-08-09: i test di integrazione girano su un PostgreSQL locale, vedi [decisioni/0004](0004-test-su-postgres-locale.md).
 - **Frontend**: due applicazioni separate in Vue.js 3 — "Area Professionisti" e "Area Cliente" — entrambe con shadcn-vue e Tailwind CSS.
 - **Database**: PostgreSQL.
 
@@ -29,5 +29,5 @@ Non raccolta in dettaglio. La separazione in due frontend riflette la separazion
 
 ## Conseguenze
 
-- Tre repository di codice indipendenti da mantenere (`backend/`, `frontend-professionisti/`, `frontend-cliente/`), oltre alla wiki.
+- Tre codebase da mantenere (`backend/`, `frontend-professionisti/`, `frontend-cliente/`), oltre alla wiki. ~~Tre repository di codice indipendenti~~ — corretto il 2026-08-09: le tre codebase e la wiki vivono in **un unico repo git**, vedi [decisioni/0003](0003-repo-unico-per-progetto.md).
 - I contratti tra backend e ciascun frontend vanno documentati e tenuti allineati in [api-contracts](../api-contracts.md).

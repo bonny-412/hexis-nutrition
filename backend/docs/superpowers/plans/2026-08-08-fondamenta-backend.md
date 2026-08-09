@@ -1,5 +1,7 @@
 # Fondamenta (backend) Implementation Plan
 
+> **⚠️ Documento storico — piano già eseguito (8 agosto 2026).** Non seguirlo alla lettera per il setup dei test: la parte su Testcontainers/Docker è superata da [`wiki/decisioni/0004`](../../../../wiki/decisioni/0004-test-su-postgres-locale.md) — i test di integrazione girano ora su un PostgreSQL locale (`hexis_test`), le dipendenze Testcontainers sono state rimosse.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
 > **Nota su commit e git:** questo workspace vieta all'agente di eseguire `git commit` di propria iniziativa (vedi `CLAUDE.md` radice del workspace). Ogni task termina quindi con uno step "Stage delle modifiche" (`git add`), **non** con un commit eseguito automaticamente. Segnala ad Andrea quando un task è pronto per essere committato; sarà lui a eseguire `git commit`.

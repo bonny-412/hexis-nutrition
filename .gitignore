@@ -13,6 +13,10 @@ dist/
 .idea/
 *.iml
 .vscode/
+# Eclipse / Spring Tool Suite: rigenerabili importando il progetto Maven
+.classpath
+.project
+.settings/
 
 # OS
 .DS_Store

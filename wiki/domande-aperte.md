@@ -3,8 +3,8 @@ title: Domande aperte
 tags: [domande-aperte]
 stato: stabile
 creato: 2026-08-08
-aggiornato: 2026-08-08
-fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md]
+aggiornato: 2026-08-09
+fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md]
 ---
 
 # Domande aperte — hexis-nutrition
@@ -12,7 +12,19 @@ fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brain
 - Perché Spring Boot (vs alternative Node/altro)? Motivazione non raccolta, potrebbe non servire documentarla se ovvia per Andrea.
 - Quale dataset pubblico di alimenti usare per il catalogo base (es. CREA, USDA, altro)? Da decidere nel sotto-progetto "Piano alimentare".
 - Deploy target (cloud, on-prem, provider) non ancora discusso.
+- Con il repo unico ([decisioni/0003](decisioni/0003-repo-unico-per-progetto.md)), se le tre applicazioni dovranno essere rilasciate in modo indipendente servirà una CI con filtri di percorso per non ricostruire tutto a ogni push. Da decidere quando si affronterà il deploy.
+- Su quale versione di PostgreSQL girerà la produzione? Sviluppo e test girano sulla **13** installata in locale ([decisioni/0004](decisioni/0004-test-su-postgres-locale.md)). La produzione sarà in Docker, quindi la versione dell'immagine è una scelta libera: usare `postgres:13` allinea i due ambienti, qualsiasi altra versione introduce una differenza che nessun test copre.
+- Come sarà fatto il deploy in produzione con Docker (immagini, orchestrazione, provider, gestione delle variabili d'ambiente come `JWT_SECRET` e `RESEND_API_KEY`)? Deciso solo che Docker si userà lì e non in sviluppo.
 - Modello dati per i sotto-progetti "Piano alimentare", "Monitoraggio" e "Chat" non ancora dettagliato (solo "Fondamenta" è stato progettato, vedi [decisioni/0002](decisioni/0002-autenticazione-e-onboarding.md)).
+- Serve una convenzione esplicita sul non scrivere credenziali nella wiki, nemmeno locali? Sollevato il 2026-08-09 e rimasto senza risposta: le credenziali del Postgres di sviluppo erano riportate in [stato](stato.md), che finisce su GitHub con il resto del repo. Sono innocue finché il database resta su localhost, ma è un'abitudine che non conviene consolidare. Nell'handoff sono state sostituite da un rimando generico; da decidere se basta così o se serve una regola scritta.
+
+## Su `token_azione` (invito e reset password)
+
+Emerse leggendo il codice il 2026-08-09, mai discusse quando "Fondamenta" è stato progettato. Riguardano [`TokenAzione`](../backend/src/main/java/com/hexisnutrition/backend/inviti/TokenAzione.java), [`AuthService`](../backend/src/main/java/com/hexisnutrition/backend/auth/AuthService.java) e [`PazienteService`](../backend/src/main/java/com/hexisnutrition/backend/pazienti/PazienteService.java).
+
+- **I token sono salvati in chiaro** nella colonna `token`. Chi ha accesso in lettura al database può spendere qualsiasi token attivo e impostare la password di un utente al posto suo. Salvarne l'hash — come già si fa per le password — chiuderebbe la cosa, al prezzo di una lookup per hash invece che per valore. Accettare o correggere?
+- **Nessuna pulizia dei token**: quelli usati e quelli scaduti restano in tabella per sempre, che quindi cresce senza limite. Serve un job di pulizia periodico, una cancellazione contestuale all'uso, o si accetta la crescita (probabilmente irrilevante ai volumi previsti)?
+- **Le richieste di reset ripetute non invalidano le precedenti**: `richiediResetPassword` crea sempre un token nuovo senza toccare quelli già emessi, quindi per la stessa persona possono esistere più token di reset validi in parallelo, ciascuno spendibile fino alla propria scadenza. Invalidare i precedenti a ogni nuova richiesta?
 
 ## Risolte
 

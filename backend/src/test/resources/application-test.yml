@@ -1,0 +1,18 @@
+# Profilo usato dai test di integrazione (AbstractIntegrationTest).
+# Punta a un PostgreSQL locale creato a mano, non a un container: il database
+# "hexis_test" deve esistere ed essere vuoto. Vedi ../../../wiki/decisioni/0004.
+spring:
+  datasource:
+    url: ${TEST_DB_URL:jdbc:postgresql://localhost:5432/hexis_test}
+    username: ${TEST_DB_USERNAME:hexis}
+    password: ${TEST_DB_PASSWORD:hexis}
+  flyway:
+    # Il database di test è persistente fra un'esecuzione e l'altra: se una migrazione
+    # già applicata viene modificata, Flyway ricrea lo schema da zero invece di fallire
+    # sul checksum. Attivo solo qui: mai puntare TEST_DB_URL a un database vero.
+    clean-disabled: false
+    clean-on-validation-error: true
+
+app:
+  jwt:
+    secret: test-jwt-secret-solo-per-i-test-non-usare-in-produzione

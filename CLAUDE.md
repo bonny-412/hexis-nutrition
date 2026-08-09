@@ -4,7 +4,7 @@ SaaS di gestione dello studio per dietisti/nutrizionisti: area professionista pe
 
 ## Stack
 
-- **Backend**: Java Spring Boot, autenticazione JWT, migrazioni con Flyway, test con Testcontainers.
+- **Backend**: Java Spring Boot, autenticazione JWT, migrazioni con Flyway, test di integrazione su un PostgreSQL locale (database `hexis_test`, vedi [wiki/decisioni/0004](wiki/decisioni/0004-test-su-postgres-locale.md)).
 - **Frontend**: due applicazioni Vue.js 3 separate — `frontend-professionisti/` e `frontend-cliente/` — entrambe con shadcn-vue + Tailwind.
 - **Database**: PostgreSQL.
 

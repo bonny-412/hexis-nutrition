@@ -3,8 +3,8 @@ title: Architettura
 tags: [architettura]
 stato: in-discussione
 creato: 2026-08-08
-aggiornato: 2026-08-08
-fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md]
+aggiornato: 2026-08-09
+fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-docker-solo-in-produzione.md]
 ---
 
 # Architettura — hexis-nutrition
@@ -31,6 +31,11 @@ Lo scope funzionale è stato diviso in 4 sotto-progetti sequenziali (vedi [stato
 2. Piano alimentare — database alimenti, costruzione/assegnazione piani.
 3. Monitoraggio — misurazioni e appuntamenti.
 4. Chat — messaggistica professionista-paziente.
+
+## Ambienti
+
+- **Sviluppo e test**: tutto sulla macchina di Andrea, con un PostgreSQL 13 installato in locale e i database creati a mano (`hexis`, `hexis_test`) — vedi [decisioni/0004](decisioni/0004-test-su-postgres-locale.md). Niente Docker.
+- **Produzione**: previsto Docker. Nient'altro deciso: immagini, orchestrazione, provider e versione di PostgreSQL restano da definire.
 
 ## Da definire
 

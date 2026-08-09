@@ -3,13 +3,13 @@ title: Contratti API
 tags: [api]
 stato: in-discussione
 creato: 2026-08-08
-aggiornato: 2026-08-08
-fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md]
+aggiornato: 2026-08-09
+fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md]
 ---
 
 # Contratti API — hexis-nutrition
 
-Endpoint del sotto-progetto "Fondamenta" (vedi [decisioni/0002](decisioni/0002-autenticazione-e-onboarding.md)): **codice scritto e in staging in `backend/`, non ancora committato né testato con database reale** (Docker non disponibile nell'ambiente di sviluppo usato per l'implementazione — vedi [stato](stato.md)).
+Endpoint del sotto-progetto "Fondamenta" (vedi [decisioni/0002](decisioni/0002-autenticazione-e-onboarding.md)): codice scritto e committato in `backend/` (`70e2141`), **coperto da test eseguiti su PostgreSQL reale** il 2026-08-09 (33 test verdi — vedi [stato](stato.md)). Non ancora provato a mano contro l'app in esecuzione.
 
 | Metodo | Path | Ruolo | Descrizione |
 |---|---|---|---|
