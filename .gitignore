@@ -1,0 +1,19 @@
+# Claude Code — impostazioni locali/personali, non condivise
+.claude/settings.local.json
+
+# Superpowers — stato locale degli agenti
+.superpowers/
+
+# Node — frontend Vue
+node_modules/
+dist/
+.env.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

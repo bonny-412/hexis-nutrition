@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: backend
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hexis
+    username: hexis
+    password: hexis
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+
+resend:
+  base-url: https://api.resend.com
+  api-key: ${RESEND_API_KEY:}
+  from-email: ${RESEND_FROM_EMAIL:no-reply@hexisnutrition.example}
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-minutes: 480
