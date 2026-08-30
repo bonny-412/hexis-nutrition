@@ -17,6 +17,10 @@ dist/
 .classpath
 .project
 .settings/
+.metadata/
+
+# Claude Code — worktree di sessione, mai da tracciare
+.claude/worktrees/
 
 # OS
 .DS_Store
