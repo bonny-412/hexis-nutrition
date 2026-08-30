@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -36,6 +37,9 @@ class AuthControllerTest extends AbstractIntegrationTest {
 
     @Autowired
     private com.hexisnutrition.backend.email.FakeEmailSender fakeEmailSender;
+
+    @Autowired
+    private JwtService jwtService;
 
     @AfterEach
     void pulisci() {
@@ -244,5 +248,39 @@ class AuthControllerTest extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"token\":\"" + primoToken.getToken() + "\",\"nuovaPassword\":\"nuovaPassword1\"}"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void meRestituisceIDatiDelProfessionistaAutenticato() throws Exception {
+        Professionista professionista = professionistaRepository.save(new Professionista(
+                "me@example.com", passwordEncoder.encode("password123"), "Anna", "Bianchi"));
+        String token = jwtService.generateToken(professionista.getId(), Ruolo.PROFESSIONISTA);
+
+        mockMvc.perform(get("/auth/me").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Anna"))
+                .andExpect(jsonPath("$.cognome").value("Bianchi"))
+                .andExpect(jsonPath("$.email").value("me@example.com"))
+                .andExpect(jsonPath("$.ruolo").value("PROFESSIONISTA"));
+    }
+
+    @Test
+    void meSenzaTokenRestituisce401() throws Exception {
+        mockMvc.perform(get("/auth/me"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void emailDiResetPasswordContieneLUrlDelFrontendConfigurato() throws Exception {
+        professionistaRepository.save(new Professionista(
+                "resetlink@example.com", passwordEncoder.encode("x"), "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/auth/password-dimenticata")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"resetlink@example.com\"}"))
+                .andExpect(status().isNoContent());
+
+        String corpoEmail = fakeEmailSender.getInviate().get(0).corpoHtml();
+        assertThat(corpoEmail).contains("http://localhost:5173/reset-password?token=");
     }
 }
