@@ -80,6 +80,38 @@ describe('PazientiListView', () => {
     const wrapper = mount(PazientiListView, { global: { plugins: [router, createTestingPinia()] } })
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Nessun paziente')
+    expect(wrapper.text()).toContain('Nessun paziente, per ora')
+  })
+
+  it('mostra un messaggio dedicato quando la ricerca non trova risultati tra pazienti esistenti', async () => {
+    vi.mocked(pazientiApi.lista).mockResolvedValue([pazienteEsempio])
+    const router = creaRouter()
+    router.push('/pazienti')
+    await router.isReady()
+    const wrapper = mount(PazientiListView, { global: { plugins: [router, createTestingPinia()] } })
+    await flushPromises()
+
+    await wrapper.find('input[type="search"]').setValue('nessuna-corrispondenza-xyz')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Nessun paziente con questi criteri di ricerca')
+  })
+
+  it('mostra un errore se l\'invito fallisce e non aggiorna lo stato del paziente (nessun optimistic update)', async () => {
+    vi.mocked(pazientiApi.lista).mockResolvedValue([{ ...pazienteEsempio, statoAccount: 'MAI_INVITATO' }])
+    vi.mocked(pazientiApi.invita).mockRejectedValue(new Error('409'))
+    const router = creaRouter()
+    router.push('/pazienti')
+    await router.isReady()
+    const wrapper = mount(PazientiListView, { global: { plugins: [router, createTestingPinia()] } })
+    await flushPromises()
+
+    const pulsanteInvita = wrapper.findAll('button').find((b) => b.text() === 'Invita')
+    await pulsanteInvita?.trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Non è stato possibile inviare l\'invito')
+    expect(wrapper.findAll('button').some((b) => b.text() === 'Invita')).toBe(true)
+    expect(wrapper.text()).not.toContain('Reinvia invito')
   })
 })

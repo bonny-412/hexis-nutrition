@@ -10,6 +10,7 @@ const ricordami = ref(true)
 const passwordVisibile = ref(false)
 const inCorso = ref(false)
 const erroreCredenziali = ref(false)
+const erroreGenerico = ref(false)
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -19,6 +20,7 @@ async function onSubmit() {
   if (inCorso.value) return
   inCorso.value = true
   erroreCredenziali.value = false
+  erroreGenerico.value = false
   try {
     await auth.login(email.value, password.value, ricordami.value)
     const destinazione = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
@@ -27,7 +29,7 @@ async function onSubmit() {
     if (errore instanceof ApiError && errore.status === 401) {
       erroreCredenziali.value = true
     } else {
-      throw errore
+      erroreGenerico.value = true
     }
   } finally {
     inCorso.value = false
@@ -64,6 +66,14 @@ async function onSubmit() {
           style="background: var(--warn-bg); border-color: var(--bd2); color: var(--danger)"
         >
           Email o password non corrette.
+        </div>
+
+        <div
+          v-if="erroreGenerico"
+          class="mb-4 rounded-lg border px-3 py-2.5 text-sm font-semibold"
+          style="background: var(--warn-bg); border-color: var(--bd2); color: var(--danger)"
+        >
+          Servizio non raggiungibile, riprova.
         </div>
 
         <label class="mb-3.5 flex flex-col gap-1.5">

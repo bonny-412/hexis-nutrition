@@ -1,4 +1,3 @@
-// src/views/ResetPasswordView.spec.ts
 import { describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'

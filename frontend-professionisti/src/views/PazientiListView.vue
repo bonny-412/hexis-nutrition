@@ -8,6 +8,7 @@ const ricerca = ref('')
 const caricamento = ref(true)
 const errore = ref(false)
 const invitoInCorsoId = ref<string | null>(null)
+const erroreInvito = ref(false)
 
 const pazientiFiltrati = computed(() => {
   const termine = ricerca.value.trim().toLowerCase()
@@ -31,9 +32,12 @@ async function carica() {
 
 async function onInvita(paziente: Paziente) {
   invitoInCorsoId.value = paziente.id
+  erroreInvito.value = false
   try {
     await invita(paziente.id)
     paziente.statoAccount = 'INVITATO'
+  } catch {
+    erroreInvito.value = true
   } finally {
     invitoInCorsoId.value = null
   }
@@ -69,9 +73,12 @@ onMounted(carica)
       style="border-color: var(--bd2); background: var(--surf)"
     />
 
+    <p v-if="erroreInvito" style="color: var(--danger)" class="mb-4 text-sm">Non è stato possibile inviare l'invito.</p>
+
     <p v-if="errore" style="color: var(--danger)">Non è stato possibile caricare i pazienti.</p>
     <p v-else-if="caricamento" style="color: var(--fg3)">Caricamento…</p>
-    <p v-else-if="pazientiFiltrati.length === 0" style="color: var(--fg3)">Nessun paziente, per ora.</p>
+    <p v-else-if="pazienti.length === 0" style="color: var(--fg3)">Nessun paziente, per ora.</p>
+    <p v-else-if="pazientiFiltrati.length === 0" style="color: var(--fg3)">Nessun paziente con questi criteri di ricerca.</p>
 
     <table v-else class="w-full text-left text-sm">
       <thead>

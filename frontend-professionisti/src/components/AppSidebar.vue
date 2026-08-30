@@ -25,24 +25,23 @@ const route = useRoute()
       </div>
 
       <nav class="flex flex-col gap-1">
-        <RouterLink
-          v-for="voce in voci.filter((v) => v.routeName)"
+        <component
+          :is="voce.routeName ? RouterLink : 'span'"
+          v-for="voce in voci"
           :key="voce.nome"
-          :to="{ name: voce.routeName }"
+          :to="voce.routeName ? { name: voce.routeName } : undefined"
           class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium"
-          :class="route.name === voce.routeName ? 'bg-white/10 text-white' : 'text-white/80 hover:bg-white/5'"
+          :class="
+            voce.routeName
+              ? route.name === voce.routeName
+                ? 'bg-white/10 text-white'
+                : 'text-white/80 hover:bg-white/5'
+              : 'cursor-not-allowed text-white/35'
+          "
         >
           <span>{{ voce.icona }}</span>
           <span>{{ voce.nome }}</span>
-        </RouterLink>
-        <span
-          v-for="voce in voci.filter((v) => !v.routeName)"
-          :key="voce.nome"
-          class="flex cursor-not-allowed items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-white/35"
-        >
-          <span>{{ voce.icona }}</span>
-          <span>{{ voce.nome }}</span>
-        </span>
+        </component>
       </nav>
     </div>
 

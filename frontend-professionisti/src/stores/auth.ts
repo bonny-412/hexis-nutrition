@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import * as authApi from '@/api/auth'
-import { configureApiClient } from '@/api/client'
+import { ApiError } from '@/api/client'
 
 const STORAGE_KEY = 'hexis-auth-token'
 
@@ -26,11 +26,6 @@ export const useAuthStore = defineStore('auth', () => {
     sessionStorage.removeItem(STORAGE_KEY)
   }
 
-  configureApiClient({
-    getToken: () => token.value,
-    onUnauthorized: () => logout(),
-  })
-
   function salvaToken(nuovoToken: string, ricordami: boolean) {
     token.value = nuovoToken
     const storage = ricordami ? localStorage : sessionStorage
@@ -43,6 +38,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function login(email: string, password: string, ricordami: boolean) {
     const risposta = await authApi.login({ email, password })
+    if (risposta.ruolo !== 'PROFESSIONISTA') {
+      throw new ApiError(403, 'Accesso riservato ai professionisti')
+    }
     salvaToken(risposta.token, ricordami)
     await caricaProfilo()
   }
@@ -51,8 +49,10 @@ export const useAuthStore = defineStore('auth', () => {
     if (!token.value) return
     try {
       await caricaProfilo()
-    } catch {
-      logout()
+    } catch (errore) {
+      if (errore instanceof ApiError && errore.status === 401) {
+        logout()
+      }
     }
   }
 

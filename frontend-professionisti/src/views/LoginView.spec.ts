@@ -58,4 +58,26 @@ describe('LoginView', () => {
 
     expect(link.exists()).toBe(true)
   })
+
+  it('mostra un banner generico se il login fallisce per un errore non gestito (es. servizio non raggiungibile)', async () => {
+    const wrapper = mount(LoginView, { global: { plugins: [router, createTestingPinia()] } })
+    const auth = useAuthStore()
+    vi.mocked(auth.login).mockRejectedValue(new Error('network down'))
+
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Servizio non raggiungibile')
+  })
+
+  it('mostra il banner generico anche per un ApiError diverso da 401 (es. ruolo non professionista)', async () => {
+    const wrapper = mount(LoginView, { global: { plugins: [router, createTestingPinia()] } })
+    const auth = useAuthStore()
+    vi.mocked(auth.login).mockRejectedValue(new ApiError(403, 'Accesso riservato ai professionisti'))
+
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Servizio non raggiungibile')
+  })
 })
