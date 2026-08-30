@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.util.UUID;
 
 @Service
 public class AuthService {
@@ -112,6 +113,19 @@ public class AuthService {
 
         tokenAzione.segnaUsato();
         tokenAzioneRepository.save(tokenAzione);
+    }
+
+    public MeResponse me(UUID id, Ruolo ruolo) {
+        if (ruolo == Ruolo.PROFESSIONISTA) {
+            Professionista professionista = professionistaRepository.findById(id)
+                    .orElseThrow(CredenzialiNonValideException::new);
+            return new MeResponse(professionista.getId(), professionista.getNome(), professionista.getCognome(),
+                    professionista.getEmail(), ruolo.name());
+        }
+        Paziente paziente = pazienteRepository.findById(id)
+                .orElseThrow(CredenzialiNonValideException::new);
+        return new MeResponse(paziente.getId(), paziente.getNome(), paziente.getCognome(),
+                paziente.getEmail(), ruolo.name());
     }
 
     private String corpoResetPassword(String token) {
