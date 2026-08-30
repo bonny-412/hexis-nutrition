@@ -11,7 +11,7 @@ fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brain
 
 ## Dove siamo
 
-Il backend del sotto-progetto **"Fondamenta"** (autenticazione JWT con ruoli, anagrafica paziente, invito via email, reset password) è **scritto, revisionato, testato su database reale e su GitHub**. I due frontend non esistono ancora: `frontend-professionisti/` e `frontend-cliente/` contengono solo un `CLAUDE.md`.
+Il backend del sotto-progetto **"Fondamenta"** (autenticazione JWT con ruoli, anagrafica paziente, invito via email, reset password) è **scritto, revisionato, testato su database reale e su GitHub**. Il frontend `frontend-professionisti/` di "Fondamenta" è **scritto, testato (54 test verdi), buildato, e in staging** (login, dashboard, lista/dettaglio/creazione paziente, reset password) — vedi sessione del 30 agosto 2026 (parte 2) più sotto. `frontend-cliente/` non esiste ancora: contiene solo un `CLAUDE.md`.
 
 Il progetto vive in **un unico repo git**, `bonny-412/hexis-nutrition`, con la radice in `progetti/hexis-nutrition/`.
 
@@ -21,7 +21,7 @@ Il progetto vive in **un unico repo git**, `bonny-412/hexis-nutrition`, con la r
 - **JDK**: il JDK di sistema di default è Java 8, va **sempre** sovrascritto: `$env:JAVA_HOME = "C:\Program Files\Java\jdk-21"` prima di ogni comando Maven.
 - **Test**: `mvn test` da `backend/`. Niente Docker richiesto.
 - **Avvio dell'app**: serve la variabile d'ambiente `JWT_SECRET`, obbligatoria (l'app non parte senza, per scelta di sicurezza post-revisione) e lunga **almeno 32 caratteri** — `Keys.hmacShaKeyFor` con HS256 richiede una chiave da 256 bit e lancia `WeakKeyException` se è più corta. Da Spring Tool Suite: importare `backend/` come progetto Maven esistente, poi impostarla in `Run Configurations → Spring Boot App → Environment` (non in *VM arguments*). `RESEND_API_KEY` serve solo per l'invio email reale: senza, l'invito paziente fallisce, mentre il reset password risponde comunque 204 per scelta anti-enumerazione.
-- **Account di sviluppo**: esiste un professionista inserito a mano nel database `hexis` (`andrea@hexisnutrition.local`), password nota ad Andrea e deliberatamente non scritta qui. Non c'è self-signup, per scelta ([decisioni/0002](decisioni/0002-autenticazione-e-onboarding.md)): altri account si creano con una `INSERT` e un hash BCrypt.
+- **Account di sviluppo**: esiste un professionista inserito a mano nel database `hexis` (email reale di Andrea, non un indirizzo `@hexisnutrition.local` come riportato in una versione precedente di questa pagina — corretto il 2026-08-30), password nota ad Andrea e deliberatamente non scritta qui. Non c'è self-signup, per scelta ([decisioni/0002](decisioni/0002-autenticazione-e-onboarding.md)): altri account si creano con una `INSERT`/`UPDATE` e un hash BCrypt.
 
 ## Cosa è stato implementato — backend "Fondamenta"
 
@@ -51,6 +51,30 @@ Tutto in `backend/`, committato in `70e2141`. Piano seguito: [`backend/docs/supe
 
 **Chiusi i tre punti aperti su `token_azione`** ([moduli/inviti-e-token](moduli/inviti-e-token.md)): token salvati come hash SHA-256 invece che in chiaro (colonna `token`→`token_hash`, migrazione V4), cancellazione immediata del token alla consumazione invece del flag `usato` (più un job schedulato notturno, `TokenAzionePulizia`, per i token scaduti mai usati), e le richieste di reset password ora invalidano quelle precedenti per la stessa persona. Bounded task, design approvato in chat, implementato in tre cicli TDD. `mvn test` → **36 test, 0 fallimenti, BUILD SUCCESS**. Dettaglio in [sorgenti/2026-08-30-hash-pulizia-invalidazione-token](sorgenti/2026-08-30-hash-pulizia-invalidazione-token.md).
 
+## Sessione del 30 agosto 2026 (parte 2) — frontend-professionisti "Fondamenta"
+
+**Piano di 16 task eseguito con `superpowers:subagent-driven-development`** in un worktree isolato, poi **merge locale su master** (un conflitto in `AuthControllerTest.java`, risolto tenendo i test di entrambi i rami). Costruito su Vue 3 + TypeScript + Vite + Tailwind CSS v4 + Pinia, basandosi sul mockup fornito da Andrea (`Hexis Nutrition.zip`). Realizzate: login, dashboard, lista/dettaglio/creazione paziente, password dimenticata, reset password, shell applicativa con sidebar e header. Revisione finale whole-branch: 5 Important risolti (redirect al login su 401, errori invito/login non più ignorati silenziosamente, logout non più scatenato da un semplice errore di rete, controllo del ruolo al login).
+
+**Pivot a metà sessione**: dopo la prima versione (CSS scritto a mano, icone emoji), Andrea ha segnalato una forte infedeltà rispetto al mockup e ha richiesto l'introduzione di **shadcn-vue + Reka UI + `@lucide/vue`** (già previsti nella ADR 0001 originaria ma inizialmente rimandati per YAGNI). Riconvertiti in un solo passaggio tutti i componenti e le view esistenti. Il drawer mobile della sidebar usa il componente `Sheet` di shadcn (portal-based) invece di un CSS hand-rolled che Andrea aveva segnalato come non funzionante; il menu profilo usa `DropdownMenu` di Reka UI, che gestisce nativamente click-outside/Escape.
+
+**Convenzione CSS stabilita da Andrea, ora rispettata ovunque**: mai `style="..."` inline nei componenti Vue — sempre classi Tailwind, incluse le variabili CSS custom via sintassi arbitraria (`text-[var(--fg3)]`, `bg-[var(--surf)]`, ecc.) e l'utility `font-heading` per i titoli in Fraunces. Verificato che Tailwind v4 (JIT) genera `font-heading` solo se referenziata in un template — non è pre-emessa dal solo `@theme`.
+
+Password dell'account di sviluppo reimpostata (Andrea l'aveva dimenticata): nuovo hash BCrypt generato al volo con uno script Java temporaneo, mai committato. Valore nuovo noto ad Andrea, non scritto qui.
+
+Stato finale verificato in questa sessione: `npm run test` → **54 test, 0 fallimenti**; `npm run build` → pulito (TypeScript + Vite), CSS compilato contiene `.font-heading{font-family:Fraunces,serif}`. Tutto in staging (`git add` fatto su tutto il repo, incluso il lavoro backend sui token), **nessun commit** — tocca ad Andrea.
+
+## Sessione del 30 agosto 2026 (parte 3) — rifiniture UI su `frontend-professionisti`
+
+Sessione di piccole correzioni e rifiniture visive su shell e dashboard, richieste una alla volta da Andrea, nessuna modifica di struttura o di flusso.
+
+**Bug fix** (`AppShell.vue`): risolta una linea verticale bianca visibile aprendo la sidebar su schermo piccolo. Causa: il `Sheet` di shadcn applica di default `data-[side=left]:border-r` e `data-[side=left]:w-3/4`; gli override passati da `AppShell.vue` (`border-0`, `w-[246px]`) non avevano lo stesso "scope" di variante, quindi `tailwind-merge` non li deduplicava e in CSS la regola con selettore `[data-side="left"]` vinceva comunque per specificità, lasciando un bordo di 1px visibile. Fix verificato empiricamente con uno script Node che chiama `twMerge` direttamente prima e dopo: ora gli override usano lo stesso prefisso (`data-[side=left]:border-r-0`, `data-[side=left]:w-[246px]`, `data-[side=left]:max-w-none`) e vengono deduplicati correttamente.
+
+**Header** (`AppHeader.vue`): freccia del menu profilo ora dinamica (ruota 180° quando il menu è aperto, via `group` + `group-data-[state=open]:rotate-180`, sfruttando il `data-state` che Reka UI propaga sul trigger tramite `as-child`); su schermi piccoli il bottone profilo mostra solo l'avatar (bordo/sfondo/padding ora `lg:`-only, prima restavano visibili anche se nome e freccia erano già nascosti); logo+"Hexis" mobile spostato fuori dal gruppo sinistro e centrato nell'header con posizionamento assoluto, ingrandito (icona `h-7`→`h-9`, testo `text-base`→`text-xl`).
+
+**Dashboard** (`DashboardView.vue`): saluto "Bentornata" (gendered) sostituito con "Ciao, {nome professionista}" (letto da `auth.professionista`) + data odierna sotto, in italiano esteso (`Intl.DateTimeFormat('it-IT', ...)`, es. "Lunedì 30 Agosto 2026"). Aggiunto a destra un bottone "Crea nuovo" con dropdown (stesso pattern freccia dinamica dell'header): "Nuovo paziente" attivo → `/pazienti/nuovo`, "Nuovo appuntamento" e "Nuovo piano alimentare" disabilitati (Agenda e Piani alimentari non esistono ancora), ciascuna voce con icona (`UserPlus`/`CalendarPlus`/`FileText`). Dimensioni del menu tarate più volte su richiesta di Andrea (troppo stretto → troppo grande → via di mezzo: contenitore `w-60`, voci `px-2.5 py-1.5 gap-2`, icone 16px).
+
+Nessun test automatico dedicato a queste view di dettaglio grafico oltre a quelli già esistenti (`AppShell.spec.ts`, `AppHeader.spec.ts`, `DashboardView.spec.ts`) — verificati verdi dopo ogni modifica, più `tsc --noEmit` pulito. Nessuna verifica visiva in browser reale in questa sessione (niente Claude in Chrome collegato): le correzioni sono basate su lettura del codice e, per il bug della linea bianca, su verifica empirica del comportamento di `tailwind-merge`.
+
 ## Cosa resta aperto
 
 Elenco completo e ragionato in [domande-aperte](domande-aperte.md). I punti che toccano il codice esistente:
@@ -58,12 +82,15 @@ Elenco completo e ragionato in [domande-aperte](domande-aperte.md). I punti che 
 - **Versione di PostgreSQL**: sviluppo e test girano sulla 13, la produzione sarà in Docker e potrà usare qualunque immagine. Fissarla su `postgres:13` allinea gli ambienti; qualsiasi altra scelta introduce una differenza che nessun test copre.
 - **Deploy**: previsto Docker, nient'altro deciso (immagini, orchestrazione, provider, gestione di `JWT_SECRET` e `RESEND_API_KEY`).
 
-Il flusso reale del prodotto — login, creazione paziente, invito via email con Resend, attivazione — **non è mai stato provato contro l'app in esecuzione**: è coperto solo dai test automatici.
+Il flusso reale del prodotto — login, creazione paziente, invito via email con Resend, attivazione — è stato **verificato manualmente da Andrea per il login** (funzionante); gli altri flussi (creazione/invito paziente, reset password) restano coperti solo dai test automatici, non ancora provati a mano contro l'app in esecuzione.
 
 ## Prossimo passo consigliato
 
-1. Apri Claude Code su `progetti/hexis-nutrition/` (non sulla radice del workspace, non dentro `backend/` da solo).
-2. Scrivere con `superpowers:writing-plans` i piani per `frontend-professionisti/` e `frontend-cliente/` di "Fondamenta" — è il primo pezzo di lavoro non ancora iniziato. Poi il brainstorming di "Piano alimentare", prossimo sotto-progetto della roadmap (vedi [architettura](architettura.md)).
+1. Apri Claude Code su `progetti/hexis-nutrition/` (non sulla radice del workspace, non dentro una singola sottocartella da sola).
+2. Andrea rivede e committa il lavoro in staging (backend token_azione + frontend-professionisti "Fondamenta" + rifiniture UI parte 3).
+3. **Sezione Pazienti**: prima le modifiche di UI, poi quelle di struttura — indicazione esplicita di Andrea per la prossima sessione, dettagli da raccogliere a inizio sessione (non ancora specificati).
+4. Provare a mano gli altri flussi di `frontend-professionisti/` (creazione paziente, invito via email, reset password) contro l'app in esecuzione.
+5. Scrivere con `superpowers:writing-plans` il piano per `frontend-cliente/` di "Fondamenta" — non ancora iniziato. Poi il brainstorming di "Piano alimentare", prossimo sotto-progetto della roadmap (vedi [architettura](architettura.md)).
 
 ## Divisione dei compiti
 

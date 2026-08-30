@@ -2,6 +2,10 @@
 import { ref, computed, onMounted } from 'vue'
 import AppShell from '@/components/AppShell.vue'
 import { lista, invita, type Paziente } from '@/api/pazienti'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 
 const pazienti = ref<Paziente[]>([])
 const ricerca = ref('')
@@ -55,63 +59,53 @@ onMounted(carica)
 <template>
   <AppShell>
     <div class="mb-6 flex items-center justify-between">
-      <h1 class="text-3xl italic" style="font-family: Fraunces, serif; color: var(--fg)">Pazienti</h1>
-      <router-link
-        to="/pazienti/nuovo"
-        class="rounded-lg px-4 py-2 text-sm font-bold text-white"
-        style="background: var(--green)"
-      >
-        + Nuovo paziente
-      </router-link>
+      <h1 class="font-heading text-3xl italic text-[var(--fg)]">Pazienti</h1>
+      <Button as-child>
+        <router-link to="/pazienti/nuovo">+ Nuovo paziente</router-link>
+      </Button>
     </div>
 
-    <input
-      v-model="ricerca"
-      type="search"
-      placeholder="Cerca per nome, cognome o email"
-      class="mb-4 w-full max-w-sm rounded-lg border px-3 py-2 text-sm"
-      style="border-color: var(--bd2); background: var(--surf)"
-    />
+    <Input v-model="ricerca" type="search" placeholder="Cerca per nome, cognome o email" class="mb-4 w-full max-w-sm" />
 
-    <p v-if="erroreInvito" style="color: var(--danger)" class="mb-4 text-sm">Non è stato possibile inviare l'invito.</p>
+    <p v-if="erroreInvito" class="mb-4 text-sm text-[var(--danger)]">Non è stato possibile inviare l'invito.</p>
 
-    <p v-if="errore" style="color: var(--danger)">Non è stato possibile caricare i pazienti.</p>
-    <p v-else-if="caricamento" style="color: var(--fg3)">Caricamento…</p>
-    <p v-else-if="pazienti.length === 0" style="color: var(--fg3)">Nessun paziente, per ora.</p>
-    <p v-else-if="pazientiFiltrati.length === 0" style="color: var(--fg3)">Nessun paziente con questi criteri di ricerca.</p>
+    <p v-if="errore" class="text-[var(--danger)]">Non è stato possibile caricare i pazienti.</p>
+    <p v-else-if="caricamento" class="text-[var(--fg3)]">Caricamento…</p>
+    <p v-else-if="pazienti.length === 0" class="text-[var(--fg3)]">Nessun paziente, per ora.</p>
+    <p v-else-if="pazientiFiltrati.length === 0" class="text-[var(--fg3)]">Nessun paziente con questi criteri di ricerca.</p>
 
-    <table v-else class="w-full text-left text-sm">
-      <thead>
-        <tr style="color: var(--fg3)">
-          <th class="pb-2">Nome</th>
-          <th class="pb-2">Email</th>
-          <th class="pb-2">Stato</th>
-          <th class="pb-2"></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="paziente in pazientiFiltrati" :key="paziente.id" class="border-t" style="border-color: var(--div)">
-          <td class="py-2">
-            <router-link :to="`/pazienti/${paziente.id}`" class="font-medium" style="color: var(--fg)">
+    <Table v-else>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Nome</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>Stato</TableHead>
+          <TableHead></TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        <TableRow v-for="paziente in pazientiFiltrati" :key="paziente.id">
+          <TableCell>
+            <router-link :to="`/pazienti/${paziente.id}`" class="font-medium text-[var(--fg)]">
               {{ paziente.nome }} {{ paziente.cognome }}
             </router-link>
-          </td>
-          <td class="py-2" style="color: var(--fg2)">{{ paziente.email }}</td>
-          <td class="py-2">{{ paziente.statoAccount }}</td>
-          <td class="py-2 text-right">
-            <button
+          </TableCell>
+          <TableCell class="text-[var(--fg2)]">{{ paziente.email }}</TableCell>
+          <TableCell><Badge variant="secondary">{{ paziente.statoAccount }}</Badge></TableCell>
+          <TableCell class="text-right">
+            <Button
               v-if="etichettaAzione(paziente)"
               type="button"
+              variant="link"
+              size="sm"
               :disabled="invitoInCorsoId === paziente.id"
-              class="text-xs font-semibold"
-              style="color: var(--green)"
               @click="onInvita(paziente)"
             >
               {{ etichettaAzione(paziente) }}
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            </Button>
+          </TableCell>
+        </TableRow>
+      </TableBody>
+    </Table>
   </AppShell>
 </template>

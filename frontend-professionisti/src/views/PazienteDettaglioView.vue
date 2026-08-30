@@ -4,6 +4,8 @@ import { useRoute } from 'vue-router'
 import AppShell from '@/components/AppShell.vue'
 import { dettaglio, invita, type Paziente } from '@/api/pazienti'
 import { ApiError } from '@/api/client'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
 const route = useRoute()
 const paziente = ref<Paziente | null>(null)
@@ -42,26 +44,25 @@ onMounted(carica)
 
 <template>
   <AppShell>
-    <p v-if="erroreCaricamento" style="color: var(--danger)">{{ erroreCaricamento }}</p>
+    <p v-if="erroreCaricamento" class="text-[var(--danger)]">{{ erroreCaricamento }}</p>
     <div v-else-if="paziente">
-      <h1 class="text-3xl italic" style="font-family: Fraunces, serif; color: var(--fg)">
+      <h1 class="font-heading text-3xl italic text-[var(--fg)]">
         {{ paziente.nome }} {{ paziente.cognome }}
       </h1>
-      <p style="color: var(--fg2)">{{ paziente.email }}</p>
-      <p style="color: var(--fg3)">Stato account: {{ paziente.statoAccount }}</p>
+      <p class="text-[var(--fg2)]">{{ paziente.email }}</p>
+      <p class="mt-1 flex items-center gap-1.5 text-[var(--fg3)]">Stato account: <Badge variant="secondary">{{ paziente.statoAccount }}</Badge></p>
 
-      <p v-if="erroreInvito" style="color: var(--danger)" class="mt-2 text-sm">Non è stato possibile inviare l'invito.</p>
+      <p v-if="erroreInvito" class="mt-2 text-sm text-[var(--danger)]">Non è stato possibile inviare l'invito.</p>
 
-      <button
+      <Button
         v-if="paziente.statoAccount !== 'ATTIVO'"
         type="button"
         :disabled="invitoInCorso"
-        class="mt-4 rounded-lg px-4 py-2.5 text-sm font-bold text-white disabled:opacity-70"
-        style="background: var(--green)"
+        class="mt-4"
         @click="onInvita"
       >
         {{ paziente.statoAccount === 'MAI_INVITATO' ? 'Invita' : 'Reinvia invito' }}
-      </button>
+      </Button>
     </div>
   </AppShell>
 </template>

@@ -3,6 +3,9 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppShell from '@/components/AppShell.vue'
 import { crea } from '@/api/pazienti'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 const nome = ref('')
 const cognome = ref('')
@@ -34,39 +37,34 @@ async function onSubmit() {
 
 <template>
   <AppShell>
-    <h1 class="mb-6 text-3xl italic" style="font-family: Fraunces, serif; color: var(--fg)">Nuovo paziente</h1>
+    <h1 class="mb-6 font-heading text-3xl italic text-[var(--fg)]">Nuovo paziente</h1>
 
     <form class="max-w-md" @submit.prevent="onSubmit">
-      <p v-if="errore" class="mb-4 text-sm font-semibold" style="color: var(--danger)">{{ errore }}</p>
+      <p v-if="errore" class="mb-4 text-sm font-semibold text-[var(--danger)]">{{ errore }}</p>
 
-      <label for="nome" class="mb-3.5 flex flex-col gap-1.5">
-        <span class="text-xs font-bold uppercase tracking-wide" style="color: var(--fg3)">Nome</span>
-        <input id="nome" v-model="nome" required class="rounded-lg border px-3 py-2.5 text-sm" style="border-color: var(--bd2); background: var(--surf)" />
-      </label>
+      <div class="mb-3.5 flex flex-col gap-1.5">
+        <Label for="nome" class="text-xs font-bold uppercase tracking-wide text-[var(--fg3)]">Nome</Label>
+        <Input id="nome" v-model="nome" required />
+      </div>
 
-      <label for="cognome" class="mb-3.5 flex flex-col gap-1.5">
-        <span class="text-xs font-bold uppercase tracking-wide" style="color: var(--fg3)">Cognome</span>
-        <input id="cognome" v-model="cognome" required class="rounded-lg border px-3 py-2.5 text-sm" style="border-color: var(--bd2); background: var(--surf)" />
-      </label>
+      <div class="mb-3.5 flex flex-col gap-1.5">
+        <Label for="cognome" class="text-xs font-bold uppercase tracking-wide text-[var(--fg3)]">Cognome</Label>
+        <Input id="cognome" v-model="cognome" required />
+      </div>
 
-      <label for="email" class="mb-3.5 flex flex-col gap-1.5">
-        <span class="text-xs font-bold uppercase tracking-wide" style="color: var(--fg3)">Email</span>
-        <input id="email" v-model="email" type="email" required class="rounded-lg border px-3 py-2.5 text-sm" style="border-color: var(--bd2); background: var(--surf)" />
-      </label>
+      <div class="mb-3.5 flex flex-col gap-1.5">
+        <Label for="email" class="text-xs font-bold uppercase tracking-wide text-[var(--fg3)]">Email</Label>
+        <Input id="email" v-model="email" type="email" required />
+      </div>
 
-      <label for="telefono" class="mb-5 flex flex-col gap-1.5">
-        <span class="text-xs font-bold uppercase tracking-wide" style="color: var(--fg3)">Telefono</span>
-        <input id="telefono" v-model="telefono" class="rounded-lg border px-3 py-2.5 text-sm" style="border-color: var(--bd2); background: var(--surf)" />
-      </label>
+      <div class="mb-5 flex flex-col gap-1.5">
+        <Label for="telefono" class="text-xs font-bold uppercase tracking-wide text-[var(--fg3)]">Telefono</Label>
+        <Input id="telefono" v-model="telefono" />
+      </div>
 
-      <button
-        type="submit"
-        :disabled="inCorso"
-        class="rounded-lg px-4 py-2.5 text-sm font-bold text-white disabled:opacity-70"
-        style="background: var(--green)"
-      >
+      <Button type="submit" :disabled="inCorso">
         {{ inCorso ? 'Salvataggio…' : 'Crea paziente' }}
-      </button>
+      </Button>
     </form>
   </AppShell>
 </template>

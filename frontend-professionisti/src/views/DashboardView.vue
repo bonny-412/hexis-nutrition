@@ -2,9 +2,24 @@
 import { ref, onMounted } from 'vue'
 import AppShell from '@/components/AppShell.vue'
 import { lista } from '@/api/pazienti'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import { Plus, ChevronDown, UserPlus, CalendarPlus, FileText } from '@lucide/vue'
+import { useAuthStore } from '@/stores/auth'
 
+const auth = useAuthStore()
 const pazientiAttivi = ref<number | null>(null)
 const erroreCaricamento = ref(false)
+
+const dataOggi = new Intl.DateTimeFormat('it-IT', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+})
+  .format(new Date())
+  .replace(/^./, (c) => c.toUpperCase())
 
 onMounted(async () => {
   try {
@@ -18,25 +33,55 @@ onMounted(async () => {
 
 <template>
   <AppShell>
-    <h1 class="text-3xl italic" style="font-family: Fraunces, serif; color: var(--fg)">Bentornata</h1>
+    <div class="flex items-start flex-col lg:flex-row">
+      <div>
+        <h1 class="font-heading text-3xl italic text-[var(--fg)]">Ciao, {{ auth.professionista?.nome }}</h1>
+        <p class="mt-1 text-sm text-[var(--fg3)]">{{ dataOggi }}</p>
+      </div>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger as-child>
+          <Button class="group">
+            <Plus :size="16" />
+            Crea nuovo
+            <ChevronDown :size="14" class="transition-transform duration-200 group-data-[state=open]:rotate-180" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" class="flex w-60 flex-col gap-0.5">
+          <DropdownMenuItem as-child class="gap-2 px-2.5 py-1.5">
+            <router-link to="/pazienti/nuovo">
+              <UserPlus :size="16" />
+              Nuovo paziente
+            </router-link>
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled class="gap-2 px-2.5 py-1.5">
+            <CalendarPlus :size="16" />
+            Nuovo appuntamento
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled class="gap-2 px-2.5 py-1.5">
+            <FileText :size="16" />
+            Nuovo piano alimentare
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
 
     <div class="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-      <div class="rounded-xl border p-4" style="border-color: var(--bd2); background: var(--surf)">
-        <div class="text-xs font-bold uppercase tracking-wide" style="color: var(--fg3)">Pazienti attivi</div>
-        <div class="mt-2 text-3xl font-semibold" style="color: var(--fg)">
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-xs font-bold uppercase tracking-wide text-[var(--fg3)]">Pazienti attivi</CardTitle>
+        </CardHeader>
+        <CardContent class="text-3xl font-semibold text-[var(--fg)]">
           {{ erroreCaricamento ? '—' : (pazientiAttivi ?? '…') }}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
-      <div
-        v-for="titolo in ['Visite oggi', 'Piani in scadenza', 'Messaggi non letti']"
-        :key="titolo"
-        class="rounded-xl border p-4 opacity-60"
-        style="border-color: var(--bd2); background: var(--surf)"
-      >
-        <div class="text-xs font-bold uppercase tracking-wide" style="color: var(--fg3)">{{ titolo }}</div>
-        <div class="mt-2 text-sm" style="color: var(--fg4)">Disponibile a breve</div>
-      </div>
+      <Card v-for="titolo in ['Visite oggi', 'Piani in scadenza', 'Messaggi non letti']" :key="titolo" class="opacity-60">
+        <CardHeader>
+          <CardTitle class="text-xs font-bold uppercase tracking-wide text-[var(--fg3)]">{{ titolo }}</CardTitle>
+        </CardHeader>
+        <CardContent class="text-sm text-[var(--fg4)]">Disponibile a breve</CardContent>
+      </Card>
     </div>
   </AppShell>
 </template>

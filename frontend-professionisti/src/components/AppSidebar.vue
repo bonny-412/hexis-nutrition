@@ -1,55 +1,61 @@
 <script setup lang="ts">
 import { RouterLink, useRoute } from 'vue-router'
+import { LayoutGrid, Calendar, Users, FileText, MessageSquare, BarChart3, Apple } from '@lucide/vue'
+
+const props = withDefaults(defineProps<{ class?: string }>(), { class: '' })
 
 const voci = [
-  { nome: 'Dashboard', routeName: 'dashboard', icona: '▦' },
-  { nome: 'Agenda', icona: '📅' },
-  { nome: 'Pazienti', routeName: 'pazienti', icona: '👥' },
-  { nome: 'Piani alimentari', icona: '📄' },
-  { nome: 'Chat', icona: '💬' },
-  { nome: 'Analytics', icona: '📊' },
+  { nome: 'Dashboard', routeName: 'dashboard', icona: LayoutGrid },
+  { nome: 'Agenda', icona: Calendar },
+  { nome: 'Pazienti', routeName: 'pazienti', icona: Users },
+  { nome: 'Piani alimentari', icona: FileText },
+  { nome: 'Chat', icona: MessageSquare },
+  { nome: 'Analytics', icona: BarChart3 },
 ]
 
 const route = useRoute()
 </script>
 
 <template>
-  <aside class="flex w-64 flex-shrink-0 flex-col justify-between p-4" style="background: var(--green-d)">
+  <div
+    :class="['flex w-[246px] flex-shrink-0 flex-col justify-between bg-[var(--side)] p-[18px_14px_14px] text-[var(--side-fg)]', props.class]"
+  >
     <div>
-      <div class="mb-6 flex items-center gap-2 px-2">
-        <img src="@/assets/hexis-logo.svg" alt="Hexis" class="h-9 w-9 rounded-lg bg-white p-1" />
-        <div>
-          <div class="font-semibold text-white">Hexis</div>
-          <div class="text-[10px] uppercase tracking-wide text-white/60">Professionisti</div>
+      <div class="mb-5 flex items-center gap-2.5 px-1.5">
+        <img src="@/assets/hexis-logo.svg" alt="Hexis" class="h-[34px] w-[34px] flex-none rounded-[10px] bg-white" />
+        <div class="flex flex-col gap-px">
+          <span class="font-heading text-base font-semibold leading-tight text-white">Hexis</span>
+          <span class="text-[10px] uppercase tracking-[0.14em] text-[var(--side-fg2)]">Professionisti</span>
         </div>
       </div>
 
-      <nav class="flex flex-col gap-1">
+      <nav class="flex flex-col gap-0.5">
         <component
           :is="voce.routeName ? RouterLink : 'span'"
           v-for="voce in voci"
           :key="voce.nome"
           :to="voce.routeName ? { name: voce.routeName } : undefined"
-          class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium"
+          class="flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium"
           :class="
-            voce.routeName
-              ? route.name === voce.routeName
-                ? 'bg-white/10 text-white'
-                : 'text-white/80 hover:bg-white/5'
-              : 'cursor-not-allowed text-white/35'
+            voce.routeName && route.name === voce.routeName
+              ? 'bg-[var(--side-act-bg)] text-white'
+              : voce.routeName
+                ? 'text-[var(--side-fg)]'
+                : 'cursor-not-allowed text-[var(--side-fg2)]'
           "
         >
-          <span>{{ voce.icona }}</span>
+          <component :is="voce.icona" :size="16" :stroke-width="1.8" />
           <span>{{ voce.nome }}</span>
         </component>
       </nav>
     </div>
 
-    <div class="px-2 text-[10px] uppercase tracking-wide text-white/40">
-      Risorse
-      <div class="mt-2 flex items-center gap-2.5 text-sm font-medium text-white/35">
-        <span>🍎</span><span>Alimenti</span>
-      </div>
+    <div>
+      <div class="mb-1.5 px-2.5 text-[10px] uppercase tracking-[0.14em] text-[var(--side-fg2)]">Risorse</div>
+      <span class="flex cursor-not-allowed items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium text-[var(--side-fg2)]">
+        <Apple :size="16" :stroke-width="1.8" />
+        <span>Alimenti</span>
+      </span>
     </div>
-  </aside>
+  </div>
 </template>

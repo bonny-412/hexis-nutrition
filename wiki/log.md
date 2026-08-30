@@ -73,3 +73,23 @@ Ripresa dai punti aperti del 9 agosto: Andrea ha confermato tutte e tre le propo
 Aggiornate: [moduli/inviti-e-token](moduli/inviti-e-token.md) (struttura, i due flussi, rimossa la sezione "punti aperti"), [domande-aperte](domande-aperte.md) (i tre punti spostati in "Risolte"), `stato.md`. Fonte: [sorgenti/2026-08-30-hash-pulizia-invalidazione-token](sorgenti/2026-08-30-hash-pulizia-invalidazione-token.md).
 
 **Aperto**: versione di PostgreSQL per la produzione, deploy in Docker, convenzione sulle credenziali nella wiki, piani frontend mai iniziati. Modifiche pronte in staging (`git add` fatto), commit da fare da parte di Andrea.
+
+## [2026-08-30] handoff | Frontend-professionisti "Fondamenta" costruito, shadcn-vue adottato, pulizia CSS completata
+
+Piano di 16 task per `frontend-professionisti/` (login, dashboard, pazienti, reset password, shell con sidebar/header) eseguito con `superpowers:subagent-driven-development` in worktree isolato, poi merge locale su master (un conflitto risolto in `AuthControllerTest.java`). A metà sessione Andrea ha segnalato forte infedeltà rispetto al mockup fornito (`Hexis Nutrition.zip`) e ha richiesto l'adozione di **shadcn-vue + Reka UI + `@lucide/vue`** (previsti in [decisioni/0001](decisioni/0001-stack-tecnologico.md) ma inizialmente rimandati per YAGNI): riconvertiti in un solo passaggio tutti i componenti/view esistenti, sostituendo CSS scritto a mano e icone emoji. Corrette più volte, su segnalazione di Andrea, la responsività di sidebar/header (drawer mobile ora basato sul componente `Sheet`, portal-based, non più CSS hand-rolled) e il comportamento del menu profilo (ora `DropdownMenu` di Reka UI, con click-outside/Escape nativi). Stabilita e applicata ovunque la convenzione: mai `style="..."` inline, sempre classi Tailwind (sintassi arbitraria per le variabili CSS custom, utility `font-heading` per i titoli).
+
+Password dell'account di sviluppo reimpostata (Andrea l'aveva dimenticata), nuovo hash generato al volo senza mai committare codice di scarto. Login verificato manualmente da Andrea.
+
+Verifiche finali di questa sessione: `npm run test` → **54 test, 0 fallimenti**; `npm run build` → pulito; confermato che `.font-heading{font-family:Fraunces,serif}` è presente nel CSS compilato. Tutto lo staging del repo (backend token_azione + questo frontend) è pronto con `git add`, nessun commit fatto. Aggiornato `stato.md`.
+
+**Aperto**: `frontend-cliente/` non ancora iniziato; i flussi di creazione/invito paziente e reset password non ancora provati a mano contro l'app in esecuzione; versione PostgreSQL per produzione e deploy Docker restano da decidere.
+
+## [2026-08-30] handoff | Rifiniture UI su shell e dashboard di `frontend-professionisti`
+
+Sessione di correzioni e rifiniture visive richieste una alla volta da Andrea, nessuna modifica di struttura o di flusso.
+
+**Fatto**: (1) risolta una linea verticale bianca nella sidebar mobile (`AppShell.vue`) — il `Sheet` di shadcn applica `data-[side=left]:border-r`/`w-3/4` di default, gli override precedenti (`border-0`, `w-[246px]`) non avevano lo stesso scope di variante e `tailwind-merge` non li deduplicava, lasciando il bordo visibile per specificità CSS; corretto usando override con lo stesso prefisso `data-[side=left]:`, verificato empiricamente con `twMerge` in Node prima e dopo il fix; (2) freccia del menu profilo (`AppHeader.vue`) resa dinamica (rotazione via `group-data-[state=open]`), stesso pattern poi riusato sul bottone "Crea nuovo" della dashboard; (3) su schermi piccoli il bottone profilo mostra solo l'avatar (bordo/sfondo/padding spostati a `lg:`-only); (4) logo+"Hexis" mobile centrato nell'header e ingrandito; (5) `DashboardView.vue`: saluto "Bentornata" (gendered) sostituito con "Ciao, {nome}" + data odierna estesa in italiano; aggiunto bottone "Crea nuovo" con dropdown (Nuovo paziente attivo, Nuovo appuntamento/Nuovo piano alimentare disabilitati, ciascuno con icona), dimensioni tarate più volte su richiesta di Andrea.
+
+Test esistenti (`AppShell.spec.ts`, `AppHeader.spec.ts`, `DashboardView.spec.ts`) verificati verdi dopo ogni modifica, più `tsc --noEmit` pulito. Nessuna verifica visiva in browser reale (Claude in Chrome non collegato in questa sessione): correzioni basate su lettura del codice e, per il bug della linea bianca, su verifica empirica del comportamento di `tailwind-merge`. Aggiornato `stato.md`.
+
+**Aperto**: come sopra, più l'indicazione esplicita di Andrea per la prossima sessione — sulla sezione **Pazienti**, prima le modifiche di UI e poi quelle di struttura (dettagli da raccogliere a inizio sessione). Modifiche pronte in staging (`git add` fatto), commit da fare da parte di Andrea.

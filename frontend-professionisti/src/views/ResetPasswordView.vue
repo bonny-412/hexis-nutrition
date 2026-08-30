@@ -3,6 +3,9 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { resetPassword } from '@/api/auth'
 import { ApiError } from '@/api/client'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 const route = useRoute()
 const router = useRouter()
@@ -38,14 +41,13 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center" style="background: var(--bg)">
+  <div class="flex min-h-screen items-center justify-center bg-[var(--bg)]">
     <form class="w-full max-w-[360px]" @submit.prevent="onSubmit">
-      <h1 class="text-2xl italic" style="font-family: Fraunces, serif; color: var(--fg)">Imposta una nuova password</h1>
+      <h1 class="font-heading text-2xl italic text-[var(--fg)]">Imposta una nuova password</h1>
 
       <div
         v-if="errore"
-        class="mt-4 rounded-lg border px-3 py-2.5 text-sm font-semibold"
-        style="background: var(--warn-bg); border-color: var(--bd2); color: var(--danger)"
+        class="mt-4 rounded-lg border border-[var(--bd2)] bg-[var(--warn-bg)] px-3 py-2.5 text-sm font-semibold text-[var(--danger)]"
       >
         {{ errore }}
         <router-link v-if="errore.includes('richiedine')" to="/password-dimenticata" class="ml-1 underline">
@@ -53,24 +55,19 @@ async function onSubmit() {
         </router-link>
       </div>
 
-      <label class="mb-3.5 mt-4 flex flex-col gap-1.5">
-        <span class="text-xs font-bold uppercase tracking-wide" style="color: var(--fg3)">Nuova password</span>
-        <input v-model="nuovaPassword" type="password" required class="rounded-lg border px-3 py-2.5 text-sm" style="border-color: var(--bd2); background: var(--surf)" />
-      </label>
+      <div class="mb-3.5 mt-4 flex flex-col gap-1.5">
+        <Label for="nuova-password" class="text-xs font-bold uppercase tracking-wide text-[var(--fg3)]">Nuova password</Label>
+        <Input id="nuova-password" v-model="nuovaPassword" type="password" required />
+      </div>
 
-      <label class="mb-5 flex flex-col gap-1.5">
-        <span class="text-xs font-bold uppercase tracking-wide" style="color: var(--fg3)">Conferma password</span>
-        <input v-model="conferma" type="password" required class="rounded-lg border px-3 py-2.5 text-sm" style="border-color: var(--bd2); background: var(--surf)" />
-      </label>
+      <div class="mb-5 flex flex-col gap-1.5">
+        <Label for="conferma-password" class="text-xs font-bold uppercase tracking-wide text-[var(--fg3)]">Conferma password</Label>
+        <Input id="conferma-password" v-model="conferma" type="password" required />
+      </div>
 
-      <button
-        type="submit"
-        :disabled="inCorso"
-        class="w-full rounded-lg py-3 text-sm font-bold text-white disabled:opacity-70"
-        style="background: var(--green)"
-      >
+      <Button type="submit" :disabled="inCorso" class="w-full">
         {{ inCorso ? 'Salvataggio…' : 'Imposta password' }}
-      </button>
+      </Button>
     </form>
   </div>
 </template>
