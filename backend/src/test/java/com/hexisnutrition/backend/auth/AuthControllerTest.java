@@ -204,4 +204,18 @@ class AuthControllerTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/auth/me"))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void emailDiResetPasswordContieneLUrlDelFrontendConfigurato() throws Exception {
+        professionistaRepository.save(new Professionista(
+                "resetlink@example.com", passwordEncoder.encode("x"), "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/auth/password-dimenticata")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"resetlink@example.com\"}"))
+                .andExpect(status().isNoContent());
+
+        String corpoEmail = fakeEmailSender.getInviate().get(0).corpoHtml();
+        assertThat(corpoEmail).contains("http://localhost:5173/reset-password?token=");
+    }
 }

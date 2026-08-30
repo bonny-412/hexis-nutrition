@@ -12,6 +12,7 @@ import com.hexisnutrition.backend.professionisti.Professionista;
 import com.hexisnutrition.backend.professionisti.ProfessionistaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,19 +31,22 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final EmailSender emailSender;
+    private final String frontendUrl;
 
     public AuthService(ProfessionistaRepository professionistaRepository,
                         PazienteRepository pazienteRepository,
                         TokenAzioneRepository tokenAzioneRepository,
                         PasswordEncoder passwordEncoder,
                         JwtService jwtService,
-                        EmailSender emailSender) {
+                        EmailSender emailSender,
+                        @Value("${app.frontend-professionisti.url}") String frontendUrl) {
         this.professionistaRepository = professionistaRepository;
         this.pazienteRepository = pazienteRepository;
         this.tokenAzioneRepository = tokenAzioneRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.emailSender = emailSender;
+        this.frontendUrl = frontendUrl;
     }
 
     public LoginResponse login(String email, String password) {
@@ -129,7 +133,7 @@ public class AuthService {
     }
 
     private String corpoResetPassword(String token) {
-        return "<p>Reimposta la password: <a href=\"https://app.hexisnutrition.example/reset-password?token="
+        return "<p>Reimposta la password: <a href=\"" + frontendUrl + "/reset-password?token="
                 + token + "\">Reimposta password</a></p>";
     }
 }
