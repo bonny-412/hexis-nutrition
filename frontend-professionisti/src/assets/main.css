@@ -1,0 +1,30 @@
+/* src/assets/main.css */
+@import "tailwindcss";
+
+:root {
+  --bg: #F7F6F2;
+  --surf: #FFFFFF;
+  --bd: #E6E4DC;
+  --bd2: #E1E6E2;
+  --div: #F0EFE9;
+  --soft: #FBFBF8;
+  --hover: #EFEEE8;
+  --fg: #12211A;
+  --fg2: #5D6B64;
+  --fg3: #7C8A83;
+  --fg4: #9AA6A0;
+  --green: #1B5E3F;
+  --green-d: #154A32;
+  --on-green: #FFFFFF;
+  --mint: #E3F3E9;
+  --sage: #7BC299;
+  --danger: #B3432E;
+  --warn-bg: #FBF1E4;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: Figtree, system-ui, sans-serif;
+}
