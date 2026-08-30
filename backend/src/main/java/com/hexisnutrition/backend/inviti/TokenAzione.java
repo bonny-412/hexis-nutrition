@@ -8,9 +8,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HexFormat;
 import java.util.UUID;
 
 @Entity
@@ -21,8 +26,15 @@ public class TokenAzione {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false, unique = true)
-    private String token;
+    @Column(name = "token_hash", nullable = false, unique = true)
+    private String tokenHash;
+
+    /**
+     * Il valore in chiaro non è mai persistito: esiste solo sull'istanza appena
+     * creata, il tempo di comporre l'email. Dopo un ricaricamento dal database è null.
+     */
+    @Transient
+    private String tokenChiaro;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -37,9 +49,6 @@ public class TokenAzione {
     @Column(nullable = false)
     private Instant scadenza;
 
-    @Column(nullable = false)
-    private boolean usato = false;
-
     @Column(name = "creato_il", nullable = false)
     private Instant creatoIl = Instant.now();
 
@@ -48,7 +57,7 @@ public class TokenAzione {
 
     public static TokenAzione perPaziente(TipoToken tipo, UUID pazienteId, Duration validita) {
         TokenAzione token = new TokenAzione();
-        token.token = UUID.randomUUID().toString();
+        token.impostaTokenChiaro(UUID.randomUUID().toString());
         token.tipo = tipo;
         token.pazienteId = pazienteId;
         token.scadenza = Instant.now().plus(validita);
@@ -57,27 +66,46 @@ public class TokenAzione {
 
     public static TokenAzione perProfessionista(TipoToken tipo, UUID professionistaId, Duration validita) {
         TokenAzione token = new TokenAzione();
-        token.token = UUID.randomUUID().toString();
+        token.impostaTokenChiaro(UUID.randomUUID().toString());
         token.tipo = tipo;
         token.professionistaId = professionistaId;
         token.scadenza = Instant.now().plus(validita);
         return token;
     }
 
-    public boolean isValido() {
-        return !usato && Instant.now().isBefore(scadenza);
+    private void impostaTokenChiaro(String valore) {
+        this.tokenChiaro = valore;
+        this.tokenHash = hash(valore);
     }
 
-    public void segnaUsato() {
-        this.usato = true;
+    public static String hash(String tokenChiaro) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] bytes = digest.digest(tokenChiaro.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(bytes);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public boolean isValido() {
+        return Instant.now().isBefore(scadenza);
     }
 
     public UUID getId() {
         return id;
     }
 
+    /**
+     * Restituisce il token in chiaro: valorizzato solo sull'istanza appena creata
+     * con {@link #perPaziente} / {@link #perProfessionista}, per comporre l'email.
+     */
     public String getToken() {
-        return token;
+        return tokenChiaro;
+    }
+
+    public String getTokenHash() {
+        return tokenHash;
     }
 
     public TipoToken getTipo() {
@@ -94,9 +122,5 @@ public class TokenAzione {
 
     public Instant getScadenza() {
         return scadenza;
-    }
-
-    public boolean isUsato() {
-        return usato;
     }
 }

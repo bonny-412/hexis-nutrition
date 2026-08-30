@@ -72,7 +72,7 @@ public class PazienteService {
 
     @Transactional
     public void attiva(String token, String nuovaPassword) {
-        TokenAzione tokenAzione = tokenAzioneRepository.findByToken(token)
+        TokenAzione tokenAzione = tokenAzioneRepository.findByTokenHash(TokenAzione.hash(token))
                 .filter(TokenAzione::isValido)
                 .filter(t -> t.getTipo() == TipoToken.INVITO)
                 .orElseThrow(TokenNonValidoException::new);
@@ -91,7 +91,6 @@ public class PazienteService {
         paziente.setStatoAccount(StatoAccountPaziente.ATTIVO);
         pazienteRepository.save(paziente);
 
-        tokenAzione.segnaUsato();
-        tokenAzioneRepository.save(tokenAzione);
+        tokenAzioneRepository.delete(tokenAzione);
     }
 }

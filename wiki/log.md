@@ -63,3 +63,13 @@ Sessione dedicata all'infrastruttura, non a nuove funzionalità: nessuna riga di
 **Aperto**: i tre punti su `token_azione` (token in chiaro, nessuna pulizia, reset multipli non invalidanti), la versione di PostgreSQL per la produzione, il deploy in Docker, e la convenzione sulle credenziali nella wiki. Il flusso reale del prodotto non è ancora stato provato contro l'app in esecuzione.
 
 **Prossimo passo**: scrivere i piani per i due frontend di "Fondamenta" — vedi [stato](stato.md), riscritto in questa sessione per essere l'unico file necessario a ripartire.
+
+## [2026-08-30] query+ingest | Chiusi i tre punti aperti su `token_azione`
+
+Ripresa dai punti aperti del 9 agosto: Andrea ha confermato tutte e tre le proposte (hash, pulizia, invalidazione). Bounded task, design approvato in chat (skill `superpowers:brainstorming`), implementato con `superpowers:test-driven-development` in tre cicli RED→GREEN.
+
+**Fatto**: (1) `TokenAzione` genera ancora un `UUID.randomUUID()` ma persiste solo il suo hash SHA-256 in `token_hash` (rinominata da `token`, migrazione V4), tenendo il valore in chiaro in un campo `@Transient` valido solo sull'istanza appena creata; (2) rimosso il flag `usato` — un token consumato viene cancellato subito in `resetPassword`/`attiva`, più il nuovo componente schedulato `TokenAzionePulizia` (`@Scheduled` notturno) che cancella i token scaduti mai usati; (3) `AuthService.richiediResetPassword` ora cancella i `RESET_PASSWORD` precedenti della stessa persona prima di crearne uno nuovo. Un test end-to-end preesistente che recuperava il token ricaricandolo dal DB è stato corretto per estrarlo dal corpo dell'email (con l'hash il valore in chiaro non è più recuperabile da un'entità ricaricata). `mvn test` → **36 test, 0 fallimenti, BUILD SUCCESS**.
+
+Aggiornate: [moduli/inviti-e-token](moduli/inviti-e-token.md) (struttura, i due flussi, rimossa la sezione "punti aperti"), [domande-aperte](domande-aperte.md) (i tre punti spostati in "Risolte"), `stato.md`. Fonte: [sorgenti/2026-08-30-hash-pulizia-invalidazione-token](sorgenti/2026-08-30-hash-pulizia-invalidazione-token.md).
+
+**Aperto**: versione di PostgreSQL per la produzione, deploy in Docker, convenzione sulle credenziali nella wiki, piani frontend mai iniziati. Modifiche pronte in staging (`git add` fatto), commit da fare da parte di Andrea.

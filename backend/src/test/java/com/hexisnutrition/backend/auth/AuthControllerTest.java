@@ -180,4 +180,69 @@ class AuthControllerTest extends AbstractIntegrationTest {
         Paziente aggiornato = pazienteRepository.findById(paziente.getId()).orElseThrow();
         assertThat(passwordEncoder.matches("nuovaPassword1", aggiornato.getPasswordHash())).isTrue();
     }
+
+    @Test
+    void resetPasswordConTokenGiaUsatoRestituisceErrore() throws Exception {
+        Professionista professionista = professionistaRepository.save(new Professionista(
+                "reset6@example.com", passwordEncoder.encode("vecchia"), "Anna", "Bianchi"));
+        var token = com.hexisnutrition.backend.inviti.TokenAzione.perProfessionista(
+                com.hexisnutrition.backend.inviti.TipoToken.RESET_PASSWORD,
+                professionista.getId(), java.time.Duration.ofHours(1));
+        tokenAzioneRepository.save(token);
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"" + token.getToken() + "\",\"nuovaPassword\":\"nuovaPassword1\"}"))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"" + token.getToken() + "\",\"nuovaPassword\":\"altraPassword1\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void unaNuovaRichiestaDiResetInvalidaLaPrecedente() throws Exception {
+        Professionista professionista = professionistaRepository.save(new Professionista(
+                "reset7@example.com", passwordEncoder.encode("vecchia"), "Anna", "Bianchi"));
+        var primoToken = com.hexisnutrition.backend.inviti.TokenAzione.perProfessionista(
+                com.hexisnutrition.backend.inviti.TipoToken.RESET_PASSWORD,
+                professionista.getId(), java.time.Duration.ofHours(1));
+        tokenAzioneRepository.save(primoToken);
+
+        mockMvc.perform(post("/auth/password-dimenticata")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"reset7@example.com\"}"))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"" + primoToken.getToken() + "\",\"nuovaPassword\":\"nuovaPassword1\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void unaNuovaRichiestaDiResetInvalidaLaPrecedenteDelPaziente() throws Exception {
+        Professionista professionista = professionistaRepository.save(new Professionista(
+                "prof10@example.com", passwordEncoder.encode("x"), "Anna", "Bianchi"));
+        Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
+                "luca-reset2@example.com", null, null, null, null);
+        paziente.setPasswordHash(passwordEncoder.encode("vecchia"));
+        paziente.setStatoAccount(StatoAccountPaziente.ATTIVO);
+        paziente = pazienteRepository.save(paziente);
+        var primoToken = com.hexisnutrition.backend.inviti.TokenAzione.perPaziente(
+                com.hexisnutrition.backend.inviti.TipoToken.RESET_PASSWORD,
+                paziente.getId(), java.time.Duration.ofHours(1));
+        tokenAzioneRepository.save(primoToken);
+
+        mockMvc.perform(post("/auth/password-dimenticata")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"luca-reset2@example.com\"}"))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(post("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"" + primoToken.getToken() + "\",\"nuovaPassword\":\"nuovaPassword1\"}"))
+                .andExpect(status().isBadRequest());
+    }
 }

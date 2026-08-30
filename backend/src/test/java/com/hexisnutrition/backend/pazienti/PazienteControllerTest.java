@@ -180,12 +180,16 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
                 "luca7@example.com", null, null, null, null));
         TokenAzione token = TokenAzione.perPaziente(TipoToken.INVITO, paziente.getId(), Duration.ofDays(7));
-        token.segnaUsato();
         tokenAzioneRepository.save(token);
 
         mockMvc.perform(post("/inviti/" + token.getToken() + "/attiva")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nuovaPassword\":\"password123\"}"))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(post("/inviti/" + token.getToken() + "/attiva")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nuovaPassword\":\"altraPassword1\"}"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -230,12 +234,10 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista)))
                 .andExpect(status().isNoContent());
 
-        TokenAzione token = tokenAzioneRepository.findAll().stream()
-                .filter(t -> paziente.getId().equals(t.getPazienteId()) && t.getTipo() == TipoToken.INVITO)
-                .findFirst()
-                .orElseThrow();
+        String corpoEmail = fakeEmailSender.getInviate().get(0).corpoHtml();
+        String token = corpoEmail.replaceAll(".*token=([\\w-]+).*", "$1");
 
-        mockMvc.perform(post("/inviti/" + token.getToken() + "/attiva")
+        mockMvc.perform(post("/inviti/" + token + "/attiva")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nuovaPassword\":\"nuovaPassword1\"}"))
                 .andExpect(status().isNoContent());

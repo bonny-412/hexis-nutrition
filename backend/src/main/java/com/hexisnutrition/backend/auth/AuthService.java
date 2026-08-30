@@ -62,8 +62,10 @@ public class AuthService {
         throw new CredenzialiNonValideException();
     }
 
+    @Transactional
     public void richiediResetPassword(String email) {
         professionistaRepository.findByEmail(email).ifPresent(professionista -> {
+            tokenAzioneRepository.deleteByTipoAndProfessionistaId(TipoToken.RESET_PASSWORD, professionista.getId());
             TokenAzione token = TokenAzione.perProfessionista(
                     TipoToken.RESET_PASSWORD, professionista.getId(), Duration.ofHours(1));
             tokenAzioneRepository.save(token);
@@ -77,6 +79,7 @@ public class AuthService {
         });
 
         pazienteRepository.findByEmailAndStatoAccount(email, StatoAccountPaziente.ATTIVO).ifPresent(paziente -> {
+            tokenAzioneRepository.deleteByTipoAndPazienteId(TipoToken.RESET_PASSWORD, paziente.getId());
             TokenAzione token = TokenAzione.perPaziente(
                     TipoToken.RESET_PASSWORD, paziente.getId(), Duration.ofHours(1));
             tokenAzioneRepository.save(token);
@@ -92,7 +95,7 @@ public class AuthService {
 
     @Transactional
     public void resetPassword(String token, String nuovaPassword) {
-        TokenAzione tokenAzione = tokenAzioneRepository.findByToken(token)
+        TokenAzione tokenAzione = tokenAzioneRepository.findByTokenHash(TokenAzione.hash(token))
                 .filter(TokenAzione::isValido)
                 .filter(t -> t.getTipo() == TipoToken.RESET_PASSWORD)
                 .orElseThrow(TokenNonValidoException::new);
@@ -110,8 +113,7 @@ public class AuthService {
             pazienteRepository.save(paziente);
         }
 
-        tokenAzione.segnaUsato();
-        tokenAzioneRepository.save(tokenAzione);
+        tokenAzioneRepository.delete(tokenAzione);
     }
 
     private String corpoResetPassword(String token) {

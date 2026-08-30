@@ -18,15 +18,8 @@ fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brain
 - Modello dati per i sotto-progetti "Piano alimentare", "Monitoraggio" e "Chat" non ancora dettagliato (solo "Fondamenta" è stato progettato, vedi [decisioni/0002](decisioni/0002-autenticazione-e-onboarding.md)).
 - Serve una convenzione esplicita sul non scrivere credenziali nella wiki, nemmeno locali? Sollevato il 2026-08-09 e rimasto senza risposta: le credenziali del Postgres di sviluppo erano riportate in [stato](stato.md), che finisce su GitHub con il resto del repo. Sono innocue finché il database resta su localhost, ma è un'abitudine che non conviene consolidare. Nell'handoff sono state sostituite da un rimando generico; da decidere se basta così o se serve una regola scritta.
 
-## Su `token_azione` (invito e reset password)
-
-Emerse leggendo il codice il 2026-08-09, mai discusse quando "Fondamenta" è stato progettato. Riguardano [`TokenAzione`](../backend/src/main/java/com/hexisnutrition/backend/inviti/TokenAzione.java), [`AuthService`](../backend/src/main/java/com/hexisnutrition/backend/auth/AuthService.java) e [`PazienteService`](../backend/src/main/java/com/hexisnutrition/backend/pazienti/PazienteService.java).
-
-- **I token sono salvati in chiaro** nella colonna `token`. Chi ha accesso in lettura al database può spendere qualsiasi token attivo e impostare la password di un utente al posto suo. Salvarne l'hash — come già si fa per le password — chiuderebbe la cosa, al prezzo di una lookup per hash invece che per valore. Accettare o correggere?
-- **Nessuna pulizia dei token**: quelli usati e quelli scaduti restano in tabella per sempre, che quindi cresce senza limite. Serve un job di pulizia periodico, una cancellazione contestuale all'uso, o si accetta la crescita (probabilmente irrilevante ai volumi previsti)?
-- **Le richieste di reset ripetute non invalidano le precedenti**: `richiediResetPassword` crea sempre un token nuovo senza toccare quelli già emessi, quindi per la stessa persona possono esistere più token di reset validi in parallelo, ciascuno spendibile fino alla propria scadenza. Invalidare i precedenti a ogni nuova richiesta?
-
 ## Risolte
 
 - ~~Perché due frontend Vue separati invece di una singola app con routing/permessi per ruolo?~~ Risolto in [architettura](architettura.md).
 - ~~Terminologia "paziente" vs "cliente"~~: sono due concetti distinti, non sinonimi. Risolto in [glossario](glossario.md).
+- ~~`token_azione`: token in chiaro, nessuna pulizia, reset ripetuti non invalidano i precedenti~~. Risolto il 2026-08-30, vedi [moduli/inviti-e-token](moduli/inviti-e-token.md).

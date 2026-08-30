@@ -34,7 +34,7 @@ class TokenAzioneRepositoryTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void salvaERitrovaPerToken() {
+    void salvaERitrovaPerTokenHash() {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
@@ -43,27 +43,18 @@ class TokenAzioneRepositoryTest extends AbstractIntegrationTest {
         TokenAzione token = TokenAzione.perPaziente(TipoToken.INVITO, paziente.getId(), Duration.ofDays(7));
         tokenAzioneRepository.save(token);
 
-        Optional<TokenAzione> trovato = tokenAzioneRepository.findByToken(token.getToken());
+        Optional<TokenAzione> trovato = tokenAzioneRepository.findByTokenHash(TokenAzione.hash(token.getToken()));
 
         assertThat(trovato).isPresent();
         assertThat(trovato.get().getTipo()).isEqualTo(TipoToken.INVITO);
         assertThat(trovato.get().isValido()).isTrue();
+        assertThat(trovato.get().getTokenHash()).isNotEqualTo(token.getToken());
     }
 
     @Test
     void unTokenScadutoNonEValido() {
         TokenAzione token = TokenAzione.perProfessionista(
                 TipoToken.RESET_PASSWORD, UUID.randomUUID(), Duration.ofSeconds(-1));
-
-        assertThat(token.isValido()).isFalse();
-    }
-
-    @Test
-    void unTokenUsatoNonEValido() {
-        TokenAzione token = TokenAzione.perProfessionista(
-                TipoToken.RESET_PASSWORD, UUID.randomUUID(), Duration.ofHours(1));
-
-        token.segnaUsato();
 
         assertThat(token.isValido()).isFalse();
     }

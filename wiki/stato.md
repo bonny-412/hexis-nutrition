@@ -3,8 +3,8 @@ title: Stato del progetto
 tags: [stato]
 stato: stabile
 creato: 2026-08-08
-aggiornato: 2026-08-09
-fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, sorgenti/2026-08-09-test-su-postgres-locale.md, sorgenti/2026-08-09-docker-solo-in-produzione.md]
+aggiornato: 2026-08-30
+fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, sorgenti/2026-08-09-test-su-postgres-locale.md, sorgenti/2026-08-09-docker-solo-in-produzione.md, sorgenti/2026-08-30-hash-pulizia-invalidazione-token.md]
 ---
 
 # Stato — hexis-nutrition
@@ -47,11 +47,14 @@ Tutto in `backend/`, committato in `70e2141`. Piano seguito: [`backend/docs/supe
 
 **Archiviata** la pagina [moduli/inviti-e-token](moduli/inviti-e-token.md), prima di `moduli/`: struttura di `token_azione`, i due flussi (invito paziente, reset password) e le condizioni di validità che impediscono di spendere un token di invito su un endpoint di reset.
 
+## Sessione del 30 agosto 2026 — cosa è stato deciso e perché
+
+**Chiusi i tre punti aperti su `token_azione`** ([moduli/inviti-e-token](moduli/inviti-e-token.md)): token salvati come hash SHA-256 invece che in chiaro (colonna `token`→`token_hash`, migrazione V4), cancellazione immediata del token alla consumazione invece del flag `usato` (più un job schedulato notturno, `TokenAzionePulizia`, per i token scaduti mai usati), e le richieste di reset password ora invalidano quelle precedenti per la stessa persona. Bounded task, design approvato in chat, implementato in tre cicli TDD. `mvn test` → **36 test, 0 fallimenti, BUILD SUCCESS**. Dettaglio in [sorgenti/2026-08-30-hash-pulizia-invalidazione-token](sorgenti/2026-08-30-hash-pulizia-invalidazione-token.md).
+
 ## Cosa resta aperto
 
 Elenco completo e ragionato in [domande-aperte](domande-aperte.md). I punti che toccano il codice esistente:
 
-- **`token_azione`**: token salvati in chiaro, nessuna pulizia dei token scaduti/usati, richieste di reset ripetute che non invalidano le precedenti. Nessuno dei tre è un bug che rompe i test — sono scelte implicite mai discusse, da confermare o correggere.
 - **Versione di PostgreSQL**: sviluppo e test girano sulla 13, la produzione sarà in Docker e potrà usare qualunque immagine. Fissarla su `postgres:13` allinea gli ambienti; qualsiasi altra scelta introduce una differenza che nessun test copre.
 - **Deploy**: previsto Docker, nient'altro deciso (immagini, orchestrazione, provider, gestione di `JWT_SECRET` e `RESEND_API_KEY`).
 
