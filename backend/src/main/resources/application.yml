@@ -21,3 +21,5 @@ app:
   jwt:
     secret: ${JWT_SECRET}
     expiration-minutes: 480
+  frontend-professionisti:
+    url: ${FRONTEND_PROFESSIONISTI_URL:http://localhost:5173}
