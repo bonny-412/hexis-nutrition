@@ -18,14 +18,14 @@ const route = useRoute()
 
 <template>
   <div
-    :class="['flex w-[246px] flex-shrink-0 flex-col justify-between bg-[var(--side)] p-[18px_14px_14px] text-[var(--side-fg)]', props.class]"
+    :class="['flex w-61.5 shrink-0 flex-col justify-between bg-(--side) p-[18px_14px_14px] text-(--side-fg)', props.class]"
   >
     <div>
       <div class="mb-5 flex items-center gap-2.5 px-1.5">
-        <img src="@/assets/hexis-logo.svg" alt="Hexis" class="h-[34px] w-[34px] flex-none rounded-[10px] bg-white" />
+        <img src="@/assets/hexis-logo.svg" alt="Hexis" class="h-8.5 w-8.5 flex-none rounded-[10px] bg-white" />
         <div class="flex flex-col gap-px">
           <span class="font-heading text-base font-semibold leading-tight text-white">Hexis</span>
-          <span class="text-[10px] uppercase tracking-[0.14em] text-[var(--side-fg2)]">Professionisti</span>
+          <span class="text-[10px] uppercase tracking-[0.14em] text-(--side-fg2)">Professionisti</span>
         </div>
       </div>
 
@@ -38,10 +38,10 @@ const route = useRoute()
           class="flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium"
           :class="
             voce.routeName && route.name === voce.routeName
-              ? 'bg-[var(--side-act-bg)] text-white'
+              ? 'bg-(--side-act-bg) text-white'
               : voce.routeName
-                ? 'text-[var(--side-fg)]'
-                : 'cursor-not-allowed text-[var(--side-fg2)]'
+                ? 'text-(--side-fg)'
+                : 'cursor-not-allowed text-(--side-fg2)'
           "
         >
           <component :is="voce.icona" :size="16" :stroke-width="1.8" />
@@ -51,8 +51,8 @@ const route = useRoute()
     </div>
 
     <div>
-      <div class="mb-1.5 px-2.5 text-[10px] uppercase tracking-[0.14em] text-[var(--side-fg2)]">Risorse</div>
-      <span class="flex cursor-not-allowed items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium text-[var(--side-fg2)]">
+      <div class="mb-1.5 px-2.5 text-[10px] uppercase tracking-[0.14em] text-(--side-fg2)">Risorse</div>
+      <span class="flex cursor-not-allowed items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium text-(--side-fg2)">
         <Apple :size="16" :stroke-width="1.8" />
         <span>Alimenti</span>
       </span>

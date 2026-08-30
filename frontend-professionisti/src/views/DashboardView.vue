@@ -33,10 +33,10 @@ onMounted(async () => {
 
 <template>
   <AppShell>
-    <div class="flex items-start flex-col lg:flex-row">
+    <div class="flex items-start justify-between">
       <div>
-        <h1 class="font-heading text-3xl italic text-[var(--fg)]">Ciao, {{ auth.professionista?.nome }}</h1>
-        <p class="mt-1 text-sm text-[var(--fg3)]">{{ dataOggi }}</p>
+        <h1 class="font-heading text-3xl italic text-(--fg)">Ciao, {{ auth.professionista?.nome }}</h1>
+        <p class="mt-1 text-sm text-(--fg3)">{{ dataOggi }}</p>
       </div>
 
       <DropdownMenu>
@@ -69,18 +69,18 @@ onMounted(async () => {
     <div class="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
       <Card>
         <CardHeader>
-          <CardTitle class="text-xs font-bold uppercase tracking-wide text-[var(--fg3)]">Pazienti attivi</CardTitle>
+          <CardTitle class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Pazienti attivi</CardTitle>
         </CardHeader>
-        <CardContent class="text-3xl font-semibold text-[var(--fg)]">
+        <CardContent class="text-3xl font-semibold text-(--fg)">
           {{ erroreCaricamento ? '—' : (pazientiAttivi ?? '…') }}
         </CardContent>
       </Card>
 
       <Card v-for="titolo in ['Visite oggi', 'Piani in scadenza', 'Messaggi non letti']" :key="titolo" class="opacity-60">
         <CardHeader>
-          <CardTitle class="text-xs font-bold uppercase tracking-wide text-[var(--fg3)]">{{ titolo }}</CardTitle>
+          <CardTitle class="text-xs font-bold uppercase tracking-wide text-(--fg3)">{{ titolo }}</CardTitle>
         </CardHeader>
-        <CardContent class="text-sm text-[var(--fg4)]">Disponibile a breve</CardContent>
+        <CardContent class="text-sm text-(--fg4)">Disponibile a breve</CardContent>
       </Card>
     </div>
   </AppShell>

@@ -41,13 +41,13 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-[var(--bg)]">
-    <form class="w-full max-w-[360px]" @submit.prevent="onSubmit">
-      <h1 class="font-heading text-2xl italic text-[var(--fg)]">Imposta una nuova password</h1>
+  <div class="flex min-h-screen items-center justify-center bg-(--bg)">
+    <form class="w-full max-w-90" @submit.prevent="onSubmit">
+      <h1 class="font-heading text-2xl italic text-(--fg)">Imposta una nuova password</h1>
 
       <div
         v-if="errore"
-        class="mt-4 rounded-lg border border-[var(--bd2)] bg-[var(--warn-bg)] px-3 py-2.5 text-sm font-semibold text-[var(--danger)]"
+        class="mt-4 rounded-lg border border-(--bd2) bg-(--warn-bg) px-3 py-2.5 text-sm font-semibold text-(--danger)"
       >
         {{ errore }}
         <router-link v-if="errore.includes('richiedine')" to="/password-dimenticata" class="ml-1 underline">
@@ -56,12 +56,12 @@ async function onSubmit() {
       </div>
 
       <div class="mb-3.5 mt-4 flex flex-col gap-1.5">
-        <Label for="nuova-password" class="text-xs font-bold uppercase tracking-wide text-[var(--fg3)]">Nuova password</Label>
+        <Label for="nuova-password" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Nuova password</Label>
         <Input id="nuova-password" v-model="nuovaPassword" type="password" required />
       </div>
 
       <div class="mb-5 flex flex-col gap-1.5">
-        <Label for="conferma-password" class="text-xs font-bold uppercase tracking-wide text-[var(--fg3)]">Conferma password</Label>
+        <Label for="conferma-password" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Conferma password</Label>
         <Input id="conferma-password" v-model="conferma" type="password" required />
       </div>
 

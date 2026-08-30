@@ -26,21 +26,21 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-[var(--bg)]">
-    <div class="w-full max-w-[360px]">
-      <h1 class="font-heading text-2xl italic text-[var(--fg)]">Password dimenticata</h1>
+  <div class="flex min-h-screen items-center justify-center bg-(--bg)">
+    <div class="w-full max-w-90">
+      <h1 class="font-heading text-2xl italic text-(--fg)">Password dimenticata</h1>
 
-      <p v-if="inviato" class="mt-4 text-sm text-[var(--fg2)]">
+      <p v-if="inviato" class="mt-4 text-sm text-(--fg2)">
         Se l'indirizzo esiste, riceverai un'email con le istruzioni per reimpostare la password.
       </p>
 
       <form v-else class="mt-4" @submit.prevent="onSubmit">
-        <p v-if="erroreRete" class="mb-4 text-sm font-semibold text-[var(--danger)]">
+        <p v-if="erroreRete" class="mb-4 text-sm font-semibold text-(--danger)">
           Errore di rete, riprova.
         </p>
 
         <div class="mb-5 flex flex-col gap-1.5">
-          <Label for="email" class="text-xs font-bold uppercase tracking-wide text-[var(--fg3)]">Email</Label>
+          <Label for="email" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Email</Label>
           <Input id="email" v-model="email" type="email" required placeholder="nome@studio.it" />
         </div>
 

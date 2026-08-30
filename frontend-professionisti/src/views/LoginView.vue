@@ -43,8 +43,8 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="grid min-h-screen grid-cols-1 bg-[var(--bg)] md:grid-cols-2">
-    <div class="hidden flex-col justify-between overflow-hidden bg-[var(--green)] p-11 md:flex">
+  <div class="grid min-h-screen grid-cols-1 bg-(--bg) md:grid-cols-2">
+    <div class="hidden flex-col justify-between overflow-hidden bg-(--green) p-11 md:flex">
       <div class="flex items-center gap-3.5">
         <img src="@/assets/hexis-logo.svg" alt="Hexis" class="h-14 w-14 rounded-2xl bg-white p-1.5" />
         <span class="font-heading text-2xl font-semibold text-white">Hexis Nutrition</span>
@@ -61,35 +61,35 @@ async function onSubmit() {
     </div>
 
     <div class="flex items-center justify-center p-10">
-      <form class="w-full max-w-[360px]" @submit.prevent="onSubmit">
-        <h1 class="font-heading text-2xl italic text-[var(--fg)]">Accedi</h1>
-        <p class="mb-6 mt-1.5 text-sm text-[var(--fg3)]">Inserisci le tue credenziali per continuare</p>
+      <form class="w-full max-w-90" @submit.prevent="onSubmit">
+        <h1 class="font-heading text-2xl italic text-(--fg)">Accedi</h1>
+        <p class="mb-6 mt-1.5 text-sm text-(--fg3)">Inserisci le tue credenziali per continuare</p>
 
         <div
           v-if="erroreCredenziali"
-          class="mb-4 rounded-lg border border-[var(--bd2)] bg-[var(--warn-bg)] px-3 py-2.5 text-sm font-semibold text-[var(--danger)]"
+          class="mb-4 rounded-lg border border-(--bd2) bg-(--warn-bg) px-3 py-2.5 text-sm font-semibold text-(--danger)"
         >
           Email o password non corrette.
         </div>
 
         <div
           v-if="erroreGenerico"
-          class="mb-4 rounded-lg border border-[var(--bd2)] bg-[var(--warn-bg)] px-3 py-2.5 text-sm font-semibold text-[var(--danger)]"
+          class="mb-4 rounded-lg border border-(--bd2) bg-(--warn-bg) px-3 py-2.5 text-sm font-semibold text-(--danger)"
         >
           Servizio non raggiungibile, riprova.
         </div>
 
         <div class="mb-3.5 flex flex-col gap-1.5">
-          <Label for="email" class="text-xs font-bold uppercase tracking-wide text-[var(--fg3)]">Email</Label>
+          <Label for="email" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Email</Label>
           <Input id="email" v-model="email" type="email" required autocomplete="username" placeholder="nome@studio.it" />
         </div>
 
         <div class="mb-2.5 flex flex-col gap-1.5">
           <span class="flex items-center justify-between">
-            <Label for="password" class="text-xs font-bold uppercase tracking-wide text-[var(--fg3)]">Password</Label>
+            <Label for="password" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Password</Label>
             <router-link to="/password-dimenticata" class="text-xs font-semibold">Password dimenticata?</router-link>
           </span>
-          <span class="flex items-center rounded-lg border border-[var(--bd2)] bg-[var(--surf)] pl-3">
+          <span class="flex items-center rounded-lg border border-(--bd2) bg-(--surf) pl-3">
             <input
               id="password"
               v-model="password"
@@ -115,7 +115,7 @@ async function onSubmit() {
 
         <div class="my-1.5 mb-5 flex items-center gap-2">
           <Checkbox id="ricordami" v-model="ricordami" />
-          <Label for="ricordami" class="text-sm font-normal text-[var(--fg2)]">Ricordami su questo dispositivo</Label>
+          <Label for="ricordami" class="text-sm font-normal text-(--fg2)">Ricordami su questo dispositivo</Label>
         </div>
 
         <Button type="submit" :disabled="inCorso" class="w-full">
