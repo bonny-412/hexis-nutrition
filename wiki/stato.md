@@ -11,7 +11,7 @@ fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brain
 
 ## Dove siamo
 
-Il backend del sotto-progetto **"Fondamenta"** (autenticazione JWT con ruoli, anagrafica paziente, invito via email, reset password) è **scritto, revisionato, testato su database reale e su GitHub**. Il frontend `frontend-professionisti/` di "Fondamenta" è **scritto, testato (54 test verdi), buildato, e in staging** (login, dashboard, lista/dettaglio/creazione paziente, reset password) — vedi sessione del 30 agosto 2026 (parte 2) più sotto. `frontend-cliente/` non esiste ancora: contiene solo un `CLAUDE.md`.
+Il backend del sotto-progetto **"Fondamenta"** (autenticazione JWT con ruoli, anagrafica paziente, invito via email, reset password) è **scritto, revisionato, testato su database reale e su GitHub**. Il frontend `frontend-professionisti/` di "Fondamenta" è **scritto, testato (57 test verdi), buildato, e in staging** (login, dashboard, lista/dettaglio/creazione paziente, reset password) — vedi sessione del 30 agosto 2026 (parte 2) più sotto. Il salvataggio di un paziente da `PazienteNuovoView.vue` è stato **verificato a mano da Andrea** il 31 agosto 2026 (parte 2), che riparte da lì per lavorare sulla lista pazienti. `frontend-cliente/` non esiste ancora: contiene solo un `CLAUDE.md`.
 
 Il progetto vive in **un unico repo git**, `bonny-412/hexis-nutrition`, con la radice in `progetti/hexis-nutrition/`.
 
