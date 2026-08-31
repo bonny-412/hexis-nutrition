@@ -40,8 +40,11 @@ public class Paziente {
 
     private String sesso;
 
-    @Column(name = "altezza_cm")
-    private Integer altezzaCm;
+    private String lavoro;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tipo_lavoro")
+    private TipoLavoro tipoLavoro;
 
     @Column(name = "password_hash")
     private String passwordHash;
@@ -57,7 +60,7 @@ public class Paziente {
     }
 
     public Paziente(UUID professionistaId, String nome, String cognome, String email,
-                     String telefono, LocalDate dataNascita, String sesso, Integer altezzaCm) {
+                     String telefono, LocalDate dataNascita, String sesso, String lavoro, TipoLavoro tipoLavoro) {
         this.professionistaId = professionistaId;
         this.nome = nome;
         this.cognome = cognome;
@@ -65,7 +68,8 @@ public class Paziente {
         this.telefono = telefono;
         this.dataNascita = dataNascita;
         this.sesso = sesso;
-        this.altezzaCm = altezzaCm;
+        this.lavoro = lavoro;
+        this.tipoLavoro = tipoLavoro;
     }
 
     public UUID getId() {
@@ -100,8 +104,12 @@ public class Paziente {
         return sesso;
     }
 
-    public Integer getAltezzaCm() {
-        return altezzaCm;
+    public String getLavoro() {
+        return lavoro;
+    }
+
+    public TipoLavoro getTipoLavoro() {
+        return tipoLavoro;
     }
 
     public String getPasswordHash() {

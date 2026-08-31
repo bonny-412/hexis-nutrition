@@ -6,7 +6,7 @@ vi.mock('./client', () => ({ apiRequest: vi.fn() }))
 
 const pazienteEsempio = {
   id: '1', nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
-  telefono: null, dataNascita: null, sesso: null, altezzaCm: null, statoAccount: 'MAI_INVITATO',
+  telefono: null, dataNascita: null, sesso: null, lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
 }
 
 describe('api/pazienti', () => {
@@ -30,11 +30,17 @@ describe('api/pazienti', () => {
   it('crea chiama POST /pazienti con i dati del form', async () => {
     vi.mocked(apiRequest).mockResolvedValue(pazienteEsempio)
 
-    await crea({ nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com' })
+    await crea({
+      nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
+      visita: { altezzaCm: 178, pesoKg: 82.5 },
+    })
 
     expect(apiRequest).toHaveBeenCalledWith('/pazienti', {
       method: 'POST',
-      body: { nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com' },
+      body: {
+        nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
+        visita: { altezzaCm: 178, pesoKg: 82.5 },
+      },
     })
   })
 

@@ -3,8 +3,8 @@ title: Stato del progetto
 tags: [stato]
 stato: stabile
 creato: 2026-08-08
-aggiornato: 2026-08-30
-fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, sorgenti/2026-08-09-test-su-postgres-locale.md, sorgenti/2026-08-09-docker-solo-in-produzione.md, sorgenti/2026-08-30-hash-pulizia-invalidazione-token.md]
+aggiornato: 2026-08-31
+fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, sorgenti/2026-08-09-test-su-postgres-locale.md, sorgenti/2026-08-09-docker-solo-in-produzione.md, sorgenti/2026-08-30-hash-pulizia-invalidazione-token.md, ../docs/superpowers/specs/2026-08-31-nuovo-paziente-con-visita-design.md, log.md#2026-08-31-handoff--bug-fix-controlli-pazientenuovoview--ux-maiuscola-errori-live]
 ---
 
 # Stato — hexis-nutrition
@@ -75,22 +75,51 @@ Sessione di piccole correzioni e rifiniture visive su shell e dashboard, richies
 
 Nessun test automatico dedicato a queste view di dettaglio grafico oltre a quelli già esistenti (`AppShell.spec.ts`, `AppHeader.spec.ts`, `DashboardView.spec.ts`) — verificati verdi dopo ogni modifica, più `tsc --noEmit` pulito. Nessuna verifica visiva in browser reale in questa sessione (niente Claude in Chrome collegato): le correzioni sono basate su lettura del codice e, per il bug della linea bianca, su verifica empirica del comportamento di `tailwind-merge`.
 
+## Sessione del 31 agosto 2026 — "Nuovo paziente con visita"
+
+Brainstorming (percorso architetturale) → spec → piano → esecuzione con `superpowers:subagent-driven-development` in un worktree isolato: 6 task, revisione finale whole-branch, una fix wave. Spec: `docs/superpowers/specs/2026-08-31-nuovo-paziente-con-visita-design.md`; piano: `docs/superpowers/plans/2026-08-31-nuovo-paziente-con-visita.md`. Dettaglio completo in [log](log.md#2026-08-31-handoff--nuovo-paziente-con-visita-anagrafica-estesa--prima-visita-backend-e-frontend).
+
+**Backend**: nuova entità `Visita` (tabella additiva `visite`, V5) — altezza, peso (obbligatori) + 12 misure di circonferenza (opzionali). `Paziente` perde `altezzaCm` (spostata su `Visita`), guadagna `lavoro`/`tipoLavoro` (V6). `POST /pazienti` crea `Paziente`+`Visita` in un'unica transazione, con validazione di range su tutte le misure. **Frontend**: `PazienteNuovoView.vue` riscritta con due card (anagrafica + visita, con placeholder per la futura misurazione BIA). Test finali: backend 48/48, frontend 55/55 + `tsc --noEmit` pulito.
+
+**Merge locale su `master` completato** (in staging, nessun commit — tocca ad Andrea). Durante il merge, scartata una modifica non committata preesistente su `PazienteNuovoView.vue`: verificato che era lo stesso styling già incluso ed esteso nella nuova versione, nessuna perdita.
+
+**Attenzione**: `LoginView.vue`/`LoginView.spec.ts` hanno 2 test rotti (`Failed to resolve component: Loader2`) per una redesign in corso non committata **preesistente a questa sessione e non toccata da essa** — non è una regressione introdotta qui, ma va segnalata perché la suite frontend non è più verde nel suo complesso finché non viene ripresa. `AppSidebar.vue`/`DashboardView.vue` hanno anch'esse modifiche non committate preesistenti, non toccate.
+
+## Sessione del 31 agosto 2026 (parte 2) — bug fix controlli e UX su `PazienteNuovoView`
+
+Andrea ha segnalato che nella pagina "Nuovo paziente" si poteva digitare **qualsiasi carattere in qualsiasi campo**, come se i controlli non funzionassero affatto. Seguito `superpowers:systematic-debugging`: causa radice nel componente shadcn `Input.vue`, che usa `useVModel(..., { passive: true })` di `@vueuse/core` — i suoi `watch` interni non scattano quando il valore filtrato coincide col precedente (es. campo vuoto, carattere non ammesso digitato, il filtro lo rimuove tornando a `''`: nessun cambiamento rilevato, la correzione non arriva mai al campo, che resta visivamente "sporco"). Il test preesistente non lo copriva perché usa `setValue()` (un solo evento con la stringa finale) invece di digitazione tasto per tasto. **Fix**: `conFiltro` ora passa per un valore intermedio invisibile per forzare comunque la propagazione reattiva quando il valore filtrato non cambierebbe.
+
+Nella stessa sessione, due richieste UX di Andrea: (1) **l'errore di un campo sparisce non appena viene corretto** (prima restava visibile fino al submit successivo) — implementato per tutti i 18 campi validati del form, riusando le stesse funzioni di validazione di `validaCampi()`; (2) **maiuscola automatica sulla prima lettera** di Nome, Cognome, Lavoro (quest'ultimo prima non passava da nessun filtro).
+
+Verifica: bug riprodotto con un test che digita tasto per tasto (rosso), poi verde dopo il fix; 3 nuovi test per le due feature (rossi poi verdi). Suite frontend: **57/57 verdi** (esclusi i 2 test preesistenti di `LoginView.spec.ts`, non toccati). `tsc --noEmit` pulito. Nessuna verifica manuale in browser.
+
+**Segnalato, non affrontato**: il backend non valida con un pattern lato server `nome`, `cognome`, `telefono`, `sesso`, `lavoro` in `CreaPazienteRequest` (solo `@NotBlank`/`@Email` dove presenti) — chi chiama l'API bypassando il frontend può ancora inserire qualsiasi carattere in quei campi. Spostato in [domande-aperte](domande-aperte.md).
+
+Dettaglio completo in [log](log.md#2026-08-31-handoff--bug-fix-controlli-pazientenuovoview--ux-maiuscola-errori-live).
+
 ## Cosa resta aperto
 
 Elenco completo e ragionato in [domande-aperte](domande-aperte.md). I punti che toccano il codice esistente:
 
 - **Versione di PostgreSQL**: sviluppo e test girano sulla 13, la produzione sarà in Docker e potrà usare qualunque immagine. Fissarla su `postgres:13` allinea gli ambienti; qualsiasi altra scelta introduce una differenza che nessun test copre.
 - **Deploy**: previsto Docker, nient'altro deciso (immagini, orchestrazione, provider, gestione di `JWT_SECRET` e `RESEND_API_KEY`).
+- **Validazione server-side incompleta su `CreaPazienteRequest`**: `nome`, `cognome`, `telefono`, `sesso`, `lavoro` non hanno un pattern lato backend (a differenza dei campi numerici della visita, ben validati con `@Positive`/`@Digits`/`@Max`) — chi chiama l'API bypassando il frontend può inserire qualsiasi carattere. Segnalato il 31 agosto 2026, non ancora affrontato.
 
-Il flusso reale del prodotto — login, creazione paziente, invito via email con Resend, attivazione — è stato **verificato manualmente da Andrea per il login** (funzionante); gli altri flussi (creazione/invito paziente, reset password) restano coperti solo dai test automatici, non ancora provati a mano contro l'app in esecuzione.
+Il flusso reale del prodotto — login, creazione paziente, invito via email con Resend, attivazione — è stato **verificato manualmente da Andrea per il login e per il salvataggio di un paziente** (funzionanti); gli altri flussi (invito paziente, reset password) restano coperti solo dai test automatici, non ancora provati a mano contro l'app in esecuzione.
 
 ## Prossimo passo consigliato
 
+Andrea ha confermato il 31 agosto 2026 (parte 2) che il salvataggio di un paziente funziona da `PazienteNuovoView.vue`. **La prossima sessione riparte da qui e lavora sulla pagina della lista dei pazienti** (`PazientiListView.vue`) — dettagli su cosa cambiare da raccogliere a inizio sessione, non ancora specificati da Andrea.
+
+Punti ancora aperti, non bloccanti per il prossimo passo:
+
 1. Apri Claude Code su `progetti/hexis-nutrition/` (non sulla radice del workspace, non dentro una singola sottocartella da sola).
-2. Andrea rivede e committa il lavoro in staging (backend token_azione + frontend-professionisti "Fondamenta" + rifiniture UI parte 3).
-3. **Sezione Pazienti**: prima le modifiche di UI, poi quelle di struttura — indicazione esplicita di Andrea per la prossima sessione, dettagli da raccogliere a inizio sessione (non ancora specificati).
-4. Provare a mano gli altri flussi di `frontend-professionisti/` (creazione paziente, invito via email, reset password) contro l'app in esecuzione.
-5. Scrivere con `superpowers:writing-plans` il piano per `frontend-cliente/` di "Fondamenta" — non ancora iniziato. Poi il brainstorming di "Piano alimentare", prossimo sotto-progetto della roadmap (vedi [architettura](architettura.md)).
+2. Andrea rivede e committa il lavoro in staging (backend token_azione, frontend-professionisti "Fondamenta" + rifiniture UI + "Nuovo paziente con visita" + bug fix controlli/UX del 31 agosto parte 2).
+3. Riprendere/completare la redesign non committata di `LoginView.vue` (icona `Loader2` mancante, 2 test rotti) — preesistente, non toccata dalle sessioni del 31 agosto.
+4. Verifica manuale in browser dei due `Select` (Sesso, Tipo lavoro) in `PazienteNuovoView.vue` — mai fatta dall'agente.
+5. Provare a mano invito via email e reset password contro l'app in esecuzione.
+6. Colmare il gap di validazione server-side su `CreaPazienteRequest` (vedi sopra), se Andrea lo ritiene prioritario.
+7. Scrivere con `superpowers:writing-plans` il piano per `frontend-cliente/` di "Fondamenta" — non ancora iniziato. Poi il brainstorming di "Piano alimentare", prossimo sotto-progetto della roadmap (vedi [architettura](architettura.md)).
 
 ## Divisione dei compiti
 

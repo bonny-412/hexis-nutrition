@@ -19,27 +19,42 @@ import java.util.UUID;
 public class PazienteService {
 
     private final PazienteRepository pazienteRepository;
+    private final VisitaRepository visitaRepository;
     private final ProfessionistaRepository professionistaRepository;
     private final TokenAzioneRepository tokenAzioneRepository;
     private final EmailSender emailSender;
     private final PasswordEncoder passwordEncoder;
 
     public PazienteService(PazienteRepository pazienteRepository,
+                            VisitaRepository visitaRepository,
                             ProfessionistaRepository professionistaRepository,
                             TokenAzioneRepository tokenAzioneRepository,
                             EmailSender emailSender,
                             PasswordEncoder passwordEncoder) {
         this.pazienteRepository = pazienteRepository;
+        this.visitaRepository = visitaRepository;
         this.professionistaRepository = professionistaRepository;
         this.tokenAzioneRepository = tokenAzioneRepository;
         this.emailSender = emailSender;
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Transactional
     public Paziente crea(UUID professionistaId, CreaPazienteRequest request) {
         Paziente paziente = new Paziente(professionistaId, request.nome(), request.cognome(), request.email(),
-                request.telefono(), request.dataNascita(), request.sesso(), request.altezzaCm());
-        return pazienteRepository.save(paziente);
+                request.telefono(), request.dataNascita(), request.sesso(), request.lavoro(), request.tipoLavoro());
+        pazienteRepository.save(paziente);
+
+        VisitaRequest v = request.visita();
+        Visita visita = new Visita(paziente.getId(), v.dataVisita(), v.altezzaCm(), v.pesoKg(),
+                v.circonferenzaVitaCm(), v.circonferenzaOmbelicoCm(), v.circonferenzaFianchiCm(),
+                v.circonferenzaPettoCm(), v.circonferenzaCosciaDxCm(), v.circonferenzaCosciaSxCm(),
+                v.circonferenzaPolpaccioDxCm(), v.circonferenzaPolpaccioSxCm(),
+                v.larghezzaSpalleCm(), v.circonferenzaSpalleCm(),
+                v.circonferenzaBicipiteDxCm(), v.circonferenzaBicipiteSxCm());
+        visitaRepository.save(visita);
+
+        return paziente;
     }
 
     public List<Paziente> listaPerProfessionista(UUID professionistaId) {

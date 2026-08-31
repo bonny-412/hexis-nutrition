@@ -8,7 +8,7 @@ const sidebarAperta = ref(false)
 </script>
 
 <template>
-  <div class="flex min-h-screen overflow-x-hidden bg-(--bg)">
+  <div class="flex h-screen overflow-hidden bg-(--bg)">
     <AppSidebar class="m-[14px_0_14px_14px] hidden rounded-[18px] border border-(--side-bd) shadow-(--shadow) lg:flex" />
 
     <Sheet v-model:open="sidebarAperta">
@@ -22,9 +22,9 @@ const sidebarAperta = ref(false)
       </SheetContent>
     </Sheet>
 
-    <div class="flex flex-1 flex-col">
+    <div class="flex flex-1 flex-col overflow-hidden">
       <AppHeader @apri-menu="sidebarAperta = true" />
-      <main class="flex-1 py-4 px-4">
+      <main class="flex-1 overflow-y-auto py-4 px-4">
         <slot />
       </main>
     </div>

@@ -8,8 +8,27 @@ export interface Paziente {
   telefono: string | null
   dataNascita: string | null
   sesso: string | null
-  altezzaCm: number | null
+  lavoro: string | null
+  tipoLavoro: 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO' | null
   statoAccount: 'MAI_INVITATO' | 'INVITATO' | 'ATTIVO'
+}
+
+export interface CreaVisitaRequest {
+  dataVisita?: string
+  altezzaCm: number
+  pesoKg: number
+  circonferenzaVitaCm?: number
+  circonferenzaOmbelicoCm?: number
+  circonferenzaFianchiCm?: number
+  circonferenzaPettoCm?: number
+  circonferenzaCosciaDxCm?: number
+  circonferenzaCosciaSxCm?: number
+  circonferenzaPolpaccioDxCm?: number
+  circonferenzaPolpaccioSxCm?: number
+  larghezzaSpalleCm?: number
+  circonferenzaSpalleCm?: number
+  circonferenzaBicipiteDxCm?: number
+  circonferenzaBicipiteSxCm?: number
 }
 
 export interface CreaPazienteRequest {
@@ -19,7 +38,9 @@ export interface CreaPazienteRequest {
   telefono?: string
   dataNascita?: string
   sesso?: string
-  altezzaCm?: number
+  lavoro?: string
+  tipoLavoro?: 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO'
+  visita: CreaVisitaRequest
 }
 
 export function lista(): Promise<Paziente[]> {

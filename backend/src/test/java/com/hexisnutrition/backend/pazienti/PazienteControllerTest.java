@@ -18,6 +18,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Duration;
+import java.time.LocalDate;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -35,6 +37,9 @@ class PazienteControllerTest extends AbstractIntegrationTest {
     private PazienteRepository pazienteRepository;
 
     @Autowired
+    private VisitaRepository visitaRepository;
+
+    @Autowired
     private TokenAzioneRepository tokenAzioneRepository;
 
     @Autowired
@@ -48,6 +53,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
 
     @AfterEach
     void pulisci() {
+        visitaRepository.deleteAll();
         tokenAzioneRepository.deleteAll();
         pazienteRepository.deleteAll();
         professionistaRepository.deleteAll();
@@ -59,7 +65,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void creaPazienteRestituisce201() throws Exception {
+    void creaPazienteRestituisce201EPersisteLaPrimaVisita() throws Exception {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof@example.com", "hash", "Anna", "Bianchi"));
 
@@ -68,11 +74,208 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"nome":"Luca","cognome":"Verdi","email":"luca@example.com",
-                                 "telefono":"333123456","dataNascita":"1990-05-20","sesso":"M","altezzaCm":178}
+                                 "telefono":"333123456","dataNascita":"1990-05-20","sesso":"M",
+                                 "lavoro":"Impiegato","tipoLavoro":"ATTIVO",
+                                 "visita":{"altezzaCm":178,"pesoKg":82.5,"circonferenzaVitaCm":95.0}}
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value("luca@example.com"))
+                .andExpect(jsonPath("$.lavoro").value("Impiegato"))
+                .andExpect(jsonPath("$.tipoLavoro").value("ATTIVO"))
                 .andExpect(jsonPath("$.statoAccount").value("MAI_INVITATO"));
+
+        List<Visita> visite = visitaRepository.findAll();
+        assertThat(visite).hasSize(1);
+        assertThat(visite.get(0).getAltezzaCm()).isEqualTo(178);
+        assertThat(visite.get(0).getPesoKg()).isEqualByComparingTo("82.5");
+        assertThat(visite.get(0).getCirconferenzaVitaCm()).isEqualByComparingTo("95.0");
+    }
+
+    @Test
+    void creaPazienteConTutteLe14MisurazioniDellaVisitaLePersisteNeiCampiCorretti() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-14-misure@example.com", "hash", "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/pazienti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Luca","cognome":"Verdi","email":"luca-14-misure@example.com",
+                                 "visita":{"altezzaCm":178,"pesoKg":82.5,
+                                 "circonferenzaVitaCm":90.1,"circonferenzaOmbelicoCm":91.2,
+                                 "circonferenzaFianchiCm":92.3,"circonferenzaPettoCm":93.4,
+                                 "circonferenzaCosciaDxCm":94.5,"circonferenzaCosciaSxCm":95.6,
+                                 "circonferenzaPolpaccioDxCm":96.7,"circonferenzaPolpaccioSxCm":97.8,
+                                 "larghezzaSpalleCm":98.9,"circonferenzaSpalleCm":99.0,
+                                 "circonferenzaBicipiteDxCm":100.1,"circonferenzaBicipiteSxCm":101.2}}
+                                """))
+                .andExpect(status().isCreated());
+
+        List<Visita> visite = visitaRepository.findAll();
+        assertThat(visite).hasSize(1);
+        Visita visita = visite.get(0);
+        assertThat(visita.getAltezzaCm()).isEqualTo(178);
+        assertThat(visita.getPesoKg()).isEqualByComparingTo("82.5");
+        assertThat(visita.getCirconferenzaVitaCm()).isEqualByComparingTo("90.1");
+        assertThat(visita.getCirconferenzaOmbelicoCm()).isEqualByComparingTo("91.2");
+        assertThat(visita.getCirconferenzaFianchiCm()).isEqualByComparingTo("92.3");
+        assertThat(visita.getCirconferenzaPettoCm()).isEqualByComparingTo("93.4");
+        assertThat(visita.getCirconferenzaCosciaDxCm()).isEqualByComparingTo("94.5");
+        assertThat(visita.getCirconferenzaCosciaSxCm()).isEqualByComparingTo("95.6");
+        assertThat(visita.getCirconferenzaPolpaccioDxCm()).isEqualByComparingTo("96.7");
+        assertThat(visita.getCirconferenzaPolpaccioSxCm()).isEqualByComparingTo("97.8");
+        assertThat(visita.getLarghezzaSpalleCm()).isEqualByComparingTo("98.9");
+        assertThat(visita.getCirconferenzaSpalleCm()).isEqualByComparingTo("99.0");
+        assertThat(visita.getCirconferenzaBicipiteDxCm()).isEqualByComparingTo("100.1");
+        assertThat(visita.getCirconferenzaBicipiteSxCm()).isEqualByComparingTo("101.2");
+    }
+
+    @Test
+    void creaPazienteConDataVisitaLaPersisteEsattamente() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-data-visita@example.com", "hash", "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/pazienti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Luca","cognome":"Verdi","email":"luca-data-visita@example.com",
+                                 "visita":{"dataVisita":"2026-08-15","altezzaCm":178,"pesoKg":82.5}}
+                                """))
+                .andExpect(status().isCreated());
+
+        List<Visita> visite = visitaRepository.findAll();
+        assertThat(visite).hasSize(1);
+        assertThat(visite.get(0).getDataVisita()).isEqualTo(LocalDate.of(2026, 8, 15));
+    }
+
+    @Test
+    void creaPazienteSenzaDataVisitaUsaLaDataOdierna() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-senza-data-visita@example.com", "hash", "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/pazienti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Luca","cognome":"Verdi","email":"luca-senza-data-visita@example.com",
+                                 "visita":{"altezzaCm":178,"pesoKg":82.5}}
+                                """))
+                .andExpect(status().isCreated());
+
+        List<Visita> visite = visitaRepository.findAll();
+        assertThat(visite).hasSize(1);
+        assertThat(visite.get(0).getDataVisita()).isEqualTo(LocalDate.now());
+    }
+
+    @Test
+    void creaPazienteConPesoECirconferenzeADueDecimaliLiPersisteEsattamente() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-due-decimali@example.com", "hash", "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/pazienti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Luca","cognome":"Verdi","email":"luca-due-decimali@example.com",
+                                 "visita":{"altezzaCm":178,"pesoKg":82.55,"circonferenzaVitaCm":95.25}}
+                                """))
+                .andExpect(status().isCreated());
+
+        List<Visita> visite = visitaRepository.findAll();
+        assertThat(visite).hasSize(1);
+        assertThat(visite.get(0).getPesoKg()).isEqualByComparingTo("82.55");
+        assertThat(visite.get(0).getCirconferenzaVitaCm()).isEqualByComparingTo("95.25");
+    }
+
+    @Test
+    void creaPazienteSenzaVisitaRestituisce400() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-senza-visita@example.com", "hash", "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/pazienti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nome\":\"Luca\",\"cognome\":\"Verdi\",\"email\":\"luca-senza-visita@example.com\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void creaPazienteConVisitaSenzaAltezzaRestituisce400() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-visita-incompleta@example.com", "hash", "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/pazienti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Luca","cognome":"Verdi","email":"luca-visita-incompleta@example.com",
+                                 "visita":{"pesoKg":82.5}}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void creaPazienteConVisitaSenzaPesoRestituisce400() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-visita-senza-peso@example.com", "hash", "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/pazienti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Luca","cognome":"Verdi","email":"luca-visita-senza-peso@example.com",
+                                 "visita":{"altezzaCm":178}}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void creaPazienteConAltezzaZeroRestituisce400() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-altezza-zero@example.com", "hash", "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/pazienti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Luca","cognome":"Verdi","email":"luca-altezza-zero@example.com",
+                                 "visita":{"altezzaCm":0,"pesoKg":82.5}}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void creaPazienteConPesoNegativoRestituisce400() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-peso-negativo@example.com", "hash", "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/pazienti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Luca","cognome":"Verdi","email":"luca-peso-negativo@example.com",
+                                 "visita":{"altezzaCm":178,"pesoKg":-80}}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void creaPazienteConLavoroETipoLavoroLiRestituisceNellaRisposta() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-lavoro@example.com", "hash", "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/pazienti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Luca","cognome":"Verdi","email":"luca-lavoro@example.com",
+                                 "lavoro":"Impiegato","tipoLavoro":"ATTIVO",
+                                 "visita":{"altezzaCm":178,"pesoKg":82.5}}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.lavoro").value("Impiegato"))
+                .andExpect(jsonPath("$.tipoLavoro").value("ATTIVO"));
     }
 
     @Test
@@ -82,9 +285,9 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionistaB = professionistaRepository.save(
                 new Professionista("b@example.com", "hash", "B", "B"));
         pazienteRepository.save(new Paziente(professionistaA.getId(), "Paziente", "DiA",
-                "diA@example.com", null, null, null, null));
+                "diA@example.com", null, null, null, null, null));
         pazienteRepository.save(new Paziente(professionistaB.getId(), "Paziente", "DiB",
-                "diB@example.com", null, null, null, null));
+                "diB@example.com", null, null, null, null, null));
 
         mockMvc.perform(get("/pazienti")
                         .header("Authorization", "Bearer " + tokenPer(professionistaA)))
@@ -100,7 +303,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionistaB = professionistaRepository.save(
                 new Professionista("b2@example.com", "hash", "B", "B"));
         Paziente pazienteDiB = pazienteRepository.save(new Paziente(professionistaB.getId(), "Paziente", "DiB",
-                "diB2@example.com", null, null, null, null));
+                "diB2@example.com", null, null, null, null, null));
 
         mockMvc.perform(get("/pazienti/" + pazienteDiB.getId())
                         .header("Authorization", "Bearer " + tokenPer(professionistaA)))
@@ -112,7 +315,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof3@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca3@example.com", null, null, null, null));
+                "luca3@example.com", null, null, null, null, null));
         String tokenPaziente = jwtService.generateToken(paziente.getId(), Ruolo.PAZIENTE);
 
         mockMvc.perform(post("/pazienti")
@@ -127,7 +330,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof4@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca4@example.com", null, null, null, null));
+                "luca4@example.com", null, null, null, null, null));
 
         mockMvc.perform(post("/pazienti/" + paziente.getId() + "/invito")
                         .header("Authorization", "Bearer " + tokenPer(professionista)))
@@ -144,7 +347,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof5@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca5@example.com", null, null, null, null);
+                "luca5@example.com", null, null, null, null, null);
         paziente.setStatoAccount(StatoAccountPaziente.ATTIVO);
         paziente.setPasswordHash("hash");
         pazienteRepository.save(paziente);
@@ -159,7 +362,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof6@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca6@example.com", null, null, null, null));
+                "luca6@example.com", null, null, null, null, null));
         TokenAzione token = TokenAzione.perPaziente(TipoToken.INVITO, paziente.getId(), Duration.ofDays(7));
         tokenAzioneRepository.save(token);
 
@@ -178,7 +381,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof7@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca7@example.com", null, null, null, null));
+                "luca7@example.com", null, null, null, null, null));
         TokenAzione token = TokenAzione.perPaziente(TipoToken.INVITO, paziente.getId(), Duration.ofDays(7));
         tokenAzioneRepository.save(token);
 
@@ -198,7 +401,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("collisione@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "collisione@example.com", null, null, null, null));
+                "collisione@example.com", null, null, null, null, null));
         TokenAzione token = TokenAzione.perPaziente(TipoToken.INVITO, paziente.getId(), Duration.ofDays(7));
         tokenAzioneRepository.save(token);
 
@@ -213,7 +416,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof8@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca8@example.com", null, null, null, null));
+                "luca8@example.com", null, null, null, null, null));
         TokenAzione token = TokenAzione.perPaziente(TipoToken.RESET_PASSWORD, paziente.getId(), Duration.ofDays(7));
         tokenAzioneRepository.save(token);
 
@@ -228,7 +431,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof9@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca9@example.com", null, null, null, null));
+                "luca9@example.com", null, null, null, null, null));
 
         mockMvc.perform(post("/pazienti/" + paziente.getId() + "/invito")
                         .header("Authorization", "Bearer " + tokenPer(professionista)))

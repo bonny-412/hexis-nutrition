@@ -3,7 +3,7 @@ title: Modello dati
 tags: [dati]
 stato: in-discussione
 creato: 2026-08-08
-aggiornato: 2026-08-09
+aggiornato: 2026-08-31
 fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md]
 ---
 
@@ -13,10 +13,11 @@ Database: PostgreSQL, migrazioni gestite con Flyway (in `backend/`).
 
 ## Entità implementate (sotto-progetto "Fondamenta", vedi [decisioni/0002](decisioni/0002-autenticazione-e-onboarding.md))
 
-Migrazioni Flyway V1-V3 scritte e committate in `backend/` (`70e2141`), **applicate con successo** al database di test `hexis_test` (PostgreSQL 13.23) il 2026-08-09 — vedi [stato](stato.md):
+Migrazioni Flyway V1-V7 scritte e committate in `backend/` (`70e2141`), **applicate con successo** al database di test `hexis_test` (PostgreSQL 13.23) il 2026-08-09 — vedi [stato](stato.md):
 
 - **Professionista** (V1): email (univoca), password (hash), nome, cognome. Un account SaaS = un professionista (no team/studio condiviso).
-- **Paziente** (V2): nome, cognome, email, telefono, data di nascita, sesso, altezza; collegato a un `Professionista`; stato account (`MAI_INVITATO` / `INVITATO` / `ATTIVO`). Non richiede un account attivo per esistere. Email univoca solo tra account `ATTIVO` (indice parziale), non a livello di anagrafica.
+- **Paziente** (V2, esteso in V6): nome, cognome, email, telefono, data di nascita, sesso, lavoro, tipo di lavoro (`SEDENTARIO`/`POCO_ATTIVO`/`ATTIVO`/`MOLTO_ATTIVO`); collegato a un `Professionista`; stato account (`MAI_INVITATO` / `INVITATO` / `ATTIVO`). Non richiede un account attivo per esistere. Email univoca solo tra account `ATTIVO` (indice parziale), non a livello di anagrafica. L'altezza **non** è più qui: è stata spostata su `Visita` (V5), storicizzata per ogni visita anziché unica per paziente.
+- **Visita** (V5, estesa in V7): data visita (scelta dal professionista, default oggi), altezza, peso, 12 circonferenze (vita, ombelico, fianchi, petto, coscia dx/sx, polpaccio dx/sx, larghezza spalle, circonferenza spalle, bicipite dx/sx); collegata a un `Paziente`. Solo altezza e peso sono obbligatori. Peso e circonferenze hanno precisione `NUMERIC(6,2)` (fino a 2 decimali, V7 — inizialmente era 1 decimale); altezza resta intera (cm). Creata contestualmente alla prima visita in `POST /pazienti`; visite successive (storico, endpoint dedicato) restano fuori scope — anticipa il sotto-progetto "Monitoraggio". Nessun campo per la misurazione BIA per ora (da definire).
 - **TokenAzione** (V3): token, scadenza (`TIMESTAMPTZ`), usato, tipo (`INVITO` / `RESET_PASSWORD`); collegato a un `Professionista` **oppure** un `Paziente` (mai entrambi, vincolo CHECK).
 
 ## Entità previste ma non ancora progettate (sotto-progetti successivi)

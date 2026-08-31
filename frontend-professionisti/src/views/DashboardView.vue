@@ -41,24 +41,24 @@ onMounted(async () => {
 
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
-          <Button class="group">
+          <Button class="group transition-all hover:bg-(--green-d) active:scale-[0.90]">
             <Plus :size="16" />
             Crea nuovo
             <ChevronDown :size="14" class="transition-transform duration-200 group-data-[state=open]:rotate-180" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" class="flex w-60 flex-col gap-0.5">
-          <DropdownMenuItem as-child class="gap-2 px-2.5 py-1.5">
+        <DropdownMenuContent align="end" class="w-64 p-1.5">
+          <DropdownMenuItem as-child class="gap-2 px-2.5 py-1.5 cursor-pointer">
             <router-link to="/pazienti/nuovo">
               <UserPlus :size="16" />
               Nuovo paziente
             </router-link>
           </DropdownMenuItem>
-          <DropdownMenuItem disabled class="gap-2 px-2.5 py-1.5">
+          <DropdownMenuItem disabled class="gap-2 px-2.5 py-1.5 cursor-pointer">
             <CalendarPlus :size="16" />
             Nuovo appuntamento
           </DropdownMenuItem>
-          <DropdownMenuItem disabled class="gap-2 px-2.5 py-1.5">
+          <DropdownMenuItem disabled class="gap-2 px-2.5 py-1.5 cursor-pointer">
             <FileText :size="16" />
             Nuovo piano alimentare
           </DropdownMenuItem>

@@ -24,7 +24,7 @@ describe('PazienteDettaglioView', () => {
   it('mostra i dati del paziente caricato', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: null, altezzaCm: null, statoAccount: 'MAI_INVITATO',
+      telefono: null, dataNascita: null, sesso: null, lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
     })
     const router = creaRouter()
     router.push('/pazienti/1')
@@ -39,7 +39,7 @@ describe('PazienteDettaglioView', () => {
   it('invita il paziente e ne aggiorna lo stato mostrato', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: null, altezzaCm: null, statoAccount: 'MAI_INVITATO',
+      telefono: null, dataNascita: null, sesso: null, lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
     })
     vi.mocked(pazientiApi.invita).mockResolvedValue(undefined)
     const router = creaRouter()
@@ -81,7 +81,7 @@ describe('PazienteDettaglioView', () => {
   it('mostra un errore se l\'invito fallisce e non aggiorna lo stato del paziente (nessun optimistic update)', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: null, altezzaCm: null, statoAccount: 'MAI_INVITATO',
+      telefono: null, dataNascita: null, sesso: null, lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
     })
     vi.mocked(pazientiApi.invita).mockRejectedValue(new Error('409'))
     const router = creaRouter()
