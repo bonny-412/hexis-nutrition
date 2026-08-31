@@ -1,0 +1,13 @@
+ALTER TABLE visite ALTER COLUMN peso_kg TYPE NUMERIC(6,2);
+ALTER TABLE visite ALTER COLUMN circonferenza_vita_cm TYPE NUMERIC(6,2);
+ALTER TABLE visite ALTER COLUMN circonferenza_ombelico_cm TYPE NUMERIC(6,2);
+ALTER TABLE visite ALTER COLUMN circonferenza_fianchi_cm TYPE NUMERIC(6,2);
+ALTER TABLE visite ALTER COLUMN circonferenza_petto_cm TYPE NUMERIC(6,2);
+ALTER TABLE visite ALTER COLUMN circonferenza_coscia_dx_cm TYPE NUMERIC(6,2);
+ALTER TABLE visite ALTER COLUMN circonferenza_coscia_sx_cm TYPE NUMERIC(6,2);
+ALTER TABLE visite ALTER COLUMN circonferenza_polpaccio_dx_cm TYPE NUMERIC(6,2);
+ALTER TABLE visite ALTER COLUMN circonferenza_polpaccio_sx_cm TYPE NUMERIC(6,2);
+ALTER TABLE visite ALTER COLUMN larghezza_spalle_cm TYPE NUMERIC(6,2);
+ALTER TABLE visite ALTER COLUMN circonferenza_spalle_cm TYPE NUMERIC(6,2);
+ALTER TABLE visite ALTER COLUMN circonferenza_bicipite_dx_cm TYPE NUMERIC(6,2);
+ALTER TABLE visite ALTER COLUMN circonferenza_bicipite_sx_cm TYPE NUMERIC(6,2);
