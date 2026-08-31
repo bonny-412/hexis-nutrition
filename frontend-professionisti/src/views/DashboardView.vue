@@ -41,7 +41,7 @@ onMounted(async () => {
 
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
-          <Button class="group transition-all hover:bg-(--green-d) active:scale-[0.90]">
+          <Button class="group transition-all hover:bg-primary/80 active:scale-[0.90]" size="lg">
             <Plus :size="16" />
             Crea nuovo
             <ChevronDown :size="14" class="transition-transform duration-200 group-data-[state=open]:rotate-180" />

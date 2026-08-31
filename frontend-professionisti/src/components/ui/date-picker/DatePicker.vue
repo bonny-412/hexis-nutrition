@@ -46,8 +46,13 @@ const testoVisualizzato = computed(() =>
         {{ testoVisualizzato }}
       </Button>
     </PopoverTrigger>
-    <PopoverContent class="w-auto p-0">
-      <Calendar v-model="valore" />
+    <PopoverContent class="w-auto overflow-hidden p-0">
+      <Calendar 
+        v-model="valore"
+        locale="it"
+        layout="month-and-year"
+        initial-focus 
+      />
     </PopoverContent>
   </Popover>
 </template>

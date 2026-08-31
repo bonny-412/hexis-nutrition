@@ -20,14 +20,27 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { DatePicker } from '@/components/ui/date-picker'
-import { AlertCircle, ArrowLeft } from '@lucide/vue'
+import { AlertCircle, ArrowLeft, Ruler, Save } from '@lucide/vue'
 
-const REGEX_NUMERO_INTERO = /^\d{1,3}$/
-const REGEX_TELEFONO = /^\d{10}$/
-const REGEX_NOME = /^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/
-const REGEX_NUMERO_DECIMALE_ITALIANO = /^\d{1,4}(,\d{1,2})?$/
-const REGEX_EMAIL = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+// Import di tutti i filtri, regex e validatori dal file esterno
+import {
+  numeroItaliano,
+  numeroItalianoOpzionale,
+  filtraNome,
+  filtraSoloCifre,
+  filtraDecimaleItaliano,
+  filtraEmail,
+  capitalizzaPrimaLettera,
+  erroreNome,
+  erroreCognome,
+  erroreEmail,
+  erroreTelefono,
+  erroreAltezza,
+  errorePeso,
+  erroreCirconferenza,
+} from '@/utils/validators'
 
+// --- STATO DEL FORM ---
 const nome = ref('')
 const cognome = ref('')
 const sesso = ref('')
@@ -60,87 +73,7 @@ const accordionAperto = ref('')
 
 const router = useRouter()
 
-function numeroItaliano(valore: string): number {
-  return Number(valore.replace(',', '.'))
-}
-
-function numeroItalianoOpzionale(valore: string): number | undefined {
-  return valore ? numeroItaliano(valore) : undefined
-}
-
-function filtraLettere(valore: string): string {
-  return valore.replace(/[^A-Za-zÀ-ÖØ-öø-ÿ' -]/g, '')
-}
-
-function filtraSoloCifre(valore: string, maxCifre: number): string {
-  return valore.replace(/\D/g, '').slice(0, maxCifre)
-}
-
-function filtraDecimaleItaliano(valore: string): string {
-  const pulito = valore.replace(/[^\d,]/g, '')
-  const indiceVirgola = pulito.indexOf(',')
-  if (indiceVirgola === -1) {
-    return pulito.slice(0, 4)
-  }
-  const intero = pulito.slice(0, indiceVirgola).slice(0, 4)
-  const decimali = pulito.slice(indiceVirgola + 1).replace(/,/g, '').slice(0, 2)
-  return `${intero},${decimali}`
-}
-
-function filtraEmail(valore: string): string {
-  return valore.replace(/[^a-zA-Z0-9._%+\-@]/g, '')
-}
-
-function capitalizzaPrimaLettera(valore: string): string {
-  return valore.charAt(0).toUpperCase() + valore.slice(1)
-}
-
-function componiFiltri(...filtri: Array<(valore: string) => string>): (valore: string) => string {
-  return (valore) => filtri.reduce((risultato, filtro) => filtro(risultato), valore)
-}
-
-const filtraNome = componiFiltri(filtraLettere, capitalizzaPrimaLettera)
-
-function erroreNome(valore: string): string | undefined {
-  if (!valore.trim()) return 'Il nome è obbligatorio.'
-  if (!REGEX_NOME.test(valore)) return 'Il nome può contenere solo lettere.'
-  return undefined
-}
-
-function erroreCognome(valore: string): string | undefined {
-  if (!valore.trim()) return 'Il cognome è obbligatorio.'
-  if (!REGEX_NOME.test(valore)) return 'Il cognome può contenere solo lettere.'
-  return undefined
-}
-
-function erroreEmail(valore: string): string | undefined {
-  if (!valore.trim()) return "L'email è obbligatoria."
-  if (!REGEX_EMAIL.test(valore)) return "Inserisci un'email valida."
-  return undefined
-}
-
-function erroreTelefono(valore: string): string | undefined {
-  if (valore && !REGEX_TELEFONO.test(valore)) return 'Il telefono deve contenere 10 cifre numeriche.'
-  return undefined
-}
-
-function erroreAltezza(valore: string): string | undefined {
-  if (!valore.trim()) return "L'altezza è obbligatoria."
-  if (!REGEX_NUMERO_INTERO.test(valore)) return 'Inserisci un numero intero (es. 178).'
-  return undefined
-}
-
-function errorePeso(valore: string): string | undefined {
-  if (!valore.trim()) return 'Il peso è obbligatorio.'
-  if (!REGEX_NUMERO_DECIMALE_ITALIANO.test(valore)) return 'Inserisci un numero valido (es. 78,50).'
-  return undefined
-}
-
-function erroreCirconferenza(valore: string): string | undefined {
-  if (valore && !REGEX_NUMERO_DECIMALE_ITALIANO.test(valore)) return 'Inserisci un numero valido (es. 95,50).'
-  return undefined
-}
-
+// --- GESTIONE FILTRI SU INPUT (LOGICA VUE UI) ---
 const MARCATORE_INVISIBILE = '​'
 
 function pulisciErroreSeCorretto(chiave: string, valida: (valore: string) => string | undefined, valore: string) {
@@ -160,11 +93,6 @@ function conFiltro(
   return async (valore: string | number) => {
     const filtrato = filtro(String(valore))
     if (filtrato === rif.value) {
-      // Il valore filtrato coincide con quello già presente nel ref: Vue non
-      // rileverebbe alcun cambiamento e non propagherebbe la correzione fino
-      // al campo, che resterebbe visivamente "sporco" col carattere appena
-      // rifiutato. Passiamo per un valore intermedio (con un carattere a
-      // larghezza zero, invisibile) per forzare comunque la propagazione.
       rif.value = `${filtrato}${MARCATORE_INVISIBILE}`
       await nextTick()
     }
@@ -173,6 +101,7 @@ function conFiltro(
   }
 }
 
+// Handlers specifici
 const onNomeInput = conFiltro(nome, filtraNome, 'nome', erroreNome)
 const onCognomeInput = conFiltro(cognome, filtraNome, 'cognome', erroreCognome)
 const onEmailInput = conFiltro(email, filtraEmail, 'email', erroreEmail)
@@ -180,19 +109,25 @@ const onTelefonoInput = conFiltro(telefono, (v) => filtraSoloCifre(v, 10), 'tele
 const onLavoroInput = conFiltro(lavoro, capitalizzaPrimaLettera)
 const onAltezzaInput = conFiltro(altezzaCm, (v) => filtraSoloCifre(v, 3), 'altezzaCm', erroreAltezza)
 const onPesoInput = conFiltro(pesoKg, filtraDecimaleItaliano, 'pesoKg', errorePeso)
-const onCirconferenzaVitaInput = conFiltro(circonferenzaVita, filtraDecimaleItaliano, 'circonferenzaVita', erroreCirconferenza)
-const onCirconferenzaOmbelicoInput = conFiltro(circonferenzaOmbelico, filtraDecimaleItaliano, 'circonferenzaOmbelico', erroreCirconferenza)
-const onCirconferenzaFianchiInput = conFiltro(circonferenzaFianchi, filtraDecimaleItaliano, 'circonferenzaFianchi', erroreCirconferenza)
-const onCirconferenzaPettoInput = conFiltro(circonferenzaPetto, filtraDecimaleItaliano, 'circonferenzaPetto', erroreCirconferenza)
-const onCirconferenzaCosciaDxInput = conFiltro(circonferenzaCosciaDx, filtraDecimaleItaliano, 'circonferenzaCosciaDx', erroreCirconferenza)
-const onCirconferenzaCosciaSxInput = conFiltro(circonferenzaCosciaSx, filtraDecimaleItaliano, 'circonferenzaCosciaSx', erroreCirconferenza)
-const onCirconferenzaPolpaccioDxInput = conFiltro(circonferenzaPolpaccioDx, filtraDecimaleItaliano, 'circonferenzaPolpaccioDx', erroreCirconferenza)
-const onCirconferenzaPolpaccioSxInput = conFiltro(circonferenzaPolpaccioSx, filtraDecimaleItaliano, 'circonferenzaPolpaccioSx', erroreCirconferenza)
-const onLarghezzaSpalleInput = conFiltro(larghezzaSpalle, filtraDecimaleItaliano, 'larghezzaSpalle', erroreCirconferenza)
-const onCirconferenzaSpalleInput = conFiltro(circonferenzaSpalle, filtraDecimaleItaliano, 'circonferenzaSpalle', erroreCirconferenza)
-const onCirconferenzaBicipiteDxInput = conFiltro(circonferenzaBicipiteDx, filtraDecimaleItaliano, 'circonferenzaBicipiteDx', erroreCirconferenza)
-const onCirconferenzaBicipiteSxInput = conFiltro(circonferenzaBicipiteSx, filtraDecimaleItaliano, 'circonferenzaBicipiteSx', erroreCirconferenza)
 
+// Helper compatto per le 12 circonferenze
+const creaHandlerCirconferenza = (rif: Ref<string>, chiave: string) =>
+  conFiltro(rif, filtraDecimaleItaliano, chiave, erroreCirconferenza)
+
+const onCirconferenzaVitaInput = creaHandlerCirconferenza(circonferenzaVita, 'circonferenzaVita')
+const onCirconferenzaOmbelicoInput = creaHandlerCirconferenza(circonferenzaOmbelico, 'circonferenzaOmbelico')
+const onCirconferenzaFianchiInput = creaHandlerCirconferenza(circonferenzaFianchi, 'circonferenzaFianchi')
+const onCirconferenzaPettoInput = creaHandlerCirconferenza(circonferenzaPetto, 'circonferenzaPetto')
+const onCirconferenzaCosciaDxInput = creaHandlerCirconferenza(circonferenzaCosciaDx, 'circonferenzaCosciaDx')
+const onCirconferenzaCosciaSxInput = creaHandlerCirconferenza(circonferenzaCosciaSx, 'circonferenzaCosciaSx')
+const onCirconferenzaPolpaccioDxInput = creaHandlerCirconferenza(circonferenzaPolpaccioDx, 'circonferenzaPolpaccioDx')
+const onCirconferenzaPolpaccioSxInput = creaHandlerCirconferenza(circonferenzaPolpaccioSx, 'circonferenzaPolpaccioSx')
+const onLarghezzaSpalleInput = creaHandlerCirconferenza(larghezzaSpalle, 'larghezzaSpalle')
+const onCirconferenzaSpalleInput = creaHandlerCirconferenza(circonferenzaSpalle, 'circonferenzaSpalle')
+const onCirconferenzaBicipiteDxInput = creaHandlerCirconferenza(circonferenzaBicipiteDx, 'circonferenzaBicipiteDx')
+const onCirconferenzaBicipiteSxInput = creaHandlerCirconferenza(circonferenzaBicipiteSx, 'circonferenzaBicipiteSx')
+
+// --- VALIDAZIONE E SUBMIT ---
 function validaCampi(): boolean {
   const nuoviErrori: Record<string, string> = {}
 
@@ -328,7 +263,7 @@ async function onSubmit() {
 
           <div class="flex flex-col gap-1.5">
             <Label for="data-nascita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Data di nascita</Label>
-            <DatePicker id="data-nascita" v-model="dataNascita" />
+            <DatePicker id="data-nascita" v-model="dataNascita"  />
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -392,82 +327,92 @@ async function onSubmit() {
           <p class="mt-1.5 text-sm text-(--fg3)">Sarà disponibile a breve.</p>
         </div>
 
-        <Accordion v-model="accordionAperto" type="single" collapsible class="mt-6 border-t border-(--bd)">
-          <AccordionItem value="circonferenze" class="border-b-0">
-            <AccordionTrigger class="text-sm font-bold uppercase tracking-wide text-(--fg3) hover:no-underline">
-              Circonferenze
+        <Accordion v-model="accordionAperto" type="single" collapsible class="mt-6">
+          <AccordionItem value="circonferenze" class="overflow-hidden rounded-xl border border-(--bd)">
+            <AccordionTrigger class="group px-4 py-3.5 hover:no-underline sm:px-5">
+              <div class="flex items-center gap-3">
+                <div class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-(--mint) text-(--green)">
+                  <Ruler :size="18" />
+                </div>
+
+                <div class="flex flex-col items-start">
+                  <span class="text-sm font-bold text-(--fg)">Circonferenze</span>
+                  <span class="mt-0.5 text-xs text-(--fg3)">Misure corporee in cm</span>
+                </div>
+              </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div class="grid gap-5 pt-2 sm:grid-cols-2">
+              <div class="mx-2 border-t-2 border-t-(--bd)"></div>
+              <div class="grid gap-5 py-4 px-6 sm:grid-cols-2">
                 <div class="flex flex-col gap-1.5">
-                  <Label for="circonferenza-vita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza vita (cm)</Label>
-                  <Input id="circonferenza-vita" :model-value="circonferenzaVita" @update:model-value="onCirconferenzaVitaInput" type="text" inputmode="decimal" :aria-invalid="!!errori.circonferenzaVita" />
+                  <Label for="circonferenza-vita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza vita</Label>
+                  <Input id="circonferenza-vita" :model-value="circonferenzaVita" @update:model-value="onCirconferenzaVitaInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaVita" />
                   <p v-if="errori.circonferenzaVita" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaVita }}</p>
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                  <Label for="circonferenza-ombelico" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza ombelico (cm)</Label>
-                  <Input id="circonferenza-ombelico" :model-value="circonferenzaOmbelico" @update:model-value="onCirconferenzaOmbelicoInput" type="text" inputmode="decimal" :aria-invalid="!!errori.circonferenzaOmbelico" />
+                  <Label for="circonferenza-ombelico" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza ombelico</Label>
+                  <Input id="circonferenza-ombelico" :model-value="circonferenzaOmbelico" @update:model-value="onCirconferenzaOmbelicoInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaOmbelico" />
                   <p v-if="errori.circonferenzaOmbelico" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaOmbelico }}</p>
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                  <Label for="circonferenza-fianchi" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza fianchi (cm)</Label>
-                  <Input id="circonferenza-fianchi" :model-value="circonferenzaFianchi" @update:model-value="onCirconferenzaFianchiInput" type="text" inputmode="decimal" :aria-invalid="!!errori.circonferenzaFianchi" />
+                  <Label for="circonferenza-fianchi" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza fianchi</Label>
+                  <Input id="circonferenza-fianchi" :model-value="circonferenzaFianchi" @update:model-value="onCirconferenzaFianchiInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaFianchi" />
                   <p v-if="errori.circonferenzaFianchi" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaFianchi }}</p>
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                  <Label for="circonferenza-petto" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza petto (cm)</Label>
-                  <Input id="circonferenza-petto" :model-value="circonferenzaPetto" @update:model-value="onCirconferenzaPettoInput" type="text" inputmode="decimal" :aria-invalid="!!errori.circonferenzaPetto" />
+                  <Label for="circonferenza-petto" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza petto</Label>
+                  <Input id="circonferenza-petto" :model-value="circonferenzaPetto" @update:model-value="onCirconferenzaPettoInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaPetto" />
                   <p v-if="errori.circonferenzaPetto" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaPetto }}</p>
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                  <Label for="circonferenza-coscia-dx" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza coscia dx (cm)</Label>
-                  <Input id="circonferenza-coscia-dx" :model-value="circonferenzaCosciaDx" @update:model-value="onCirconferenzaCosciaDxInput" type="text" inputmode="decimal" :aria-invalid="!!errori.circonferenzaCosciaDx" />
+                  <Label for="circonferenza-coscia-dx" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza coscia dx</Label>
+                  <Input id="circonferenza-coscia-dx" :model-value="circonferenzaCosciaDx" @update:model-value="onCirconferenzaCosciaDxInput" placeholder="Es. 78,50" type="text" inputmode="decimal" :aria-invalid="!!errori.circonferenzaCosciaDx" />
                   <p v-if="errori.circonferenzaCosciaDx" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaCosciaDx }}</p>
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                  <Label for="circonferenza-coscia-sx" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza coscia sx (cm)</Label>
-                  <Input id="circonferenza-coscia-sx" :model-value="circonferenzaCosciaSx" @update:model-value="onCirconferenzaCosciaSxInput" type="text" inputmode="decimal" :aria-invalid="!!errori.circonferenzaCosciaSx" />
+                  <Label for="circonferenza-coscia-sx" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza coscia sx</Label>
+                  <Input id="circonferenza-coscia-sx" :model-value="circonferenzaCosciaSx" @update:model-value="onCirconferenzaCosciaSxInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaCosciaSx" />
                   <p v-if="errori.circonferenzaCosciaSx" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaCosciaSx }}</p>
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                  <Label for="circonferenza-polpaccio-dx" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza polpaccio dx (cm)</Label>
-                  <Input id="circonferenza-polpaccio-dx" :model-value="circonferenzaPolpaccioDx" @update:model-value="onCirconferenzaPolpaccioDxInput" type="text" inputmode="decimal" :aria-invalid="!!errori.circonferenzaPolpaccioDx" />
+                  <Label for="circonferenza-polpaccio-dx" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza polpaccio dx</Label>
+                  <Input id="circonferenza-polpaccio-dx" :model-value="circonferenzaPolpaccioDx" @update:model-value="onCirconferenzaPolpaccioDxInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaPolpaccioDx" />
                   <p v-if="errori.circonferenzaPolpaccioDx" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaPolpaccioDx }}</p>
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                  <Label for="circonferenza-polpaccio-sx" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza polpaccio sx (cm)</Label>
-                  <Input id="circonferenza-polpaccio-sx" :model-value="circonferenzaPolpaccioSx" @update:model-value="onCirconferenzaPolpaccioSxInput" type="text" inputmode="decimal" :aria-invalid="!!errori.circonferenzaPolpaccioSx" />
+                  <Label for="circonferenza-polpaccio-sx" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza polpaccio sx</Label>
+                  <Input id="circonferenza-polpaccio-sx" :model-value="circonferenzaPolpaccioSx" @update:model-value="onCirconferenzaPolpaccioSxInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaPolpaccioSx" />
                   <p v-if="errori.circonferenzaPolpaccioSx" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaPolpaccioSx }}</p>
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                  <Label for="larghezza-spalle" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Larghezza spalle (cm)</Label>
-                  <Input id="larghezza-spalle" :model-value="larghezzaSpalle" @update:model-value="onLarghezzaSpalleInput" type="text" inputmode="decimal" :aria-invalid="!!errori.larghezzaSpalle" />
+                  <Label for="larghezza-spalle" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Larghezza spalle</Label>
+                  <Input id="larghezza-spalle" :model-value="larghezzaSpalle" @update:model-value="onLarghezzaSpalleInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.larghezzaSpalle" />
                   <p v-if="errori.larghezzaSpalle" class="text-xs font-medium text-(--danger)">{{ errori.larghezzaSpalle }}</p>
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                  <Label for="circonferenza-spalle" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza spalle (cm)</Label>
-                  <Input id="circonferenza-spalle" :model-value="circonferenzaSpalle" @update:model-value="onCirconferenzaSpalleInput" type="text" inputmode="decimal" :aria-invalid="!!errori.circonferenzaSpalle" />
+                  <Label for="circonferenza-spalle" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza spalle</Label>
+                  <Input id="circonferenza-spalle" :model-value="circonferenzaSpalle" @update:model-value="onCirconferenzaSpalleInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaSpalle" />
                   <p v-if="errori.circonferenzaSpalle" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaSpalle }}</p>
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                  <Label for="circonferenza-bicipite-dx" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza bicipite dx (cm)</Label>
-                  <Input id="circonferenza-bicipite-dx" :model-value="circonferenzaBicipiteDx" @update:model-value="onCirconferenzaBicipiteDxInput" type="text" inputmode="decimal" :aria-invalid="!!errori.circonferenzaBicipiteDx" />
+                  <Label for="circonferenza-bicipite-dx" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza bicipite dx</Label>
+                  <Input id="circonferenza-bicipite-dx" :model-value="circonferenzaBicipiteDx" @update:model-value="onCirconferenzaBicipiteDxInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaBicipiteDx" />
                   <p v-if="errori.circonferenzaBicipiteDx" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaBicipiteDx }}</p>
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                  <Label for="circonferenza-bicipite-sx" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza bicipite sx (cm)</Label>
-                  <Input id="circonferenza-bicipite-sx" :model-value="circonferenzaBicipiteSx" @update:model-value="onCirconferenzaBicipiteSxInput" type="text" inputmode="decimal" :aria-invalid="!!errori.circonferenzaBicipiteSx" />
+                  <Label for="circonferenza-bicipite-sx" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza bicipite sx</Label>
+                  <Input id="circonferenza-bicipite-sx" :model-value="circonferenzaBicipiteSx" @update:model-value="onCirconferenzaBicipiteSxInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaBicipiteSx" />
                   <p v-if="errori.circonferenzaBicipiteSx" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaBicipiteSx }}</p>
                 </div>
               </div>
@@ -476,9 +421,12 @@ async function onSubmit() {
         </Accordion>
       </div>
 
-      <Button type="submit" :disabled="inCorso">
-        {{ inCorso ? 'Salvataggio…' : 'Crea paziente' }}
-      </Button>
+      <div class="w-full flex justify-end">
+        <Button type="submit" :disabled="inCorso" size="lg" class="hover:bg-primary/80">
+          <Save :size="16" />
+          {{ inCorso ? 'Salvataggio…' : 'Salva paziente' }}
+        </Button>
+      </div>
     </form>
   </AppShell>
 </template>

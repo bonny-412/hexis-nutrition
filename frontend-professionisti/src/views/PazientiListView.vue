@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
+import { Plus } from '@lucide/vue'
 
 const pazienti = ref<Paziente[]>([])
 const ricerca = ref('')
@@ -60,8 +61,8 @@ onMounted(carica)
   <AppShell>
     <div class="mb-6 flex items-center justify-between">
       <h1 class="font-heading text-3xl italic text-[var(--fg)]">Pazienti</h1>
-      <Button as-child>
-        <router-link to="/pazienti/nuovo">+ Nuovo paziente</router-link>
+      <Button as-child size="lg" class="hover:bg-primary/80">
+        <router-link to="/pazienti/nuovo"><Plus :size="16" /> Nuovo paziente</router-link>
       </Button>
     </div>
 
