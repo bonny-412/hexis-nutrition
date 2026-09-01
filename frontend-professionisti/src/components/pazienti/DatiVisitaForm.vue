@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { DatePicker } from '@/components/ui/date-picker'
-import { Percent, Ruler } from '@lucide/vue'
+import { Percent, Ruler, ScissorsLineDashed } from '@lucide/vue'
 import type { CreaVisitaRequest } from '@/api/pazienti'
 import PlicometriaForm from './PlicometriaForm.vue'
 
@@ -207,7 +207,7 @@ defineExpose({
         <AccordionTrigger class="group px-4 py-3.5 hover:no-underline sm:px-5">
           <div class="flex items-center gap-3">
             <div class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-(--mint) text-(--green)">
-              <Percent :size="18" />
+              <ScissorsLineDashed :size="18" />
             </div>
 
             <div class="flex flex-col items-start">
