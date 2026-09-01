@@ -72,9 +72,20 @@ export function erroreTelefono(valore: string): string | undefined {
     return undefined
 }
 
+export function erroreDataNascita(valore: string): string | undefined {
+    if (!valore.trim()) return 'La data di nascita è obbligatoria.'
+    return undefined
+}
+
+export function erroreSesso(valore: string): string | undefined {
+    if (!valore) return 'Il sesso è obbligatorio.'
+    return undefined
+}
+
 export function erroreAltezza(valore: string): string | undefined {
     if (!valore.trim()) return "L'altezza è obbligatoria."
     if (!REGEX_NUMERO_INTERO.test(valore)) return 'Inserisci un numero intero (es. 178).'
+    if (Number(valore) < 50) return "L'altezza deve essere almeno 50 cm."
     return undefined
 }
 

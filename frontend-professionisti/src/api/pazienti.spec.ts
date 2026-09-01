@@ -6,7 +6,7 @@ vi.mock('./client', () => ({ apiRequest: vi.fn() }))
 
 const pazienteEsempio = {
   id: '1', nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
-  telefono: null, dataNascita: null, sesso: null, lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
+  telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
 }
 
 describe('api/pazienti', () => {
@@ -31,14 +31,14 @@ describe('api/pazienti', () => {
     vi.mocked(apiRequest).mockResolvedValue(pazienteEsempio)
 
     await crea({
-      nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
+      nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com', dataNascita: '1990-01-01', sesso: 'M',
       visita: { altezzaCm: 178, pesoKg: 82.5 },
     })
 
     expect(apiRequest).toHaveBeenCalledWith('/pazienti', {
       method: 'POST',
       body: {
-        nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
+        nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com', dataNascita: '1990-01-01', sesso: 'M',
         visita: { altezzaCm: 178, pesoKg: 82.5 },
       },
     })

@@ -24,19 +24,22 @@ public class PazienteService {
     private final TokenAzioneRepository tokenAzioneRepository;
     private final EmailSender emailSender;
     private final PasswordEncoder passwordEncoder;
+    private final PlicometriaService plicometriaService;
 
     public PazienteService(PazienteRepository pazienteRepository,
                             VisitaRepository visitaRepository,
                             ProfessionistaRepository professionistaRepository,
                             TokenAzioneRepository tokenAzioneRepository,
                             EmailSender emailSender,
-                            PasswordEncoder passwordEncoder) {
+                            PasswordEncoder passwordEncoder,
+                            PlicometriaService plicometriaService) {
         this.pazienteRepository = pazienteRepository;
         this.visitaRepository = visitaRepository;
         this.professionistaRepository = professionistaRepository;
         this.tokenAzioneRepository = tokenAzioneRepository;
         this.emailSender = emailSender;
         this.passwordEncoder = passwordEncoder;
+        this.plicometriaService = plicometriaService;
     }
 
     @Transactional
@@ -47,12 +50,13 @@ public class PazienteService {
 
         VisitaRequest v = request.visita();
         Visita visita = new Visita(paziente.getId(), v.dataVisita(), v.altezzaCm(), v.pesoKg(),
-                v.circonferenzaVitaCm(), v.circonferenzaOmbelicoCm(), v.circonferenzaFianchiCm(),
-                v.circonferenzaPettoCm(), v.circonferenzaCosciaDxCm(), v.circonferenzaCosciaSxCm(),
-                v.circonferenzaPolpaccioDxCm(), v.circonferenzaPolpaccioSxCm(),
-                v.larghezzaSpalleCm(), v.circonferenzaSpalleCm(),
-                v.circonferenzaBicipiteDxCm(), v.circonferenzaBicipiteSxCm());
+                v.circonferenzaVitaCm(), v.circonferenzaFianchiCm(), v.circonferenzaAddomeCm(),
+                v.circonferenzaBraccioRilassatoCm(), v.circonferenzaCosciaCm(), v.circonferenzaPolpaccioCm(),
+                v.circonferenzaColloCm(), v.circonferenzaToraceCm(), v.circonferenzaBraccioContrattoCm(),
+                v.circonferenzaAvambraccioCm(), v.circonferenzaCavigliaCm(), v.protocolloVita());
+        VisitaCalcoli.applica(visita);
         visitaRepository.save(visita);
+        plicometriaService.elabora(paziente, visita, v.plicometria());
 
         return paziente;
     }

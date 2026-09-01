@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,12 +36,12 @@ class VisitaRepositoryTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("visite-prof@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "visite-luca@example.com", null, null, null, null, null));
+                "visite-luca@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
 
         Visita visita = new Visita(paziente.getId(), null, 178, new BigDecimal("82.5"),
-                new BigDecimal("95.0"), null, new BigDecimal("102.0"), new BigDecimal("100.0"),
-                new BigDecimal("58.0"), new BigDecimal("58.0"), new BigDecimal("38.0"), new BigDecimal("38.0"),
-                new BigDecimal("45.0"), new BigDecimal("110.0"), new BigDecimal("32.0"), new BigDecimal("32.0"));
+                new BigDecimal("95.0"), new BigDecimal("100.0"), null, new BigDecimal("32.0"),
+                new BigDecimal("58.0"), new BigDecimal("38.0"), null, null, null, null, null,
+                ProtocolloVita.OMS);
         visitaRepository.save(visita);
 
         List<Visita> visite = visitaRepository.findAllByPazienteId(paziente.getId());
@@ -48,7 +49,10 @@ class VisitaRepositoryTest extends AbstractIntegrationTest {
         assertThat(visite).hasSize(1);
         assertThat(visite.get(0).getAltezzaCm()).isEqualTo(178);
         assertThat(visite.get(0).getPesoKg()).isEqualByComparingTo("82.5");
-        assertThat(visite.get(0).getCirconferenzaOmbelicoCm()).isNull();
+        assertThat(visite.get(0).getCirconferenzaFianchiCm()).isEqualByComparingTo("100.0");
+        assertThat(visite.get(0).getCirconferenzaAddomeCm()).isNull();
+        assertThat(visite.get(0).getCirconferenzaColloCm()).isNull();
+        assertThat(visite.get(0).getProtocolloVita()).isEqualTo(ProtocolloVita.OMS);
         assertThat(visite.get(0).getDataVisita()).isNotNull();
     }
 }

@@ -130,3 +130,65 @@ Sessione di debug e piccole feature su `PazienteNuovoView.vue`, seguita con `sup
 **Segnalato ma non affrontato (fuori scope)**: il backend valida bene i campi numerici della visita (`@Positive`, `@Digits`, `@Max`), ma `nome`, `cognome`, `telefono`, `sesso` e `lavoro` in `CreaPazienteRequest` non hanno alcun pattern lato server — chi chiama l'API direttamente, bypassando il frontend, può ancora inserire qualsiasi carattere in quei campi. Spostato in [domande-aperte](domande-aperte.md).
 
 **Aperto**: tutti i punti già aperti nell'handoff precedente (LoginView.vue/AppSidebar.vue/DashboardView.vue con modifiche non committate preesistenti, verifica manuale dei due `Select`, gap di validazione server-side sopra) restano tali, non toccati da questa sessione. Andrea riparte dal **salvataggio di un paziente** (revisione/commit del lavoro in staging) e la prossima sessione lavorerà sulla **pagina della lista dei pazienti** (`PazientiListView.vue`).
+
+## [2026-09-01] handoff | Pagina "Nuovo paziente": età, componente visita e data di nascita obbligatoria
+
+Tre richieste di Andrea sulla pagina `PazienteNuovoView.vue`, ciascuna con brainstorming bounded (design breve in chat, approvato) → TDD.
+
+**1. Età automatica**: nuovo `calcolaEta(dataNascita)` in `frontend-professionisti/src/utils/data.ts`, campo "Età" sola lettura nei dati anagrafici, subito dopo "Data di nascita".
+
+**2. Estrazione di "Dati della visita" in componente autonomo**: `frontend-professionisti/src/components/pazienti/DatiVisitaForm.vue`, motivata da Andrea con il riuso futuro in una pagina "aggiungi visita" su un paziente esistente. Design scelto (chiesto esplicitamente ad Andrea con `AskUserQuestion`, tra due opzioni): componente **autonomo** con stato e validazione interni, che espone `valida()`/`ottieniDati()` via `defineExpose`, invece di uno stateless con 16 v-model passati dal genitore — meno boilerplate al riuso.
+
+**3. Data di nascita resa obbligatoria**: Andrea vuole l'età sempre calcolabile in modo affidabile. Scelta discussa e confermata con `AskUserQuestion`: **non** persistere l'età come colonna (andrebbe disallineata a ogni compleanno del paziente) — solo garantire che `dataNascita` sia sempre presente, età calcolata al volo dove serve. Impatto più ampio del previsto: 14 istanziazioni dirette di `Paziente` in 5 file di test backend passavano `null` come data di nascita solo per costruire un paziente di supporto (non erano test sulla data di nascita), più 4 body JSON in `PazienteControllerTest` che la omettevano aspettandosi 201 — tutti aggiornati con una data placeholder o esplicita. Migrazione Flyway V8 (`data_nascita SET NOT NULL`), `@NotNull` su `CreaPazienteRequest.dataNascita`, nuovo validatore `erroreDataNascita` lato frontend con lo stesso pattern UX degli altri campi obbligatori (errore che sparisce alla compilazione).
+
+**Verifica**: backend 52/52 verdi (`mvn test` su `hexis_test`); frontend 71/73 verdi (`npx vitest run`) — i 2 falliti sono i test preesistenti e scollegati di `LoginView.spec.ts`, già noti dal 31 agosto; `npm run build` pulito. Nessuna verifica manuale in browser: nessun tool di automazione browser collegato in questa sessione, segnalato esplicitamente ad Andrea invece di darla per buona.
+
+**Segnalato, non risolto**: la migrazione V8 non è stata verificata contro il database `hexis` reale (solo `hexis_test`) — se un paziente esistente ha `data_nascita` nulla, l'avvio dell'app fallirà finché non viene sistemato a mano. Spostato in [domande-aperte](domande-aperte.md).
+
+**Handoff esplicito**: Andrea ha chiesto di salvare tutto (fatto `git add`, nessun commit) perché apre una nuova sessione per continuare a modificare i dati della visita — presumibilmente su `DatiVisitaForm.vue`, appena estratto. Dettagli specifici non ancora raccolti. Aggiornati `stato.md`, `modello-dati.md`, `api-contracts.md`, `domande-aperte.md`.
+
+**Chiuso subito dopo**: Andrea ha confermato che la tabella `pazienti` in `hexis` (database reale) è vuota, quindi il rischio segnalato sulla migrazione V8 non si applica — spostato in "Risolte" in [domande-aperte](domande-aperte.md), rimosso il punto d'attenzione da qui sopra e dal prossimo passo consigliato.
+
+## [2026-09-01] handoff | Modulo Plicometria e redesign Circonferenze
+
+Sessione nella stessa giornata del componente `DatiVisitaForm.vue`/data di nascita obbligatoria, ma a parte: Andrea ha portato 6 PDF di specifica (letti e analizzati in sequenza, con due correzioni fatte da Andrea stesso durante il brainstorming — prima l'ampliamento da 4 a 6 protocolli plicometrici con Slaughter/Evans, poi la correzione a mano della formula di Evans dopo che era stata segnalata un'incoerenza) per un modulo Plicometria (stima massa grassa da pliche cutanee) e il redesign del modulo Circonferenze. Percorso completo: brainstorming architetturale → spec (`docs/superpowers/specs/2026-09-01-plicometria-circonferenze-design.md`) → piano (`docs/superpowers/plans/2026-09-01-plicometria-circonferenze.md`, 10 task) → esecuzione con `superpowers:subagent-driven-development`.
+
+**Scelta di ambiente non standard**: eseguito **direttamente su `master`, senza worktree**, su richiesta esplicita di Andrea — `master` aveva già modifiche in staging non committate (data di nascita obbligatoria, `DatiVisitaForm.vue`) che un worktree creato da `HEAD` non avrebbe incluso, disallineando il piano dal codice reale.
+
+**Backend**: tabelle `plicometrie` e `durnin_womersley_coefficienti` (dati di riferimento seminati da migrazione); motore di calcolo a strategy pattern con un calcolatore per protocollo (Jackson-Pollock 3/7, Durnin-Womersley 4, Faulkner 4, Slaughter pediatrico, Evans atleti); `PlicometriaService` con validazione, calcolo (età, densità, `%BF`, FM/FFM/FMI/FFMI), limite di sicurezza biologico e persistenza storicizzata; `Visita` ridisegnata (11 circonferenze a misura singola, `protocollo_vita`, BMI/WHR/WHtR/MAMC calcolati); `Paziente.sesso` reso obbligatorio a 3 valori (M/F/ALTRO).
+
+**Frontend**: sesso a 3 valori, redesign circonferenze in `DatiVisitaForm.vue`, nuovi `PlicaInput.vue` (tripla misurazione con media live) e `PlicometriaForm.vue` (campi condizionati da protocollo/sesso).
+
+**Adattamento di processo**: la skill `subagent-driven-development` assume commit ad ogni task (SHA per i diff) — in conflitto con la regola assoluta del progetto. Adattato per tutta l'esecuzione: solo `git add`, mai commit; review package generati con `git diff --cached` mirato ai file di ciascun task.
+
+**Incidente gestito durante l'esecuzione**: l'implementer del Task 7 (sesso frontend) si è interrotto per un rate limit di sessione a metà lavoro, dopo aver trovato un difetto reale nel piano (il `Select` del sesso non cancellava l'errore alla selezione). Verificato nessuna perdita di dati, ricomposto lo stato di staging (`git add -A`), dispatchato un nuovo implementer con la correzione decisa dal coordinatore.
+
+**Revisione finale whole-branch** (Opus): "ready to merge, with fixes". Tutte e 6 le formule cliniche verificate a mano (nessun errore), parità di contratto backend↔frontend confermata su tutti i DTO, sequenza delle 4 migrazioni verificata contro lo schema reale. Trovati 3 problemi importanti, risolti in un'unica fix wave: pliche di un protocollo precedente che sopravvivevano al cambio protocollo (fix sia in `PlicometriaService` sia in `PlicometriaForm.vue`); i messaggi d'errore dei nuovi 400 non arrivavano mai al client (`server.error.include-message` di default `never`); nessun minimo su `altezzaCm` (500 invece di 400 su valori estremi). Più 3 correzioni minori economiche (un `@DecimalMax` reso morto da un `@Digits` troppo stretto — difetto del piano; un'asimmetria di tipo su `dataNascita` nel client; un commento chiarificatore). Re-review mirata: tutti i 6 finding risolti, nessuna nuova rottura. Due domande di prodotto (accoppiamento MAMC↔protocollo; incoerenza densità/`%BF` al limite di sicurezza) spostate in [domande-aperte](domande-aperte.md) invece di essere decise unilateralmente.
+
+**Verifica**: backend `mvn test` → 89/89 verdi, BUILD SUCCESS (ri-verificato in autonomia dal coordinatore); frontend `npm run test` → 83/85 verdi (stessi 2 test preesistenti e scollegati di `LoginView.spec.ts`, non toccati); `npx tsc --noEmit` pulito. Nessuna verifica manuale in browser.
+
+**Segnalato, non risolto**: nessun test di regressione dedicato per due dei fix della revisione finale (esclusione pliche non richieste dal protocollo; presenza del messaggio nel body del 400) — verificati per ispezione del codice dal reviewer, non da un assert automatico. Spostato in "Cosa resta aperto" in [stato](stato.md).
+
+**Handoff esplicito**: lavoro in staging (`git add` fatto, nessun commit) — tocca ad Andrea. Aggiornati `stato.md`, `modello-dati.md`, `api-contracts.md`, `domande-aperte.md`.
+
+## [2026-09-01] query | Decise le due domande aperte del modulo Plicometria
+
+Discusse con Andrea le due domande di prodotto lasciate aperte dalla revisione finale. **MAMC↔protocollo**: confermato che va bene resti "opportunistico" (calcolabile solo quando il protocollo scelto include comunque la tricipitale), nessuna modifica. **Incoerenza densità/`%BF`**: Andrea ha chiesto un consiglio; proposta e implementata l'opzione di non falsificare mai la densità corporea persistita, aggiungendo invece un flag esplicito `limite_sicurezza_applicato` su `Plicometria` (booleano, migrazione V13) che segnala quando il limite di sicurezza ha corretto il `%BF` e i due valori non si riconciliano più via Siri.
+
+Implementazione TDD diretta (bounded, nessuna orchestrazione multi-agente): nuovo helper `CalcoliPlicometria.limiteSicurezzaApplicato(double, Sesso)` con 2 nuovi test; campo + getter + parametro di costruttore su `Plicometria.java`; wiring in `PlicometriaService.elabora()`; 2 nuovi test in `PazienteControllerTest` (uno che conferma `false` nel caso normale, uno con pliche Evans vicine allo zero che fa scattare il limite e verifica `true` + `percentuale_grasso` flooorata a 3.00). Backend `mvn test` → **92/92 verdi, BUILD SUCCESS**. Aggiornati `modello-dati.md` e `domande-aperte.md` (le due domande spostate in "Risolte").
+
+Lavoro in staging, nessun commit — tocca ad Andrea.
+
+## [2026-09-01] handoff | Prima verifica manuale e rifiniture UI del modulo Plicometria
+
+Andrea ha lanciato di persona `mvn clean install` (backend) e l'avvio del frontend — **entrambi ok**, prima verifica manuale reale contro il lavoro delle sessioni precedenti. Dalla prova pratica sono emerse tre richieste UI, tutte bounded, presentate in chat e approvate prima di implementare:
+
+1. **Plicometria in accordion**: come le Circonferenze, un `AccordionItem` (icona `Percent`) che si apre da sé se la validazione fallisce.
+2. **Età sulla stessa riga di Data di nascita**: riordinato il blocco Sesso subito dopo, nella griglia anagrafica a 2 colonne.
+3. **Select "Protocollo" e "Protocollo vita" azzerabili**: aggiunta una voce "Seleziona" in cima a entrambe le liste, selezionata di default — come una select HTML normale, su richiesta esplicita di Andrea ("basta aggiungere un valore 'Seleziona' con value null ... come funziona una normale select"). `protocollo_vita` ora parte vuoto invece che precompilato su OMS; se lasciato vuoto il backend applica comunque OMS di default (nessun cambio di comportamento finale, solo visivo).
+
+**Effetto collaterale trovato e corretto**: il test end-to-end della plicometria (`PazienteNuovoView.spec.ts`) falliva dopo il punto 1, perché i campi plica sono ora dentro un accordion chiuso di default — sistemato aprendo l'accordion prima di interagire con `Select`/`Input`, stesso pattern già usato per le circonferenze.
+
+**Verifica**: frontend `npm run test` → **83/85 verdi** (stessi 2 test preesistenti e scollegati di `LoginView.spec.ts`, non toccati), `npx tsc --noEmit` pulito. Nessun test backend interessato (modifiche solo frontend).
+
+**Handoff esplicito**: lavoro in staging (`git add` fatto, nessun commit) — Andrea farà alcune modifiche a mano prima del prossimo avvio di sessione, poi si riparte con la verifica manuale del salvataggio di un paziente e il lavoro sulla lista dei pazienti (`PazientiListView.vue`). Aggiornato `stato.md`.

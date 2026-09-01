@@ -35,10 +35,12 @@ public class Paziente {
 
     private String telefono;
 
-    @Column(name = "data_nascita")
+    @Column(name = "data_nascita", nullable = false)
     private LocalDate dataNascita;
 
-    private String sesso;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Sesso sesso;
 
     private String lavoro;
 
@@ -60,7 +62,7 @@ public class Paziente {
     }
 
     public Paziente(UUID professionistaId, String nome, String cognome, String email,
-                     String telefono, LocalDate dataNascita, String sesso, String lavoro, TipoLavoro tipoLavoro) {
+                     String telefono, LocalDate dataNascita, Sesso sesso, String lavoro, TipoLavoro tipoLavoro) {
         this.professionistaId = professionistaId;
         this.nome = nome;
         this.cognome = cognome;
@@ -100,7 +102,7 @@ public class Paziente {
         return dataNascita;
     }
 
-    public String getSesso() {
+    public Sesso getSesso() {
         return sesso;
     }
 

@@ -21,9 +21,9 @@ function creaRouter() {
 describe('DashboardView', () => {
   it('mostra il numero di pazienti attivi calcolato dalla lista reale', async () => {
     vi.mocked(pazientiApi.lista).mockResolvedValue([
-      { id: '1', nome: 'A', cognome: 'A', email: 'a@a.it', telefono: null, dataNascita: null, sesso: null, lavoro: null, tipoLavoro: null, statoAccount: 'ATTIVO' },
-      { id: '2', nome: 'B', cognome: 'B', email: 'b@b.it', telefono: null, dataNascita: null, sesso: null, lavoro: null, tipoLavoro: null, statoAccount: 'ATTIVO' },
-      { id: '3', nome: 'C', cognome: 'C', email: 'c@c.it', telefono: null, dataNascita: null, sesso: null, lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO' },
+      { id: '1', nome: 'A', cognome: 'A', email: 'a@a.it', telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'ATTIVO' },
+      { id: '2', nome: 'B', cognome: 'B', email: 'b@b.it', telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'ATTIVO' },
+      { id: '3', nome: 'C', cognome: 'C', email: 'c@c.it', telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO' },
     ])
     const router = creaRouter()
     router.push('/')

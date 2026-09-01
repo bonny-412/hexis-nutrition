@@ -12,8 +12,8 @@ public record CreaPazienteRequest(
         @NotBlank String cognome,
         @NotBlank @Email String email,
         String telefono,
-        LocalDate dataNascita,
-        String sesso,
+        @NotNull LocalDate dataNascita,
+        @NotNull Sesso sesso,
         String lavoro,
         TipoLavoro tipoLavoro,
         @NotNull @Valid VisitaRequest visita

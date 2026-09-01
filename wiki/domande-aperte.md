@@ -3,8 +3,8 @@ title: Domande aperte
 tags: [domande-aperte]
 stato: stabile
 creato: 2026-08-08
-aggiornato: 2026-08-31
-fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, log.md#2026-08-31-handoff--bug-fix-controlli-pazientenuovoview--ux-maiuscola-errori-live]
+aggiornato: 2026-09-01
+fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, log.md#2026-08-31-handoff--bug-fix-controlli-pazientenuovoview--ux-maiuscola-errori-live, log.md#2026-09-01-handoff--pagina-nuovo-paziente-eta-componente-visita-e-data-nascita-obbligatoria]
 ---
 
 # Domande aperte — hexis-nutrition
@@ -18,9 +18,11 @@ fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brain
 - Modello dati per i sotto-progetti "Piano alimentare", "Monitoraggio" e "Chat" non ancora dettagliato (solo "Fondamenta" è stato progettato, vedi [decisioni/0002](decisioni/0002-autenticazione-e-onboarding.md)).
 - Serve una convenzione esplicita sul non scrivere credenziali nella wiki, nemmeno locali? Sollevato il 2026-08-09 e rimasto senza risposta: le credenziali del Postgres di sviluppo erano riportate in [stato](stato.md), che finisce su GitHub con il resto del repo. Sono innocue finché il database resta su localhost, ma è un'abitudine che non conviene consolidare. Nell'handoff sono state sostituite da un rimando generico; da decidere se basta così o se serve una regola scritta.
 - **Validazione server-side incompleta su `CreaPazienteRequest`** (backend): `nome`, `cognome`, `telefono`, `sesso`, `lavoro` non hanno alcun pattern lato server (solo `@NotBlank`/`@Email` dove presenti), a differenza dei campi numerici della visita in `VisitaRequest` (`@Positive`, `@Digits`, `@Max`, ben validati). Chi chiama l'API `/pazienti` bypassando il frontend può quindi inserire qualsiasi carattere in quei campi, anche se `frontend-professionisti/` ora filtra e valida correttamente lato client (bug fix del 2026-08-31, vedi [stato](stato.md)). Segnalato da un fix di UI, non ancora deciso se/quando colmarlo.
-
 ## Risolte
 
 - ~~Perché due frontend Vue separati invece di una singola app con routing/permessi per ruolo?~~ Risolto in [architettura](architettura.md).
 - ~~Terminologia "paziente" vs "cliente"~~: sono due concetti distinti, non sinonimi. Risolto in [glossario](glossario.md).
 - ~~`token_azione`: token in chiaro, nessuna pulizia, reset ripetuti non invalidano i precedenti~~. Risolto il 2026-08-30, vedi [moduli/inviti-e-token](moduli/inviti-e-token.md).
+- ~~Migrazione V8 (`data_nascita` obbligatoria) da verificare contro il database `hexis` reale~~. Segnalato il 2026-09-01, confermato dallo stesso giorno da Andrea: la tabella `pazienti` in `hexis` è vuota, quindi l'`ALTER TABLE ... SET NOT NULL` non incontra righe esistenti con `data_nascita` nulla — nessuna azione manuale necessaria prima del prossimo avvio.
+- ~~Accoppiamento MAMC ↔ protocollo plicometrico~~ (2026-09-01): Andrea ha confermato che va bene così — MAMC resta un valore "opportunistico", calcolabile solo quando il protocollo scelto include comunque la plica tricipitale (tutti tranne Jackson-Pollock 3 su un uomo) e per sesso M/F. Nessuna azione.
+- ~~Incoerenza tra densità corporea e percentuale di grasso quando scatta il limite di sicurezza~~ (2026-09-01): deciso di non falsificare mai la densità corporea persistita (resta sempre il vero output della formula, anche quando implica un `%BF` clinicamente implausibile) — ricalcolarla dall'inverso di Siri l'avrebbe resa un dato inventato, in contrasto con il principio di riproducibilità storica dello spec. Aggiunto invece un flag esplicito `Plicometria.limite_sicurezza_applicato` (migrazione V13) che segnala quando i due valori non si riconciliano tra loro via Siri, così una futura UI può mostrarlo senza dover ricalcolare per dedurlo. Vedi [modello-dati](modello-dati.md).

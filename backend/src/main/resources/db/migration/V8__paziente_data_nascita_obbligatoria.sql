@@ -1,0 +1,1 @@
+ALTER TABLE pazienti ALTER COLUMN data_nascita SET NOT NULL;

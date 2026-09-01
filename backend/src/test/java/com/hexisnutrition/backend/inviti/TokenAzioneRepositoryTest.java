@@ -2,6 +2,7 @@ package com.hexisnutrition.backend.inviti;
 
 import com.hexisnutrition.backend.pazienti.Paziente;
 import com.hexisnutrition.backend.pazienti.PazienteRepository;
+import com.hexisnutrition.backend.pazienti.Sesso;
 import com.hexisnutrition.backend.professionisti.Professionista;
 import com.hexisnutrition.backend.professionisti.ProfessionistaRepository;
 import com.hexisnutrition.backend.support.AbstractIntegrationTest;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,7 +40,7 @@ class TokenAzioneRepositoryTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca@example.com", null, null, null, null, null));
+                "luca@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
 
         TokenAzione token = TokenAzione.perPaziente(TipoToken.INVITO, paziente.getId(), Duration.ofDays(7));
         tokenAzioneRepository.save(token);

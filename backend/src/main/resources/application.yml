@@ -12,6 +12,10 @@ spring:
   flyway:
     enabled: true
 
+server:
+  error:
+    include-message: always
+
 resend:
   base-url: https://api.resend.com
   api-key: ${RESEND_API_KEY:}

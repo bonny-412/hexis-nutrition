@@ -22,7 +22,7 @@ function creaRouter() {
 
 const pazienteEsempio = {
   id: '1', nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
-  telefono: null, dataNascita: null, sesso: null, lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO' as const,
+  telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO' as const,
 }
 
 describe('PazientiListView', () => {

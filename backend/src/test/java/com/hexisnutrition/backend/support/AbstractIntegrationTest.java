@@ -30,6 +30,6 @@ public abstract class AbstractIntegrationTest {
      */
     @BeforeEach
     void svuotaDatabase() {
-        jdbcTemplate.execute("TRUNCATE TABLE token_azione, visite, pazienti, professionisti RESTART IDENTITY CASCADE");
+        jdbcTemplate.execute("TRUNCATE TABLE token_azione, plicometrie, visite, pazienti, professionisti RESTART IDENTITY CASCADE");
     }
 }

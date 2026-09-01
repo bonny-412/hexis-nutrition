@@ -2,6 +2,7 @@ package com.hexisnutrition.backend.auth;
 
 import com.hexisnutrition.backend.pazienti.Paziente;
 import com.hexisnutrition.backend.pazienti.PazienteRepository;
+import com.hexisnutrition.backend.pazienti.Sesso;
 import com.hexisnutrition.backend.pazienti.StatoAccountPaziente;
 import com.hexisnutrition.backend.professionisti.Professionista;
 import com.hexisnutrition.backend.professionisti.ProfessionistaRepository;
@@ -13,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -78,7 +81,7 @@ class AuthControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(new Professionista(
                 "prof@example.com", passwordEncoder.encode("x"), "Anna", "Bianchi"));
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca@example.com", null, null, null, null, null);
+                "luca@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
         paziente.setPasswordHash(passwordEncoder.encode("password123"));
         paziente.setStatoAccount(StatoAccountPaziente.INVITATO);
         pazienteRepository.save(paziente);
@@ -166,7 +169,7 @@ class AuthControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(new Professionista(
                 "reset5@example.com", passwordEncoder.encode("x"), "Anna", "Bianchi"));
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca-reset@example.com", null, null, null, null, null);
+                "luca-reset@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
         paziente.setPasswordHash(passwordEncoder.encode("vecchia"));
         paziente.setStatoAccount(StatoAccountPaziente.ATTIVO);
         paziente = pazienteRepository.save(paziente);
@@ -230,7 +233,7 @@ class AuthControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(new Professionista(
                 "prof10@example.com", passwordEncoder.encode("x"), "Anna", "Bianchi"));
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca-reset2@example.com", null, null, null, null, null);
+                "luca-reset2@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
         paziente.setPasswordHash(passwordEncoder.encode("vecchia"));
         paziente.setStatoAccount(StatoAccountPaziente.ATTIVO);
         paziente = pazienteRepository.save(paziente);

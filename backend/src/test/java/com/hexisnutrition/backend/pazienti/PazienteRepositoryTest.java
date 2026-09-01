@@ -33,7 +33,7 @@ class PazienteRepositoryTest extends AbstractIntegrationTest {
                 new Professionista("prof@example.com", "hash", "Anna", "Bianchi"));
 
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca.verdi@example.com", "3331234567", LocalDate.of(1990, 5, 20), "M", "Impiegato", TipoLavoro.ATTIVO);
+                "luca.verdi@example.com", "3331234567", LocalDate.of(1990, 5, 20), Sesso.M, "Impiegato", TipoLavoro.ATTIVO);
         pazienteRepository.save(paziente);
 
         List<Paziente> pazienti = pazienteRepository.findAllByProfessionistaId(professionista.getId());
@@ -48,7 +48,7 @@ class PazienteRepositoryTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof2@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "attivo@example.com", null, null, null, null, null);
+                "attivo@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
         paziente.setStatoAccount(StatoAccountPaziente.ATTIVO);
         paziente.setPasswordHash("hash-paziente");
         pazienteRepository.save(paziente);

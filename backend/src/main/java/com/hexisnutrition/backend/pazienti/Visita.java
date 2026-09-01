@@ -2,6 +2,8 @@ package com.hexisnutrition.backend.pazienti;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -35,38 +37,51 @@ public class Visita {
     @Column(name = "circonferenza_vita_cm")
     private BigDecimal circonferenzaVitaCm;
 
-    @Column(name = "circonferenza_ombelico_cm")
-    private BigDecimal circonferenzaOmbelicoCm;
-
     @Column(name = "circonferenza_fianchi_cm")
     private BigDecimal circonferenzaFianchiCm;
 
-    @Column(name = "circonferenza_petto_cm")
-    private BigDecimal circonferenzaPettoCm;
+    @Column(name = "circonferenza_addome_cm")
+    private BigDecimal circonferenzaAddomeCm;
 
-    @Column(name = "circonferenza_coscia_dx_cm")
-    private BigDecimal circonferenzaCosciaDxCm;
+    @Column(name = "circonferenza_braccio_rilassato_cm")
+    private BigDecimal circonferenzaBraccioRilassatoCm;
 
-    @Column(name = "circonferenza_coscia_sx_cm")
-    private BigDecimal circonferenzaCosciaSxCm;
+    @Column(name = "circonferenza_coscia_cm")
+    private BigDecimal circonferenzaCosciaCm;
 
-    @Column(name = "circonferenza_polpaccio_dx_cm")
-    private BigDecimal circonferenzaPolpaccioDxCm;
+    @Column(name = "circonferenza_polpaccio_cm")
+    private BigDecimal circonferenzaPolpaccioCm;
 
-    @Column(name = "circonferenza_polpaccio_sx_cm")
-    private BigDecimal circonferenzaPolpaccioSxCm;
+    @Column(name = "circonferenza_collo_cm")
+    private BigDecimal circonferenzaColloCm;
 
-    @Column(name = "larghezza_spalle_cm")
-    private BigDecimal larghezzaSpalleCm;
+    @Column(name = "circonferenza_torace_cm")
+    private BigDecimal circonferenzaToraceCm;
 
-    @Column(name = "circonferenza_spalle_cm")
-    private BigDecimal circonferenzaSpalleCm;
+    @Column(name = "circonferenza_braccio_contratto_cm")
+    private BigDecimal circonferenzaBraccioContrattoCm;
 
-    @Column(name = "circonferenza_bicipite_dx_cm")
-    private BigDecimal circonferenzaBicipiteDxCm;
+    @Column(name = "circonferenza_avambraccio_cm")
+    private BigDecimal circonferenzaAvambraccioCm;
 
-    @Column(name = "circonferenza_bicipite_sx_cm")
-    private BigDecimal circonferenzaBicipiteSxCm;
+    @Column(name = "circonferenza_caviglia_cm")
+    private BigDecimal circonferenzaCavigliaCm;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "protocollo_vita", nullable = false)
+    private ProtocolloVita protocolloVita = ProtocolloVita.OMS;
+
+    @Column(name = "bmi")
+    private BigDecimal bmi;
+
+    @Column(name = "whr")
+    private BigDecimal whr;
+
+    @Column(name = "whtr")
+    private BigDecimal whtr;
+
+    @Column(name = "mamc_cm")
+    private BigDecimal mamcCm;
 
     @Column(name = "creato_il", nullable = false)
     private Instant creatoIl = Instant.now();
@@ -75,12 +90,12 @@ public class Visita {
     }
 
     public Visita(UUID pazienteId, LocalDate dataVisita, Integer altezzaCm, BigDecimal pesoKg,
-                  BigDecimal circonferenzaVitaCm, BigDecimal circonferenzaOmbelicoCm,
-                  BigDecimal circonferenzaFianchiCm, BigDecimal circonferenzaPettoCm,
-                  BigDecimal circonferenzaCosciaDxCm, BigDecimal circonferenzaCosciaSxCm,
-                  BigDecimal circonferenzaPolpaccioDxCm, BigDecimal circonferenzaPolpaccioSxCm,
-                  BigDecimal larghezzaSpalleCm, BigDecimal circonferenzaSpalleCm,
-                  BigDecimal circonferenzaBicipiteDxCm, BigDecimal circonferenzaBicipiteSxCm) {
+                  BigDecimal circonferenzaVitaCm, BigDecimal circonferenzaFianchiCm,
+                  BigDecimal circonferenzaAddomeCm, BigDecimal circonferenzaBraccioRilassatoCm,
+                  BigDecimal circonferenzaCosciaCm, BigDecimal circonferenzaPolpaccioCm,
+                  BigDecimal circonferenzaColloCm, BigDecimal circonferenzaToraceCm,
+                  BigDecimal circonferenzaBraccioContrattoCm, BigDecimal circonferenzaAvambraccioCm,
+                  BigDecimal circonferenzaCavigliaCm, ProtocolloVita protocolloVita) {
         this.pazienteId = pazienteId;
         if (dataVisita != null) {
             this.dataVisita = dataVisita;
@@ -88,17 +103,19 @@ public class Visita {
         this.altezzaCm = altezzaCm;
         this.pesoKg = pesoKg;
         this.circonferenzaVitaCm = circonferenzaVitaCm;
-        this.circonferenzaOmbelicoCm = circonferenzaOmbelicoCm;
         this.circonferenzaFianchiCm = circonferenzaFianchiCm;
-        this.circonferenzaPettoCm = circonferenzaPettoCm;
-        this.circonferenzaCosciaDxCm = circonferenzaCosciaDxCm;
-        this.circonferenzaCosciaSxCm = circonferenzaCosciaSxCm;
-        this.circonferenzaPolpaccioDxCm = circonferenzaPolpaccioDxCm;
-        this.circonferenzaPolpaccioSxCm = circonferenzaPolpaccioSxCm;
-        this.larghezzaSpalleCm = larghezzaSpalleCm;
-        this.circonferenzaSpalleCm = circonferenzaSpalleCm;
-        this.circonferenzaBicipiteDxCm = circonferenzaBicipiteDxCm;
-        this.circonferenzaBicipiteSxCm = circonferenzaBicipiteSxCm;
+        this.circonferenzaAddomeCm = circonferenzaAddomeCm;
+        this.circonferenzaBraccioRilassatoCm = circonferenzaBraccioRilassatoCm;
+        this.circonferenzaCosciaCm = circonferenzaCosciaCm;
+        this.circonferenzaPolpaccioCm = circonferenzaPolpaccioCm;
+        this.circonferenzaColloCm = circonferenzaColloCm;
+        this.circonferenzaToraceCm = circonferenzaToraceCm;
+        this.circonferenzaBraccioContrattoCm = circonferenzaBraccioContrattoCm;
+        this.circonferenzaAvambraccioCm = circonferenzaAvambraccioCm;
+        this.circonferenzaCavigliaCm = circonferenzaCavigliaCm;
+        if (protocolloVita != null) {
+            this.protocolloVita = protocolloVita;
+        }
     }
 
     public UUID getId() {
@@ -125,47 +142,79 @@ public class Visita {
         return circonferenzaVitaCm;
     }
 
-    public BigDecimal getCirconferenzaOmbelicoCm() {
-        return circonferenzaOmbelicoCm;
-    }
-
     public BigDecimal getCirconferenzaFianchiCm() {
         return circonferenzaFianchiCm;
     }
 
-    public BigDecimal getCirconferenzaPettoCm() {
-        return circonferenzaPettoCm;
+    public BigDecimal getCirconferenzaAddomeCm() {
+        return circonferenzaAddomeCm;
     }
 
-    public BigDecimal getCirconferenzaCosciaDxCm() {
-        return circonferenzaCosciaDxCm;
+    public BigDecimal getCirconferenzaBraccioRilassatoCm() {
+        return circonferenzaBraccioRilassatoCm;
     }
 
-    public BigDecimal getCirconferenzaCosciaSxCm() {
-        return circonferenzaCosciaSxCm;
+    public BigDecimal getCirconferenzaCosciaCm() {
+        return circonferenzaCosciaCm;
     }
 
-    public BigDecimal getCirconferenzaPolpaccioDxCm() {
-        return circonferenzaPolpaccioDxCm;
+    public BigDecimal getCirconferenzaPolpaccioCm() {
+        return circonferenzaPolpaccioCm;
     }
 
-    public BigDecimal getCirconferenzaPolpaccioSxCm() {
-        return circonferenzaPolpaccioSxCm;
+    public BigDecimal getCirconferenzaColloCm() {
+        return circonferenzaColloCm;
     }
 
-    public BigDecimal getLarghezzaSpalleCm() {
-        return larghezzaSpalleCm;
+    public BigDecimal getCirconferenzaToraceCm() {
+        return circonferenzaToraceCm;
     }
 
-    public BigDecimal getCirconferenzaSpalleCm() {
-        return circonferenzaSpalleCm;
+    public BigDecimal getCirconferenzaBraccioContrattoCm() {
+        return circonferenzaBraccioContrattoCm;
     }
 
-    public BigDecimal getCirconferenzaBicipiteDxCm() {
-        return circonferenzaBicipiteDxCm;
+    public BigDecimal getCirconferenzaAvambraccioCm() {
+        return circonferenzaAvambraccioCm;
     }
 
-    public BigDecimal getCirconferenzaBicipiteSxCm() {
-        return circonferenzaBicipiteSxCm;
+    public BigDecimal getCirconferenzaCavigliaCm() {
+        return circonferenzaCavigliaCm;
+    }
+
+    public ProtocolloVita getProtocolloVita() {
+        return protocolloVita;
+    }
+
+    public BigDecimal getBmi() {
+        return bmi;
+    }
+
+    public void setBmi(BigDecimal bmi) {
+        this.bmi = bmi;
+    }
+
+    public BigDecimal getWhr() {
+        return whr;
+    }
+
+    public void setWhr(BigDecimal whr) {
+        this.whr = whr;
+    }
+
+    public BigDecimal getWhtr() {
+        return whtr;
+    }
+
+    public void setWhtr(BigDecimal whtr) {
+        this.whtr = whtr;
+    }
+
+    public BigDecimal getMamcCm() {
+        return mamcCm;
+    }
+
+    public void setMamcCm(BigDecimal mamcCm) {
+        this.mamcCm = mamcCm;
     }
 }

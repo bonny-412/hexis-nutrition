@@ -18,7 +18,7 @@ public record PazienteResponse(
     public static PazienteResponse da(Paziente paziente) {
         return new PazienteResponse(paziente.getId(), paziente.getNome(), paziente.getCognome(),
                 paziente.getEmail(), paziente.getTelefono(), paziente.getDataNascita(),
-                paziente.getSesso(), paziente.getLavoro(),
+                paziente.getSesso().name(), paziente.getLavoro(),
                 paziente.getTipoLavoro() != null ? paziente.getTipoLavoro().name() : null,
                 paziente.getStatoAccount().name());
     }
