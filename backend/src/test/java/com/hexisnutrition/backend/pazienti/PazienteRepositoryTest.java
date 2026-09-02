@@ -61,4 +61,16 @@ class PazienteRepositoryTest extends AbstractIntegrationTest {
                 "attivo@example.com", StatoAccountPaziente.INVITATO);
         assertThat(esisteNonAttivo).isFalse();
     }
+
+    @Test
+    void unNuovoPazienteNonEArchiviatoPerDefault() {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-archivio@example.com", "hash", "Anna", "Bianchi"));
+        Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
+                "RSSMRA80A01H501U", "luca.archivio@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
+        pazienteRepository.save(paziente);
+
+        Paziente ritrovato = pazienteRepository.findById(paziente.getId()).orElseThrow();
+        assertThat(ritrovato.isArchiviato()).isFalse();
+    }
 }

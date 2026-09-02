@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { toast } from 'vue-sonner'
 import AppShell from '@/components/AppShell.vue'
 import { dettaglio, invita, type Paziente } from '@/api/pazienti'
 import { ApiError } from '@/api/client'
@@ -11,7 +12,6 @@ const route = useRoute()
 const paziente = ref<Paziente | null>(null)
 const erroreCaricamento = ref<string | null>(null)
 const invitoInCorso = ref(false)
-const erroreInvito = ref(false)
 
 async function carica() {
   try {
@@ -28,12 +28,12 @@ async function carica() {
 async function onInvita() {
   if (!paziente.value) return
   invitoInCorso.value = true
-  erroreInvito.value = false
   try {
     await invita(paziente.value.id)
     paziente.value.statoAccount = 'INVITATO'
+    toast.success('Invito inviato.')
   } catch {
-    erroreInvito.value = true
+    toast.error('Non è stato possibile inviare l\'invito.')
   } finally {
     invitoInCorso.value = false
   }
@@ -52,8 +52,6 @@ onMounted(carica)
       <p class="text-(--fg2)">{{ paziente.email }}</p>
       <p class="text-(--fg3)">Codice fiscale: {{ paziente.codiceFiscale }}</p>
       <p class="mt-1 flex items-center gap-1.5 text-(--fg3)">Stato account: <Badge variant="secondary">{{ paziente.statoAccount }}</Badge></p>
-
-      <p v-if="erroreInvito" class="mt-2 text-sm text-(--danger)">Non è stato possibile inviare l'invito.</p>
 
       <Button
         v-if="paziente.statoAccount !== 'ATTIVO'"

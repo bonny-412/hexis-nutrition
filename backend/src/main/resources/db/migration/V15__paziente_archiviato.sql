@@ -1,0 +1,1 @@
+ALTER TABLE pazienti ADD COLUMN archiviato BOOLEAN NOT NULL DEFAULT false;

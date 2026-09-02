@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ApiError } from '@/api/client'
+import { toast } from 'vue-sonner'
 import { Eye, EyeOff } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,8 +15,6 @@ const password = ref('')
 const ricordami = ref(true)
 const passwordVisibile = ref(false)
 const inCorso = ref(false)
-const erroreCredenziali = ref(false)
-const erroreGenerico = ref(false)
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -24,17 +23,15 @@ const route = useRoute()
 async function onSubmit() {
   if (inCorso.value) return
   inCorso.value = true
-  erroreCredenziali.value = false
-  erroreGenerico.value = false
   try {
     await auth.login(email.value, password.value, ricordami.value)
     const destinazione = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
     router.push(destinazione)
   } catch (errore) {
     if (errore instanceof ApiError && errore.status === 401) {
-      erroreCredenziali.value = true
+      toast.error('Email o password non corrette. Riprova.')
     } else {
-      erroreGenerico.value = true
+      toast.error('Servizio temporaneamente non raggiungibile. Riprova più tardi.')
     }
   } finally {
     inCorso.value = false
@@ -91,23 +88,6 @@ async function onSubmit() {
         <div class="mb-8">
           <h1 class="font-heading text-3xl italic text-(--fg)">Accedi</h1>
           <p class="mt-2 text-sm text-(--fg3)">Inserisci le tue credenziali per entrare nel tuo studio</p>
-        </div>
-
-        <!-- Alert Errori -->
-        <div
-          v-if="erroreCredenziali"
-          class="mb-6 flex items-start gap-3 rounded-xl border border-(--danger)/20 bg-(--warn-bg) p-3.5 text-xs font-medium text-(--danger)"
-        >
-          <AlertCircle :size="16" class="mt-0.5 shrink-0" />
-          <span>Email o password non corrette. Riprova.</span>
-        </div>
-
-        <div
-          v-if="erroreGenerico"
-          class="mb-6 flex items-start gap-3 rounded-xl border border-(--danger)/20 bg-(--warn-bg) p-3.5 text-xs font-medium text-(--danger)"
-        >
-          <AlertCircle :size="16" class="mt-0.5 shrink-0" />
-          <span>Servizio temporaneamente non raggiungibile. Riprova più tardi.</span>
         </div>
 
         <form class="space-y-4" @submit.prevent="onSubmit">
@@ -167,7 +147,7 @@ async function onSubmit() {
           <Button
             type="submit"
             :disabled="inCorso"
-            class="mt-2 h-11 w-full rounded-xl bg-(--green) text-sm font-semibold text-white shadow-sm transition-all hover:bg-(--green-d) active:scale-[0.99]"
+            class="mt-2 h-11 w-full rounded-xl bg-(--green) text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary/80 active:not-aria-[haspopup]:translate-y-0.5"
           >
             <Loader2 v-if="inCorso" :size="18" class="mr-2 animate-spin" />
             <span>{{ inCorso ? 'Accesso in corso…' : 'Accedi' }}</span>

@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
 import { apiRequest } from './client'
-import { lista, dettaglio, crea, invita } from './pazienti'
+import { lista, dettaglio, crea, invita, archivia, deArchivia, cerca } from './pazienti'
 
 vi.mock('./client', () => ({ apiRequest: vi.fn() }))
 
 const pazienteEsempio = {
   id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
   telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
+  archiviato: false,
 }
 
 describe('api/pazienti', () => {
@@ -50,5 +51,46 @@ describe('api/pazienti', () => {
     await invita('1')
 
     expect(apiRequest).toHaveBeenCalledWith('/pazienti/1/invito', { method: 'POST' })
+  })
+
+  it('archivia chiama POST /pazienti/{id}/archivia', async () => {
+    vi.mocked(apiRequest).mockResolvedValue(undefined)
+
+    await archivia('1')
+
+    expect(apiRequest).toHaveBeenCalledWith('/pazienti/1/archivia', { method: 'POST' })
+  })
+
+  it('deArchivia chiama POST /pazienti/{id}/de-archivia', async () => {
+    vi.mocked(apiRequest).mockResolvedValue(undefined)
+
+    await deArchivia('1')
+
+    expect(apiRequest).toHaveBeenCalledWith('/pazienti/1/de-archivia', { method: 'POST' })
+  })
+
+  it('cerca chiama GET /pazienti/ricerca senza parametri se non specificati', async () => {
+    const paginaEsempio = { contenuto: [pazienteEsempio], paginaCorrente: 0, dimensionePagina: 20, totaleElementi: 1, totalePagine: 1 }
+    vi.mocked(apiRequest).mockResolvedValue(paginaEsempio)
+
+    const risultato = await cerca()
+
+    expect(apiRequest).toHaveBeenCalledWith('/pazienti/ricerca')
+    expect(risultato).toEqual(paginaEsempio)
+  })
+
+  it('cerca costruisce la query string con tutti i filtri passati', async () => {
+    vi.mocked(apiRequest).mockResolvedValue({ contenuto: [], paginaCorrente: 1, dimensionePagina: 10, totaleElementi: 0, totalePagine: 0 })
+
+    await cerca({
+      pagina: 1, dimensione: 10, ordinaPer: 'dataNascita', direzione: 'desc',
+      ricerca: 'marco', statoAccount: 'ATTIVO', sesso: 'M',
+      dataNascitaDa: '1990-01-01', dataNascitaA: '2000-01-01', archiviato: true,
+    })
+
+    expect(apiRequest).toHaveBeenCalledWith(
+      '/pazienti/ricerca?pagina=1&dimensione=10&ordinaPer=dataNascita&direzione=desc&ricerca=marco' +
+      '&statoAccount=ATTIVO&sesso=M&dataNascitaDa=1990-01-01&dataNascitaA=2000-01-01&archiviato=true',
+    )
   })
 })

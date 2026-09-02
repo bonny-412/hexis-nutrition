@@ -1,11 +1,15 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
+import { toast } from 'vue-sonner'
 import ResetPasswordView from './ResetPasswordView.vue'
 import * as authApi from '@/api/auth'
 import { ApiError } from '@/api/client'
 
 vi.mock('@/api/auth')
+vi.mock('vue-sonner', () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}))
 
 function creaRouter() {
   return createRouter({
@@ -29,7 +33,7 @@ describe('ResetPasswordView', () => {
     await wrapper.findAll('input[type="password"]')[1].setValue('altra1234')
     await wrapper.find('form').trigger('submit')
 
-    expect(wrapper.text()).toContain('non coincidono')
+    expect(toast.error).toHaveBeenCalledWith('Le due password non coincidono.')
     expect(authApi.resetPassword).not.toHaveBeenCalled()
   })
 
@@ -61,6 +65,9 @@ describe('ResetPasswordView', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
-    expect(wrapper.text()).toContain('non è più valido')
+    expect(toast.error).toHaveBeenCalledWith(
+      'Il link non è più valido: richiedine uno nuovo.',
+      expect.objectContaining({ action: expect.objectContaining({ label: 'Richiedi un nuovo link' }) }),
+    )
   })
 })

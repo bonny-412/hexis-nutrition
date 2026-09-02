@@ -1,10 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
+import { toast } from 'vue-sonner'
 import PasswordDimenticataView from './PasswordDimenticataView.vue'
 import * as authApi from '@/api/auth'
 
 vi.mock('@/api/auth')
+vi.mock('vue-sonner', () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}))
 
 function creaRouter() {
   return createRouter({
@@ -43,6 +47,6 @@ describe('PasswordDimenticataView', () => {
     await flushPromises()
 
     expect(wrapper.text()).not.toContain("Se l'indirizzo esiste")
-    expect(wrapper.text().toLowerCase()).toContain('errore')
+    expect(toast.error).toHaveBeenCalledWith('Errore di rete, riprova.')
   })
 })

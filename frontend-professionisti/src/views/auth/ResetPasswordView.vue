@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { toast } from 'vue-sonner'
 import { resetPassword } from '@/api/auth'
 import { ApiError } from '@/api/client'
 import { Button } from '@/components/ui/button'
@@ -14,16 +15,14 @@ const token = typeof route.query.token === 'string' ? route.query.token : ''
 const nuovaPassword = ref('')
 const conferma = ref('')
 const inCorso = ref(false)
-const errore = ref('')
 
 async function onSubmit() {
-  errore.value = ''
   if (nuovaPassword.value.length < 8) {
-    errore.value = 'La password deve avere almeno 8 caratteri.'
+    toast.error('La password deve avere almeno 8 caratteri.')
     return
   }
   if (nuovaPassword.value !== conferma.value) {
-    errore.value = 'Le due password non coincidono.'
+    toast.error('Le due password non coincidono.')
     return
   }
   inCorso.value = true
@@ -31,9 +30,16 @@ async function onSubmit() {
     await resetPassword(token, nuovaPassword.value)
     router.push({ name: 'login' })
   } catch (e) {
-    errore.value = e instanceof ApiError && e.status === 400
-      ? 'Il link non è più valido: richiedine uno nuovo.'
-      : 'Errore imprevisto, riprova.'
+    if (e instanceof ApiError && e.status === 400) {
+      toast.error('Il link non è più valido: richiedine uno nuovo.', {
+        action: {
+          label: 'Richiedi un nuovo link',
+          onClick: () => router.push({ name: 'password-dimenticata' }),
+        },
+      })
+    } else {
+      toast.error('Errore imprevisto, riprova.')
+    }
   } finally {
     inCorso.value = false
   }
@@ -44,16 +50,6 @@ async function onSubmit() {
   <div class="flex min-h-screen items-center justify-center bg-(--bg)">
     <form class="w-full max-w-90" @submit.prevent="onSubmit">
       <h1 class="font-heading text-2xl italic text-(--fg)">Imposta una nuova password</h1>
-
-      <div
-        v-if="errore"
-        class="mt-4 rounded-lg border border-(--bd2) bg-(--warn-bg) px-3 py-2.5 text-sm font-semibold text-(--danger)"
-      >
-        {{ errore }}
-        <router-link v-if="errore.includes('richiedine')" to="/password-dimenticata" class="ml-1 underline">
-          Richiedi un nuovo link
-        </router-link>
-      </div>
 
       <div class="mb-3.5 mt-4 flex flex-col gap-1.5">
         <Label for="nuova-password" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Nuova password</Label>

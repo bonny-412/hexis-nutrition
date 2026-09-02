@@ -21,9 +21,9 @@ function creaRouter() {
 describe('DashboardView', () => {
   it('mostra il numero di pazienti attivi calcolato dalla lista reale', async () => {
     vi.mocked(pazientiApi.lista).mockResolvedValue([
-      { id: '1', nome: 'A', cognome: 'A', codiceFiscale: 'RSSMRA80A01H501U', email: 'a@a.it', telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'ATTIVO' },
-      { id: '2', nome: 'B', cognome: 'B', codiceFiscale: 'RSSMRA80A01H501U', email: 'b@b.it', telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'ATTIVO' },
-      { id: '3', nome: 'C', cognome: 'C', codiceFiscale: 'RSSMRA80A01H501U', email: 'c@c.it', telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO' },
+      { id: '1', nome: 'A', cognome: 'A', codiceFiscale: 'RSSMRA80A01H501U', email: 'a@a.it', telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'ATTIVO', archiviato: false },
+      { id: '2', nome: 'B', cognome: 'B', codiceFiscale: 'RSSMRA80A01H501U', email: 'b@b.it', telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'ATTIVO', archiviato: false },
+      { id: '3', nome: 'C', cognome: 'C', codiceFiscale: 'RSSMRA80A01H501U', email: 'c@c.it', telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false },
     ])
     const router = creaRouter()
     router.push('/')

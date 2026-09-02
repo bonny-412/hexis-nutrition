@@ -61,7 +61,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         tokenAzioneRepository.deleteAll();
         pazienteRepository.deleteAll();
         professionistaRepository.deleteAll();
-        fakeEmailSender.getInviate().clear();
+        fakeEmailSender.reset();
     }
 
     private String tokenPer(Professionista professionista) {
@@ -87,7 +87,8 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.codiceFiscale").value("RSSMRA80A01H501U"))
                 .andExpect(jsonPath("$.lavoro").value("Impiegato"))
                 .andExpect(jsonPath("$.tipoLavoro").value("ATTIVO"))
-                .andExpect(jsonPath("$.statoAccount").value("MAI_INVITATO"));
+                .andExpect(jsonPath("$.statoAccount").value("MAI_INVITATO"))
+                .andExpect(jsonPath("$.archiviato").value(false));
 
         List<Visita> visite = visitaRepository.findAll();
         assertThat(visite).hasSize(1);
@@ -454,6 +455,236 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         mockMvc.perform(post("/pazienti/" + paziente.getId() + "/invito")
                         .header("Authorization", "Bearer " + tokenPer(professionista)))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void invitoAPazienteArchiviatoRestituisce400() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-arch-invito@example.com", "hash", "Anna", "Bianchi"));
+        Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
+                "RSSMRA80A01H501U", "luca-arch-invito@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
+        paziente.setArchiviato(true);
+        pazienteRepository.save(paziente);
+
+        mockMvc.perform(post("/pazienti/" + paziente.getId() + "/invito")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void invitoConEmailNonInviataRestituisce502ENonModificaLoStato() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-email-fallita@example.com", "hash", "Anna", "Bianchi"));
+        Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
+                "RSSMRA80A01H501U", "luca-email-fallita@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+        fakeEmailSender.simulaFallimento();
+
+        mockMvc.perform(post("/pazienti/" + paziente.getId() + "/invito")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isBadGateway());
+
+        Paziente nonModificato = pazienteRepository.findById(paziente.getId()).orElseThrow();
+        assertThat(nonModificato.getStatoAccount()).isEqualTo(StatoAccountPaziente.MAI_INVITATO);
+        assertThat(tokenAzioneRepository.count()).isZero();
+    }
+
+    @Test
+    void archiviaImpostaIlFlagArchiviato() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-archivia@example.com", "hash", "Anna", "Bianchi"));
+        Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
+                "RSSMRA80A01H501U", "luca-archivia@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+
+        mockMvc.perform(post("/pazienti/" + paziente.getId() + "/archivia")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isNoContent());
+
+        Paziente aggiornato = pazienteRepository.findById(paziente.getId()).orElseThrow();
+        assertThat(aggiornato.isArchiviato()).isTrue();
+    }
+
+    @Test
+    void deArchiviaRimuoveIlFlagArchiviato() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-dearchivia@example.com", "hash", "Anna", "Bianchi"));
+        Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
+                "RSSMRA80A01H501U", "luca-dearchivia@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
+        paziente.setArchiviato(true);
+        pazienteRepository.save(paziente);
+
+        mockMvc.perform(post("/pazienti/" + paziente.getId() + "/de-archivia")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isNoContent());
+
+        Paziente aggiornato = pazienteRepository.findById(paziente.getId()).orElseThrow();
+        assertThat(aggiornato.isArchiviato()).isFalse();
+    }
+
+    @Test
+    void nonSiPuoArchiviareUnPazienteDiUnAltroProfessionista() throws Exception {
+        Professionista professionistaA = professionistaRepository.save(
+                new Professionista("prof-a-arch@example.com", "hash", "A", "A"));
+        Professionista professionistaB = professionistaRepository.save(
+                new Professionista("prof-b-arch@example.com", "hash", "B", "B"));
+        Paziente pazienteDiB = pazienteRepository.save(new Paziente(professionistaB.getId(), "Paziente", "DiB",
+                "RSSMRA80A01H501U", "diB-arch@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+
+        mockMvc.perform(post("/pazienti/" + pazienteDiB.getId() + "/archivia")
+                        .header("Authorization", "Bearer " + tokenPer(professionistaA)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void ricercaSenzaParametriRestituiscePaginaDefaultEscludendoArchiviati() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-ricerca1@example.com", "hash", "Anna", "Bianchi"));
+        pazienteRepository.save(new Paziente(professionista.getId(), "Marco", "Rossi",
+                "RSSMRC90A01H501U", "marco-ricerca1@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+        Paziente archiviato = new Paziente(professionista.getId(), "Giulia", "Verdi",
+                "VRDGLI85A41H501U", "giulia-ricerca1@example.com", null, LocalDate.of(1985, 3, 10), Sesso.F, null, null);
+        archiviato.setArchiviato(true);
+        pazienteRepository.save(archiviato);
+
+        mockMvc.perform(get("/pazienti/ricerca")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenuto.length()").value(1))
+                .andExpect(jsonPath("$.contenuto[0].email").value("marco-ricerca1@example.com"))
+                .andExpect(jsonPath("$.paginaCorrente").value(0))
+                .andExpect(jsonPath("$.dimensionePagina").value(20))
+                .andExpect(jsonPath("$.totaleElementi").value(1))
+                .andExpect(jsonPath("$.totalePagine").value(1));
+    }
+
+    @Test
+    void ricercaConArchiviatoTrueRestituisceSoloGliArchiviati() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-ricerca2@example.com", "hash", "Anna", "Bianchi"));
+        Paziente archiviato = new Paziente(professionista.getId(), "Giulia", "Verdi",
+                "VRDGLI85A41H501U", "giulia-ricerca2@example.com", null, LocalDate.of(1985, 3, 10), Sesso.F, null, null);
+        archiviato.setArchiviato(true);
+        pazienteRepository.save(archiviato);
+        pazienteRepository.save(new Paziente(professionista.getId(), "Marco", "Rossi",
+                "RSSMRC90A01H501U", "marco-ricerca2@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+
+        mockMvc.perform(get("/pazienti/ricerca?archiviato=true")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenuto.length()").value(1))
+                .andExpect(jsonPath("$.contenuto[0].email").value("giulia-ricerca2@example.com"));
+    }
+
+    @Test
+    void ricercaConTestoLibero() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-ricerca3@example.com", "hash", "Anna", "Bianchi"));
+        pazienteRepository.save(new Paziente(professionista.getId(), "Marco", "Rossi",
+                "RSSMRC90A01H501U", "marco-ricerca3@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+        pazienteRepository.save(new Paziente(professionista.getId(), "Giulia", "Verdi",
+                "VRDGLI85A41H501U", "giulia-ricerca3@example.com", null, LocalDate.of(1985, 3, 10), Sesso.F, null, null));
+
+        mockMvc.perform(get("/pazienti/ricerca?ricerca=giulia")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenuto.length()").value(1))
+                .andExpect(jsonPath("$.contenuto[0].nome").value("Giulia"));
+    }
+
+    @Test
+    void ricercaConStatoAccountSessoEIntervalloDataNascita() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-ricerca4@example.com", "hash", "Anna", "Bianchi"));
+        Paziente match = new Paziente(professionista.getId(), "Marco", "Rossi",
+                "RSSMRC90A01H501U", "marco-ricerca4@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
+        match.setStatoAccount(StatoAccountPaziente.ATTIVO);
+        pazienteRepository.save(match);
+        pazienteRepository.save(new Paziente(professionista.getId(), "Marco", "Bianchi",
+                "BNCMRC70A01H501U", "marco-vecchio-ricerca4@example.com", null, LocalDate.of(1970, 1, 1), Sesso.M, null, null));
+
+        mockMvc.perform(get("/pazienti/ricerca")
+                        .param("statoAccount", "ATTIVO")
+                        .param("sesso", "M")
+                        .param("dataNascitaDa", "1985-01-01")
+                        .param("dataNascitaA", "1995-01-01")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenuto.length()").value(1))
+                .andExpect(jsonPath("$.contenuto[0].email").value("marco-ricerca4@example.com"));
+    }
+
+    @Test
+    void ricercaOrdinaEPaginaIRisultati() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-ricerca5@example.com", "hash", "Anna", "Bianchi"));
+        pazienteRepository.save(new Paziente(professionista.getId(), "Carlo", "Neri",
+                "NRICRL90A01H501U", "carlo-ricerca5@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+        pazienteRepository.save(new Paziente(professionista.getId(), "Anna", "Bruni",
+                "BRNANN90A01H501U", "anna-ricerca5@example.com", null, LocalDate.of(1990, 1, 1), Sesso.F, null, null));
+        pazienteRepository.save(new Paziente(professionista.getId(), "Bruno", "Villa",
+                "VLLBRN90A01H501U", "bruno-ricerca5@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+
+        mockMvc.perform(get("/pazienti/ricerca")
+                        .param("dimensione", "2")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenuto.length()").value(2))
+                .andExpect(jsonPath("$.contenuto[0].nome").value("Anna"))
+                .andExpect(jsonPath("$.contenuto[1].nome").value("Bruno"))
+                .andExpect(jsonPath("$.totaleElementi").value(3))
+                .andExpect(jsonPath("$.totalePagine").value(2));
+
+        mockMvc.perform(get("/pazienti/ricerca")
+                        .param("dimensione", "2")
+                        .param("pagina", "1")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenuto.length()").value(1))
+                .andExpect(jsonPath("$.contenuto[0].nome").value("Carlo"))
+                .andExpect(jsonPath("$.paginaCorrente").value(1));
+
+        mockMvc.perform(get("/pazienti/ricerca")
+                        .param("ordinaPer", "nome")
+                        .param("direzione", "desc")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenuto[0].nome").value("Carlo"))
+                .andExpect(jsonPath("$.contenuto[2].nome").value("Anna"));
+    }
+
+    @Test
+    void ricercaSenzaAutenticazioneRestituisce401() throws Exception {
+        mockMvc.perform(get("/pazienti/ricerca"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void archiviareUnPazienteGiaArchiviatoNonProduceErrori() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-arch-idem@example.com", "hash", "Anna", "Bianchi"));
+        Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
+                "RSSMRA80A01H501U", "luca-arch-idem@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
+        paziente.setArchiviato(true);
+        pazienteRepository.save(paziente);
+
+        mockMvc.perform(post("/pazienti/" + paziente.getId() + "/archivia")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isNoContent());
+
+        assertThat(pazienteRepository.findById(paziente.getId()).orElseThrow().isArchiviato()).isTrue();
+    }
+
+    @Test
+    void deArchiviareUnPazienteNonArchiviatoNonProduceErrori() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-dearch-idem@example.com", "hash", "Anna", "Bianchi"));
+        Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
+                "RSSMRA80A01H501U", "luca-dearch-idem@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+
+        mockMvc.perform(post("/pazienti/" + paziente.getId() + "/de-archivia")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isNoContent());
+
+        assertThat(pazienteRepository.findById(paziente.getId()).orElseThrow().isArchiviato()).isFalse();
     }
 
     @Test

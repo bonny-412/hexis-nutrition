@@ -80,7 +80,7 @@ function onLogout() {
             <div class="mt-0.5 text-[11px] font-normal text-(--fg4)">{{ auth.professionista?.email }}</div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem data-test="logout" variant="destructive" @click="onLogout">
+          <DropdownMenuItem data-test="logout" class="cursor-pointer" variant="destructive" @click="onLogout">
             <LogOut :size="14" />
             Esci dall'account
           </DropdownMenuItem>

@@ -12,6 +12,28 @@ export interface Paziente {
   lavoro: string | null
   tipoLavoro: 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO' | null
   statoAccount: 'MAI_INVITATO' | 'INVITATO' | 'ATTIVO'
+  archiviato: boolean
+}
+
+export interface CriteriRicercaPazienti {
+  pagina?: number
+  dimensione?: number
+  ordinaPer?: 'nome' | 'cognome' | 'dataNascita' | 'statoAccount'
+  direzione?: 'asc' | 'desc'
+  ricerca?: string
+  statoAccount?: Paziente['statoAccount']
+  sesso?: 'M' | 'F' | 'ALTRO'
+  dataNascitaDa?: string
+  dataNascitaA?: string
+  archiviato?: boolean
+}
+
+export interface PaginaPazienti {
+  contenuto: Paziente[]
+  paginaCorrente: number
+  dimensionePagina: number
+  totaleElementi: number
+  totalePagine: number
 }
 
 export interface CreaPlicometriaRequest {
@@ -74,4 +96,29 @@ export function crea(request: CreaPazienteRequest): Promise<Paziente> {
 
 export function invita(id: string): Promise<void> {
   return apiRequest<void>(`/pazienti/${id}/invito`, { method: 'POST' })
+}
+
+export function archivia(id: string): Promise<void> {
+  return apiRequest<void>(`/pazienti/${id}/archivia`, { method: 'POST' })
+}
+
+export function deArchivia(id: string): Promise<void> {
+  return apiRequest<void>(`/pazienti/${id}/de-archivia`, { method: 'POST' })
+}
+
+export function cerca(criteri: CriteriRicercaPazienti = {}): Promise<PaginaPazienti> {
+  const parametri = new URLSearchParams()
+  if (criteri.pagina !== undefined) parametri.set('pagina', String(criteri.pagina))
+  if (criteri.dimensione !== undefined) parametri.set('dimensione', String(criteri.dimensione))
+  if (criteri.ordinaPer) parametri.set('ordinaPer', criteri.ordinaPer)
+  if (criteri.direzione) parametri.set('direzione', criteri.direzione)
+  if (criteri.ricerca) parametri.set('ricerca', criteri.ricerca)
+  if (criteri.statoAccount) parametri.set('statoAccount', criteri.statoAccount)
+  if (criteri.sesso) parametri.set('sesso', criteri.sesso)
+  if (criteri.dataNascitaDa) parametri.set('dataNascitaDa', criteri.dataNascitaDa)
+  if (criteri.dataNascitaA) parametri.set('dataNascitaA', criteri.dataNascitaA)
+  if (criteri.archiviato !== undefined) parametri.set('archiviato', String(criteri.archiviato))
+
+  const query = parametri.toString()
+  return apiRequest<PaginaPazienti>(`/pazienti/ricerca${query ? `?${query}` : ''}`)
 }

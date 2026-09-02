@@ -2,6 +2,7 @@
 import { computed, nextTick, ref, type Ref } from 'vue'
 import type { AcceptableValue } from 'reka-ui'
 import { useRouter } from 'vue-router'
+import { toast } from 'vue-sonner'
 import AppShell from '@/components/AppShell.vue'
 import DatiVisitaForm from '@/components/pazienti/DatiVisitaForm.vue'
 import { crea } from '@/api/pazienti'
@@ -16,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { DatePicker } from '@/components/ui/date-picker'
-import { AlertCircle, ArrowLeft, Save } from '@lucide/vue'
+import { ArrowLeft, Save } from '@lucide/vue'
 
 // Import di tutti i filtri, regex e validatori dal file esterno
 import {
@@ -51,7 +52,6 @@ const eta = computed(() => calcolaEta(dataNascita.value))
 const datiVisitaForm = ref<InstanceType<typeof DatiVisitaForm>>()
 
 const inCorso = ref(false)
-const errore = ref('')
 const errori = ref<Record<string, string>>({})
 
 const router = useRouter()
@@ -135,7 +135,6 @@ async function onSubmit() {
   if (!campiValidi || !visitaValida) return
 
   inCorso.value = true
-  errore.value = ''
   try {
     const paziente = await crea({
       nome: nome.value,
@@ -149,9 +148,10 @@ async function onSubmit() {
       tipoLavoro: tipoLavoro.value || undefined,
       visita: datiVisitaForm.value!.ottieniDati(),
     })
+    toast.success('Paziente creato con successo.')
     router.push(`/pazienti/${paziente.id}`)
   } catch {
-    errore.value = 'Non è stato possibile creare il paziente. Controlla i dati e riprova.'
+    toast.error('Non è stato possibile creare il paziente. Controlla i dati e riprova.')
   } finally {
     inCorso.value = false
   }
@@ -161,21 +161,14 @@ async function onSubmit() {
 <template>
   <AppShell>
     <div class="mb-6">
-      <router-link to="/pazienti"
-          class="inline-flex items-center gap-2 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)"
-        >
-          <ArrowLeft :size="16" />
-          <span>Torna alla lista pazienti</span>
-        </router-link>
-        <h1 class="font-heading text-3xl italic text-(--fg)">Nuovo paziente</h1>
-        <p class="mt-1 text-sm text-(--fg3)">
-          Inserisci le informazioni personali e i dati della prima visita per registrare una nuova scheda clinica.
-        </p>
-    </div>
-
-    <div v-if="errore" class="mb-6 flex items-start gap-3 rounded-xl border border-(--danger)/20 bg-(--warn-bg) p-3.5 text-xs font-medium text-(--danger)">
-      <AlertCircle :size="16" class="mt-0.5 shrink-0" />
-      <span>{{ errore }}</span>
+      <router-link to="/pazienti" class="inline-flex items-center gap-2 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)">
+        <ArrowLeft :size="16" />
+        <span>Torna alla lista pazienti</span>
+      </router-link>
+      <h1 class="font-heading text-3xl italic text-(--fg)">Nuovo paziente</h1>
+      <p class="mt-1 text-sm text-(--fg3)">
+        Inserisci le informazioni personali e i dati della prima visita per registrare una nuova scheda clinica.
+      </p>
     </div>
 
     <form class="space-y-6" @submit.prevent="onSubmit">
@@ -267,7 +260,7 @@ async function onSubmit() {
       </div>
 
       <div class="w-full flex justify-end">
-        <Button type="submit" :disabled="inCorso" size="lg" class="hover:bg-primary/80">
+        <Button type="submit" :disabled="inCorso" size="lg" class="hover:bg-primary/80 active:not-aria-[haspopup]:translate-y-0.5">
           <Save :size="16" />
           {{ inCorso ? 'Salvataggio…' : 'Salva paziente' }}
         </Button>

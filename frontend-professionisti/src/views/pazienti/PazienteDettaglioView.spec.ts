@@ -2,11 +2,15 @@ import { describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { createRouter, createMemoryHistory } from 'vue-router'
+import { toast } from 'vue-sonner'
 import PazienteDettaglioView from './PazienteDettaglioView.vue'
 import * as pazientiApi from '@/api/pazienti'
 import { ApiError } from '@/api/client'
 
 vi.mock('@/api/pazienti')
+vi.mock('vue-sonner', () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}))
 
 function creaRouter() {
   return createRouter({
@@ -24,7 +28,7 @@ describe('PazienteDettaglioView', () => {
   it('mostra i dati del paziente caricato', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     const router = creaRouter()
     router.push('/pazienti/1')
@@ -40,7 +44,7 @@ describe('PazienteDettaglioView', () => {
   it('invita il paziente e ne aggiorna lo stato mostrato', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     vi.mocked(pazientiApi.invita).mockResolvedValue(undefined)
     const router = creaRouter()
@@ -55,6 +59,7 @@ describe('PazienteDettaglioView', () => {
 
     expect(pazientiApi.invita).toHaveBeenCalledWith('1')
     expect(wrapper.text()).toContain('INVITATO')
+    expect(toast.success).toHaveBeenCalledWith('Invito inviato.')
   })
 
   it('mostra un messaggio se il paziente non è stato trovato (404)', async () => {
@@ -82,7 +87,7 @@ describe('PazienteDettaglioView', () => {
   it('mostra un errore se l\'invito fallisce e non aggiorna lo stato del paziente (nessun optimistic update)', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     vi.mocked(pazientiApi.invita).mockRejectedValue(new Error('409'))
     const router = creaRouter()
@@ -95,7 +100,7 @@ describe('PazienteDettaglioView', () => {
     await pulsanteInvita?.trigger('click')
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Non è stato possibile inviare l\'invito')
+    expect(toast.error).toHaveBeenCalledWith('Non è stato possibile inviare l\'invito.')
     expect(wrapper.findAll('button').some((b) => b.text() === 'Invita')).toBe(true)
     expect(wrapper.text()).not.toContain('Reinvia invito')
   })

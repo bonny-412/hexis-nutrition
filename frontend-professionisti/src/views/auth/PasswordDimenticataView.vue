@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { toast } from 'vue-sonner'
 import { richiediResetPassword } from '@/api/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -7,18 +8,16 @@ import { Label } from '@/components/ui/label'
 
 const email = ref('')
 const inviato = ref(false)
-const erroreRete = ref(false)
 const inCorso = ref(false)
 
 async function onSubmit() {
   if (inCorso.value) return
   inCorso.value = true
-  erroreRete.value = false
   try {
     await richiediResetPassword(email.value)
     inviato.value = true
   } catch {
-    erroreRete.value = true
+    toast.error('Errore di rete, riprova.')
   } finally {
     inCorso.value = false
   }
@@ -35,10 +34,6 @@ async function onSubmit() {
       </p>
 
       <form v-else class="mt-4" @submit.prevent="onSubmit">
-        <p v-if="erroreRete" class="mb-4 text-sm font-semibold text-(--danger)">
-          Errore di rete, riprova.
-        </p>
-
         <div class="mb-5 flex flex-col gap-1.5">
           <Label for="email" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Email</Label>
           <Input id="email" v-model="email" type="email" required placeholder="nome@studio.it" />

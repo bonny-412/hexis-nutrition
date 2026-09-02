@@ -19,11 +19,16 @@ Endpoint del sotto-progetto "Fondamenta" (vedi [decisioni/0002](decisioni/0002-a
 | GET | `/auth/me` | autenticato (PROFESSIONISTA o PAZIENTE) | Restituisce i dati dell'utente autenticato: `{id, nome, cognome, email, ruolo}`; 401 senza token valido. Aggiunto per permettere al frontend di ripristinare la sessione e mostrare il nome utente. |
 | POST | `/pazienti` | PROFESSIONISTA | Crea anagrafica paziente **e prima visita** (dati antropometrici, circonferenze, plicometria opzionale), 201; 400 se la visita manca, se altezza/peso al suo interno sono nulli, se `dataNascita` o `sesso` sono nulli (entrambi obbligatori dal 2026-09-01), se `codiceFiscale` è vuoto o non ha 16 caratteri alfanumerici (obbligatorio dal 2026-09-02, non univoco), se la plicometria è richiesta con `sesso: ALTRO`, se mancano pliche obbligatorie per il protocollo scelto, o se manca una riga di coefficienti Durnin-Womersley applicabile all'età |
 | GET | `/pazienti` | PROFESSIONISTA | Lista pazienti del professionista autenticato (isolamento multi-tenant) |
+| GET | `/pazienti/ricerca` | PROFESSIONISTA | Lista pazienti paginata/filtrata/ordinata (`pagina`, `dimensione`, `ordinaPer`, `direzione`, `ricerca`, `statoAccount`, `sesso`, `dataNascitaDa`/`dataNascitaA`, `archiviato`) — esclude i pazienti archiviati per default, `archiviato=true` mostra solo quelli |
 | GET | `/pazienti/{id}` | PROFESSIONISTA | Dettaglio paziente; 404 se appartiene a un altro professionista |
-| POST | `/pazienti/{id}/invito` | PROFESSIONISTA | Genera token invito e invia email; 409 se il paziente è già ATTIVO |
+| POST | `/pazienti/{id}/invito` | PROFESSIONISTA | Genera token invito e invia email; 409 se il paziente è già ATTIVO, 400 se il paziente è archiviato |
+| POST | `/pazienti/{id}/archivia` | PROFESSIONISTA | Archivia (soft-delete logico) il paziente, 204; idempotente |
+| POST | `/pazienti/{id}/de-archivia` | PROFESSIONISTA | De-archivia il paziente, 204; idempotente |
 | POST | `/inviti/{token}/attiva` | pubblico (con token) | Il paziente imposta la password e attiva l'account; 400 se token non valido, 409 se l'email è già in uso da un account attivo |
 
 `POST /pazienti` richiede un oggetto `visita` obbligatorio nel body (altezza e peso obbligatori, le 11 circonferenze sono opzionali, il blocco `plicometria` è opzionale e annidato dentro `visita`) — creato in transazione con l'anagrafica. `sesso` del paziente è obbligatorio (`M`/`F`/`ALTRO`) dal 2026-09-01; la plicometria è disponibile solo per `M`/`F`. Dettagli campo per campo in `VisitaRequest` e `PlicometriaRequest` (`backend/src/main/java/com/hexisnutrition/backend/pazienti/`).
+
+`GET /pazienti/ricerca` è separato da `GET /pazienti` (che resta la lista completa non paginata, usata dalla dashboard): risponde con `{contenuto, paginaCorrente, dimensionePagina, totaleElementi, totalePagine}`, tutti i filtri sono combinati in AND, `dimensione` è clampata lato server tra 1 e 100.
 
 Richiesta/risposta dettagliate (campi, validazioni) sono nel codice: `AuthController`/`PazienteController`/`InvitoController` e i relativi DTO in `backend/src/main/java/com/hexisnutrition/backend/{auth,pazienti,inviti}/`. Nessun endpoint di self-signup professionista esiste (per scelta, vedi ADR 0002).
 

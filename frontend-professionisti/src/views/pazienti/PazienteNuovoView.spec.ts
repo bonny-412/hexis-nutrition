@@ -2,12 +2,16 @@ import { describe, expect, it, vi, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { createRouter, createMemoryHistory } from 'vue-router'
+import { toast } from 'vue-sonner'
 import PazienteNuovoView from './PazienteNuovoView.vue'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Select, SelectTrigger } from '@/components/ui/select'
 import * as pazientiApi from '@/api/pazienti'
 
 vi.mock('@/api/pazienti')
+vi.mock('vue-sonner', () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}))
 
 function creaRouter() {
   return createRouter({
@@ -62,7 +66,7 @@ describe('PazienteNuovoView', () => {
   it('crea il paziente con i dati anagrafici e della visita, poi naviga al suo dettaglio', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '42', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     const router = creaRouter()
     router.push('/pazienti/nuovo')
@@ -92,12 +96,13 @@ describe('PazienteNuovoView', () => {
       },
     })
     expect(router.currentRoute.value.path).toBe('/pazienti/42')
+    expect(toast.success).toHaveBeenCalledWith('Paziente creato con successo.')
   })
 
   it('invia tutte le circonferenze della visita con i valori corretti nei rispettivi campi', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '43', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     const router = creaRouter()
     router.push('/pazienti/nuovo')
@@ -162,7 +167,7 @@ describe('PazienteNuovoView', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Non è stato possibile creare il paziente')
+    expect(toast.error).toHaveBeenCalledWith('Non è stato possibile creare il paziente. Controlla i dati e riprova.')
   })
 
   it('non invia la richiesta e mostra gli errori sotto i campi obbligatori vuoti', async () => {
@@ -346,7 +351,7 @@ describe('PazienteNuovoView', () => {
   it('include la plicometria nel payload quando protocollo e pliche sono compilati', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '44', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     const router = creaRouter()
     router.push('/pazienti/nuovo')
@@ -388,7 +393,7 @@ describe('PazienteNuovoView', () => {
   it('permette di riportare il tipo lavoro allo stato non selezionato', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '45', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     const router = creaRouter()
     router.push('/pazienti/nuovo')

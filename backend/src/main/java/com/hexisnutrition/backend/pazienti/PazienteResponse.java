@@ -14,13 +14,14 @@ public record PazienteResponse(
         String sesso,
         String lavoro,
         String tipoLavoro,
-        String statoAccount
+        String statoAccount,
+        boolean archiviato
 ) {
     public static PazienteResponse da(Paziente paziente) {
         return new PazienteResponse(paziente.getId(), paziente.getNome(), paziente.getCognome(),
                 paziente.getCodiceFiscale(), paziente.getEmail(), paziente.getTelefono(), paziente.getDataNascita(),
                 paziente.getSesso().name(), paziente.getLavoro(),
                 paziente.getTipoLavoro() != null ? paziente.getTipoLavoro().name() : null,
-                paziente.getStatoAccount().name());
+                paziente.getStatoAccount().name(), paziente.isArchiviato());
     }
 }

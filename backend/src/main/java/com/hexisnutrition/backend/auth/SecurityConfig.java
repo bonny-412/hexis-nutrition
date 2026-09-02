@@ -56,6 +56,7 @@ public class SecurityConfig {
                         (request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/password-dimenticata", "/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/inviti/*/attiva").permitAll()
                         .requestMatchers("/pazienti/**").hasRole("PROFESSIONISTA")

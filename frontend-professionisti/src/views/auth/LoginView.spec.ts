@@ -2,9 +2,14 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { createRouter, createMemoryHistory } from 'vue-router'
+import { toast } from 'vue-sonner'
 import { useAuthStore } from '@/stores/auth'
 import { ApiError } from '@/api/client'
 import LoginView from './LoginView.vue'
+
+vi.mock('vue-sonner', () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}))
 
 function creaRouterDiTest() {
   return createRouter({
@@ -21,6 +26,8 @@ describe('LoginView', () => {
   let router: ReturnType<typeof creaRouterDiTest>
 
   beforeEach(async () => {
+    vi.mocked(toast.error).mockClear()
+    vi.mocked(toast.success).mockClear()
     router = creaRouterDiTest()
     router.push('/login')
     await router.isReady()
@@ -40,7 +47,7 @@ describe('LoginView', () => {
     expect(router.currentRoute.value.path).toBe('/')
   })
 
-  it('mostra il banner di errore su credenziali non valide', async () => {
+  it('mostra un toast di errore su credenziali non valide', async () => {
     const wrapper = mount(LoginView, { global: { plugins: [router, createTestingPinia()] } })
     const auth = useAuthStore()
     vi.mocked(auth.login).mockRejectedValue(new ApiError(401, 'Credenziali non valide'))
@@ -48,7 +55,7 @@ describe('LoginView', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Email o password non corrette')
+    expect(toast.error).toHaveBeenCalledWith('Email o password non corrette. Riprova.')
   })
 
   it('il link "password dimenticata" porta alla rotta dedicata', () => {
@@ -59,7 +66,7 @@ describe('LoginView', () => {
     expect(link.exists()).toBe(true)
   })
 
-  it('mostra un banner generico se il login fallisce per un errore non gestito (es. servizio non raggiungibile)', async () => {
+  it('mostra un toast generico se il login fallisce per un errore non gestito (es. servizio non raggiungibile)', async () => {
     const wrapper = mount(LoginView, { global: { plugins: [router, createTestingPinia()] } })
     const auth = useAuthStore()
     vi.mocked(auth.login).mockRejectedValue(new Error('network down'))
@@ -67,10 +74,10 @@ describe('LoginView', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Servizio non raggiungibile')
+    expect(toast.error).toHaveBeenCalledWith('Servizio temporaneamente non raggiungibile. Riprova più tardi.')
   })
 
-  it('mostra il banner generico anche per un ApiError diverso da 401 (es. ruolo non professionista)', async () => {
+  it('mostra il toast generico anche per un ApiError diverso da 401 (es. ruolo non professionista)', async () => {
     const wrapper = mount(LoginView, { global: { plugins: [router, createTestingPinia()] } })
     const auth = useAuthStore()
     vi.mocked(auth.login).mockRejectedValue(new ApiError(403, 'Accesso riservato ai professionisti'))
@@ -78,6 +85,6 @@ describe('LoginView', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
-    expect(wrapper.text()).toContain('Servizio non raggiungibile')
+    expect(toast.error).toHaveBeenCalledWith('Servizio temporaneamente non raggiungibile. Riprova più tardi.')
   })
 })

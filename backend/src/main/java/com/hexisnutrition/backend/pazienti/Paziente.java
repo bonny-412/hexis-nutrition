@@ -58,6 +58,9 @@ public class Paziente {
     @Column(name = "stato_account", nullable = false)
     private StatoAccountPaziente statoAccount = StatoAccountPaziente.MAI_INVITATO;
 
+    @Column(nullable = false)
+    private boolean archiviato = false;
+
     @Column(name = "creato_il", nullable = false)
     private Instant creatoIl = Instant.now();
 
@@ -136,5 +139,13 @@ public class Paziente {
 
     public void setStatoAccount(StatoAccountPaziente statoAccount) {
         this.statoAccount = statoAccount;
+    }
+
+    public boolean isArchiviato() {
+        return archiviato;
+    }
+
+    public void setArchiviato(boolean archiviato) {
+        this.archiviato = archiviato;
     }
 }
