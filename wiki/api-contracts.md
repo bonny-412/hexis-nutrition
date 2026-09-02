@@ -21,6 +21,7 @@ Endpoint del sotto-progetto "Fondamenta" (vedi [decisioni/0002](decisioni/0002-a
 | GET | `/pazienti` | PROFESSIONISTA | Lista pazienti del professionista autenticato (isolamento multi-tenant) |
 | GET | `/pazienti/ricerca` | PROFESSIONISTA | Lista pazienti paginata/filtrata/ordinata (`pagina`, `dimensione`, `ordinaPer`, `direzione`, `ricerca`, `statoAccount`, `sesso`, `dataNascitaDa`/`dataNascitaA`, `archiviato`) — esclude i pazienti archiviati per default, `archiviato=true` mostra solo quelli |
 | GET | `/pazienti/{id}` | PROFESSIONISTA | Dettaglio paziente; 404 se appartiene a un altro professionista |
+| GET | `/pazienti/{id}/visite` | PROFESSIONISTA | Storico visite del paziente, ordinato per `dataVisita` crescente; ogni voce include `plicometria` annidata (nullable, presente solo se la plicometria è stata eseguita per quella visita); 404 se il paziente appartiene a un altro professionista |
 | POST | `/pazienti/{id}/invito` | PROFESSIONISTA | Genera token invito e invia email; 409 se il paziente è già ATTIVO, 400 se il paziente è archiviato |
 | POST | `/pazienti/{id}/archivia` | PROFESSIONISTA | Archivia (soft-delete logico) il paziente, 204; idempotente |
 | POST | `/pazienti/{id}/de-archivia` | PROFESSIONISTA | De-archivia il paziente, 204; idempotente |

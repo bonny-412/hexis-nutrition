@@ -173,7 +173,12 @@ async function onSubmit() {
 
     <form class="space-y-6" @submit.prevent="onSubmit">
       <div class="rounded-2xl border border-(--bd) bg-(--surf) p-6 shadow-sm sm:p-8">
-        <h2 class="font-heading text-xl italic text-(--fg)">Dati anagrafici</h2>
+        <div class="w-full flex items-center">
+          <!-- <div class="flex size-8 shrink-0 items-center justify-center  text-(--green)">
+            <User :size="18" />
+          </div> -->
+          <h2 class="font-heading text-xl italic text-(--fg)">Dati anagrafici</h2>
+        </div>
 
         <div class="mt-5 grid gap-5 sm:grid-cols-2">
           <div class="flex flex-col gap-1.5">

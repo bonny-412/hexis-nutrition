@@ -34,6 +34,7 @@ public class PazienteService {
     private final EmailSender emailSender;
     private final PasswordEncoder passwordEncoder;
     private final PlicometriaService plicometriaService;
+    private final PlicometriaRepository plicometriaRepository;
 
     public PazienteService(PazienteRepository pazienteRepository,
                             VisitaRepository visitaRepository,
@@ -41,7 +42,8 @@ public class PazienteService {
                             TokenAzioneRepository tokenAzioneRepository,
                             EmailSender emailSender,
                             PasswordEncoder passwordEncoder,
-                            PlicometriaService plicometriaService) {
+                            PlicometriaService plicometriaService,
+                            PlicometriaRepository plicometriaRepository) {
         this.pazienteRepository = pazienteRepository;
         this.visitaRepository = visitaRepository;
         this.professionistaRepository = professionistaRepository;
@@ -49,6 +51,7 @@ public class PazienteService {
         this.emailSender = emailSender;
         this.passwordEncoder = passwordEncoder;
         this.plicometriaService = plicometriaService;
+        this.plicometriaRepository = plicometriaRepository;
     }
 
     @Transactional
@@ -100,6 +103,13 @@ public class PazienteService {
             throw new PazienteNonTrovatoException();
         }
         return paziente;
+    }
+
+    public List<VisitaResponse> visite(UUID professionistaId, UUID pazienteId) {
+        dettaglio(professionistaId, pazienteId);
+        return visitaRepository.findAllByPazienteIdOrderByDataVisitaAsc(pazienteId).stream()
+                .map(v -> VisitaResponse.da(v, plicometriaRepository.findByVisitaId(v.getId()).orElse(null)))
+                .toList();
     }
 
     @Transactional

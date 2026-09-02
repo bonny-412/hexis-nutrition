@@ -36,6 +36,41 @@ export interface PaginaPazienti {
   totalePagine: number
 }
 
+export interface Circonferenze {
+  vitaCm: number | null
+  fianchiCm: number | null
+  addomeCm: number | null
+  braccioRilassatoCm: number | null
+  cosciaCm: number | null
+  polpaccioCm: number | null
+  colloCm: number | null
+  toraceCm: number | null
+  braccioContrattoCm: number | null
+  avambraccioCm: number | null
+  cavigliaCm: number | null
+}
+
+export interface Plicometria {
+  percentualeGrassoCorporeo: number
+  massaGrassaKg: number
+  massaMagraKg: number
+  fmi: number
+  ffmi: number
+}
+
+export interface Visita {
+  id: string
+  dataVisita: string
+  altezzaCm: number
+  pesoKg: number
+  bmi: number | null
+  whr: number | null
+  whtr: number | null
+  mamcCm: number | null
+  circonferenze: Circonferenze
+  plicometria: Plicometria | null
+}
+
 export interface CreaPlicometriaRequest {
   protocollo: 'JACKSON_POLLOCK_3' | 'JACKSON_POLLOCK_7' | 'DURNIN_WOMERSLEY_4' | 'FAULKNER_4' | 'SLAUGHTER_PEDIATRICO' | 'EVANS_ATLETI'
   etniaAtleta?: 'CAUCASICO' | 'AFROAMERICANO'
@@ -121,4 +156,8 @@ export function cerca(criteri: CriteriRicercaPazienti = {}): Promise<PaginaPazie
 
   const query = parametri.toString()
   return apiRequest<PaginaPazienti>(`/pazienti/ricerca${query ? `?${query}` : ''}`)
+}
+
+export function visite(id: string): Promise<Visita[]> {
+  return apiRequest<Visita[]>(`/pazienti/${id}/visite`)
 }

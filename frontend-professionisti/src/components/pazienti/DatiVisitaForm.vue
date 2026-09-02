@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { DatePicker } from '@/components/ui/date-picker'
-import { Percent, Ruler, ScissorsLineDashed } from '@lucide/vue'
+import { Ruler, ScissorsLineDashed } from '@lucide/vue'
 import type { CreaVisitaRequest } from '@/api/pazienti'
 import PlicometriaForm from './PlicometriaForm.vue'
 

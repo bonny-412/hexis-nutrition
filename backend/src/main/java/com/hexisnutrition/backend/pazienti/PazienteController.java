@@ -72,6 +72,11 @@ public class PazienteController {
         return PazienteResponse.da(pazienteService.dettaglio(professionistaId, id));
     }
 
+    @GetMapping("/{id}/visite")
+    public List<VisitaResponse> visite(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id) {
+        return pazienteService.visite(professionistaId, id);
+    }
+
     @PostMapping("/{id}/invito")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void invita(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id) {

@@ -10,6 +10,7 @@ import com.hexisnutrition.backend.professionisti.ProfessionistaRepository;
 import com.hexisnutrition.backend.support.AbstractIntegrationTest;
 import com.hexisnutrition.backend.support.TestEmailConfig;
 import com.hexisnutrition.backend.email.FakeEmailSender;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +18,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -928,5 +931,75 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                                  "plicaSottoscapolareMm":14.00,"plicaSoprailiacaMm":12.00}}}
                                 """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void visiteRestituisceListaVuotaSeIlPazienteNonHaVisite() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-visite-vuote@example.com", "hash", "Anna", "Bianchi"));
+        Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
+                "RSSMRA80A01H501U", "luca-visite-vuote@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+
+        mockMvc.perform(get("/pazienti/" + paziente.getId() + "/visite")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void visiteRestituisceInOrdineCronologicoConPlicometriaSoloDoveApplicata() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-visite-ordine@example.com", "hash", "Anna", "Bianchi"));
+        Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
+                "RSSMRA80A01H501U", "luca-visite-ordine@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+
+        Visita piuRecente = new Visita(paziente.getId(), LocalDate.of(2026, 8, 1), 178, new BigDecimal("77.5"),
+                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS);
+        piuRecente.setBmi(new BigDecimal("24.4"));
+        Visita piuVecchia = new Visita(paziente.getId(), LocalDate.of(2026, 6, 1), 178, new BigDecimal("80.0"),
+                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS);
+        piuVecchia.setBmi(new BigDecimal("25.2"));
+        visitaRepository.save(piuRecente);
+        visitaRepository.save(piuVecchia);
+
+        plicometriaRepository.save(new Plicometria(piuRecente.getId(), ProtocolloPlicometrico.JACKSON_POLLOCK_3, "v1", 36,
+                null, null, null,
+                null, null, new BigDecimal("12.5"),
+                null, null, null,
+                new BigDecimal("15.0"), new BigDecimal("14.0"), null,
+                new BigDecimal("41.5"), new BigDecimal("1.06"), new BigDecimal("18.2"),
+                new BigDecimal("14.1"), new BigDecimal("63.4"), new BigDecimal("4.4"), new BigDecimal("20.1"),
+                false));
+
+        mockMvc.perform(get("/pazienti/" + paziente.getId() + "/visite")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].dataVisita").value("2026-06-01"))
+                .andExpect(jsonPath("$[0].bmi").value(25.2))
+                .andExpect(jsonPath("$[0].plicometria").value(Matchers.nullValue()))
+                .andExpect(jsonPath("$[1].dataVisita").value("2026-08-01"))
+                .andExpect(jsonPath("$[1].bmi").value(24.4))
+                .andExpect(jsonPath("$[1].plicometria.percentualeGrassoCorporeo").value(18.2));
+    }
+
+    @Test
+    void visiteDiPazienteDiAltroProfessionistaRestituisce404() throws Exception {
+        Professionista professionistaA = professionistaRepository.save(
+                new Professionista("prof-visite-a@example.com", "hash", "A", "A"));
+        Professionista professionistaB = professionistaRepository.save(
+                new Professionista("prof-visite-b@example.com", "hash", "B", "B"));
+        Paziente pazienteDiB = pazienteRepository.save(new Paziente(professionistaB.getId(), "Paziente", "DiB",
+                "RSSMRA80A01H501U", "diB-visite@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+
+        mockMvc.perform(get("/pazienti/" + pazienteDiB.getId() + "/visite")
+                        .header("Authorization", "Bearer " + tokenPer(professionistaA)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void visiteSenzaAutenticazioneRestituisce401() throws Exception {
+        mockMvc.perform(get("/pazienti/" + UUID.randomUUID() + "/visite"))
+                .andExpect(status().isUnauthorized());
     }
 }
