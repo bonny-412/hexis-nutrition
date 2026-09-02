@@ -81,7 +81,7 @@ class AuthControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(new Professionista(
                 "prof@example.com", passwordEncoder.encode("x"), "Anna", "Bianchi"));
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
+                "RSSMRA80A01H501U", "luca@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
         paziente.setPasswordHash(passwordEncoder.encode("password123"));
         paziente.setStatoAccount(StatoAccountPaziente.INVITATO);
         pazienteRepository.save(paziente);
@@ -169,7 +169,7 @@ class AuthControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(new Professionista(
                 "reset5@example.com", passwordEncoder.encode("x"), "Anna", "Bianchi"));
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca-reset@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
+                "RSSMRA80A01H501U", "luca-reset@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
         paziente.setPasswordHash(passwordEncoder.encode("vecchia"));
         paziente.setStatoAccount(StatoAccountPaziente.ATTIVO);
         paziente = pazienteRepository.save(paziente);
@@ -233,7 +233,7 @@ class AuthControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(new Professionista(
                 "prof10@example.com", passwordEncoder.encode("x"), "Anna", "Bianchi"));
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca-reset2@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
+                "RSSMRA80A01H501U", "luca-reset2@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
         paziente.setPasswordHash(passwordEncoder.encode("vecchia"));
         paziente.setStatoAccount(StatoAccountPaziente.ATTIVO);
         paziente = pazienteRepository.save(paziente);

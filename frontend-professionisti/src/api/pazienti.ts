@@ -4,6 +4,7 @@ export interface Paziente {
   id: string
   nome: string
   cognome: string
+  codiceFiscale: string
   email: string
   telefono: string | null
   dataNascita: string | null
@@ -49,6 +50,7 @@ export interface CreaVisitaRequest {
 export interface CreaPazienteRequest {
   nome: string
   cognome: string
+  codiceFiscale: string
   email: string
   telefono?: string
   dataNascita: string

@@ -30,7 +30,8 @@ const mediaCalcolata = computed(() => {
 })
 
 watch(mediaCalcolata, (media) => {
-  if (media !== null) emit('update:modelValue', media.toFixed(2).replace('.', ','))
+  if (!tripla.value) return
+  emit('update:modelValue', media !== null ? media.toFixed(2).replace('.', ',') : '')
 })
 
 function onSingoloInput(valore: string | number) {
@@ -74,11 +75,11 @@ function onTriplaChange(valore: boolean) {
     <Input v-if="!tripla" :id="id" :model-value="modelValue" @update:model-value="onSingoloInput" type="text" inputmode="decimal" placeholder="Es. 12,50" :aria-invalid="!!errore" />
 
     <div v-else class="grid grid-cols-3 gap-2">
-      <Input :id="`${id}-m1`" :model-value="misura1" @update:model-value="onMisura1Input" type="text" inputmode="decimal" placeholder="Misura 1" />
-      <Input :id="`${id}-m2`" :model-value="misura2" @update:model-value="onMisura2Input" type="text" inputmode="decimal" placeholder="Misura 2" />
-      <Input :id="`${id}-m3`" :model-value="misura3" @update:model-value="onMisura3Input" type="text" inputmode="decimal" placeholder="Misura 3" />
+      <Input :id="`${id}-m1`" :model-value="misura1" @update:model-value="onMisura1Input" type="text" inputmode="decimal" placeholder="Misura 1" :aria-invalid="!!errore" />
+      <Input :id="`${id}-m2`" :model-value="misura2" @update:model-value="onMisura2Input" type="text" inputmode="decimal" placeholder="Misura 2" :aria-invalid="!!errore" />
+      <Input :id="`${id}-m3`" :model-value="misura3" @update:model-value="onMisura3Input" type="text" inputmode="decimal" placeholder="Misura 3" :aria-invalid="!!errore" />
     </div>
-    <p v-if="tripla && mediaCalcolata !== null" class="text-xs text-(--fg3)">Media calcolata: {{ mediaCalcolata.toFixed(2) }} mm</p>
+    <p v-if="tripla && mediaCalcolata !== null" class="text-xs text-(--fg3)">Media calcolata: {{ mediaCalcolata.toFixed(2).replace('.', ',') }} mm</p>
     <p v-if="errore" class="text-xs font-medium text-(--danger)">{{ errore }}</p>
   </div>
 </template>

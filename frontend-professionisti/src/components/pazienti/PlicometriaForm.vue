@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, type Ref } from 'vue'
+import type { AcceptableValue } from 'reka-ui'
 import {
   Select,
   SelectContent,
@@ -30,7 +31,7 @@ const plicaAddominale = ref('')
 const plicaCoscia = ref('')
 const plicaPolpaccio = ref('')
 
-const valoriPerCampo: Record<Campo, ReturnType<typeof ref<string>>> = {
+const valoriPerCampo: Record<Campo, Ref<string>> = {
   pettorale: plicaPettorale,
   ascellare: plicaAscellare,
   tricipitale: plicaTricipitale,
@@ -65,7 +66,7 @@ const etichette: Record<Campo, string> = {
 
 const VALORE_SELEZIONA = '__seleziona__'
 
-function onProtocolloChange(valore: string) {
+function onProtocolloChange(valore: AcceptableValue) {
   protocollo.value = valore === VALORE_SELEZIONA ? '' : (valore as Protocollo)
 }
 
@@ -87,6 +88,22 @@ watch([protocollo, () => props.sesso], () => {
 
 const errori = ref<Record<string, string>>({})
 
+function erroreCampo(campo: Campo, valore: string): string | undefined {
+  if (!campiVisibili.value.includes(campo)) return undefined
+  if (!valore.trim()) return 'Questa plica è obbligatoria per il protocollo scelto.'
+  return erroreCirconferenza(valore)
+}
+
+for (const campo of Object.keys(valoriPerCampo) as Campo[]) {
+  watch(valoriPerCampo[campo], (valore) => {
+    if (!errori.value[campo]) return
+    if (erroreCampo(campo, valore)) return
+    const nuovi = { ...errori.value }
+    delete nuovi[campo]
+    errori.value = nuovi
+  })
+}
+
 function valida(): boolean {
   if (disabilitato.value || !protocollo.value) {
     errori.value = {}
@@ -94,12 +111,7 @@ function valida(): boolean {
   }
   const nuoviErrori: Record<string, string> = {}
   for (const campo of campiVisibili.value) {
-    const valore = valoriPerCampo[campo].value
-    if (!valore.trim()) {
-      nuoviErrori[campo] = 'Questa plica è obbligatoria per il protocollo scelto.'
-      continue
-    }
-    const messaggio = erroreCirconferenza(valore)
+    const messaggio = erroreCampo(campo, valoriPerCampo[campo].value)
     if (messaggio) nuoviErrori[campo] = messaggio
   }
   errori.value = nuoviErrori

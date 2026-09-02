@@ -44,15 +44,16 @@ onMounted(carica)
 
 <template>
   <AppShell>
-    <p v-if="erroreCaricamento" class="text-[var(--danger)]">{{ erroreCaricamento }}</p>
+    <p v-if="erroreCaricamento" class="text-(--danger)">{{ erroreCaricamento }}</p>
     <div v-else-if="paziente">
-      <h1 class="font-heading text-3xl italic text-[var(--fg)]">
+      <h1 class="font-heading text-3xl italic text-(--fg)">
         {{ paziente.nome }} {{ paziente.cognome }}
       </h1>
-      <p class="text-[var(--fg2)]">{{ paziente.email }}</p>
-      <p class="mt-1 flex items-center gap-1.5 text-[var(--fg3)]">Stato account: <Badge variant="secondary">{{ paziente.statoAccount }}</Badge></p>
+      <p class="text-(--fg2)">{{ paziente.email }}</p>
+      <p class="text-(--fg3)">Codice fiscale: {{ paziente.codiceFiscale }}</p>
+      <p class="mt-1 flex items-center gap-1.5 text-(--fg3)">Stato account: <Badge variant="secondary">{{ paziente.statoAccount }}</Badge></p>
 
-      <p v-if="erroreInvito" class="mt-2 text-sm text-[var(--danger)]">Non è stato possibile inviare l'invito.</p>
+      <p v-if="erroreInvito" class="mt-2 text-sm text-(--danger)">Non è stato possibile inviare l'invito.</p>
 
       <Button
         v-if="paziente.statoAccount !== 'ATTIVO'"

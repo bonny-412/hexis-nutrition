@@ -77,13 +77,14 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca@example.com",
                                  "telefono":"333123456","dataNascita":"1990-05-20","sesso":"M",
                                  "lavoro":"Impiegato","tipoLavoro":"ATTIVO",
                                  "visita":{"altezzaCm":178,"pesoKg":82.5,"circonferenzaVitaCm":95.0}}
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value("luca@example.com"))
+                .andExpect(jsonPath("$.codiceFiscale").value("RSSMRA80A01H501U"))
                 .andExpect(jsonPath("$.lavoro").value("Impiegato"))
                 .andExpect(jsonPath("$.tipoLavoro").value("ATTIVO"))
                 .andExpect(jsonPath("$.statoAccount").value("MAI_INVITATO"));
@@ -104,7 +105,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-11-misure@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-11-misure@example.com",
                                  "dataNascita":"1990-05-20","sesso":"M",
                                  "visita":{"altezzaCm":178,"pesoKg":82.5,
                                  "circonferenzaVitaCm":90.1,"circonferenzaFianchiCm":91.2,
@@ -144,7 +145,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-protocollo-default@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-protocollo-default@example.com",
                                  "dataNascita":"1990-05-20","sesso":"M",
                                  "visita":{"altezzaCm":178,"pesoKg":82.5}}
                                 """))
@@ -163,7 +164,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-data-visita@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-data-visita@example.com",
                                  "dataNascita":"1990-05-20","sesso":"M",
                                  "visita":{"dataVisita":"2026-08-15","altezzaCm":178,"pesoKg":82.5}}
                                 """))
@@ -183,7 +184,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-senza-data-visita@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-senza-data-visita@example.com",
                                  "dataNascita":"1990-05-20","sesso":"M",
                                  "visita":{"altezzaCm":178,"pesoKg":82.5}}
                                 """))
@@ -203,7 +204,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-due-decimali@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-due-decimali@example.com",
                                  "dataNascita":"1990-05-20","sesso":"M",
                                  "visita":{"altezzaCm":178,"pesoKg":82.55,"circonferenzaVitaCm":95.25}}
                                 """))
@@ -224,7 +225,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-bmi-whr@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-bmi-whr@example.com",
                                  "dataNascita":"1990-05-20","sesso":"M",
                                  "visita":{"altezzaCm":180,"pesoKg":82.50,
                                  "circonferenzaVitaCm":95.00,"circonferenzaFianchiCm":100.00}}
@@ -245,7 +246,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         mockMvc.perform(post("/pazienti")
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"nome\":\"Luca\",\"cognome\":\"Verdi\",\"email\":\"luca-senza-visita@example.com\"}"))
+                        .content("{\"nome\":\"Luca\",\"cognome\":\"Verdi\",\"codiceFiscale\":\"RSSMRA80A01H501U\",\"email\":\"luca-senza-visita@example.com\"}"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -258,7 +259,40 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-senza-data-nascita@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-senza-data-nascita@example.com",
+                                 "visita":{"altezzaCm":178,"pesoKg":82.5}}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void creaPazienteSenzaCodiceFiscaleRestituisce400() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-senza-cf@example.com", "hash", "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/pazienti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Luca","cognome":"Verdi","email":"luca-senza-cf@example.com",
+                                 "dataNascita":"1990-05-20","sesso":"M",
+                                 "visita":{"altezzaCm":178,"pesoKg":82.5}}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void creaPazienteConCodiceFiscaleNonValidoRestituisce400() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-cf-non-valido@example.com", "hash", "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/pazienti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"NONVALIDO",
+                                 "email":"luca-cf-non-valido@example.com",
+                                 "dataNascita":"1990-05-20","sesso":"M",
                                  "visita":{"altezzaCm":178,"pesoKg":82.5}}
                                 """))
                 .andExpect(status().isBadRequest());
@@ -273,7 +307,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-visita-incompleta@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-visita-incompleta@example.com",
                                  "visita":{"pesoKg":82.5}}
                                 """))
                 .andExpect(status().isBadRequest());
@@ -288,7 +322,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-visita-senza-peso@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-visita-senza-peso@example.com",
                                  "visita":{"altezzaCm":178}}
                                 """))
                 .andExpect(status().isBadRequest());
@@ -303,7 +337,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-altezza-zero@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-altezza-zero@example.com",
                                  "visita":{"altezzaCm":0,"pesoKg":82.5}}
                                 """))
                 .andExpect(status().isBadRequest());
@@ -318,7 +352,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-peso-negativo@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-peso-negativo@example.com",
                                  "visita":{"altezzaCm":178,"pesoKg":-80}}
                                 """))
                 .andExpect(status().isBadRequest());
@@ -333,7 +367,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-lavoro@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-lavoro@example.com",
                                  "dataNascita":"1990-05-20","sesso":"M",
                                  "lavoro":"Impiegato","tipoLavoro":"ATTIVO",
                                  "visita":{"altezzaCm":178,"pesoKg":82.5}}
@@ -350,9 +384,9 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionistaB = professionistaRepository.save(
                 new Professionista("b@example.com", "hash", "B", "B"));
         pazienteRepository.save(new Paziente(professionistaA.getId(), "Paziente", "DiA",
-                "diA@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "diA@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
         pazienteRepository.save(new Paziente(professionistaB.getId(), "Paziente", "DiB",
-                "diB@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "diB@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
 
         mockMvc.perform(get("/pazienti")
                         .header("Authorization", "Bearer " + tokenPer(professionistaA)))
@@ -368,7 +402,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionistaB = professionistaRepository.save(
                 new Professionista("b2@example.com", "hash", "B", "B"));
         Paziente pazienteDiB = pazienteRepository.save(new Paziente(professionistaB.getId(), "Paziente", "DiB",
-                "diB2@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "diB2@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
 
         mockMvc.perform(get("/pazienti/" + pazienteDiB.getId())
                         .header("Authorization", "Bearer " + tokenPer(professionistaA)))
@@ -380,13 +414,13 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof3@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca3@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca3@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
         String tokenPaziente = jwtService.generateToken(paziente.getId(), Ruolo.PAZIENTE);
 
         mockMvc.perform(post("/pazienti")
                         .header("Authorization", "Bearer " + tokenPaziente)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"nome\":\"X\",\"cognome\":\"Y\",\"email\":\"x@example.com\"}"))
+                        .content("{\"nome\":\"X\",\"cognome\":\"Y\",\"codiceFiscale\":\"RSSMRA80A01H501U\",\"email\":\"x@example.com\"}"))
                 .andExpect(status().isForbidden());
     }
 
@@ -395,7 +429,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof4@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca4@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca4@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
 
         mockMvc.perform(post("/pazienti/" + paziente.getId() + "/invito")
                         .header("Authorization", "Bearer " + tokenPer(professionista)))
@@ -412,7 +446,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof5@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca5@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
+                "RSSMRA80A01H501U", "luca5@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
         paziente.setStatoAccount(StatoAccountPaziente.ATTIVO);
         paziente.setPasswordHash("hash");
         pazienteRepository.save(paziente);
@@ -427,7 +461,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof6@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca6@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca6@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
         TokenAzione token = TokenAzione.perPaziente(TipoToken.INVITO, paziente.getId(), Duration.ofDays(7));
         tokenAzioneRepository.save(token);
 
@@ -446,7 +480,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof7@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca7@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca7@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
         TokenAzione token = TokenAzione.perPaziente(TipoToken.INVITO, paziente.getId(), Duration.ofDays(7));
         tokenAzioneRepository.save(token);
 
@@ -466,7 +500,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("collisione@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "collisione@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "collisione@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
         TokenAzione token = TokenAzione.perPaziente(TipoToken.INVITO, paziente.getId(), Duration.ofDays(7));
         tokenAzioneRepository.save(token);
 
@@ -481,7 +515,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof8@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca8@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca8@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
         TokenAzione token = TokenAzione.perPaziente(TipoToken.RESET_PASSWORD, paziente.getId(), Duration.ofDays(7));
         tokenAzioneRepository.save(token);
 
@@ -496,7 +530,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof9@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "luca9@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca9@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
 
         mockMvc.perform(post("/pazienti/" + paziente.getId() + "/invito")
                         .header("Authorization", "Bearer " + tokenPer(professionista)))
@@ -527,7 +561,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-plico-jp3@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-plico-jp3@example.com",
                                  "dataNascita":"2001-01-01","sesso":"M",
                                  "visita":{"dataVisita":"2026-01-15","altezzaCm":180,"pesoKg":80.00,
                                  "plicometria":{"protocollo":"JACKSON_POLLOCK_3",
@@ -554,7 +588,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-plico-limite@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-plico-limite@example.com",
                                  "dataNascita":"1990-05-20","sesso":"M",
                                  "visita":{"altezzaCm":180,"pesoKg":80.00,
                                  "plicometria":{"protocollo":"EVANS_ATLETI",
@@ -576,7 +610,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-plico-altro@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-plico-altro@example.com",
                                  "dataNascita":"1990-05-20","sesso":"ALTRO",
                                  "visita":{"altezzaCm":178,"pesoKg":82.5,
                                  "plicometria":{"protocollo":"FAULKNER_4",
@@ -595,7 +629,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-plico-mancante@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-plico-mancante@example.com",
                                  "dataNascita":"1990-05-20","sesso":"M",
                                  "visita":{"altezzaCm":178,"pesoKg":82.5,
                                  "plicometria":{"protocollo":"JACKSON_POLLOCK_3","plicaPettoraleMm":10.00}}}
@@ -612,7 +646,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-mamc@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-mamc@example.com",
                                  "dataNascita":"2001-01-01","sesso":"F",
                                  "visita":{"dataVisita":"2026-01-15","altezzaCm":165,"pesoKg":65.00,
                                  "circonferenzaBraccioRilassatoCm":32.00,
@@ -634,7 +668,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-mamc-senza-braccio@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-mamc-senza-braccio@example.com",
                                  "dataNascita":"2001-01-01","sesso":"F",
                                  "visita":{"dataVisita":"2026-01-15","altezzaCm":165,"pesoKg":65.00,
                                  "plicometria":{"protocollo":"JACKSON_POLLOCK_3",
@@ -655,7 +689,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"nome":"Luca","cognome":"Verdi","email":"luca-plico-durnin-eta@example.com",
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-plico-durnin-eta@example.com",
                                  "dataNascita":"2020-01-01","sesso":"M",
                                  "visita":{"dataVisita":"2026-01-15","altezzaCm":120,"pesoKg":25.0,
                                  "plicometria":{"protocollo":"DURNIN_WOMERSLEY_4",

@@ -36,7 +36,7 @@ class VisitaRepositoryTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("visite-prof@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "visite-luca@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "visite-luca@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
 
         Visita visita = new Visita(paziente.getId(), null, 178, new BigDecimal("82.5"),
                 new BigDecimal("95.0"), new BigDecimal("100.0"), null, new BigDecimal("32.0"),

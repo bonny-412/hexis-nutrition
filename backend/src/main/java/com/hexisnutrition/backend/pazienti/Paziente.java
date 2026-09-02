@@ -30,6 +30,9 @@ public class Paziente {
     @Column(nullable = false)
     private String cognome;
 
+    @Column(name = "codice_fiscale", nullable = false)
+    private String codiceFiscale;
+
     @Column(nullable = false)
     private String email;
 
@@ -61,11 +64,12 @@ public class Paziente {
     protected Paziente() {
     }
 
-    public Paziente(UUID professionistaId, String nome, String cognome, String email,
+    public Paziente(UUID professionistaId, String nome, String cognome, String codiceFiscale, String email,
                      String telefono, LocalDate dataNascita, Sesso sesso, String lavoro, TipoLavoro tipoLavoro) {
         this.professionistaId = professionistaId;
         this.nome = nome;
         this.cognome = cognome;
+        this.codiceFiscale = codiceFiscale;
         this.email = email;
         this.telefono = telefono;
         this.dataNascita = dataNascita;
@@ -88,6 +92,10 @@ public class Paziente {
 
     public String getCognome() {
         return cognome;
+    }
+
+    public String getCodiceFiscale() {
+        return codiceFiscale;
     }
 
     public String getEmail() {

@@ -3,8 +3,8 @@ title: Stato del progetto
 tags: [stato]
 stato: stabile
 creato: 2026-08-08
-aggiornato: 2026-09-01
-fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, sorgenti/2026-08-09-test-su-postgres-locale.md, sorgenti/2026-08-09-docker-solo-in-produzione.md, sorgenti/2026-08-30-hash-pulizia-invalidazione-token.md, ../docs/superpowers/specs/2026-08-31-nuovo-paziente-con-visita-design.md, ../docs/superpowers/specs/2026-09-01-plicometria-circonferenze-design.md, ../docs/superpowers/plans/2026-09-01-plicometria-circonferenze.md, log.md#2026-08-31-handoff--bug-fix-controlli-pazientenuovoview--ux-maiuscola-errori-live, log.md#2026-09-01-handoff--pagina-nuovo-paziente-eta-componente-visita-e-data-nascita-obbligatoria, log.md#2026-09-01-handoff--modulo-plicometria-e-redesign-circonferenze]
+aggiornato: 2026-09-02
+fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, sorgenti/2026-08-09-test-su-postgres-locale.md, sorgenti/2026-08-09-docker-solo-in-produzione.md, sorgenti/2026-08-30-hash-pulizia-invalidazione-token.md, ../docs/superpowers/specs/2026-08-31-nuovo-paziente-con-visita-design.md, ../docs/superpowers/specs/2026-09-01-plicometria-circonferenze-design.md, ../docs/superpowers/plans/2026-09-01-plicometria-circonferenze.md, log.md#2026-08-31-handoff--bug-fix-controlli-pazientenuovoview--ux-maiuscola-errori-live, log.md#2026-09-01-handoff--pagina-nuovo-paziente-eta-componente-visita-e-data-nascita-obbligatoria, log.md#2026-09-01-handoff--modulo-plicometria-e-redesign-circonferenze, log.md#2026-09-02-handoff--rifiniture-plicometria-fix-typescript-sulle-select-riorganizzazione-views]
 ---
 
 # Stato — hexis-nutrition
@@ -159,18 +159,40 @@ Andrea ha lanciato di persona `mvn clean install` (backend) e l'avvio del fronte
 
 Lavoro in staging, nessun commit — **Andrea farà alcune modifiche a mano** prima del prossimo avvio di sessione.
 
+## Sessione del 2 settembre 2026 — rifiniture Plicometria, fix TypeScript sulle Select, riorganizzazione `views/`
+
+Andrea ha fatto la prima verifica manuale end-to-end (build/avvio confermati ok in precedenza) e ha richiesto, una alla volta, piccole correzioni: (1) su `PlicaInput.vue`, la tripla misurazione ora rende obbligatorie tutte e tre le misure (bug: un valore medio "congelato" restava valido anche a tripla incompleta, perché il watcher non lo svuotava se una misura veniva ricancellata) — TDD, rosso poi verde; (2) l'errore su una plica in `PlicometriaForm.vue` ora sparisce non appena il valore viene corretto, come già nel resto del form; (3) i tre campi della tripla misurazione si evidenziano di rosso in caso di errore, e la media calcolata si mostra con la virgola italiana invece del punto; (4) risolti 4 errori TypeScript segnalati da Andrea via VS Code sulle `Select` di reka-ui — 3 handler tipizzati troppo stretti (`AcceptableValue` invece di `string`) e un quarto con causa diversa e non ovvia: `ReturnType<typeof ref<string>>` non risolve a `Ref<string>` come sembrerebbe (TypeScript seleziona un overload di `ref` diverso in una instantiation expression), corretto con `Record<Campo, Ref<string>>` esplicito; (5) riorganizzata `src/views/` in sottocartelle per sezione (`pazienti/`, `auth/`, `git mv` con history preservata), aggiornati i path in `router/index.ts`; (6) select "Tipo lavoro" resa azzerabile con lo stesso pattern `VALORE_SELEZIONA` già usato altrove.
+
+**Verifica**: frontend `npx vitest run` → **90/92 verdi** (stessi 2 test preesistenti e scollegati di `LoginView.spec.ts`), `npx tsc --noEmit` pulito. Nessuna verifica manuale in browser in questa sessione (tocca ad Andrea). Dettaglio completo in [log](log.md#2026-09-02-handoff--rifiniture-plicometria-fix-typescript-sulle-select-riorganizzazione-views).
+
+Lavoro **in staging** (`git add` fatto su tutti i file toccati), **nessun commit** — Andrea farà lui stesso il commit di persona e aprirà una nuova sessione per la lista dei pazienti.
+
+## Sessione del 2 settembre 2026 (parte 2) — aggiunto il Codice Fiscale all'anagrafica paziente
+
+Prima di aprire la nuova sessione annunciata, Andrea si è accorto che mancava un dato importante: il Codice Fiscale. Brainstorming bounded (4 domande mirate) → design approvato → TDD diretto, backend e frontend.
+
+**Decisioni**: campo **obbligatorio** alla creazione, **validato con pattern completo** (16 caratteri alfanumerici) sia client che server (prima volta che questo progetto valida il formato di un campo testuale anche lato backend con `@Pattern` — gli altri campi testuali restano senza, gap noto invariato), **non univoco** (nessun vincolo a DB), mostrato **solo in creazione e dettaglio** (non nella lista pazienti), posizionato **subito dopo Cognome**.
+
+**Backend**: `Paziente`/`CreaPazienteRequest`/`PazienteResponse` estesi, migrazione `V14__paziente_codice_fiscale.sql` (`NOT NULL` in un solo passaggio, sicuro solo se `pazienti` su `hexis` è ancora vuota — da riverificare). Aggiornati 18 punti di test che costruiscono `Paziente` direttamente + 22 body JSON in `PazienteControllerTest` (trasformazione via regex PowerShell, verificato il conteggio). 2 nuovi test negativi.
+
+**Frontend**: nuovo validatore/filtro in `validators.ts`, campo in `PazienteNuovoView.vue` (stesso pattern `conFiltro` degli altri campi obbligatori) e in `PazienteDettaglioView.vue`, tipi aggiornati in `api/pazienti.ts`. Aggiornati tutti i mock `Paziente`/`CreaPazienteRequest` nei test esistenti.
+
+**Verifica**: backend `mvn test` → **94/94 verdi**; frontend `npx vitest run` → **89/91 verdi** (stessi 2 test preesistenti scollegati di `LoginView.spec.ts`), `npx tsc --noEmit` pulito. Nessuna verifica manuale in browser. Dettaglio completo in [log](log.md#2026-09-02-ingesthandoff--aggiunto-il-codice-fiscale-allanagrafica-paziente).
+
+Aggiornati `modello-dati.md`, `api-contracts.md`. Lavoro **non ancora messo in staging** (fatto solo per la sessione di rifiniture precedente) — va fatto `git add` su tutti i file toccati da questa aggiunta prima che Andrea committi.
+
 ## Prossimo passo consigliato
 
-Andrea ha annunciato di voler riprendere domani con: (1) **verifica manuale del salvataggio di un paziente** contro l'app in esecuzione (col modulo Plicometria/Circonferenze ridisegnato — non ancora provato a mano end-to-end, solo con `mvn clean install` e avvio frontend); (2) **lavoro sulla lista dei pazienti** (`PazientiListView.vue`, confermato prioritario da Andrea il 31 agosto 2026 parte 2), non ancora iniziato. Nel frattempo farà alcune modifiche a mano non ancora note all'agente — da controllare a inizio sessione con `git status`/`git diff` prima di assumere lo stato descritto qui.
+Prima di aprire la nuova sessione per la lista pazienti, mettere in staging (`git add`) anche il lavoro sul Codice Fiscale appena descritto — non ancora fatto. Poi Andrea committa lui stesso tutto (rifiniture Plicometria/TypeScript/riorganizzazione `views/` + Codice Fiscale) e apre una **nuova sessione dedicata alla lista dei pazienti** (`PazientiListView.vue`, ora in `views/pazienti/PazientiListView.vue`) — coerente con quanto già annunciato il 31 agosto 2026 (parte 2) e confermato prioritario da allora.
 
 Punti ancora aperti, non bloccanti per il prossimo passo:
 
 1. Apri Claude Code su `progetti/hexis-nutrition/` (non sulla radice del workspace, non dentro una singola sottocartella da sola).
-2. Controlla `git status`/`git diff` prima di iniziare: Andrea ha annunciato modifiche a mano non ancora descritte in questa pagina.
-3. Andrea rivede e committa il lavoro in staging (l'intera storia dei sotto-progetti fin qui: Fondamenta, Nuovo paziente con visita, età/data di nascita obbligatoria, modulo Plicometria/redesign Circonferenze e le sue rifiniture).
-4. Riprendere/completare la redesign non committata di `LoginView.vue` (icona `Loader2` mancante, 2 test rotti) — preesistente, mai ripresa.
-5. Provare a mano invito via email e reset password contro l'app in esecuzione.
-6. Colmare il gap di validazione server-side su `CreaPazienteRequest` (vedi sopra), se Andrea lo ritiene prioritario.
+2. Controlla `git status`/`git diff` a inizio sessione: se Andrea ha committato come annunciato, la working tree dovrebbe risultare pulita — verificalo prima di assumere lo stato descritto qui.
+3. `PazientiListView.vue` (in `views/pazienti/`) è il punto di partenza dichiarato da Andrea — raccogli i dettagli specifici (UI e/o struttura) a inizio sessione, non ancora noti a questa pagina. Valuta se includere il Codice Fiscale come colonna/filtro, dato che ora esiste in anagrafica.
+4. Riprendere/completare la redesign non committata di `LoginView.vue` (icona `Loader2` mancante, 2 test rotti) — preesistente, mai ripresa, ora vive in `views/auth/LoginView.vue`.
+5. Provare a mano invito via email e reset password contro l'app in esecuzione, e la migrazione V14 (Codice Fiscale) contro il database `hexis` reale.
+6. Colmare il gap di validazione server-side su `CreaPazienteRequest` per nome/cognome/telefono/lavoro (vedi sopra), se Andrea lo ritiene prioritario.
 7. Aggiungere test di regressione dedicati per due fix della revisione finale del modulo Plicometria (esclusione pliche non richieste dal protocollo; presenza del messaggio nel body del 400) — vedi "Cosa resta aperto".
 8. Scrivere con `superpowers:writing-plans` il piano per `frontend-cliente/` di "Fondamenta" — non ancora iniziato. Poi il brainstorming di "Piano alimentare", prossimo sotto-progetto della roadmap (vedi [architettura](architettura.md)).
 

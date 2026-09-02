@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
 import PlicometriaForm from './PlicometriaForm.vue'
 import { Select, SelectTrigger } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
 
 interface PlicometriaFormExposed {
   valida(): boolean
@@ -74,6 +75,44 @@ describe('PlicometriaForm', () => {
 
     expect(valido).toBe(false)
     expect(wrapper.text()).toContain('Questa plica è obbligatoria per il protocollo scelto.')
+  })
+
+  it('valida() fallisce se la tripla misurazione di una plica obbligatoria è incompleta', async () => {
+    const wrapper = mount(PlicometriaForm, { props: { sesso: 'M' } })
+
+    await selezionaSelect(wrapper, 'protocollo-plico', 'FAULKNER_4')
+    await wrapper.find('#plica-tricipitale').setValue('10,00')
+    await wrapper.find('#plica-sottoscapolare').setValue('10,00')
+    await wrapper.find('#plica-soprailiaca').setValue('10,00')
+
+    const checkboxTripla = wrapper.findAllComponents(Checkbox).find((c) => c.props('id') === 'plica-addominale-tripla')
+    await checkboxTripla?.vm.$emit('update:modelValue', true)
+    await wrapper.vm.$nextTick()
+    await wrapper.find('#plica-addominale-m1').setValue('10,0')
+    await wrapper.find('#plica-addominale-m2').setValue('11,0')
+
+    const valido = esposti(wrapper).valida()
+    await wrapper.vm.$nextTick()
+
+    expect(valido).toBe(false)
+    expect(esposti(wrapper).ottieniDati()).toBeDefined()
+  })
+
+  it('l\'errore su una plica scompare non appena il valore viene corretto', async () => {
+    const wrapper = mount(PlicometriaForm, { props: { sesso: 'M' } })
+
+    await selezionaSelect(wrapper, 'protocollo-plico', 'SLAUGHTER_PEDIATRICO')
+    await wrapper.find('#plica-tricipitale').setValue('10,00')
+
+    esposti(wrapper).valida()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('#plica-polpaccio').attributes('aria-invalid')).toBe('true')
+
+    await wrapper.find('#plica-polpaccio').setValue('8,50')
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('#plica-polpaccio').attributes('aria-invalid')).toBe('false')
   })
 
   it('ottieniDati() restituisce protocollo, etnia e pliche compilate', async () => {

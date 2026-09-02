@@ -23,13 +23,13 @@ export function guardiaAutenticazione(
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue'), meta: { requiresAuth: false } },
-    { path: '/password-dimenticata', name: 'password-dimenticata', component: () => import('@/views/PasswordDimenticataView.vue'), meta: { requiresAuth: false } },
-    { path: '/reset-password', name: 'reset-password', component: () => import('@/views/ResetPasswordView.vue'), meta: { requiresAuth: false } },
+    { path: '/login', name: 'login', component: () => import('@/views/auth/LoginView.vue'), meta: { requiresAuth: false } },
+    { path: '/password-dimenticata', name: 'password-dimenticata', component: () => import('@/views/auth/PasswordDimenticataView.vue'), meta: { requiresAuth: false } },
+    { path: '/reset-password', name: 'reset-password', component: () => import('@/views/auth/ResetPasswordView.vue'), meta: { requiresAuth: false } },
     { path: '/', name: 'dashboard', component: () => import('@/views/DashboardView.vue'), meta: { requiresAuth: true } },
-    { path: '/pazienti', name: 'pazienti', component: () => import('@/views/PazientiListView.vue'), meta: { requiresAuth: true } },
-    { path: '/pazienti/nuovo', name: 'paziente-nuovo', component: () => import('@/views/PazienteNuovoView.vue'), meta: { requiresAuth: true } },
-    { path: '/pazienti/:id', name: 'paziente-dettaglio', component: () => import('@/views/PazienteDettaglioView.vue'), meta: { requiresAuth: true } },
+    { path: '/pazienti', name: 'pazienti', component: () => import('@/views/pazienti/PazientiListView.vue'), meta: { requiresAuth: true } },
+    { path: '/pazienti/nuovo', name: 'paziente-nuovo', component: () => import('@/views/pazienti/PazienteNuovoView.vue'), meta: { requiresAuth: true } },
+    { path: '/pazienti/:id', name: 'paziente-dettaglio', component: () => import('@/views/pazienti/PazienteDettaglioView.vue'), meta: { requiresAuth: true } },
   ],
 })
 

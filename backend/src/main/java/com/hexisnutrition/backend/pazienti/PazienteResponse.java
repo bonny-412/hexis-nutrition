@@ -7,6 +7,7 @@ public record PazienteResponse(
         UUID id,
         String nome,
         String cognome,
+        String codiceFiscale,
         String email,
         String telefono,
         LocalDate dataNascita,
@@ -17,7 +18,7 @@ public record PazienteResponse(
 ) {
     public static PazienteResponse da(Paziente paziente) {
         return new PazienteResponse(paziente.getId(), paziente.getNome(), paziente.getCognome(),
-                paziente.getEmail(), paziente.getTelefono(), paziente.getDataNascita(),
+                paziente.getCodiceFiscale(), paziente.getEmail(), paziente.getTelefono(), paziente.getDataNascita(),
                 paziente.getSesso().name(), paziente.getLavoro(),
                 paziente.getTipoLavoro() != null ? paziente.getTipoLavoro().name() : null,
                 paziente.getStatoAccount().name());

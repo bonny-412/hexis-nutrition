@@ -61,7 +61,7 @@ describe('PazienteNuovoView', () => {
 
   it('crea il paziente con i dati anagrafici e della visita, poi naviga al suo dettaglio', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
-      id: '42', nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
+      id: '42', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
       telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
     })
     const router = creaRouter()
@@ -71,6 +71,7 @@ describe('PazienteNuovoView', () => {
 
     await wrapper.find('#nome').setValue('Luca')
     await wrapper.find('#cognome').setValue('Verdi')
+    await wrapper.find('#codice-fiscale').setValue('rssmra80a01h501u')
     await wrapper.find('#email').setValue('luca@example.com')
     await selezionaDataNascita(wrapper, '1990-05-20')
     await selezionaSelect(wrapper, 'sesso', 'M')
@@ -80,7 +81,7 @@ describe('PazienteNuovoView', () => {
     await flushPromises()
 
     expect(pazientiApi.crea).toHaveBeenCalledWith({
-      nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
+      nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
       telefono: undefined, dataNascita: '1990-05-20', sesso: 'M', lavoro: undefined, tipoLavoro: undefined,
       visita: {
         dataVisita: oggiIso(), altezzaCm: 178, pesoKg: 82.5,
@@ -95,7 +96,7 @@ describe('PazienteNuovoView', () => {
 
   it('invia tutte le circonferenze della visita con i valori corretti nei rispettivi campi', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
-      id: '43', nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
+      id: '43', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
       telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
     })
     const router = creaRouter()
@@ -105,6 +106,7 @@ describe('PazienteNuovoView', () => {
 
     await wrapper.find('#nome').setValue('Luca')
     await wrapper.find('#cognome').setValue('Verdi')
+    await wrapper.find('#codice-fiscale').setValue('RSSMRA80A01H501U')
     await wrapper.find('#email').setValue('luca@example.com')
     await selezionaDataNascita(wrapper, '1990-05-20')
     await selezionaSelect(wrapper, 'sesso', 'M')
@@ -130,7 +132,7 @@ describe('PazienteNuovoView', () => {
     await flushPromises()
 
     expect(pazientiApi.crea).toHaveBeenCalledWith({
-      nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
+      nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
       telefono: undefined, dataNascita: '1990-05-20', sesso: 'M', lavoro: undefined, tipoLavoro: undefined,
       visita: {
         dataVisita: oggiIso(), altezzaCm: 178, pesoKg: 82.5,
@@ -151,6 +153,7 @@ describe('PazienteNuovoView', () => {
 
     await wrapper.find('#nome').setValue('Luca')
     await wrapper.find('#cognome').setValue('Verdi')
+    await wrapper.find('#codice-fiscale').setValue('RSSMRA80A01H501U')
     await wrapper.find('#email').setValue('luca@example.com')
     await selezionaDataNascita(wrapper, '1990-05-20')
     await selezionaSelect(wrapper, 'sesso', 'M')
@@ -174,6 +177,7 @@ describe('PazienteNuovoView', () => {
     expect(pazientiApi.crea).not.toHaveBeenCalled()
     expect(wrapper.text()).toContain('Il nome è obbligatorio.')
     expect(wrapper.text()).toContain('Il cognome è obbligatorio.')
+    expect(wrapper.text()).toContain('Il codice fiscale è obbligatorio.')
     expect(wrapper.text()).toContain("L'email è obbligatoria.")
     expect(wrapper.text()).toContain('La data di nascita è obbligatoria.')
     expect(wrapper.text()).toContain("L'altezza è obbligatoria.")
@@ -288,6 +292,27 @@ describe('PazienteNuovoView', () => {
     expect(wrapper.text()).toContain('Il telefono deve contenere 10 cifre numeriche.')
   })
 
+  it('non invia la richiesta e mostra l\'errore se il codice fiscale non ha 16 caratteri', async () => {
+    const router = creaRouter()
+    router.push('/pazienti/nuovo')
+    await router.isReady()
+    const wrapper = mount(PazienteNuovoView, { global: { plugins: [router, createTestingPinia()] } })
+
+    await wrapper.find('#nome').setValue('Mario')
+    await wrapper.find('#cognome').setValue('Rossi')
+    await wrapper.find('#codice-fiscale').setValue('RSSMRA80A01')
+    await wrapper.find('#email').setValue('mario@example.com')
+    await selezionaDataNascita(wrapper, '1990-05-20')
+    await selezionaSelect(wrapper, 'sesso', 'M')
+    await wrapper.find('#altezza').setValue('178')
+    await wrapper.find('#peso').setValue('82,5')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(pazientiApi.crea).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('Il codice fiscale deve avere 16 caratteri alfanumerici.')
+  })
+
   it('mette in maiuscolo la prima lettera di nome, cognome e lavoro mentre si digita', async () => {
     const router = creaRouter()
     router.push('/pazienti/nuovo')
@@ -320,7 +345,7 @@ describe('PazienteNuovoView', () => {
 
   it('include la plicometria nel payload quando protocollo e pliche sono compilati', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
-      id: '44', nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
+      id: '44', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
       telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
     })
     const router = creaRouter()
@@ -330,6 +355,7 @@ describe('PazienteNuovoView', () => {
 
     await wrapper.find('#nome').setValue('Luca')
     await wrapper.find('#cognome').setValue('Verdi')
+    await wrapper.find('#codice-fiscale').setValue('RSSMRA80A01H501U')
     await wrapper.find('#email').setValue('luca@example.com')
     await selezionaDataNascita(wrapper, '1990-05-20')
     await selezionaSelect(wrapper, 'sesso', 'M')
@@ -357,6 +383,33 @@ describe('PazienteNuovoView', () => {
       plicaSoprailiacaMm: 10,
       plicaAddominaleMm: 10,
     })
+  })
+
+  it('permette di riportare il tipo lavoro allo stato non selezionato', async () => {
+    vi.mocked(pazientiApi.crea).mockResolvedValue({
+      id: '45', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
+    })
+    const router = creaRouter()
+    router.push('/pazienti/nuovo')
+    await router.isReady()
+    const wrapper = mount(PazienteNuovoView, { global: { plugins: [router, createTestingPinia()] } })
+
+    await wrapper.find('#nome').setValue('Luca')
+    await wrapper.find('#cognome').setValue('Verdi')
+    await wrapper.find('#codice-fiscale').setValue('RSSMRA80A01H501U')
+    await wrapper.find('#email').setValue('luca@example.com')
+    await selezionaDataNascita(wrapper, '1990-05-20')
+    await selezionaSelect(wrapper, 'sesso', 'M')
+    await wrapper.find('#altezza').setValue('178')
+    await wrapper.find('#peso').setValue('82,5')
+
+    await selezionaSelect(wrapper, 'tipo-lavoro', 'ATTIVO')
+    await selezionaSelect(wrapper, 'tipo-lavoro', '__seleziona__')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    expect(pazientiApi.crea).toHaveBeenCalledWith(expect.objectContaining({ tipoLavoro: undefined }))
   })
 
   it('fa sparire l\'errore di formato di un campo non appena viene corretto', async () => {

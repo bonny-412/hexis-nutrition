@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, type Ref } from 'vue'
+import type { AcceptableValue } from 'reka-ui'
 import { useRouter } from 'vue-router'
 import AppShell from '@/components/AppShell.vue'
 import DatiVisitaForm from '@/components/pazienti/DatiVisitaForm.vue'
@@ -22,6 +23,7 @@ import {
   filtraNome,
   filtraSoloCifre,
   filtraEmail,
+  filtraCodiceFiscale,
   capitalizzaPrimaLettera,
   erroreNome,
   erroreCognome,
@@ -29,12 +31,14 @@ import {
   erroreTelefono,
   erroreDataNascita,
   erroreSesso,
+  erroreCodiceFiscale,
 } from '@/utils/validators'
 import { calcolaEta } from '@/utils/data'
 
 // --- STATO DEL FORM ---
 const nome = ref('')
 const cognome = ref('')
+const codiceFiscale = ref('')
 const sesso = ref('')
 const email = ref('')
 const telefono = ref('')
@@ -51,6 +55,8 @@ const errore = ref('')
 const errori = ref<Record<string, string>>({})
 
 const router = useRouter()
+
+const VALORE_SELEZIONA = '__seleziona__'
 
 // --- GESTIONE FILTRI SU INPUT (LOGICA VUE UI) ---
 const MARCATORE_INVISIBILE = '​'
@@ -83,6 +89,7 @@ function conFiltro(
 // Handlers specifici
 const onNomeInput = conFiltro(nome, filtraNome, 'nome', erroreNome)
 const onCognomeInput = conFiltro(cognome, filtraNome, 'cognome', erroreCognome)
+const onCodiceFiscaleInput = conFiltro(codiceFiscale, filtraCodiceFiscale, 'codiceFiscale', erroreCodiceFiscale)
 const onEmailInput = conFiltro(email, filtraEmail, 'email', erroreEmail)
 const onTelefonoInput = conFiltro(telefono, (v) => filtraSoloCifre(v, 10), 'telefono', erroreTelefono)
 const onLavoroInput = conFiltro(lavoro, capitalizzaPrimaLettera)
@@ -92,9 +99,13 @@ function onDataNascitaChange(valore: string) {
   pulisciErroreSeCorretto('dataNascita', erroreDataNascita, valore)
 }
 
-function onSessoChange(valore: string) {
-  sesso.value = valore
-  pulisciErroreSeCorretto('sesso', erroreSesso, valore)
+function onSessoChange(valore: AcceptableValue) {
+  sesso.value = valore as string
+  pulisciErroreSeCorretto('sesso', erroreSesso, valore as string)
+}
+
+function onTipoLavoroChange(valore: AcceptableValue) {
+  tipoLavoro.value = valore === VALORE_SELEZIONA ? '' : (valore as typeof tipoLavoro.value)
 }
 
 // --- VALIDAZIONE E SUBMIT ---
@@ -107,6 +118,7 @@ function validaCampi(): boolean {
 
   assegna('nome', erroreNome(nome.value))
   assegna('cognome', erroreCognome(cognome.value))
+  assegna('codiceFiscale', erroreCodiceFiscale(codiceFiscale.value))
   assegna('email', erroreEmail(email.value))
   assegna('telefono', erroreTelefono(telefono.value))
   assegna('dataNascita', erroreDataNascita(dataNascita.value))
@@ -128,6 +140,7 @@ async function onSubmit() {
     const paziente = await crea({
       nome: nome.value,
       cognome: cognome.value,
+      codiceFiscale: codiceFiscale.value,
       email: email.value,
       telefono: telefono.value || undefined,
       dataNascita: dataNascita.value,
@@ -183,14 +196,9 @@ async function onSubmit() {
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="data-nascita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Data di nascita*</Label>
-            <DatePicker id="data-nascita" :model-value="dataNascita" @update:model-value="onDataNascitaChange" />
-            <p v-if="errori.dataNascita" class="text-xs font-medium text-(--danger)">{{ errori.dataNascita }}</p>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <Label for="eta" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Età</Label>
-            <Input id="eta" :model-value="eta ?? ''" type="text" disabled placeholder="—" />
+            <Label for="codice-fiscale" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Codice fiscale*</Label>
+            <Input id="codice-fiscale" :model-value="codiceFiscale" @update:model-value="onCodiceFiscaleInput" type="text" :aria-invalid="!!errori.codiceFiscale" placeholder="Es. RSSMRA80A01H501U" />
+            <p v-if="errori.codiceFiscale" class="text-xs font-medium text-(--danger)">{{ errori.codiceFiscale }}</p>
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -206,6 +214,17 @@ async function onSubmit() {
               </SelectContent>
             </Select>
             <p v-if="errori.sesso" class="text-xs font-medium text-(--danger)">{{ errori.sesso }}</p>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <Label for="data-nascita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Data di nascita*</Label>
+            <DatePicker id="data-nascita" :model-value="dataNascita" @update:model-value="onDataNascitaChange" />
+            <p v-if="errori.dataNascita" class="text-xs font-medium text-(--danger)">{{ errori.dataNascita }}</p>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <Label for="eta" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Età</Label>
+            <Input id="eta" :model-value="eta ?? ''" type="text" disabled placeholder="—" />
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -227,11 +246,12 @@ async function onSubmit() {
 
           <div class="flex flex-col gap-1.5">
             <Label for="tipo-lavoro" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Tipo lavoro</Label>
-            <Select v-model="tipoLavoro">
+            <Select :model-value="tipoLavoro || VALORE_SELEZIONA" @update:model-value="onTipoLavoroChange">
               <SelectTrigger id="tipo-lavoro" class="w-full">
                 <SelectValue placeholder="Seleziona" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem :value="VALORE_SELEZIONA">Seleziona</SelectItem>
                 <SelectItem value="SEDENTARIO">Sedentario</SelectItem>
                 <SelectItem value="POCO_ATTIVO">Poco attivo</SelectItem>
                 <SelectItem value="ATTIVO">Attivo</SelectItem>

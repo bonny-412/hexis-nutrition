@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nextTick, ref, type Ref } from 'vue'
+import type { AcceptableValue } from 'reka-ui'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -50,7 +51,7 @@ const protocolloVita = ref<'' | 'OMS' | 'OMBELICALE' | 'ALTRO'>('')
 
 const VALORE_SELEZIONA = '__seleziona__'
 
-function onProtocolloVitaChange(valore: string) {
+function onProtocolloVitaChange(valore: AcceptableValue) {
   protocolloVita.value = valore === VALORE_SELEZIONA ? '' : (valore as typeof protocolloVita.value)
 }
 

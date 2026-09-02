@@ -44,7 +44,7 @@ public class PazienteService {
 
     @Transactional
     public Paziente crea(UUID professionistaId, CreaPazienteRequest request) {
-        Paziente paziente = new Paziente(professionistaId, request.nome(), request.cognome(), request.email(),
+        Paziente paziente = new Paziente(professionistaId, request.nome(), request.cognome(), request.codiceFiscale(), request.email(),
                 request.telefono(), request.dataNascita(), request.sesso(), request.lavoro(), request.tipoLavoro());
         pazienteRepository.save(paziente);
 

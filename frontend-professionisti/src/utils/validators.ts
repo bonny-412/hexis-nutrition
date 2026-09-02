@@ -4,6 +4,7 @@ export const REGEX_TELEFONO = /^\d{10}$/
 export const REGEX_NOME = /^[A-Za-zÀ-ÖØ-öø-ÿ' -]+$/
 export const REGEX_NUMERO_DECIMALE_ITALIANO = /^\d{1,4}(,\d{1,2})?$/
 export const REGEX_EMAIL = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+export const REGEX_CODICE_FISCALE = /^[A-Z0-9]{16}$/
 
 // PARSERS
 export function numeroItaliano(valore: string): number {
@@ -38,6 +39,10 @@ export function filtraEmail(valore: string): string {
     return valore.replace(/[^a-zA-Z0-9._%+\-@]/g, '')
 }
 
+export function filtraCodiceFiscale(valore: string): string {
+    return valore.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 16)
+}
+
 export function capitalizzaPrimaLettera(valore: string): string {
     return valore.charAt(0).toUpperCase() + valore.slice(1)
 }
@@ -58,6 +63,12 @@ export function erroreNome(valore: string): string | undefined {
 export function erroreCognome(valore: string): string | undefined {
     if (!valore.trim()) return 'Il cognome è obbligatorio.'
     if (!REGEX_NOME.test(valore)) return 'Il cognome può contenere solo lettere.'
+    return undefined
+}
+
+export function erroreCodiceFiscale(valore: string): string | undefined {
+    if (!valore.trim()) return 'Il codice fiscale è obbligatorio.'
+    if (!REGEX_CODICE_FISCALE.test(valore)) return 'Il codice fiscale deve avere 16 caratteri alfanumerici.'
     return undefined
 }
 

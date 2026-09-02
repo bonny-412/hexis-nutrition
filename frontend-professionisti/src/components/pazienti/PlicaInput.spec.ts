@@ -25,7 +25,7 @@ describe('PlicaInput', () => {
     await wrapper.find('#plica-test-m2').setValue('13,0')
     await wrapper.find('#plica-test-m3').setValue('12,2')
 
-    expect(wrapper.text()).toContain('Media calcolata: 12.57 mm')
+    expect(wrapper.text()).toContain('Media calcolata: 12,57 mm')
     expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['12,57'])
   })
 
@@ -38,5 +38,29 @@ describe('PlicaInput', () => {
     await attivaTripla(wrapper, true)
 
     expect((wrapper.find('#plica-test-m1').element as HTMLInputElement).value).toBe('')
+  })
+
+  it('svuota il valore emesso se una misura viene cancellata dopo aver completato la tripla misurazione', async () => {
+    const wrapper = mount(PlicaInput, { props: { id: 'plica-test', label: 'Plica test', modelValue: '' } })
+
+    await attivaTripla(wrapper, true)
+    await wrapper.find('#plica-test-m1').setValue('12,5')
+    await wrapper.find('#plica-test-m2').setValue('13,0')
+    await wrapper.find('#plica-test-m3').setValue('12,2')
+    await wrapper.find('#plica-test-m3').setValue('')
+
+    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([''])
+  })
+
+  it('evidenzia di rosso le tre misurazioni quando è presente un errore', async () => {
+    const wrapper = mount(PlicaInput, {
+      props: { id: 'plica-test', label: 'Plica test', modelValue: '', errore: 'Questa plica è obbligatoria per il protocollo scelto.' },
+    })
+
+    await attivaTripla(wrapper, true)
+
+    expect(wrapper.find('#plica-test-m1').attributes('aria-invalid')).toBe('true')
+    expect(wrapper.find('#plica-test-m2').attributes('aria-invalid')).toBe('true')
+    expect(wrapper.find('#plica-test-m3').attributes('aria-invalid')).toBe('true')
   })
 })

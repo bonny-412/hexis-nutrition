@@ -1,0 +1,1 @@
+ALTER TABLE pazienti ADD COLUMN codice_fiscale VARCHAR(16) NOT NULL;

@@ -23,7 +23,7 @@ function creaRouter() {
 describe('PazienteDettaglioView', () => {
   it('mostra i dati del paziente caricato', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
-      id: '1', nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
+      id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
       telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
     })
     const router = creaRouter()
@@ -34,11 +34,12 @@ describe('PazienteDettaglioView', () => {
 
     expect(wrapper.text()).toContain('Luca Verdi')
     expect(wrapper.text()).toContain('luca@example.com')
+    expect(wrapper.text()).toContain('RSSMRA80A01H501U')
   })
 
   it('invita il paziente e ne aggiorna lo stato mostrato', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
-      id: '1', nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
+      id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
       telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
     })
     vi.mocked(pazientiApi.invita).mockResolvedValue(undefined)
@@ -80,7 +81,7 @@ describe('PazienteDettaglioView', () => {
 
   it('mostra un errore se l\'invito fallisce e non aggiorna lo stato del paziente (nessun optimistic update)', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
-      id: '1', nome: 'Luca', cognome: 'Verdi', email: 'luca@example.com',
+      id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
       telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
     })
     vi.mocked(pazientiApi.invita).mockRejectedValue(new Error('409'))
