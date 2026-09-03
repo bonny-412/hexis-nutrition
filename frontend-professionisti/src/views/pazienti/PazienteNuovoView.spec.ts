@@ -419,6 +419,69 @@ describe('PazienteNuovoView', () => {
     expect(pazientiApi.crea).toHaveBeenCalledWith(expect.objectContaining({ tipoLavoro: undefined }))
   })
 
+  it('annulla con form vuoto naviga subito senza chiedere conferma', async () => {
+    const router = creaRouter()
+    router.push('/pazienti/nuovo')
+    await router.isReady()
+    const wrapper = mount(PazienteNuovoView, { global: { plugins: [router, createTestingPinia()] } })
+
+    await wrapper.find('[data-test="btn-annulla"]').trigger('click')
+    await flushPromises()
+
+    expect(router.currentRoute.value.path).toBe('/pazienti')
+    expect(document.body.textContent).not.toContain('Uscire senza salvare?')
+  })
+
+  it('annulla con dati inseriti chiede conferma e non naviga se si sceglie di continuare', async () => {
+    const router = creaRouter()
+    router.push('/pazienti/nuovo')
+    await router.isReady()
+    const wrapper = mount(PazienteNuovoView, { global: { plugins: [router, createTestingPinia()] } })
+
+    await wrapper.find('#nome').setValue('Mario')
+    await wrapper.find('[data-test="btn-annulla"]').trigger('click')
+    await flushPromises()
+
+    expect(document.body.textContent).toContain('Uscire senza salvare?')
+
+    document.querySelector<HTMLElement>('[data-test="conferma-annulla-continua"]')?.click()
+    await flushPromises()
+
+    expect(router.currentRoute.value.path).toBe('/pazienti/nuovo')
+  })
+
+  it('annulla con dati inseriti naviga via se si conferma l\'uscita', async () => {
+    const router = creaRouter()
+    router.push('/pazienti/nuovo')
+    await router.isReady()
+    const wrapper = mount(PazienteNuovoView, { global: { plugins: [router, createTestingPinia()] } })
+
+    await wrapper.find('#altezza').setValue('178')
+    await wrapper.find('[data-test="btn-annulla"]').trigger('click')
+    await flushPromises()
+    document.querySelector<HTMLElement>('[data-test="conferma-annulla-esci"]')?.click()
+    await flushPromises()
+
+    expect(router.currentRoute.value.path).toBe('/pazienti')
+  })
+
+  it('annulla con dati inseriti solo nel sotto-form plicometria chiede comunque conferma', async () => {
+    const router = creaRouter()
+    router.push('/pazienti/nuovo')
+    await router.isReady()
+    const wrapper = mount(PazienteNuovoView, { global: { plugins: [router, createTestingPinia()] } })
+
+    const accordionPlicometria = wrapper.findAll('button').find((b) => b.text().includes('Plicometria'))
+    await accordionPlicometria?.trigger('click')
+    await flushPromises()
+
+    await selezionaSelect(wrapper, 'protocollo-plico', 'FAULKNER_4')
+    await wrapper.find('[data-test="btn-annulla"]').trigger('click')
+    await flushPromises()
+
+    expect(document.body.textContent).toContain('Uscire senza salvare?')
+  })
+
   it('fa sparire l\'errore di formato di un campo non appena viene corretto', async () => {
     const router = creaRouter()
     router.push('/pazienti/nuovo')

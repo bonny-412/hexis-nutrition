@@ -140,7 +140,15 @@ function ottieniDati(): CreaPlicometriaRequest | undefined {
   }
 }
 
-defineExpose({ valida, ottieniDati })
+function valorizzato(): boolean {
+  return (
+    protocollo.value !== '' ||
+    etniaAtleta.value !== 'CAUCASICO' ||
+    Object.values(valoriPerCampo).some((rif) => rif.value !== '')
+  )
+}
+
+defineExpose({ valida, ottieniDati, valorizzato })
 </script>
 
 <template>

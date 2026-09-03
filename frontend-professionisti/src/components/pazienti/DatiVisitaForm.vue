@@ -35,6 +35,7 @@ import {
 const props = defineProps<{ sesso: string }>()
 
 const dataVisita = ref(new Date().toISOString().slice(0, 10))
+const dataVisitaIniziale = dataVisita.value
 const altezzaCm = ref('')
 const pesoKg = ref('')
 const circonferenzaVita = ref('')
@@ -178,9 +179,33 @@ function ottieniDati(): CreaVisitaRequest {
   }
 }
 
+function valorizzato(): boolean {
+  return (
+    dataVisita.value !== dataVisitaIniziale ||
+    altezzaCm.value !== '' ||
+    pesoKg.value !== '' ||
+    circonferenzaVita.value !== '' ||
+    circonferenzaFianchi.value !== '' ||
+    circonferenzaAddome.value !== '' ||
+    circonferenzaBraccioRilassato.value !== '' ||
+    circonferenzaCoscia.value !== '' ||
+    circonferenzaPolpaccio.value !== '' ||
+    circonferenzaCollo.value !== '' ||
+    circonferenzaTorace.value !== '' ||
+    circonferenzaBraccioContratto.value !== '' ||
+    circonferenzaAvambraccio.value !== '' ||
+    circonferenzaCaviglia.value !== '' ||
+    protocolloVita.value !== '' ||
+    note.value !== '' ||
+    obiettivo.value !== 'MANTENIMENTO' ||
+    (plicometriaForm.value?.valorizzato() ?? false)
+  )
+}
+
 defineExpose({
   valida,
   ottieniDati,
+  valorizzato,
 })
 </script>
 

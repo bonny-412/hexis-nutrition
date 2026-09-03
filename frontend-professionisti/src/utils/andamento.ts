@@ -15,6 +15,7 @@ export interface AndamentoPaziente {
   peso: Andamento
   bmi: Andamento
   percentualeGrassoCorporeo: Andamento
+  massaMagra: Andamento
 }
 
 function costruisciAndamento(visite: Visita[], estraiValore: (visita: Visita) => number | null): Andamento {
@@ -33,5 +34,6 @@ export function prepareAndamento(visite: Visita[]): AndamentoPaziente {
     peso: costruisciAndamento(visite, (v) => v.pesoKg),
     bmi: costruisciAndamento(visite, (v) => v.bmi),
     percentualeGrassoCorporeo: costruisciAndamento(visite, (v) => v.plicometria?.percentualeGrassoCorporeo ?? null),
+    massaMagra: costruisciAndamento(visite, (v) => v.plicometria?.massaMagraKg ?? null),
   }
 }

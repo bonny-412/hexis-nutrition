@@ -79,4 +79,24 @@ describe('prepareAndamento', () => {
     expect(risultato.bmi.punti).toEqual([{ data: '2026-02-01', valore: 24.0 }])
     expect(risultato.bmi.delta).toBeNull()
   })
+
+  it('massaMagra ignora le visite senza plicometria', () => {
+    const risultato = prepareAndamento([
+      visita({ dataVisita: '2026-06-01', plicometria: null }),
+      visita({
+        dataVisita: '2026-08-01',
+        plicometria: { percentualeGrassoCorporeo: 18.2, massaGrassaKg: 14.1, massaMagraKg: 63.4, fmi: 4.4, ffmi: 20.1 },
+      }),
+    ])
+
+    expect(risultato.massaMagra.punti).toEqual([{ data: '2026-08-01', valore: 63.4 }])
+    expect(risultato.massaMagra.ultimo).toBe(63.4)
+    expect(risultato.massaMagra.delta).toBeNull()
+  })
+
+  it('massaMagra è vuoto se nessuna visita ha la plicometria', () => {
+    const risultato = prepareAndamento([visita({ plicometria: null })])
+
+    expect(risultato.massaMagra).toEqual({ punti: [], ultimo: null, delta: null })
+  })
 })

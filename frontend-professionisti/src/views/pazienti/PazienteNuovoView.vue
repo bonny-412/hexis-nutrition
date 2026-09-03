@@ -18,7 +18,17 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { DatePicker } from '@/components/ui/date-picker'
-import { ArrowLeft, Save } from '@lucide/vue'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog'
+import { ArrowLeft, Save, X } from '@lucide/vue'
 
 // Import di tutti i filtri, regex e validatori dal file esterno
 import {
@@ -55,6 +65,7 @@ const datiVisitaForm = ref<InstanceType<typeof DatiVisitaForm>>()
 
 const inCorso = ref(false)
 const errori = ref<Record<string, string>>({})
+const mostraConfermaAnnulla = ref(false)
 
 const router = useRouter()
 
@@ -108,6 +119,44 @@ function onSessoChange(valore: AcceptableValue) {
 
 function onTipoLavoroChange(valore: AcceptableValue) {
   tipoLavoro.value = valore === VALORE_SELEZIONA ? '' : (valore as typeof tipoLavoro.value)
+}
+
+// --- ANNULLA ---
+function formValorizzata(): boolean {
+  return (
+    nome.value !== '' ||
+    cognome.value !== '' ||
+    codiceFiscale.value !== '' ||
+    sesso.value !== '' ||
+    email.value !== '' ||
+    telefono.value !== '' ||
+    dataNascita.value !== '' ||
+    lavoro.value !== '' ||
+    tipoLavoro.value !== '' ||
+    note.value !== '' ||
+    (datiVisitaForm.value?.valorizzato() ?? false)
+  )
+}
+
+function tornaIndietro() {
+  if (router.options.history.state.back) {
+    router.back()
+  } else {
+    router.push('/pazienti')
+  }
+}
+
+function onAnnullaClick() {
+  if (formValorizzata()) {
+    mostraConfermaAnnulla.value = true
+  } else {
+    tornaIndietro()
+  }
+}
+
+function confermaAnnulla() {
+  mostraConfermaAnnulla.value = false
+  tornaIndietro()
 }
 
 // --- VALIDAZIONE E SUBMIT ---
@@ -273,12 +322,31 @@ async function onSubmit() {
         <DatiVisitaForm ref="datiVisitaForm" :sesso="sesso" />
       </div>
 
-      <div class="w-full flex justify-end">
+      <div class="w-full flex justify-end items-center gap-2">
+        <Button type="button" data-test="btn-annulla" variant="outline" :disabled="inCorso" size="lg" class="bg-(--surf) hover:bg-(--surf)/60 active:not-aria-[haspopup]:translate-y-0.5" @click="onAnnullaClick">
+          <X :size="16" />
+          Annulla
+        </Button>
         <Button type="submit" :disabled="inCorso" size="lg" class="hover:bg-primary/80 active:not-aria-[haspopup]:translate-y-0.5">
           <Save :size="16" />
           {{ inCorso ? 'Salvataggio…' : 'Salva paziente' }}
         </Button>
       </div>
     </form>
+
+    <AlertDialog v-model:open="mostraConfermaAnnulla">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Uscire senza salvare?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Hai inserito dei dati che non sono stati salvati. Se esci ora andranno persi.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel data-test="conferma-annulla-continua">Continua a compilare</AlertDialogCancel>
+          <AlertDialogAction data-test="conferma-annulla-esci" @click="confermaAnnulla" class="hover:bg-primary/80">Esci senza salvare</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </AppShell>
 </template>
