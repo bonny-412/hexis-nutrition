@@ -31,7 +31,7 @@ class PazienteSpecificationsTest extends AbstractIntegrationTest {
     private Paziente creaPaziente(UUID professionistaId, String nome, String cognome, String email,
                                    String codiceFiscale, LocalDate dataNascita, Sesso sesso) {
         Paziente paziente = new Paziente(professionistaId, nome, cognome, codiceFiscale, email,
-                null, dataNascita, sesso, null, null);
+                null, dataNascita, sesso, null, null, null);
         return pazienteRepository.save(paziente);
     }
 

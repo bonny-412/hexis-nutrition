@@ -18,6 +18,7 @@ public record CreaPazienteRequest(
         @NotNull Sesso sesso,
         String lavoro,
         TipoLavoro tipoLavoro,
+        String note,
         @NotNull @Valid VisitaRequest visita
 ) {
 }

@@ -282,3 +282,27 @@ Percorso completo (brainstorming architetturale → spec → piano → esecuzion
 **Verifica**: backend `mvn test` → **122/122 verdi**; frontend `npx vitest run` → **156/159 verdi** (3 falliti = `PazienteRigaAzioni.spec.ts`, isolamento tra test, pre-esistente e non toccato, vedi handoff precedente); `npx tsc --noEmit` pulito. Nessuna verifica manuale in browser fatta dall'agente — fatta da Andrea stesso, che ha anche segnalato e fatto verificare il bug della striscia statistiche.
 
 **Handoff esplicito**: Andrea ha chiesto di salvare tutto (`git add`, tutto in staging, **nessun commit**) per riprendere domani con due flussi che oggi sono bottoni/voci disabilitate su questa stessa pagina: **modifica anagrafica paziente** e **inserimento nuova visita su paziente esistente** (quest'ultimo già segnalato come mancante fin dalla sessione lista-pazienti del 2 settembre). Aggiornato `stato.md`.
+
+## [2026-09-03] ingest/handoff | Aggiunti campi Note (paziente e visita) e Obiettivo (visita)
+
+Bounded (brainstorming mirato, 4 domande) → design approvato in chat → TDD diretto, backend e frontend. Nessun nuovo endpoint: i campi sono valorizzabili solo alla creazione del paziente/prima visita (`POST /pazienti`), dato che non esiste ancora un flusso di modifica anagrafica né di nuova visita su paziente esistente.
+
+**Decisioni**: `Paziente.note` opzionale (testo libero, in fondo ai dati anagrafici). `Visita.note` opzionale (in fondo al form visita) e `Visita.obiettivo` (`DIMAGRIMENTO`/`IPERTROFIA`/`RICOMPOSIZIONE`/`MANTENIMENTO`/`NUTRIZIONE_CLINICA`) con default `MANTENIMENTO` preselezionato in UI (diverso dal pattern "Seleziona" già usato per Protocollo vita/Tipo lavoro, su richiesta esplicita di Andrea). Nessuna validazione server-side su `note` (stesso gap noto degli altri campi testuali liberi); su richiesta di Andrea a metà sessione, aggiunto un limite di 500 caratteri con contatore solo lato client (`maxlength` + contatore `n/500` sotto entrambe le textarea).
+
+**Backend**: migrazione `V16__paziente_visita_note_e_obiettivo.sql` (`pazienti.note TEXT` nullable, `visite.note TEXT` nullable, `visite.obiettivo VARCHAR(30) NOT NULL DEFAULT 'MANTENIMENTO'`), nuovo enum `ObiettivoVisita`. `Paziente`/`Visita`/`CreaPazienteRequest`/`VisitaRequest`/`PazienteResponse`/`VisitaResponse`/`PazienteService` estesi. Le circa 45 chiamate dirette a `new Paziente(...)`/`new Visita(...)` nei test sono state aggiornate con uno script Node ad hoc (parser a parentesi bilanciate, non una regex piatta, per gestire gli argomenti annidati come `LocalDate.of(...)`) che inserisce l'argomento aggiuntivo prima della parentesi di chiusura di ogni chiamata — verificato a campione dopo l'esecuzione. 2 nuovi test (note/obiettivo persistiti e restituiti; default `MANTENIMENTO` quando `obiettivo` non è passato).
+
+**Frontend**: aggiunto il componente shadcn `Textarea` (non esisteva ancora). `PazienteNuovoView.vue` (campo Note), `DatiVisitaForm.vue` (select Obiettivo nella griglia principale, textarea Note in fondo), `PazienteDettaglioView.vue` (Note mostrata nella card Dati Anagrafici se presente), tipi in `api/pazienti.ts` estesi.
+
+**Verifica**: backend `mvn test` → **124/124 verdi, BUILD SUCCESS**. Frontend `npx vitest run` → **156/159 verdi** (3 falliti = `PazienteRigaAzioni.spec.ts`, isolamento tra test pre-esistente e non toccato, segnalato per la quarta volta consecutiva); `npx tsc --noEmit` pulito; `npm run build` pulito. Nessuna verifica manuale in browser (tocca ad Andrea).
+
+Aggiornati `modello-dati.md` e `api-contracts.md`. Lavoro **in staging, nessun commit** — tocca ad Andrea.
+
+## [2026-09-03] ingest | Revisione dei valori di ObiettivoVisita
+
+Andrea ha rivisto i valori dell'enum `ObiettivoVisita` introdotto nella voce precedente: `NUTRIZIONE_CLINICA` sostituita da `EDUCATIVO` e `PREPARAZIONE_SPORTIVA`, aggiunta `AUMENTO_PESO`. Valori finali: `DIMAGRIMENTO`, `AUMENTO_PESO`, `IPERTROFIA`, `RICOMPOSIZIONE`, `MANTENIMENTO`, `EDUCATIVO`, `PREPARAZIONE_SPORTIVA` (default resta `MANTENIMENTO`). Aggiornati enum backend, tipi/select frontend, `modello-dati.md`, `api-contracts.md`, `stato.md`. Nessuna migrazione aggiuntiva necessaria (colonna `VARCHAR`, nessun vincolo CHECK sui valori). Backend `mvn test` → 124/124 verdi; frontend `npx vitest run` → 156/159 verdi (stessi 3 falliti pre-esistenti); `tsc --noEmit` pulito.
+
+## [2026-09-03] handoff | Rifiniture UI a mano su Note/Obiettivo, prossimo passo: dettaglio poi modifica paziente
+
+Andrea ha rifinito a mano `PazienteNuovoView.vue` e `DatiVisitaForm.vue` dopo le due voci precedenti: placeholder più descrittivi sulle due textarea Note ("Allergie, patologie, indicazioni utili…" per il paziente; "Note operative, aderenza al piano, piccoli obiettivi fino alla prossima visita..." per la visita), select "Obiettivo" spostata in cima alla griglia della visita (prima di data/altezza/peso), textarea Note visita spostata subito dopo quella griglia invece che in fondo al componente dopo gli accordion. Riverificato `tsc --noEmit` pulito e `npx vitest run` 156/159 (stesse 3 failure pre-esistenti di `PazienteRigaAzioni.spec.ts`), nessuna regressione. Tutto rimesso in staging.
+
+**Handoff esplicito**: Andrea vuole riprendere con la **pagina di dettaglio del paziente**, per poi passare alla **modifica del paziente** — aggiornato `stato.md` (sezione "Prossimo passo consigliato") di conseguenza.

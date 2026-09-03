@@ -11,6 +11,7 @@ export interface Paziente {
   sesso: string
   lavoro: string | null
   tipoLavoro: 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO' | null
+  note: string | null
   statoAccount: 'MAI_INVITATO' | 'INVITATO' | 'ATTIVO'
   archiviato: boolean
 }
@@ -68,6 +69,8 @@ export interface Visita {
   whtr: number | null
   mamcCm: number | null
   circonferenze: Circonferenze
+  note: string | null
+  obiettivo: 'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'EDUCATIVO' | 'PREPARAZIONE_SPORTIVA'
   plicometria: Plicometria | null
 }
 
@@ -101,6 +104,8 @@ export interface CreaVisitaRequest {
   circonferenzaAvambraccioCm?: number
   circonferenzaCavigliaCm?: number
   protocolloVita?: 'OMS' | 'OMBELICALE' | 'ALTRO'
+  note?: string
+  obiettivo?: 'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'EDUCATIVO' | 'PREPARAZIONE_SPORTIVA'
   plicometria?: CreaPlicometriaRequest
 }
 
@@ -114,6 +119,7 @@ export interface CreaPazienteRequest {
   sesso: 'M' | 'F' | 'ALTRO'
   lavoro?: string
   tipoLavoro?: 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO'
+  note?: string
   visita: CreaVisitaRequest
 }
 

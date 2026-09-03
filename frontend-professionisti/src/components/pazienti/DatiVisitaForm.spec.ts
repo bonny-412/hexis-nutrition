@@ -50,6 +50,9 @@ describe('DatiVisitaForm', () => {
       circonferenzaAvambraccioCm: undefined,
       circonferenzaCavigliaCm: undefined,
       protocolloVita: undefined,
+      note: undefined,
+      obiettivo: 'MANTENIMENTO',
+      plicometria: undefined,
     })
   })
 

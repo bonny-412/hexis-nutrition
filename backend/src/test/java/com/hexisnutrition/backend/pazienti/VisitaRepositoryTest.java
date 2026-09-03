@@ -36,12 +36,12 @@ class VisitaRepositoryTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("visite-prof@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "visite-luca@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "visite-luca@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
 
         Visita visita = new Visita(paziente.getId(), null, 178, new BigDecimal("82.5"),
                 new BigDecimal("95.0"), new BigDecimal("100.0"), null, new BigDecimal("32.0"),
                 new BigDecimal("58.0"), new BigDecimal("38.0"), null, null, null, null, null,
-                ProtocolloVita.OMS);
+                ProtocolloVita.OMS, null, null);
         visitaRepository.save(visita);
 
         List<Visita> visite = visitaRepository.findAllByPazienteId(paziente.getId());
@@ -61,12 +61,12 @@ class VisitaRepositoryTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("visite-ordine-prof@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "visite-ordine-luca@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "visite-ordine-luca@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
 
         Visita piuRecente = new Visita(paziente.getId(), LocalDate.of(2026, 8, 1), 178, new BigDecimal("77.5"),
-                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS);
+                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
         Visita piuVecchia = new Visita(paziente.getId(), LocalDate.of(2026, 6, 1), 178, new BigDecimal("80.0"),
-                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS);
+                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
         // Salvate in ordine inverso rispetto alla data, per verificare che sia la query a ordinare, non l'inserimento.
         visitaRepository.save(piuRecente);
         visitaRepository.save(piuVecchia);

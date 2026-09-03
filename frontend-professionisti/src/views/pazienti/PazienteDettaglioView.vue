@@ -346,6 +346,11 @@ onMounted(() => {
                 {{ ETICHETTE_TIPO_LAVORO[paziente.tipoLavoro] }}
               </span>
             </div>
+
+            <div v-if="paziente.note" class="text-sm">
+              <span class="text-xs font-bold uppercase tracking-wide text-(--fg4)">Note</span>
+              <p class="mt-1 whitespace-pre-line font-medium text-(--fg)">{{ paziente.note }}</p>
+            </div>
           </div>
         </div>
 

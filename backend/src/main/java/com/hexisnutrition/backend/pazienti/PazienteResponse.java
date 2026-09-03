@@ -14,6 +14,7 @@ public record PazienteResponse(
         String sesso,
         String lavoro,
         String tipoLavoro,
+        String note,
         String statoAccount,
         boolean archiviato
 ) {
@@ -22,6 +23,6 @@ public record PazienteResponse(
                 paziente.getCodiceFiscale(), paziente.getEmail(), paziente.getTelefono(), paziente.getDataNascita(),
                 paziente.getSesso().name(), paziente.getLavoro(),
                 paziente.getTipoLavoro() != null ? paziente.getTipoLavoro().name() : null,
-                paziente.getStatoAccount().name(), paziente.isArchiviato());
+                paziente.getNote(), paziente.getStatoAccount().name(), paziente.isArchiviato());
     }
 }

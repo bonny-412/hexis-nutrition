@@ -3,6 +3,7 @@ import { nextTick, ref, type Ref } from 'vue'
 import type { AcceptableValue } from 'reka-ui'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Accordion,
   AccordionContent,
@@ -48,11 +49,17 @@ const circonferenzaBraccioContratto = ref('')
 const circonferenzaAvambraccio = ref('')
 const circonferenzaCaviglia = ref('')
 const protocolloVita = ref<'' | 'OMS' | 'OMBELICALE' | 'ALTRO'>('')
+const note = ref('')
+const obiettivo = ref<'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'EDUCATIVO' | 'PREPARAZIONE_SPORTIVA'>('MANTENIMENTO')
 
 const VALORE_SELEZIONA = '__seleziona__'
 
 function onProtocolloVitaChange(valore: AcceptableValue) {
   protocolloVita.value = valore === VALORE_SELEZIONA ? '' : (valore as typeof protocolloVita.value)
+}
+
+function onObiettivoChange(valore: AcceptableValue) {
+  obiettivo.value = valore as typeof obiettivo.value
 }
 
 const errori = ref<Record<string, string>>({})
@@ -165,6 +172,8 @@ function ottieniDati(): CreaVisitaRequest {
     circonferenzaAvambraccioCm: numeroItalianoOpzionale(circonferenzaAvambraccio.value),
     circonferenzaCavigliaCm: numeroItalianoOpzionale(circonferenzaCaviglia.value),
     protocolloVita: protocolloVita.value || undefined,
+    note: note.value || undefined,
+    obiettivo: obiettivo.value,
     plicometria: plicometriaForm.value?.ottieniDati(),
   }
 }
@@ -181,6 +190,24 @@ defineExpose({
 
     <div class="mt-5 grid gap-5 sm:grid-cols-2">
       <div class="flex flex-col gap-1.5">
+        <Label for="obiettivo" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Obiettivo</Label>
+        <Select :model-value="obiettivo" @update:model-value="onObiettivoChange">
+          <SelectTrigger id="obiettivo" class="w-full">
+            <SelectValue placeholder="Seleziona" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="DIMAGRIMENTO">Dimagrimento</SelectItem>
+            <SelectItem value="AUMENTO_PESO">Aumento peso</SelectItem>
+            <SelectItem value="IPERTROFIA">Ipertrofia</SelectItem>
+            <SelectItem value="RICOMPOSIZIONE">Ricomposizione</SelectItem>
+            <SelectItem value="MANTENIMENTO">Mantenimento</SelectItem>
+            <SelectItem value="EDUCATIVO">Educativo</SelectItem>
+            <SelectItem value="PREPARAZIONE_SPORTIVA">Preparazione sportiva</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div class="flex flex-col gap-1.5">
         <Label for="data-visita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Data visita</Label>
         <DatePicker id="data-visita" v-model="dataVisita" />
       </div>
@@ -196,6 +223,12 @@ defineExpose({
         <Input id="peso" :model-value="pesoKg" @update:model-value="onPesoInput" type="text" inputmode="decimal" :aria-invalid="!!errori.pesoKg" placeholder="Es. 78,50" />
         <p v-if="errori.pesoKg" class="text-xs font-medium text-(--danger)">{{ errori.pesoKg }}</p>
       </div>
+    </div>
+
+    <div class="mt-5 flex flex-col gap-1.5">
+      <Label for="note-visita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Note</Label>
+      <Textarea id="note-visita" v-model="note" maxlength="500" placeholder="Note operative, aderenza al piano, piccoli obiettivi fino alla prossima visita..." />
+      <p class="text-right text-xs text-(--fg3)">{{ note.length }}/500</p>
     </div>
 
     <div class="mt-6 border-t border-(--bd) pt-5">

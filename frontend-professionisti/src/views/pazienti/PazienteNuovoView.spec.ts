@@ -66,7 +66,7 @@ describe('PazienteNuovoView', () => {
   it('crea il paziente con i dati anagrafici e della visita, poi naviga al suo dettaglio', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '42', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     const router = creaRouter()
     router.push('/pazienti/nuovo')
@@ -86,13 +86,14 @@ describe('PazienteNuovoView', () => {
 
     expect(pazientiApi.crea).toHaveBeenCalledWith({
       nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: undefined, dataNascita: '1990-05-20', sesso: 'M', lavoro: undefined, tipoLavoro: undefined,
+      telefono: undefined, dataNascita: '1990-05-20', sesso: 'M', lavoro: undefined, tipoLavoro: undefined, note: undefined,
       visita: {
         dataVisita: oggiIso(), altezzaCm: 178, pesoKg: 82.5,
         circonferenzaVitaCm: undefined, circonferenzaFianchiCm: undefined, circonferenzaAddomeCm: undefined,
         circonferenzaBraccioRilassatoCm: undefined, circonferenzaCosciaCm: undefined, circonferenzaPolpaccioCm: undefined,
         circonferenzaColloCm: undefined, circonferenzaToraceCm: undefined, circonferenzaBraccioContrattoCm: undefined,
         circonferenzaAvambraccioCm: undefined, circonferenzaCavigliaCm: undefined, protocolloVita: undefined,
+        note: undefined, obiettivo: 'MANTENIMENTO', plicometria: undefined,
       },
     })
     expect(router.currentRoute.value.path).toBe('/pazienti/42')
@@ -102,7 +103,7 @@ describe('PazienteNuovoView', () => {
   it('invia tutte le circonferenze della visita con i valori corretti nei rispettivi campi', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '43', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     const router = creaRouter()
     router.push('/pazienti/nuovo')
@@ -138,13 +139,14 @@ describe('PazienteNuovoView', () => {
 
     expect(pazientiApi.crea).toHaveBeenCalledWith({
       nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: undefined, dataNascita: '1990-05-20', sesso: 'M', lavoro: undefined, tipoLavoro: undefined,
+      telefono: undefined, dataNascita: '1990-05-20', sesso: 'M', lavoro: undefined, tipoLavoro: undefined, note: undefined,
       visita: {
         dataVisita: oggiIso(), altezzaCm: 178, pesoKg: 82.5,
         circonferenzaVitaCm: 90.1, circonferenzaFianchiCm: 91.2, circonferenzaAddomeCm: 92.3,
         circonferenzaBraccioRilassatoCm: 93.4, circonferenzaCosciaCm: 94.5, circonferenzaPolpaccioCm: 95.6,
         circonferenzaColloCm: 96.7, circonferenzaToraceCm: 97.8, circonferenzaBraccioContrattoCm: 98.9,
         circonferenzaAvambraccioCm: 99.0, circonferenzaCavigliaCm: 100.1, protocolloVita: undefined,
+        note: undefined, obiettivo: 'MANTENIMENTO', plicometria: undefined,
       },
     })
   })
@@ -351,7 +353,7 @@ describe('PazienteNuovoView', () => {
   it('include la plicometria nel payload quando protocollo e pliche sono compilati', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '44', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     const router = creaRouter()
     router.push('/pazienti/nuovo')
@@ -393,7 +395,7 @@ describe('PazienteNuovoView', () => {
   it('permette di riportare il tipo lavoro allo stato non selezionato', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '45', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     const router = creaRouter()
     router.push('/pazienti/nuovo')

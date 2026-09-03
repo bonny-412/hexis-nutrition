@@ -101,6 +101,49 @@ class PazienteControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void creaPazienteConNoteEObiettivoLiPersisteERestituisce() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-note-obiettivo@example.com", "hash", "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/pazienti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-note-obiettivo@example.com",
+                                 "dataNascita":"1990-05-20","sesso":"M","note":"Allergico ai crostacei",
+                                 "visita":{"altezzaCm":178,"pesoKg":82.5,"note":"Prima seduta, molto motivato","obiettivo":"IPERTROFIA"}}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.note").value("Allergico ai crostacei"));
+
+        List<Visita> visite = visitaRepository.findAll();
+        assertThat(visite).hasSize(1);
+        assertThat(visite.get(0).getNote()).isEqualTo("Prima seduta, molto motivato");
+        assertThat(visite.get(0).getObiettivo()).isEqualTo(ObiettivoVisita.IPERTROFIA);
+    }
+
+    @Test
+    void creaPazienteSenzaObiettivoVisitaUsaMantenimentoComeDefault() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-obiettivo-default@example.com", "hash", "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/pazienti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-obiettivo-default@example.com",
+                                 "dataNascita":"1990-05-20","sesso":"M",
+                                 "visita":{"altezzaCm":178,"pesoKg":82.5}}
+                                """))
+                .andExpect(status().isCreated());
+
+        List<Visita> visite = visitaRepository.findAll();
+        assertThat(visite).hasSize(1);
+        assertThat(visite.get(0).getObiettivo()).isEqualTo(ObiettivoVisita.MANTENIMENTO);
+        assertThat(visite.get(0).getNote()).isNull();
+    }
+
+    @Test
     void creaPazienteConTutteLeCirconferenzeLePersisteNeiCampiCorretti() throws Exception {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-11-misure@example.com", "hash", "Anna", "Bianchi"));
@@ -388,9 +431,9 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionistaB = professionistaRepository.save(
                 new Professionista("b@example.com", "hash", "B", "B"));
         pazienteRepository.save(new Paziente(professionistaA.getId(), "Paziente", "DiA",
-                "RSSMRA80A01H501U", "diA@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "diA@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
         pazienteRepository.save(new Paziente(professionistaB.getId(), "Paziente", "DiB",
-                "RSSMRA80A01H501U", "diB@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "diB@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
 
         mockMvc.perform(get("/pazienti")
                         .header("Authorization", "Bearer " + tokenPer(professionistaA)))
@@ -406,7 +449,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionistaB = professionistaRepository.save(
                 new Professionista("b2@example.com", "hash", "B", "B"));
         Paziente pazienteDiB = pazienteRepository.save(new Paziente(professionistaB.getId(), "Paziente", "DiB",
-                "RSSMRA80A01H501U", "diB2@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "diB2@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
 
         mockMvc.perform(get("/pazienti/" + pazienteDiB.getId())
                         .header("Authorization", "Bearer " + tokenPer(professionistaA)))
@@ -418,7 +461,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof3@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca3@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca3@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
         String tokenPaziente = jwtService.generateToken(paziente.getId(), Ruolo.PAZIENTE);
 
         mockMvc.perform(post("/pazienti")
@@ -433,7 +476,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof4@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca4@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca4@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
 
         mockMvc.perform(post("/pazienti/" + paziente.getId() + "/invito")
                         .header("Authorization", "Bearer " + tokenPer(professionista)))
@@ -450,7 +493,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof5@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca5@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
+                "RSSMRA80A01H501U", "luca5@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null);
         paziente.setStatoAccount(StatoAccountPaziente.ATTIVO);
         paziente.setPasswordHash("hash");
         pazienteRepository.save(paziente);
@@ -465,7 +508,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-arch-invito@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca-arch-invito@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
+                "RSSMRA80A01H501U", "luca-arch-invito@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null);
         paziente.setArchiviato(true);
         pazienteRepository.save(paziente);
 
@@ -479,7 +522,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-email-fallita@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca-email-fallita@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca-email-fallita@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
         fakeEmailSender.simulaFallimento();
 
         mockMvc.perform(post("/pazienti/" + paziente.getId() + "/invito")
@@ -496,7 +539,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-archivia@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca-archivia@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca-archivia@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
 
         mockMvc.perform(post("/pazienti/" + paziente.getId() + "/archivia")
                         .header("Authorization", "Bearer " + tokenPer(professionista)))
@@ -511,7 +554,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-dearchivia@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca-dearchivia@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
+                "RSSMRA80A01H501U", "luca-dearchivia@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null);
         paziente.setArchiviato(true);
         pazienteRepository.save(paziente);
 
@@ -530,7 +573,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionistaB = professionistaRepository.save(
                 new Professionista("prof-b-arch@example.com", "hash", "B", "B"));
         Paziente pazienteDiB = pazienteRepository.save(new Paziente(professionistaB.getId(), "Paziente", "DiB",
-                "RSSMRA80A01H501U", "diB-arch@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "diB-arch@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
 
         mockMvc.perform(post("/pazienti/" + pazienteDiB.getId() + "/archivia")
                         .header("Authorization", "Bearer " + tokenPer(professionistaA)))
@@ -542,9 +585,9 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-ricerca1@example.com", "hash", "Anna", "Bianchi"));
         pazienteRepository.save(new Paziente(professionista.getId(), "Marco", "Rossi",
-                "RSSMRC90A01H501U", "marco-ricerca1@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRC90A01H501U", "marco-ricerca1@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
         Paziente archiviato = new Paziente(professionista.getId(), "Giulia", "Verdi",
-                "VRDGLI85A41H501U", "giulia-ricerca1@example.com", null, LocalDate.of(1985, 3, 10), Sesso.F, null, null);
+                "VRDGLI85A41H501U", "giulia-ricerca1@example.com", null, LocalDate.of(1985, 3, 10), Sesso.F, null, null, null);
         archiviato.setArchiviato(true);
         pazienteRepository.save(archiviato);
 
@@ -564,11 +607,11 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-ricerca2@example.com", "hash", "Anna", "Bianchi"));
         Paziente archiviato = new Paziente(professionista.getId(), "Giulia", "Verdi",
-                "VRDGLI85A41H501U", "giulia-ricerca2@example.com", null, LocalDate.of(1985, 3, 10), Sesso.F, null, null);
+                "VRDGLI85A41H501U", "giulia-ricerca2@example.com", null, LocalDate.of(1985, 3, 10), Sesso.F, null, null, null);
         archiviato.setArchiviato(true);
         pazienteRepository.save(archiviato);
         pazienteRepository.save(new Paziente(professionista.getId(), "Marco", "Rossi",
-                "RSSMRC90A01H501U", "marco-ricerca2@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRC90A01H501U", "marco-ricerca2@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
 
         mockMvc.perform(get("/pazienti/ricerca?archiviato=true")
                         .header("Authorization", "Bearer " + tokenPer(professionista)))
@@ -582,9 +625,9 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-ricerca3@example.com", "hash", "Anna", "Bianchi"));
         pazienteRepository.save(new Paziente(professionista.getId(), "Marco", "Rossi",
-                "RSSMRC90A01H501U", "marco-ricerca3@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRC90A01H501U", "marco-ricerca3@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
         pazienteRepository.save(new Paziente(professionista.getId(), "Giulia", "Verdi",
-                "VRDGLI85A41H501U", "giulia-ricerca3@example.com", null, LocalDate.of(1985, 3, 10), Sesso.F, null, null));
+                "VRDGLI85A41H501U", "giulia-ricerca3@example.com", null, LocalDate.of(1985, 3, 10), Sesso.F, null, null, null));
 
         mockMvc.perform(get("/pazienti/ricerca?ricerca=giulia")
                         .header("Authorization", "Bearer " + tokenPer(professionista)))
@@ -598,11 +641,11 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-ricerca4@example.com", "hash", "Anna", "Bianchi"));
         Paziente match = new Paziente(professionista.getId(), "Marco", "Rossi",
-                "RSSMRC90A01H501U", "marco-ricerca4@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
+                "RSSMRC90A01H501U", "marco-ricerca4@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null);
         match.setStatoAccount(StatoAccountPaziente.ATTIVO);
         pazienteRepository.save(match);
         pazienteRepository.save(new Paziente(professionista.getId(), "Marco", "Bianchi",
-                "BNCMRC70A01H501U", "marco-vecchio-ricerca4@example.com", null, LocalDate.of(1970, 1, 1), Sesso.M, null, null));
+                "BNCMRC70A01H501U", "marco-vecchio-ricerca4@example.com", null, LocalDate.of(1970, 1, 1), Sesso.M, null, null, null));
 
         mockMvc.perform(get("/pazienti/ricerca")
                         .param("statoAccount", "ATTIVO")
@@ -620,11 +663,11 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-ricerca5@example.com", "hash", "Anna", "Bianchi"));
         pazienteRepository.save(new Paziente(professionista.getId(), "Carlo", "Neri",
-                "NRICRL90A01H501U", "carlo-ricerca5@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "NRICRL90A01H501U", "carlo-ricerca5@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
         pazienteRepository.save(new Paziente(professionista.getId(), "Anna", "Bruni",
-                "BRNANN90A01H501U", "anna-ricerca5@example.com", null, LocalDate.of(1990, 1, 1), Sesso.F, null, null));
+                "BRNANN90A01H501U", "anna-ricerca5@example.com", null, LocalDate.of(1990, 1, 1), Sesso.F, null, null, null));
         pazienteRepository.save(new Paziente(professionista.getId(), "Bruno", "Villa",
-                "VLLBRN90A01H501U", "bruno-ricerca5@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "VLLBRN90A01H501U", "bruno-ricerca5@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
 
         mockMvc.perform(get("/pazienti/ricerca")
                         .param("dimensione", "2")
@@ -665,7 +708,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-arch-idem@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca-arch-idem@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
+                "RSSMRA80A01H501U", "luca-arch-idem@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null);
         paziente.setArchiviato(true);
         pazienteRepository.save(paziente);
 
@@ -681,7 +724,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-dearch-idem@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca-dearch-idem@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca-dearch-idem@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
 
         mockMvc.perform(post("/pazienti/" + paziente.getId() + "/de-archivia")
                         .header("Authorization", "Bearer " + tokenPer(professionista)))
@@ -695,7 +738,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof6@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca6@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca6@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
         TokenAzione token = TokenAzione.perPaziente(TipoToken.INVITO, paziente.getId(), Duration.ofDays(7));
         tokenAzioneRepository.save(token);
 
@@ -714,7 +757,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof7@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca7@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca7@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
         TokenAzione token = TokenAzione.perPaziente(TipoToken.INVITO, paziente.getId(), Duration.ofDays(7));
         tokenAzioneRepository.save(token);
 
@@ -734,7 +777,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("collisione@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "collisione@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "collisione@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
         TokenAzione token = TokenAzione.perPaziente(TipoToken.INVITO, paziente.getId(), Duration.ofDays(7));
         tokenAzioneRepository.save(token);
 
@@ -749,7 +792,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof8@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca8@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca8@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
         TokenAzione token = TokenAzione.perPaziente(TipoToken.RESET_PASSWORD, paziente.getId(), Duration.ofDays(7));
         tokenAzioneRepository.save(token);
 
@@ -764,7 +807,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof9@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca9@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca9@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
 
         mockMvc.perform(post("/pazienti/" + paziente.getId() + "/invito")
                         .header("Authorization", "Bearer " + tokenPer(professionista)))
@@ -938,7 +981,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-visite-vuote@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca-visite-vuote@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca-visite-vuote@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
 
         mockMvc.perform(get("/pazienti/" + paziente.getId() + "/visite")
                         .header("Authorization", "Bearer " + tokenPer(professionista)))
@@ -951,13 +994,13 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-visite-ordine@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca-visite-ordine@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca-visite-ordine@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
 
         Visita piuRecente = new Visita(paziente.getId(), LocalDate.of(2026, 8, 1), 178, new BigDecimal("77.5"),
-                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS);
+                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
         piuRecente.setBmi(new BigDecimal("24.4"));
         Visita piuVecchia = new Visita(paziente.getId(), LocalDate.of(2026, 6, 1), 178, new BigDecimal("80.0"),
-                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS);
+                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
         piuVecchia.setBmi(new BigDecimal("25.2"));
         visitaRepository.save(piuRecente);
         visitaRepository.save(piuVecchia);
@@ -990,7 +1033,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         Professionista professionistaB = professionistaRepository.save(
                 new Professionista("prof-visite-b@example.com", "hash", "B", "B"));
         Paziente pazienteDiB = pazienteRepository.save(new Paziente(professionistaB.getId(), "Paziente", "DiB",
-                "RSSMRA80A01H501U", "diB-visite@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "diB-visite@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
 
         mockMvc.perform(get("/pazienti/" + pazienteDiB.getId() + "/visite")
                         .header("Authorization", "Bearer " + tokenPer(professionistaA)))

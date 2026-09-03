@@ -32,7 +32,7 @@ describe('PazienteDettaglioView', () => {
   it('mostra i dati del paziente caricato', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     const router = creaRouter()
     router.push('/pazienti/1')
@@ -48,7 +48,7 @@ describe('PazienteDettaglioView', () => {
   it('mostra i campi anagrafici aggiuntivi (telefono, età, sesso, lavoro) quando presenti', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: '3331234567', dataNascita: '1990-05-20', sesso: 'M', lavoro: 'Impiegato', tipoLavoro: 'ATTIVO',
+      telefono: '3331234567', dataNascita: '1990-05-20', sesso: 'M', lavoro: 'Impiegato', tipoLavoro: 'ATTIVO', note: null,
       statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     const router = creaRouter()
@@ -67,7 +67,7 @@ describe('PazienteDettaglioView', () => {
   it('mostra un trattino per i campi anagrafici assenti', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     const router = creaRouter()
     router.push('/pazienti/1')
@@ -81,7 +81,7 @@ describe('PazienteDettaglioView', () => {
   it('invita il paziente e ne aggiorna lo stato mostrato', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     vi.mocked(pazientiApi.invita).mockResolvedValue(undefined)
     const router = creaRouter()
@@ -102,7 +102,7 @@ describe('PazienteDettaglioView', () => {
   it('mostra la striscia di statistiche rapide con peso, BMI e ultima visita', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     vi.mocked(pazientiApi.visite).mockResolvedValue([
       {
@@ -111,6 +111,8 @@ describe('PazienteDettaglioView', () => {
           vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
           polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
         },
+        note: null,
+        obiettivo: 'MANTENIMENTO',
         plicometria: null,
       },
       {
@@ -119,6 +121,8 @@ describe('PazienteDettaglioView', () => {
           vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
           polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
         },
+        note: null,
+        obiettivo: 'MANTENIMENTO',
         plicometria: null,
       },
     ])
@@ -145,7 +149,7 @@ describe('PazienteDettaglioView', () => {
   it('mostra la card Visite con l\'elenco dalla più recente, etichettando la più vecchia come "Prima visita"', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     vi.mocked(pazientiApi.visite).mockResolvedValue([
       {
@@ -154,6 +158,8 @@ describe('PazienteDettaglioView', () => {
           vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
           polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
         },
+        note: null,
+        obiettivo: 'MANTENIMENTO',
         plicometria: null,
       },
       {
@@ -162,6 +168,8 @@ describe('PazienteDettaglioView', () => {
           vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
           polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
         },
+        note: null,
+        obiettivo: 'MANTENIMENTO',
         plicometria: null,
       },
     ])
@@ -188,7 +196,7 @@ describe('PazienteDettaglioView', () => {
   it('mostra "Nessuna visita registrata" nella card Visite quando non ci sono visite', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     const router = creaRouter()
     router.push('/pazienti/1')
@@ -225,7 +233,7 @@ describe('PazienteDettaglioView', () => {
   it('mostra un errore se l\'invito fallisce e non aggiorna lo stato del paziente (nessun optimistic update)', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     vi.mocked(pazientiApi.invita).mockRejectedValue(new Error('409'))
     const router = creaRouter()
@@ -246,7 +254,7 @@ describe('PazienteDettaglioView', () => {
   it('mostra la sezione Andamento con i dati delle visite', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     vi.mocked(pazientiApi.visite).mockResolvedValue([
       {
@@ -255,6 +263,8 @@ describe('PazienteDettaglioView', () => {
           vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
           polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
         },
+        note: null,
+        obiettivo: 'MANTENIMENTO',
         plicometria: null,
       },
       {
@@ -263,6 +273,8 @@ describe('PazienteDettaglioView', () => {
           vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
           polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
         },
+        note: null,
+        obiettivo: 'MANTENIMENTO',
         plicometria: null,
       },
     ])
@@ -283,7 +295,7 @@ describe('PazienteDettaglioView', () => {
   it('nasconde la card % Grasso corporeo se nessuna visita ha la plicometria', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     vi.mocked(pazientiApi.visite).mockResolvedValue([
       {
@@ -292,6 +304,8 @@ describe('PazienteDettaglioView', () => {
           vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
           polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
         },
+        note: null,
+        obiettivo: 'MANTENIMENTO',
         plicometria: null,
       },
     ])
@@ -309,7 +323,7 @@ describe('PazienteDettaglioView', () => {
   it('mostra la card % Grasso corporeo quando almeno una visita ha la plicometria', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     vi.mocked(pazientiApi.visite).mockResolvedValue([
       {
@@ -318,6 +332,8 @@ describe('PazienteDettaglioView', () => {
           vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
           polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
         },
+        note: null,
+        obiettivo: 'MANTENIMENTO',
         plicometria: { percentualeGrassoCorporeo: 18.2, massaGrassaKg: 14.1, massaMagraKg: 63.4, fmi: 4.4, ffmi: 20.1 },
       },
     ])
@@ -335,7 +351,7 @@ describe('PazienteDettaglioView', () => {
   it('non mostra lo stato vuoto dell\'andamento finché lo storico visite è in caricamento', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     let risolviVisite: (visite: pazientiApi.Visita[]) => void = () => {}
     vi.mocked(pazientiApi.visite).mockReturnValue(
@@ -368,7 +384,7 @@ describe('PazienteDettaglioView', () => {
   it('mostra un errore se lo storico visite non si carica, senza bloccare l\'anagrafica', async () => {
     vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
       id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     })
     vi.mocked(pazientiApi.visite).mockRejectedValue(new Error('500'))
     const router = creaRouter()

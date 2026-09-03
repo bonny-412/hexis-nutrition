@@ -12,7 +12,7 @@ class VisitaCalcoliTest {
     private Visita visitaConMisure(BigDecimal vita, BigDecimal fianchi) {
         return new Visita(UUID.randomUUID(), null, 180, new BigDecimal("82.50"),
                 vita, fianchi, null, null, null, null, null, null, null, null, null,
-                ProtocolloVita.OMS);
+                ProtocolloVita.OMS, null, null);
     }
 
     @Test
@@ -52,7 +52,7 @@ class VisitaCalcoliTest {
     void applicaMamcSoloSeBraccioRilassatoPresente() {
         Visita conBraccio = new Visita(UUID.randomUUID(), null, 180, new BigDecimal("82.50"),
                 null, null, null, new BigDecimal("32.00"), null, null, null, null, null, null, null,
-                ProtocolloVita.OMS);
+                ProtocolloVita.OMS, null, null);
         Visita senzaBraccio = visitaConMisure(null, null);
 
         VisitaCalcoli.applicaMamc(conBraccio, new BigDecimal("16.00"));

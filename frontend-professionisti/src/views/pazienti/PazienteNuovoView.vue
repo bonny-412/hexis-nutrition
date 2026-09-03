@@ -9,6 +9,7 @@ import { crea } from '@/api/pazienti'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -46,6 +47,7 @@ const telefono = ref('')
 const dataNascita = ref('')
 const lavoro = ref('')
 const tipoLavoro = ref<'' | 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO'>('')
+const note = ref('')
 
 const eta = computed(() => calcolaEta(dataNascita.value))
 
@@ -146,6 +148,7 @@ async function onSubmit() {
       sesso: sesso.value as 'M' | 'F' | 'ALTRO',
       lavoro: lavoro.value || undefined,
       tipoLavoro: tipoLavoro.value || undefined,
+      note: note.value || undefined,
       visita: datiVisitaForm.value!.ottieniDati(),
     })
     toast.success('Paziente creato con successo.')
@@ -257,6 +260,12 @@ async function onSubmit() {
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        <div class="mt-5 flex flex-col gap-1.5">
+          <Label for="note" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Note</Label>
+          <Textarea id="note" v-model="note" maxlength="500" placeholder="Allergie, patologie, indicazioni utili…" />
+          <p class="text-right text-xs text-(--fg3)">{{ note.length }}/500</p>
         </div>
       </div>
 

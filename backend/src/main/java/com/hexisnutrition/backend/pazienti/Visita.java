@@ -71,6 +71,13 @@ public class Visita {
     @Column(name = "protocollo_vita", nullable = false)
     private ProtocolloVita protocolloVita = ProtocolloVita.OMS;
 
+    @Column(columnDefinition = "TEXT")
+    private String note;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ObiettivoVisita obiettivo = ObiettivoVisita.MANTENIMENTO;
+
     @Column(name = "bmi")
     private BigDecimal bmi;
 
@@ -95,7 +102,8 @@ public class Visita {
                   BigDecimal circonferenzaCosciaCm, BigDecimal circonferenzaPolpaccioCm,
                   BigDecimal circonferenzaColloCm, BigDecimal circonferenzaToraceCm,
                   BigDecimal circonferenzaBraccioContrattoCm, BigDecimal circonferenzaAvambraccioCm,
-                  BigDecimal circonferenzaCavigliaCm, ProtocolloVita protocolloVita) {
+                  BigDecimal circonferenzaCavigliaCm, ProtocolloVita protocolloVita,
+                  String note, ObiettivoVisita obiettivo) {
         this.pazienteId = pazienteId;
         if (dataVisita != null) {
             this.dataVisita = dataVisita;
@@ -115,6 +123,10 @@ public class Visita {
         this.circonferenzaCavigliaCm = circonferenzaCavigliaCm;
         if (protocolloVita != null) {
             this.protocolloVita = protocolloVita;
+        }
+        this.note = note;
+        if (obiettivo != null) {
+            this.obiettivo = obiettivo;
         }
     }
 
@@ -184,6 +196,14 @@ public class Visita {
 
     public ProtocolloVita getProtocolloVita() {
         return protocolloVita;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public ObiettivoVisita getObiettivo() {
+        return obiettivo;
     }
 
     public BigDecimal getBmi() {

@@ -14,6 +14,8 @@ public record VisitaResponse(
         BigDecimal whtr,
         BigDecimal mamcCm,
         Circonferenze circonferenze,
+        String note,
+        String obiettivo,
         PlicometriaResponse plicometria
 ) {
     public static VisitaResponse da(Visita visita, Plicometria plicometria) {
@@ -27,6 +29,8 @@ public record VisitaResponse(
                 visita.getWhtr(),
                 visita.getMamcCm(),
                 Circonferenze.da(visita),
+                visita.getNote(),
+                visita.getObiettivo().name(),
                 plicometria != null ? PlicometriaResponse.da(plicometria) : null);
     }
 

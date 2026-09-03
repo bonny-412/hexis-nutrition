@@ -16,6 +16,8 @@ function visita(overrides: Partial<Visita> = {}): Visita {
       vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
       polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
     },
+    note: null,
+    obiettivo: 'MANTENIMENTO',
     plicometria: null,
     ...overrides,
   }

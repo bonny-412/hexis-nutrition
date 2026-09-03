@@ -26,6 +26,8 @@ public record VisitaRequest(
         @Positive @Digits(integer = 4, fraction = 2) BigDecimal circonferenzaAvambraccioCm,
         @Positive @Digits(integer = 4, fraction = 2) BigDecimal circonferenzaCavigliaCm,
         ProtocolloVita protocolloVita,
+        String note,
+        ObiettivoVisita obiettivo,
         @Valid PlicometriaRequest plicometria
 ) {
 }

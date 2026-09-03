@@ -40,7 +40,7 @@ class TokenAzioneRepositoryTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null));
+                "RSSMRA80A01H501U", "luca@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
 
         TokenAzione token = TokenAzione.perPaziente(TipoToken.INVITO, paziente.getId(), Duration.ofDays(7));
         tokenAzioneRepository.save(token);

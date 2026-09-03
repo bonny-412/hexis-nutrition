@@ -57,7 +57,8 @@ public class PazienteService {
     @Transactional
     public Paziente crea(UUID professionistaId, CreaPazienteRequest request) {
         Paziente paziente = new Paziente(professionistaId, request.nome(), request.cognome(), request.codiceFiscale(), request.email(),
-                request.telefono(), request.dataNascita(), request.sesso(), request.lavoro(), request.tipoLavoro());
+                request.telefono(), request.dataNascita(), request.sesso(), request.lavoro(), request.tipoLavoro(),
+                request.note());
         pazienteRepository.save(paziente);
 
         VisitaRequest v = request.visita();
@@ -65,7 +66,8 @@ public class PazienteService {
                 v.circonferenzaVitaCm(), v.circonferenzaFianchiCm(), v.circonferenzaAddomeCm(),
                 v.circonferenzaBraccioRilassatoCm(), v.circonferenzaCosciaCm(), v.circonferenzaPolpaccioCm(),
                 v.circonferenzaColloCm(), v.circonferenzaToraceCm(), v.circonferenzaBraccioContrattoCm(),
-                v.circonferenzaAvambraccioCm(), v.circonferenzaCavigliaCm(), v.protocolloVita());
+                v.circonferenzaAvambraccioCm(), v.circonferenzaCavigliaCm(), v.protocolloVita(),
+                v.note(), v.obiettivo());
         VisitaCalcoli.applica(visita);
         visitaRepository.save(visita);
         plicometriaService.elabora(paziente, visita, v.plicometria());

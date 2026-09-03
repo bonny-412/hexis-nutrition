@@ -33,7 +33,7 @@ class PazienteRepositoryTest extends AbstractIntegrationTest {
                 new Professionista("prof@example.com", "hash", "Anna", "Bianchi"));
 
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca.verdi@example.com", "3331234567", LocalDate.of(1990, 5, 20), Sesso.M, "Impiegato", TipoLavoro.ATTIVO);
+                "RSSMRA80A01H501U", "luca.verdi@example.com", "3331234567", LocalDate.of(1990, 5, 20), Sesso.M, "Impiegato", TipoLavoro.ATTIVO, null);
         pazienteRepository.save(paziente);
 
         List<Paziente> pazienti = pazienteRepository.findAllByProfessionistaId(professionista.getId());
@@ -48,7 +48,7 @@ class PazienteRepositoryTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof2@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "attivo@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
+                "RSSMRA80A01H501U", "attivo@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null);
         paziente.setStatoAccount(StatoAccountPaziente.ATTIVO);
         paziente.setPasswordHash("hash-paziente");
         pazienteRepository.save(paziente);
@@ -67,7 +67,7 @@ class PazienteRepositoryTest extends AbstractIntegrationTest {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-archivio@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = new Paziente(professionista.getId(), "Luca", "Verdi",
-                "RSSMRA80A01H501U", "luca.archivio@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null);
+                "RSSMRA80A01H501U", "luca.archivio@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null);
         pazienteRepository.save(paziente);
 
         Paziente ritrovato = pazienteRepository.findById(paziente.getId()).orElseThrow();

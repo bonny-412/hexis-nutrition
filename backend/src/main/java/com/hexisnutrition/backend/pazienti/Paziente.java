@@ -51,6 +51,9 @@ public class Paziente {
     @Column(name = "tipo_lavoro")
     private TipoLavoro tipoLavoro;
 
+    @Column(columnDefinition = "TEXT")
+    private String note;
+
     @Column(name = "password_hash")
     private String passwordHash;
 
@@ -68,7 +71,8 @@ public class Paziente {
     }
 
     public Paziente(UUID professionistaId, String nome, String cognome, String codiceFiscale, String email,
-                     String telefono, LocalDate dataNascita, Sesso sesso, String lavoro, TipoLavoro tipoLavoro) {
+                     String telefono, LocalDate dataNascita, Sesso sesso, String lavoro, TipoLavoro tipoLavoro,
+                     String note) {
         this.professionistaId = professionistaId;
         this.nome = nome;
         this.cognome = cognome;
@@ -79,6 +83,7 @@ public class Paziente {
         this.sesso = sesso;
         this.lavoro = lavoro;
         this.tipoLavoro = tipoLavoro;
+        this.note = note;
     }
 
     public UUID getId() {
@@ -123,6 +128,10 @@ public class Paziente {
 
     public TipoLavoro getTipoLavoro() {
         return tipoLavoro;
+    }
+
+    public String getNote() {
+        return note;
     }
 
     public String getPasswordHash() {

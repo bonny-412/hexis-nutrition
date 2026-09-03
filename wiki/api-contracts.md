@@ -3,7 +3,7 @@ title: Contratti API
 tags: [api]
 stato: in-discussione
 creato: 2026-08-08
-aggiornato: 2026-09-02
+aggiornato: 2026-09-03
 fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md]
 ---
 
@@ -28,6 +28,8 @@ Endpoint del sotto-progetto "Fondamenta" (vedi [decisioni/0002](decisioni/0002-a
 | POST | `/inviti/{token}/attiva` | pubblico (con token) | Il paziente imposta la password e attiva l'account; 400 se token non valido, 409 se l'email è già in uso da un account attivo |
 
 `POST /pazienti` richiede un oggetto `visita` obbligatorio nel body (altezza e peso obbligatori, le 11 circonferenze sono opzionali, il blocco `plicometria` è opzionale e annidato dentro `visita`) — creato in transazione con l'anagrafica. `sesso` del paziente è obbligatorio (`M`/`F`/`ALTRO`) dal 2026-09-01; la plicometria è disponibile solo per `M`/`F`. Dettagli campo per campo in `VisitaRequest` e `PlicometriaRequest` (`backend/src/main/java/com/hexisnutrition/backend/pazienti/`).
+
+Dal 2026-09-03: `note` opzionale (testo libero) sia sul paziente sia sulla visita; `obiettivo` opzionale sulla visita (`DIMAGRIMENTO`/`AUMENTO_PESO`/`IPERTROFIA`/`RICOMPOSIZIONE`/`MANTENIMENTO`/`EDUCATIVO`/`PREPARAZIONE_SPORTIVA`, default `MANTENIMENTO` se omesso). Nessuna validazione lato server su `note` (stesso gap noto degli altri campi testuali liberi); il frontend applica un limite di 500 caratteri solo lato client.
 
 `GET /pazienti/ricerca` è separato da `GET /pazienti` (che resta la lista completa non paginata, usata dalla dashboard): risponde con `{contenuto, paginaCorrente, dimensionePagina, totaleElementi, totalePagine}`, tutti i filtri sono combinati in AND, `dimensione` è clampata lato server tra 1 e 100.
 
