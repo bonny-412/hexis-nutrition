@@ -7,7 +7,10 @@ import type { Paziente } from '@/api/pazienti'
 function creaRouter() {
   return createRouter({
     history: createMemoryHistory(),
-    routes: [{ path: '/pazienti/:id', name: 'paziente-dettaglio', component: { template: '<div/>' } }],
+    routes: [
+      { path: '/pazienti/:id', name: 'paziente-dettaglio', component: { template: '<div/>' } },
+      { path: '/pazienti/:id/visite/nuova', name: 'visita-nuova', component: { template: '<div/>' } },
+    ],
   })
 }
 
@@ -54,12 +57,13 @@ describe('PazienteRigaAzioni', () => {
     wrapper.unmount()
   })
 
-  it('apre il menu e mostra "Nuova visita" disabilitata', async () => {
+  it('apre il menu e collega "Nuova visita" alla pagina di creazione per il paziente', async () => {
     const wrapper = await montaComponente(pazienteEsempio)
     await apriMenu(wrapper)
 
-    expect(document.body.textContent).toContain('Nuova visita')
-    expect(document.body.textContent).toContain('Presto disponibile')
+    const link = document.querySelector<HTMLAnchorElement>('[data-test="menu-nuova-visita"]')
+    expect(link?.textContent).toContain('Nuova visita')
+    expect(link?.getAttribute('href')).toBe('/pazienti/1/visite/nuova')
     wrapper.unmount()
   })
 

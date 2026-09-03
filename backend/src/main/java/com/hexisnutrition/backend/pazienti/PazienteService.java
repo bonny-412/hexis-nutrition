@@ -75,6 +75,22 @@ public class PazienteService {
         return paziente;
     }
 
+    @Transactional
+    public Paziente aggiorna(UUID professionistaId, UUID pazienteId, AggiornaPazienteRequest request) {
+        Paziente paziente = dettaglio(professionistaId, pazienteId);
+        paziente.setNome(request.nome());
+        paziente.setCognome(request.cognome());
+        paziente.setCodiceFiscale(request.codiceFiscale());
+        paziente.setEmail(request.email());
+        paziente.setTelefono(request.telefono());
+        paziente.setDataNascita(request.dataNascita());
+        paziente.setSesso(request.sesso());
+        paziente.setLavoro(request.lavoro());
+        paziente.setTipoLavoro(request.tipoLavoro());
+        paziente.setNote(request.note());
+        return pazienteRepository.save(paziente);
+    }
+
     public List<Paziente> listaPerProfessionista(UUID professionistaId) {
         return pazienteRepository.findAllByProfessionistaId(professionistaId);
     }
@@ -112,6 +128,75 @@ public class PazienteService {
         return visitaRepository.findAllByPazienteIdOrderByDataVisitaAsc(pazienteId).stream()
                 .map(v -> VisitaResponse.da(v, plicometriaRepository.findByVisitaId(v.getId()).orElse(null)))
                 .toList();
+    }
+
+    private Visita visitaDelPaziente(UUID pazienteId, UUID visitaId) {
+        Visita visita = visitaRepository.findById(visitaId).orElseThrow(VisitaNonTrovataException::new);
+        if (!visita.getPazienteId().equals(pazienteId)) {
+            throw new VisitaNonTrovataException();
+        }
+        return visita;
+    }
+
+    public VisitaResponse visitaSingola(UUID professionistaId, UUID pazienteId, UUID visitaId) {
+        dettaglio(professionistaId, pazienteId);
+        Visita visita = visitaDelPaziente(pazienteId, visitaId);
+        return VisitaResponse.da(visita, plicometriaRepository.findByVisitaId(visita.getId()).orElse(null));
+    }
+
+    @Transactional
+    public VisitaResponse creaVisita(UUID professionistaId, UUID pazienteId, VisitaRequest request) {
+        Paziente paziente = dettaglio(professionistaId, pazienteId);
+
+        Visita visita = new Visita(paziente.getId(), request.dataVisita(), request.altezzaCm(), request.pesoKg(),
+                request.circonferenzaVitaCm(), request.circonferenzaFianchiCm(), request.circonferenzaAddomeCm(),
+                request.circonferenzaBraccioRilassatoCm(), request.circonferenzaCosciaCm(), request.circonferenzaPolpaccioCm(),
+                request.circonferenzaColloCm(), request.circonferenzaToraceCm(), request.circonferenzaBraccioContrattoCm(),
+                request.circonferenzaAvambraccioCm(), request.circonferenzaCavigliaCm(), request.protocolloVita(),
+                request.note(), request.obiettivo());
+        VisitaCalcoli.applica(visita);
+        visitaRepository.save(visita);
+        plicometriaService.elabora(paziente, visita, request.plicometria());
+        visitaRepository.save(visita);
+
+        return VisitaResponse.da(visita, plicometriaRepository.findByVisitaId(visita.getId()).orElse(null));
+    }
+
+    @Transactional
+    public VisitaResponse aggiornaVisita(UUID professionistaId, UUID pazienteId, UUID visitaId, VisitaRequest request) {
+        Paziente paziente = dettaglio(professionistaId, pazienteId);
+        Visita visita = visitaDelPaziente(pazienteId, visitaId);
+
+        visita.setDataVisita(request.dataVisita());
+        visita.setAltezzaCm(request.altezzaCm());
+        visita.setPesoKg(request.pesoKg());
+        visita.setCirconferenzaVitaCm(request.circonferenzaVitaCm());
+        visita.setCirconferenzaFianchiCm(request.circonferenzaFianchiCm());
+        visita.setCirconferenzaAddomeCm(request.circonferenzaAddomeCm());
+        visita.setCirconferenzaBraccioRilassatoCm(request.circonferenzaBraccioRilassatoCm());
+        visita.setCirconferenzaCosciaCm(request.circonferenzaCosciaCm());
+        visita.setCirconferenzaPolpaccioCm(request.circonferenzaPolpaccioCm());
+        visita.setCirconferenzaColloCm(request.circonferenzaColloCm());
+        visita.setCirconferenzaToraceCm(request.circonferenzaToraceCm());
+        visita.setCirconferenzaBraccioContrattoCm(request.circonferenzaBraccioContrattoCm());
+        visita.setCirconferenzaAvambraccioCm(request.circonferenzaAvambraccioCm());
+        visita.setCirconferenzaCavigliaCm(request.circonferenzaCavigliaCm());
+        visita.setProtocolloVita(request.protocolloVita());
+        visita.setNote(request.note());
+        visita.setObiettivo(request.obiettivo());
+
+        visita.setWhr(null);
+        visita.setWhtr(null);
+        visita.setMamcCm(null);
+        VisitaCalcoli.applica(visita);
+
+        plicometriaRepository.deleteByVisitaId(visita.getId());
+        plicometriaRepository.flush();
+        visitaRepository.save(visita);
+        plicometriaService.elabora(paziente, visita, request.plicometria());
+        visitaRepository.save(visita);
+
+        return VisitaResponse.da(visita, plicometriaRepository.findByVisitaId(visita.getId()).orElse(null));
     }
 
     @Transactional

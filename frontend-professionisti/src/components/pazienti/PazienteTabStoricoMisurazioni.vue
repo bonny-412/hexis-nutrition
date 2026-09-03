@@ -8,6 +8,7 @@ import { formattaDataItalianaConMese } from '@/utils/data'
 import { ChevronDown } from '@lucide/vue'
 
 const props = defineProps<{
+  pazienteId: string
   visiteInCaricamento: boolean
   erroreVisite: boolean
   visite: Visita[]
@@ -143,7 +144,9 @@ const righe = computed<RigaStorico[]>(() => {
 
         <div v-if="idAperto === riga.visita.id" data-test="storico-dettaglio" class="border-t border-(--div) px-5 pb-5 pt-4">
           <div class="mb-4 flex justify-end gap-2">
-            <Button variant="outline" size="sm" disabled title="Presto disponibile">Modifica visita</Button>
+            <Button as-child variant="outline" size="sm">
+              <router-link :to="`/pazienti/${pazienteId}/visite/${riga.visita.id}/modifica`">Modifica visita</router-link>
+            </Button>
             <Button variant="outline" size="sm" disabled title="Presto disponibile">Elimina visita</Button>
           </div>
 

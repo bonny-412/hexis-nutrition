@@ -11,6 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -72,9 +73,34 @@ public class PazienteController {
         return PazienteResponse.da(pazienteService.dettaglio(professionistaId, id));
     }
 
+    @PutMapping("/{id}")
+    public PazienteResponse aggiorna(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id,
+                                      @Valid @RequestBody AggiornaPazienteRequest request) {
+        return PazienteResponse.da(pazienteService.aggiorna(professionistaId, id, request));
+    }
+
     @GetMapping("/{id}/visite")
     public List<VisitaResponse> visite(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id) {
         return pazienteService.visite(professionistaId, id);
+    }
+
+    @PostMapping("/{id}/visite")
+    @ResponseStatus(HttpStatus.CREATED)
+    public VisitaResponse creaVisita(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id,
+                                      @Valid @RequestBody VisitaRequest request) {
+        return pazienteService.creaVisita(professionistaId, id, request);
+    }
+
+    @GetMapping("/{id}/visite/{visitaId}")
+    public VisitaResponse dettaglioVisita(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id,
+                                           @PathVariable UUID visitaId) {
+        return pazienteService.visitaSingola(professionistaId, id, visitaId);
+    }
+
+    @PutMapping("/{id}/visite/{visitaId}")
+    public VisitaResponse aggiornaVisita(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id,
+                                          @PathVariable UUID visitaId, @Valid @RequestBody VisitaRequest request) {
+        return pazienteService.aggiornaVisita(professionistaId, id, visitaId, request);
     }
 
     @PostMapping("/{id}/invito")

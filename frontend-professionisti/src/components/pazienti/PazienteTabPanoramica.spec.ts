@@ -27,6 +27,7 @@ function visita(overrides: Partial<Visita> = {}): Visita {
       vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
       polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
     },
+    protocolloVita: 'OMS',
     note: null,
     obiettivo: 'MANTENIMENTO',
     plicometria: null,
@@ -96,7 +97,12 @@ describe('PazienteTabPanoramica', () => {
     const wrapper = monta([
       visita({
         dataVisita: '2026-06-01',
-        plicometria: { percentualeGrassoCorporeo: 18.2, massaGrassaKg: 14.1, massaMagraKg: 63.4, fmi: 4.4, ffmi: 20.1 },
+        plicometria: {
+          protocollo: 'JACKSON_POLLOCK_3', etniaAtleta: null,
+          plicaPettoraleMm: null, plicaAscellareMm: null, plicaTricipitaleMm: null, plicaBicipitaleMm: null,
+          plicaSottoscapolareMm: null, plicaSoprailiacaMm: null, plicaAddominaleMm: null, plicaCosciaMm: null, plicaPolpaccioMm: null,
+          percentualeGrassoCorporeo: 18.2, massaGrassaKg: 14.1, massaMagraKg: 63.4, fmi: 4.4, ffmi: 20.1,
+        },
       }),
     ])
 
@@ -123,7 +129,12 @@ describe('PazienteTabPanoramica', () => {
   it('mostra i dati reali di plicometria dell\'ultima visita quando presenti', () => {
     const wrapper = monta([
       visita({
-        plicometria: { percentualeGrassoCorporeo: 18.2, massaGrassaKg: 14.1, massaMagraKg: 63.4, fmi: 4.4, ffmi: 20.1 },
+        plicometria: {
+          protocollo: 'JACKSON_POLLOCK_3', etniaAtleta: null,
+          plicaPettoraleMm: null, plicaAscellareMm: null, plicaTricipitaleMm: null, plicaBicipitaleMm: null,
+          plicaSottoscapolareMm: null, plicaSoprailiacaMm: null, plicaAddominaleMm: null, plicaCosciaMm: null, plicaPolpaccioMm: null,
+          percentualeGrassoCorporeo: 18.2, massaGrassaKg: 14.1, massaMagraKg: 63.4, fmi: 4.4, ffmi: 20.1,
+        },
       }),
     ])
 

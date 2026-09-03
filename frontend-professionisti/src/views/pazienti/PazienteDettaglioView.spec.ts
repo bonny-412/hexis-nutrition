@@ -21,6 +21,8 @@ function creaRouter() {
       { path: '/', name: 'dashboard', component: { template: '<div/>' } },
       { path: '/pazienti', name: 'pazienti', component: { template: '<div/>' } },
       { path: '/pazienti/:id', name: 'paziente-dettaglio', component: PazienteDettaglioView },
+      { path: '/pazienti/:id/visite/nuova', name: 'visita-nuova', component: { template: '<div/>' } },
+      { path: '/pazienti/:id/visite/:visitaId/modifica', name: 'visita-modifica', component: { template: '<div/>' } },
       { path: '/login', name: 'login', component: { template: '<div/>' } },
     ],
   })
@@ -40,6 +42,7 @@ function visita(overrides: Partial<Visita> = {}): Visita {
       vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
       polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
     },
+    protocolloVita: 'OMS',
     note: null,
     obiettivo: 'MANTENIMENTO',
     plicometria: null,
@@ -152,7 +155,12 @@ describe('PazienteDettaglioView', () => {
         visita({ id: 'v1', dataVisita: '2026-06-01', pesoKg: 80, bmi: 25.2 }),
         visita({
           id: 'v2', dataVisita: '2026-08-01', pesoKg: 77.5, bmi: 24.4,
-          plicometria: { percentualeGrassoCorporeo: 18.2, massaGrassaKg: 14.1, massaMagraKg: 63.4, fmi: 4.4, ffmi: 20.1 },
+          plicometria: {
+            protocollo: 'JACKSON_POLLOCK_3', etniaAtleta: null,
+            plicaPettoraleMm: null, plicaAscellareMm: null, plicaTricipitaleMm: null, plicaBicipitaleMm: null,
+            plicaSottoscapolareMm: null, plicaSoprailiacaMm: null, plicaAddominaleMm: null, plicaCosciaMm: null, plicaPolpaccioMm: null,
+            percentualeGrassoCorporeo: 18.2, massaGrassaKg: 14.1, massaMagraKg: 63.4, fmi: 4.4, ffmi: 20.1,
+          },
         }),
       ])
     })

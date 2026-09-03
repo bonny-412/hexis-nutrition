@@ -7,4 +7,6 @@ import java.util.UUID;
 
 public interface PlicometriaRepository extends JpaRepository<Plicometria, UUID> {
     Optional<Plicometria> findByVisitaId(UUID visitaId);
+
+    void deleteByVisitaId(UUID visitaId);
 }

@@ -98,40 +98,80 @@ public class Paziente {
         return nome;
     }
 
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
     public String getCognome() {
         return cognome;
+    }
+
+    public void setCognome(String cognome) {
+        this.cognome = cognome;
     }
 
     public String getCodiceFiscale() {
         return codiceFiscale;
     }
 
+    public void setCodiceFiscale(String codiceFiscale) {
+        this.codiceFiscale = codiceFiscale;
+    }
+
     public String getEmail() {
         return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getTelefono() {
         return telefono;
     }
 
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
+    }
+
     public LocalDate getDataNascita() {
         return dataNascita;
+    }
+
+    public void setDataNascita(LocalDate dataNascita) {
+        this.dataNascita = dataNascita;
     }
 
     public Sesso getSesso() {
         return sesso;
     }
 
+    public void setSesso(Sesso sesso) {
+        this.sesso = sesso;
+    }
+
     public String getLavoro() {
         return lavoro;
+    }
+
+    public void setLavoro(String lavoro) {
+        this.lavoro = lavoro;
     }
 
     public TipoLavoro getTipoLavoro() {
         return tipoLavoro;
     }
 
+    public void setTipoLavoro(TipoLavoro tipoLavoro) {
+        this.tipoLavoro = tipoLavoro;
+    }
+
     public String getNote() {
         return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 
     public String getPasswordHash() {

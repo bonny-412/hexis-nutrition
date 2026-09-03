@@ -52,6 +52,17 @@ export interface Circonferenze {
 }
 
 export interface Plicometria {
+  protocollo: 'JACKSON_POLLOCK_3' | 'JACKSON_POLLOCK_7' | 'DURNIN_WOMERSLEY_4' | 'FAULKNER_4' | 'SLAUGHTER_PEDIATRICO' | 'EVANS_ATLETI'
+  etniaAtleta: 'CAUCASICO' | 'AFROAMERICANO' | null
+  plicaPettoraleMm: number | null
+  plicaAscellareMm: number | null
+  plicaTricipitaleMm: number | null
+  plicaBicipitaleMm: number | null
+  plicaSottoscapolareMm: number | null
+  plicaSoprailiacaMm: number | null
+  plicaAddominaleMm: number | null
+  plicaCosciaMm: number | null
+  plicaPolpaccioMm: number | null
   percentualeGrassoCorporeo: number
   massaGrassaKg: number
   massaMagraKg: number
@@ -69,6 +80,7 @@ export interface Visita {
   whtr: number | null
   mamcCm: number | null
   circonferenze: Circonferenze
+  protocolloVita: 'OMS' | 'OMBELICALE' | 'ALTRO'
   note: string | null
   obiettivo: 'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'EDUCATIVO' | 'PREPARAZIONE_SPORTIVA'
   plicometria: Plicometria | null
@@ -123,6 +135,19 @@ export interface CreaPazienteRequest {
   visita: CreaVisitaRequest
 }
 
+export interface AggiornaPazienteRequest {
+  nome: string
+  cognome: string
+  codiceFiscale: string
+  email: string
+  telefono?: string
+  dataNascita: string
+  sesso: 'M' | 'F' | 'ALTRO'
+  lavoro?: string
+  tipoLavoro?: 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO'
+  note?: string
+}
+
 export function lista(): Promise<Paziente[]> {
   return apiRequest<Paziente[]>('/pazienti')
 }
@@ -133,6 +158,10 @@ export function dettaglio(id: string): Promise<Paziente> {
 
 export function crea(request: CreaPazienteRequest): Promise<Paziente> {
   return apiRequest<Paziente>('/pazienti', { method: 'POST', body: request })
+}
+
+export function aggiorna(id: string, request: AggiornaPazienteRequest): Promise<Paziente> {
+  return apiRequest<Paziente>(`/pazienti/${id}`, { method: 'PUT', body: request })
 }
 
 export function invita(id: string): Promise<void> {
@@ -166,4 +195,16 @@ export function cerca(criteri: CriteriRicercaPazienti = {}): Promise<PaginaPazie
 
 export function visite(id: string): Promise<Visita[]> {
   return apiRequest<Visita[]>(`/pazienti/${id}/visite`)
+}
+
+export function creaVisita(pazienteId: string, request: CreaVisitaRequest): Promise<Visita> {
+  return apiRequest<Visita>(`/pazienti/${pazienteId}/visite`, { method: 'POST', body: request })
+}
+
+export function dettaglioVisita(pazienteId: string, visitaId: string): Promise<Visita> {
+  return apiRequest<Visita>(`/pazienti/${pazienteId}/visite/${visitaId}`)
+}
+
+export function aggiornaVisita(pazienteId: string, visitaId: string, request: CreaVisitaRequest): Promise<Visita> {
+  return apiRequest<Visita>(`/pazienti/${pazienteId}/visite/${visitaId}`, { method: 'PUT', body: request })
 }

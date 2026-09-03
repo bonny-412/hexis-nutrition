@@ -12,6 +12,7 @@ import type { AcceptableValue } from 'reka-ui'
 import PazienteTabPanoramica from '@/components/pazienti/PazienteTabPanoramica.vue'
 import PazienteTabStoricoMisurazioni from '@/components/pazienti/PazienteTabStoricoMisurazioni.vue'
 import PazienteTabConfrontoVisite from '@/components/pazienti/PazienteTabConfrontoVisite.vue'
+import ModificaPazienteDialog from '@/components/pazienti/ModificaPazienteDialog.vue'
 import { prepareAndamento } from '@/utils/andamento'
 import { formattaDataItalianaConMese } from '@/utils/data'
 import { ETICHETTE_OBIETTIVO, formattaNumero } from '@/utils/visita'
@@ -57,6 +58,7 @@ const caricamento = ref(true)
 const paziente = ref<Paziente | null>(null)
 const erroreCaricamento = ref<string | null>(null)
 const invitoInCorso = ref(false)
+const mostraModificaAnagrafica = ref(false)
 
 // Stato Visite e Andamento
 const visite = ref<Visita[]>([])
@@ -97,6 +99,10 @@ async function caricaAndamento() {
   } finally {
     visiteInCaricamento.value = false
   }
+}
+
+function onPazienteAggiornato(aggiornato: Paziente) {
+  paziente.value = aggiornato
 }
 
 async function onInvita() {
@@ -175,10 +181,10 @@ onMounted(() => {
               </Badge>
               <Button
                 variant="ghost"
-                size="icon-xs"
-                disabled
+                size="icon-sm"
                 title="Modifica dati anagrafici"
                 aria-label="Modifica dati anagrafici"
+                @click="mostraModificaAnagrafica = true"
               >
                 <Pencil :size="14" />
               </Button>
@@ -186,7 +192,7 @@ onMounted(() => {
                 v-if="paziente.statoAccount !== 'ATTIVO'"
                 type="button"
                 :disabled="invitoInCorso"
-                class="text-xs font-semibold text-(--green) underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                class="text-sm font-semibold text-(--green) underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                 @click="onInvita"
               >
                 {{ paziente.statoAccount === 'MAI_INVITATO' ? 'Invita' : 'Reinvia invito' }}
@@ -213,9 +219,11 @@ onMounted(() => {
             <Plus :size="15" />
             <span>Nuovo piano</span>
           </Button>
-          <Button size="sm" class="hover:bg-primary/80" disabled>
-            <Plus :size="15" />
-            <span>Nuova visita</span>
+          <Button as-child size="sm" class="hover:bg-primary/80">
+            <router-link :to="`/pazienti/${paziente.id}/visite/nuova`">
+              <Plus :size="15" />
+              <span>Nuova visita</span>
+            </router-link>
           </Button>
         </div>
       </div>
@@ -357,6 +365,7 @@ onMounted(() => {
 
           <PazienteTabStoricoMisurazioni
             v-else-if="tabAttivo === 'storico'"
+            :paziente-id="paziente.id"
             :visite-in-caricamento="visiteInCaricamento"
             :errore-visite="erroreVisite"
             :visite="visite"
@@ -377,4 +386,11 @@ onMounted(() => {
       </div>
     </div>
   </AppShell>
+
+  <ModificaPazienteDialog
+    v-if="paziente"
+    v-model:open="mostraModificaAnagrafica"
+    :paziente="paziente"
+    @aggiornato="onPazienteAggiornato"
+  />
 </template>

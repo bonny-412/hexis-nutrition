@@ -27,6 +27,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -422,6 +423,99 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.lavoro").value("Impiegato"))
                 .andExpect(jsonPath("$.tipoLavoro").value("ATTIVO"));
+    }
+
+    @Test
+    void aggiornaPazienteAggiornaICampiAnagraficiERestituisce200() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-aggiorna@example.com", "hash", "Anna", "Bianchi"));
+        Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
+                "RSSMRA80A01H501U", "luca-aggiorna@example.com", "333123456", LocalDate.of(1990, 1, 1), Sesso.M,
+                "Impiegato", TipoLavoro.SEDENTARIO, "Nota iniziale"));
+
+        mockMvc.perform(put("/pazienti/" + paziente.getId())
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Luca","cognome":"Rossi","codiceFiscale":"RSSMRA80A01H501U",
+                                 "email":"luca-aggiornato@example.com","telefono":"333999888",
+                                 "dataNascita":"1990-01-01","sesso":"M","lavoro":"Libero professionista",
+                                 "tipoLavoro":"ATTIVO","note":"Nota aggiornata"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cognome").value("Rossi"))
+                .andExpect(jsonPath("$.email").value("luca-aggiornato@example.com"))
+                .andExpect(jsonPath("$.telefono").value("333999888"))
+                .andExpect(jsonPath("$.lavoro").value("Libero professionista"))
+                .andExpect(jsonPath("$.tipoLavoro").value("ATTIVO"))
+                .andExpect(jsonPath("$.note").value("Nota aggiornata"));
+
+        Paziente aggiornato = pazienteRepository.findById(paziente.getId()).orElseThrow();
+        assertThat(aggiornato.getCognome()).isEqualTo("Rossi");
+        assertThat(aggiornato.getEmail()).isEqualTo("luca-aggiornato@example.com");
+    }
+
+    @Test
+    void aggiornaPazienteNonModificaLeVisiteEsistenti() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-aggiorna-visita@example.com", "hash", "Anna", "Bianchi"));
+        Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
+                "RSSMRA80A01H501U", "luca-aggiorna-visita@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M,
+                null, null, null));
+        Visita visita = new Visita(paziente.getId(), LocalDate.of(2026, 1, 1), 178, new BigDecimal("80.0"),
+                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
+        visitaRepository.save(visita);
+
+        mockMvc.perform(put("/pazienti/" + paziente.getId())
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Luca","cognome":"Rossi","codiceFiscale":"RSSMRA80A01H501U",
+                                 "email":"luca-aggiorna-visita@example.com",
+                                 "dataNascita":"1990-01-01","sesso":"M"}
+                                """))
+                .andExpect(status().isOk());
+
+        List<Visita> visite = visitaRepository.findAll();
+        assertThat(visite).hasSize(1);
+        assertThat(visite.get(0).getAltezzaCm()).isEqualTo(178);
+    }
+
+    @Test
+    void aggiornaPazienteDiAltroProfessionistaRestituisce404() throws Exception {
+        Professionista professionistaA = professionistaRepository.save(
+                new Professionista("prof-aggiorna-a@example.com", "hash", "A", "A"));
+        Professionista professionistaB = professionistaRepository.save(
+                new Professionista("prof-aggiorna-b@example.com", "hash", "B", "B"));
+        Paziente pazienteDiB = pazienteRepository.save(new Paziente(professionistaB.getId(), "Paziente", "DiB",
+                "RSSMRA80A01H501U", "diB-aggiorna@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
+
+        mockMvc.perform(put("/pazienti/" + pazienteDiB.getId())
+                        .header("Authorization", "Bearer " + tokenPer(professionistaA))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Paziente","cognome":"DiB","codiceFiscale":"RSSMRA80A01H501U",
+                                 "email":"diB-aggiorna@example.com","dataNascita":"1990-01-01","sesso":"M"}
+                                """))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void aggiornaPazienteConEmailNonValidaRestituisce400() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-aggiorna-email@example.com", "hash", "Anna", "Bianchi"));
+        Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
+                "RSSMRA80A01H501U", "luca-aggiorna-email@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M,
+                null, null, null));
+
+        mockMvc.perform(put("/pazienti/" + paziente.getId())
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U",
+                                 "email":"non-una-email","dataNascita":"1990-01-01","sesso":"M"}
+                                """))
+                .andExpect(status().isBadRequest());
     }
 
     @Test

@@ -18,7 +18,7 @@ export function configureApiClient(options: { getToken: () => string | null; onU
 }
 
 interface ApiRequestOptions {
-  method?: 'GET' | 'POST'
+  method?: 'GET' | 'POST' | 'PUT'
   body?: unknown
 }
 

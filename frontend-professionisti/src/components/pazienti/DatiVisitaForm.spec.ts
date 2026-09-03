@@ -87,4 +87,71 @@ describe('DatiVisitaForm', () => {
 
     expect(wrapper.text()).toContain('Inserisci un numero valido (es. 95,50).')
   })
+
+  it('con datiIniziali precompila i campi principali e le circonferenze', async () => {
+    const wrapper = mount(DatiVisitaForm, {
+      props: {
+        sesso: 'M',
+        datiIniziali: {
+          id: 'v1', dataVisita: '2026-03-01', altezzaCm: 178, pesoKg: 82.5,
+          bmi: 26.05, whr: null, whtr: null, mamcCm: null,
+          circonferenze: {
+            vitaCm: 90.1, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
+            polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
+          },
+          protocolloVita: 'OMBELICALE',
+          note: 'Nota precedente',
+          obiettivo: 'DIMAGRIMENTO',
+          plicometria: null,
+        },
+      },
+    })
+
+    expect(esposti(wrapper).ottieniDati()).toMatchObject({
+      dataVisita: '2026-03-01',
+      altezzaCm: 178,
+      pesoKg: 82.5,
+      circonferenzaVitaCm: 90.1,
+      protocolloVita: 'OMBELICALE',
+      note: 'Nota precedente',
+      obiettivo: 'DIMAGRIMENTO',
+    })
+  })
+
+  it('senza datiIniziali, precompila altezza e obiettivo con i valori suggeriti dalla visita precedente', () => {
+    const wrapper = mount(DatiVisitaForm, {
+      props: { sesso: 'M', altezzaSuggeritaCm: 180, obiettivoSuggerito: 'IPERTROFIA' },
+    })
+
+    const dati = esposti(wrapper).ottieniDati()
+    expect(dati.altezzaCm).toBe(180)
+    expect(dati.obiettivo).toBe('IPERTROFIA')
+    expect((wrapper.find('#peso').element as HTMLInputElement).value).toBe('')
+  })
+
+  it('con datiIniziali, ignora i valori suggeriti e usa quelli della visita da modificare', () => {
+    const wrapper = mount(DatiVisitaForm, {
+      props: {
+        sesso: 'M',
+        altezzaSuggeritaCm: 999,
+        obiettivoSuggerito: 'EDUCATIVO',
+        datiIniziali: {
+          id: 'v1', dataVisita: '2026-03-01', altezzaCm: 178, pesoKg: 82.5,
+          bmi: 26.05, whr: null, whtr: null, mamcCm: null,
+          circonferenze: {
+            vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
+            polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
+          },
+          protocolloVita: 'OMS',
+          note: null,
+          obiettivo: 'DIMAGRIMENTO',
+          plicometria: null,
+        },
+      },
+    })
+
+    const dati = esposti(wrapper).ottieniDati()
+    expect(dati.altezzaCm).toBe(178)
+    expect(dati.obiettivo).toBe('DIMAGRIMENTO')
+  })
 })

@@ -17,6 +17,7 @@ function visita(overrides: Partial<Visita> = {}): Visita {
       vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
       polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
     },
+    protocolloVita: 'OMS',
     note: null,
     obiettivo: 'MANTENIMENTO',
     plicometria: null,
@@ -65,7 +66,12 @@ describe('PazienteTabConfrontoVisite', () => {
           visita({
             id: 'v2',
             dataVisita: '2026-02-01',
-            plicometria: { percentualeGrassoCorporeo: 18.2, massaGrassaKg: 14.1, massaMagraKg: 63.4, fmi: 4.4, ffmi: 20.1 },
+            plicometria: {
+              protocollo: 'JACKSON_POLLOCK_3', etniaAtleta: null,
+              plicaPettoraleMm: null, plicaAscellareMm: null, plicaTricipitaleMm: null, plicaBicipitaleMm: null,
+              plicaSottoscapolareMm: null, plicaSoprailiacaMm: null, plicaAddominaleMm: null, plicaCosciaMm: null, plicaPolpaccioMm: null,
+              percentualeGrassoCorporeo: 18.2, massaGrassaKg: 14.1, massaMagraKg: 63.4, fmi: 4.4, ffmi: 20.1,
+            },
           }),
         ],
       },

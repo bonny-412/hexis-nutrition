@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { createRouter, createMemoryHistory } from 'vue-router'
 import PazienteTabStoricoMisurazioni from './PazienteTabStoricoMisurazioni.vue'
 import type { Visita } from '@/api/pazienti'
+
+function creaRouter() {
+  return createRouter({
+    history: createMemoryHistory(),
+    routes: [{ path: '/pazienti/:id/visite/:visitaId/modifica', name: 'visita-modifica', component: { template: '<div/>' } }],
+  })
+}
 
 function visita(overrides: Partial<Visita> = {}): Visita {
   return {
@@ -17,6 +25,7 @@ function visita(overrides: Partial<Visita> = {}): Visita {
       vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
       polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
     },
+    protocolloVita: 'OMS',
     note: null,
     obiettivo: 'MANTENIMENTO',
     plicometria: null,
@@ -25,8 +34,11 @@ function visita(overrides: Partial<Visita> = {}): Visita {
 }
 
 function monta(visite: Visita[], props: Partial<{ visiteInCaricamento: boolean; erroreVisite: boolean }> = {}) {
+  const router = creaRouter()
+  router.push('/')
   return mount(PazienteTabStoricoMisurazioni, {
-    props: { visiteInCaricamento: false, erroreVisite: false, visite, ...props },
+    props: { pazienteId: 'p1', visiteInCaricamento: false, erroreVisite: false, visite, ...props },
+    global: { plugins: [router] },
   })
 }
 
@@ -65,7 +77,12 @@ describe('PazienteTabStoricoMisurazioni', () => {
       visita({
         id: 'v1',
         note: 'Prima visita, nessuna allergia nota.',
-        plicometria: { percentualeGrassoCorporeo: 18.2, massaGrassaKg: 14.1, massaMagraKg: 63.4, fmi: 4.4, ffmi: 20.1 },
+        plicometria: {
+          protocollo: 'JACKSON_POLLOCK_3', etniaAtleta: null,
+          plicaPettoraleMm: null, plicaAscellareMm: null, plicaTricipitaleMm: null, plicaBicipitaleMm: null,
+          plicaSottoscapolareMm: null, plicaSoprailiacaMm: null, plicaAddominaleMm: null, plicaCosciaMm: null, plicaPolpaccioMm: null,
+          percentualeGrassoCorporeo: 18.2, massaGrassaKg: 14.1, massaMagraKg: 63.4, fmi: 4.4, ffmi: 20.1,
+        },
         circonferenze: {
           vitaCm: 84, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
           polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
@@ -113,12 +130,15 @@ describe('PazienteTabStoricoMisurazioni', () => {
     expect(dettaglio.text()).toContain('Nessuna circonferenza registrata.')
   })
 
-  it('disabilita le azioni di modifica ed eliminazione visita', () => {
-    const wrapper = monta([visita()])
+  it('collega "Modifica visita" alla pagina di modifica e lascia disabilitata "Elimina visita"', () => {
+    const wrapper = monta([visita({ id: 'v1' })])
 
-    const bottoni = wrapper.findAll('button').filter((b) => b.text().includes('visita'))
-    expect(bottoni.some((b) => b.text() === 'Modifica visita' && b.attributes('disabled') !== undefined)).toBe(true)
-    expect(bottoni.some((b) => b.text() === 'Elimina visita' && b.attributes('disabled') !== undefined)).toBe(true)
+    const link = wrapper.find('a')
+    expect(link.text()).toBe('Modifica visita')
+    expect(link.attributes('href')).toBe('/pazienti/p1/visite/v1/modifica')
+
+    const bottoneElimina = wrapper.findAll('button').find((b) => b.text() === 'Elimina visita')
+    expect(bottoneElimina?.attributes('disabled')).not.toBeUndefined()
   })
 
   it('mostra un bordo evidenziato al passaggio del mouse sulla card', () => {

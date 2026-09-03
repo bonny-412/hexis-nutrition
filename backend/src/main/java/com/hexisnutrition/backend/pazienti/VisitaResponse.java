@@ -14,6 +14,7 @@ public record VisitaResponse(
         BigDecimal whtr,
         BigDecimal mamcCm,
         Circonferenze circonferenze,
+        String protocolloVita,
         String note,
         String obiettivo,
         PlicometriaResponse plicometria
@@ -29,6 +30,7 @@ public record VisitaResponse(
                 visita.getWhtr(),
                 visita.getMamcCm(),
                 Circonferenze.da(visita),
+                visita.getProtocolloVita().name(),
                 visita.getNote(),
                 visita.getObiettivo().name(),
                 plicometria != null ? PlicometriaResponse.da(plicometria) : null);
@@ -64,6 +66,17 @@ public record VisitaResponse(
     }
 
     public record PlicometriaResponse(
+            ProtocolloPlicometrico protocollo,
+            EtniaAtleta etniaAtleta,
+            BigDecimal plicaPettoraleMm,
+            BigDecimal plicaAscellareMm,
+            BigDecimal plicaTricipitaleMm,
+            BigDecimal plicaBicipitaleMm,
+            BigDecimal plicaSottoscapolareMm,
+            BigDecimal plicaSoprailiacaMm,
+            BigDecimal plicaAddominaleMm,
+            BigDecimal plicaCosciaMm,
+            BigDecimal plicaPolpaccioMm,
             BigDecimal percentualeGrassoCorporeo,
             BigDecimal massaGrassaKg,
             BigDecimal massaMagraKg,
@@ -72,6 +85,17 @@ public record VisitaResponse(
     ) {
         public static PlicometriaResponse da(Plicometria plicometria) {
             return new PlicometriaResponse(
+                    plicometria.getProtocollo(),
+                    plicometria.getEtniaAtleta(),
+                    plicometria.getPlicaPettoraleMm(),
+                    plicometria.getPlicaAscellareMm(),
+                    plicometria.getPlicaTricipitaleMm(),
+                    plicometria.getPlicaBicipitaleMm(),
+                    plicometria.getPlicaSottoscapolareMm(),
+                    plicometria.getPlicaSoprailiacaMm(),
+                    plicometria.getPlicaAddominaleMm(),
+                    plicometria.getPlicaCosciaMm(),
+                    plicometria.getPlicaPolpaccioMm(),
                     plicometria.getPercentualeGrasso(),
                     plicometria.getMassaGrassaKg(),
                     plicometria.getMassaMagraKg(),

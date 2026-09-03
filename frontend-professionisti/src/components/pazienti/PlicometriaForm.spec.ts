@@ -132,4 +132,27 @@ describe('PlicometriaForm', () => {
       plicaCosciaMm: 10,
     })
   })
+
+  it('con datiIniziali precompila protocollo, etnia e pliche già inserite', () => {
+    const wrapper = mount(PlicometriaForm, {
+      props: {
+        sesso: 'M',
+        datiIniziali: {
+          protocollo: 'EVANS_ATLETI', etniaAtleta: 'AFROAMERICANO',
+          plicaPettoraleMm: null, plicaAscellareMm: null, plicaTricipitaleMm: 10,
+          plicaBicipitaleMm: null, plicaSottoscapolareMm: null, plicaSoprailiacaMm: null,
+          plicaAddominaleMm: 12, plicaCosciaMm: 8, plicaPolpaccioMm: null,
+          percentualeGrassoCorporeo: 10, massaGrassaKg: 8, massaMagraKg: 70, fmi: 2, ffmi: 20,
+        },
+      },
+    })
+
+    expect(esposti(wrapper).ottieniDati()).toMatchObject({
+      protocollo: 'EVANS_ATLETI',
+      etniaAtleta: 'AFROAMERICANO',
+      plicaTricipitaleMm: 10,
+      plicaAddominaleMm: 12,
+      plicaCosciaMm: 8,
+    })
+  })
 })

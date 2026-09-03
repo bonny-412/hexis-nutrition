@@ -142,68 +142,136 @@ public class Visita {
         return dataVisita;
     }
 
+    public void setDataVisita(LocalDate dataVisita) {
+        this.dataVisita = dataVisita != null ? dataVisita : LocalDate.now();
+    }
+
     public Integer getAltezzaCm() {
         return altezzaCm;
+    }
+
+    public void setAltezzaCm(Integer altezzaCm) {
+        this.altezzaCm = altezzaCm;
     }
 
     public BigDecimal getPesoKg() {
         return pesoKg;
     }
 
+    public void setPesoKg(BigDecimal pesoKg) {
+        this.pesoKg = pesoKg;
+    }
+
     public BigDecimal getCirconferenzaVitaCm() {
         return circonferenzaVitaCm;
+    }
+
+    public void setCirconferenzaVitaCm(BigDecimal circonferenzaVitaCm) {
+        this.circonferenzaVitaCm = circonferenzaVitaCm;
     }
 
     public BigDecimal getCirconferenzaFianchiCm() {
         return circonferenzaFianchiCm;
     }
 
+    public void setCirconferenzaFianchiCm(BigDecimal circonferenzaFianchiCm) {
+        this.circonferenzaFianchiCm = circonferenzaFianchiCm;
+    }
+
     public BigDecimal getCirconferenzaAddomeCm() {
         return circonferenzaAddomeCm;
+    }
+
+    public void setCirconferenzaAddomeCm(BigDecimal circonferenzaAddomeCm) {
+        this.circonferenzaAddomeCm = circonferenzaAddomeCm;
     }
 
     public BigDecimal getCirconferenzaBraccioRilassatoCm() {
         return circonferenzaBraccioRilassatoCm;
     }
 
+    public void setCirconferenzaBraccioRilassatoCm(BigDecimal circonferenzaBraccioRilassatoCm) {
+        this.circonferenzaBraccioRilassatoCm = circonferenzaBraccioRilassatoCm;
+    }
+
     public BigDecimal getCirconferenzaCosciaCm() {
         return circonferenzaCosciaCm;
+    }
+
+    public void setCirconferenzaCosciaCm(BigDecimal circonferenzaCosciaCm) {
+        this.circonferenzaCosciaCm = circonferenzaCosciaCm;
     }
 
     public BigDecimal getCirconferenzaPolpaccioCm() {
         return circonferenzaPolpaccioCm;
     }
 
+    public void setCirconferenzaPolpaccioCm(BigDecimal circonferenzaPolpaccioCm) {
+        this.circonferenzaPolpaccioCm = circonferenzaPolpaccioCm;
+    }
+
     public BigDecimal getCirconferenzaColloCm() {
         return circonferenzaColloCm;
+    }
+
+    public void setCirconferenzaColloCm(BigDecimal circonferenzaColloCm) {
+        this.circonferenzaColloCm = circonferenzaColloCm;
     }
 
     public BigDecimal getCirconferenzaToraceCm() {
         return circonferenzaToraceCm;
     }
 
+    public void setCirconferenzaToraceCm(BigDecimal circonferenzaToraceCm) {
+        this.circonferenzaToraceCm = circonferenzaToraceCm;
+    }
+
     public BigDecimal getCirconferenzaBraccioContrattoCm() {
         return circonferenzaBraccioContrattoCm;
+    }
+
+    public void setCirconferenzaBraccioContrattoCm(BigDecimal circonferenzaBraccioContrattoCm) {
+        this.circonferenzaBraccioContrattoCm = circonferenzaBraccioContrattoCm;
     }
 
     public BigDecimal getCirconferenzaAvambraccioCm() {
         return circonferenzaAvambraccioCm;
     }
 
+    public void setCirconferenzaAvambraccioCm(BigDecimal circonferenzaAvambraccioCm) {
+        this.circonferenzaAvambraccioCm = circonferenzaAvambraccioCm;
+    }
+
     public BigDecimal getCirconferenzaCavigliaCm() {
         return circonferenzaCavigliaCm;
+    }
+
+    public void setCirconferenzaCavigliaCm(BigDecimal circonferenzaCavigliaCm) {
+        this.circonferenzaCavigliaCm = circonferenzaCavigliaCm;
     }
 
     public ProtocolloVita getProtocolloVita() {
         return protocolloVita;
     }
 
+    public void setProtocolloVita(ProtocolloVita protocolloVita) {
+        this.protocolloVita = protocolloVita != null ? protocolloVita : ProtocolloVita.OMS;
+    }
+
     public String getNote() {
         return note;
     }
 
+    public void setNote(String note) {
+        this.note = note;
+    }
+
     public ObiettivoVisita getObiettivo() {
         return obiettivo;
+    }
+
+    public void setObiettivo(ObiettivoVisita obiettivo) {
+        this.obiettivo = obiettivo != null ? obiettivo : ObiettivoVisita.MANTENIMENTO;
     }
 
     public BigDecimal getBmi() {

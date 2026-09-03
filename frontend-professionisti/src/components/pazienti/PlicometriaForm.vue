@@ -11,25 +11,30 @@ import {
 import { Label } from '@/components/ui/label'
 import PlicaInput from './PlicaInput.vue'
 import { numeroItalianoOpzionale, erroreCirconferenza } from '@/utils/validators'
-import type { CreaPlicometriaRequest } from '@/api/pazienti'
+import { formattaNumero } from '@/utils/visita'
+import type { CreaPlicometriaRequest, Plicometria } from '@/api/pazienti'
 
-const props = defineProps<{ sesso: string }>()
+const props = defineProps<{ sesso: string; datiIniziali?: Plicometria | null }>()
 
 type Protocollo = '' | 'JACKSON_POLLOCK_3' | 'JACKSON_POLLOCK_7' | 'DURNIN_WOMERSLEY_4' | 'FAULKNER_4' | 'SLAUGHTER_PEDIATRICO' | 'EVANS_ATLETI'
 type Campo = 'pettorale' | 'ascellare' | 'tricipitale' | 'bicipitale' | 'sottoscapolare' | 'soprailiaca' | 'addominale' | 'coscia' | 'polpaccio'
 
-const protocollo = ref<Protocollo>('')
-const etniaAtleta = ref<'CAUCASICO' | 'AFROAMERICANO'>('CAUCASICO')
+function valoreIniziale(valore: number | null | undefined): string {
+  return valore !== null && valore !== undefined ? formattaNumero(valore, 2) : ''
+}
 
-const plicaPettorale = ref('')
-const plicaAscellare = ref('')
-const plicaTricipitale = ref('')
-const plicaBicipitale = ref('')
-const plicaSottoscapolare = ref('')
-const plicaSoprailiaca = ref('')
-const plicaAddominale = ref('')
-const plicaCoscia = ref('')
-const plicaPolpaccio = ref('')
+const protocollo = ref<Protocollo>(props.datiIniziali?.protocollo ?? '')
+const etniaAtleta = ref<'CAUCASICO' | 'AFROAMERICANO'>(props.datiIniziali?.etniaAtleta ?? 'CAUCASICO')
+
+const plicaPettorale = ref(valoreIniziale(props.datiIniziali?.plicaPettoraleMm))
+const plicaAscellare = ref(valoreIniziale(props.datiIniziali?.plicaAscellareMm))
+const plicaTricipitale = ref(valoreIniziale(props.datiIniziali?.plicaTricipitaleMm))
+const plicaBicipitale = ref(valoreIniziale(props.datiIniziali?.plicaBicipitaleMm))
+const plicaSottoscapolare = ref(valoreIniziale(props.datiIniziali?.plicaSottoscapolareMm))
+const plicaSoprailiaca = ref(valoreIniziale(props.datiIniziali?.plicaSoprailiacaMm))
+const plicaAddominale = ref(valoreIniziale(props.datiIniziali?.plicaAddominaleMm))
+const plicaCoscia = ref(valoreIniziale(props.datiIniziali?.plicaCosciaMm))
+const plicaPolpaccio = ref(valoreIniziale(props.datiIniziali?.plicaPolpaccioMm))
 
 const valoriPerCampo: Record<Campo, Ref<string>> = {
   pettorale: plicaPettorale,

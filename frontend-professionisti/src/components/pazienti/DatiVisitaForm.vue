@@ -19,7 +19,8 @@ import {
 } from '@/components/ui/select'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Ruler, ScissorsLineDashed } from '@lucide/vue'
-import type { CreaVisitaRequest } from '@/api/pazienti'
+import type { CreaVisitaRequest, Visita } from '@/api/pazienti'
+import { formattaNumero } from '@/utils/visita'
 import PlicometriaForm from './PlicometriaForm.vue'
 
 import {
@@ -32,26 +33,43 @@ import {
   erroreCirconferenza,
 } from '@/utils/validators'
 
-const props = defineProps<{ sesso: string }>()
+const props = defineProps<{
+  sesso: string
+  datiIniziali?: Visita | null
+  altezzaSuggeritaCm?: number | null
+  obiettivoSuggerito?: Visita['obiettivo'] | null
+}>()
 
-const dataVisita = ref(new Date().toISOString().slice(0, 10))
+function valoreIniziale(valore: number | null | undefined): string {
+  return valore !== null && valore !== undefined ? formattaNumero(valore, 2) : ''
+}
+
+const dataVisita = ref(props.datiIniziali?.dataVisita ?? new Date().toISOString().slice(0, 10))
 const dataVisitaIniziale = dataVisita.value
-const altezzaCm = ref('')
-const pesoKg = ref('')
-const circonferenzaVita = ref('')
-const circonferenzaFianchi = ref('')
-const circonferenzaAddome = ref('')
-const circonferenzaBraccioRilassato = ref('')
-const circonferenzaCoscia = ref('')
-const circonferenzaPolpaccio = ref('')
-const circonferenzaCollo = ref('')
-const circonferenzaTorace = ref('')
-const circonferenzaBraccioContratto = ref('')
-const circonferenzaAvambraccio = ref('')
-const circonferenzaCaviglia = ref('')
-const protocolloVita = ref<'' | 'OMS' | 'OMBELICALE' | 'ALTRO'>('')
-const note = ref('')
-const obiettivo = ref<'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'EDUCATIVO' | 'PREPARAZIONE_SPORTIVA'>('MANTENIMENTO')
+const altezzaCm = ref(
+  props.datiIniziali
+    ? String(props.datiIniziali.altezzaCm)
+    : props.altezzaSuggeritaCm != null
+      ? String(props.altezzaSuggeritaCm)
+      : '',
+)
+const pesoKg = ref(valoreIniziale(props.datiIniziali?.pesoKg))
+const circonferenzaVita = ref(valoreIniziale(props.datiIniziali?.circonferenze.vitaCm))
+const circonferenzaFianchi = ref(valoreIniziale(props.datiIniziali?.circonferenze.fianchiCm))
+const circonferenzaAddome = ref(valoreIniziale(props.datiIniziali?.circonferenze.addomeCm))
+const circonferenzaBraccioRilassato = ref(valoreIniziale(props.datiIniziali?.circonferenze.braccioRilassatoCm))
+const circonferenzaCoscia = ref(valoreIniziale(props.datiIniziali?.circonferenze.cosciaCm))
+const circonferenzaPolpaccio = ref(valoreIniziale(props.datiIniziali?.circonferenze.polpaccioCm))
+const circonferenzaCollo = ref(valoreIniziale(props.datiIniziali?.circonferenze.colloCm))
+const circonferenzaTorace = ref(valoreIniziale(props.datiIniziali?.circonferenze.toraceCm))
+const circonferenzaBraccioContratto = ref(valoreIniziale(props.datiIniziali?.circonferenze.braccioContrattoCm))
+const circonferenzaAvambraccio = ref(valoreIniziale(props.datiIniziali?.circonferenze.avambraccioCm))
+const circonferenzaCaviglia = ref(valoreIniziale(props.datiIniziali?.circonferenze.cavigliaCm))
+const protocolloVita = ref<'' | 'OMS' | 'OMBELICALE' | 'ALTRO'>(props.datiIniziali?.protocolloVita ?? '')
+const note = ref(props.datiIniziali?.note ?? '')
+const obiettivo = ref<'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'EDUCATIVO' | 'PREPARAZIONE_SPORTIVA'>(
+  props.datiIniziali?.obiettivo ?? props.obiettivoSuggerito ?? 'MANTENIMENTO',
+)
 
 const VALORE_SELEZIONA = '__seleziona__'
 
@@ -278,7 +296,7 @@ defineExpose({
         <AccordionContent>
           <div class="mx-2 border-t-2 border-t-(--bd)"></div>
           <div class="px-6 py-4">
-            <PlicometriaForm ref="plicometriaForm" :sesso="props.sesso" />
+            <PlicometriaForm ref="plicometriaForm" :sesso="props.sesso" :dati-iniziali="props.datiIniziali?.plicometria" />
           </div>
         </AccordionContent>
       </AccordionItem>
