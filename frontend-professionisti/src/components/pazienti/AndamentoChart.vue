@@ -61,7 +61,7 @@ function formatta(valore: number): string {
       <div v-if="andamento.punti.length === 0" class="text-sm text-(--fg4)">Nessun dato disponibile</div>
       <template v-else>
         <div class="flex items-baseline gap-2">
-          <span class="text-3xl font-semibold text-(--fg)">{{ formatta(andamento.ultimo as number) }}</span>
+          <span class="font-heading text-3xl font-semibold text-(--fg)">{{ formatta(andamento.ultimo as number) }}</span>
           <span v-if="unita" class="text-sm text-(--fg3)">{{ unita }}</span>
           <span
             v-if="andamento.delta !== null"

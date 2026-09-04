@@ -27,15 +27,22 @@ public class JacksonPollock3Calcolatore implements CalcolatorePlicometria {
                 : CalcoliPlicometria.somma(pliche.tricipitaleMm(), pliche.soprailiacaMm(), pliche.cosciaMm());
 
         double eta = contesto.etaAnni();
+
+        // Calcoliamo 'd' a piena precisione double senza arrotondamenti intermedi
         double d = contesto.sesso() == Sesso.M
                 ? 1.109380 - 0.0008267 * s3 + 0.0000016 * s3 * s3 - 0.0002574 * eta
                 : 1.0994921 - 0.0009929 * s3 + 0.0000023 * s3 * s3 - 0.0001392 * eta;
 
+        // Passiamo 'd' a piena precisione alla formula di Siri
         double percentualeGrasso = CalcoliPlicometria.percentualeGrassoSiri(d);
 
+        // Arrotondiamo 'd' e 'percentualeGrasso' solo nella risposta finale
         return new RisultatoDensita(
-                CalcoliPlicometria.arrotonda(s3, 2), CalcoliPlicometria.arrotonda(d, 4),
-                CalcoliPlicometria.arrotonda(percentualeGrasso, 2), null, null,
+                CalcoliPlicometria.arrotonda(s3, 2), 
+                CalcoliPlicometria.arrotonda(d, 4),
+                CalcoliPlicometria.arrotonda(percentualeGrasso, 2), 
+                null, 
+                null,
                 "jackson-pollock-1978-3siti");
     }
 }

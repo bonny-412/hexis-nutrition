@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { DateFormatter, getLocalTimeZone, parseDate, type DateValue } from '@internationalized/date'
 import { Calendar as CalendarIcon } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
@@ -25,13 +25,20 @@ const valore = computed<DateValue | undefined>({
   set: (data) => emit('update:modelValue', data ? data.toString() : ''),
 })
 
+const aperto = ref(false)
+
+/** Selezionare una data nel calendario chiude il popover: nessun secondo click per confermare. */
+watch(() => props.modelValue, () => {
+  aperto.value = false
+})
+
 const testoVisualizzato = computed(() =>
   valore.value ? formatter.format(valore.value.toDate(getLocalTimeZone())) : props.placeholder,
 )
 </script>
 
 <template>
-  <Popover>
+  <Popover v-model:open="aperto">
     <PopoverTrigger as-child>
       <Button
         :id="id"

@@ -9,6 +9,7 @@ function pazienteEsempio(overrides: Partial<Paziente> = {}): Paziente {
     id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
     telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null,
     statoAccount: 'MAI_INVITATO', archiviato: false,
+    obiettivoUltimaVisita: null, dataUltimaVisita: null,
     ...overrides,
   }
 }
@@ -79,7 +80,8 @@ describe('PazienteTabPanoramica', () => {
 
   it('mostra lo stato vuoto quando non ci sono visite', () => {
     const wrapper = monta([])
-    expect(wrapper.text()).toContain('Nessuna visita registrata. L\'andamento apparirà dopo la prima visita.')
+    expect(wrapper.text()).toContain('Nessuna visita registrata')
+    expect(wrapper.text()).toContain('Nessun dato clinico da mostrare. I dettagli dell\'ultima visita appariranno qui non appena registrata.')
   })
 
   it('mostra i grafici di peso e bmi, e "Dati non disponibili" nella card massa grassa/magra senza plicometria', () => {
@@ -108,8 +110,8 @@ describe('PazienteTabPanoramica', () => {
 
     expect(wrapper.text()).toContain('% Grasso corporeo')
     expect(wrapper.text()).toContain('Massa magra (kg)')
-    expect(wrapper.text()).toContain('18,2%')
-    expect(wrapper.text()).toContain('63,4 kg')
+    expect(wrapper.text()).toContain('18,20%')
+    expect(wrapper.text()).toContain('63,40 kg')
   })
 
   it('mostra la nota del paziente, o un messaggio di assenza', () => {
@@ -139,9 +141,9 @@ describe('PazienteTabPanoramica', () => {
     ])
 
     expect(wrapper.text()).toContain('Plicometria')
-    expect(wrapper.text()).toContain('18,2%')
-    expect(wrapper.text()).toContain('14,1 kg')
-    expect(wrapper.text()).toContain('63,4 kg')
+    expect(wrapper.text()).toContain('18,20%')
+    expect(wrapper.text()).toContain('14,10 kg')
+    expect(wrapper.text()).toContain('63,40 kg')
   })
 
   it('mostra un messaggio se l\'ultima visita non ha plicometria', () => {
@@ -160,7 +162,7 @@ describe('PazienteTabPanoramica', () => {
     ])
 
     expect(wrapper.text()).toContain('Vita')
-    expect(wrapper.text()).toContain('84,0 cm')
+    expect(wrapper.text()).toContain('84,00 cm')
     expect(wrapper.findAll('dd').filter((d) => d.text() === '—').length).toBeGreaterThan(0)
   })
 

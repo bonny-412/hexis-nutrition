@@ -34,7 +34,7 @@ export function categoriaBmi(bmi: number | null): string | null {
   return 'obesità'
 }
 
-/** Formatta un numero con la notazione italiana (virgola decimale). */
-export function formattaNumero(valore: number, decimali = 1): string {
+/** Formatta un numero con la notazione italiana (virgola decimale). Default a 2 cifre: usato per peso, plicometria e circonferenze; il BMI passa esplicitamente 1. */
+export function formattaNumero(valore: number, decimali = 2): string {
   return valore.toLocaleString('it-IT', { minimumFractionDigits: decimali, maximumFractionDigits: decimali })
 }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink, useRoute } from 'vue-router'
-import { LayoutGrid, Calendar, Users, FileText, MessageSquare, BarChart3, Apple, PanelLeftOpen, PanelLeftClose } from '@lucide/vue'
+import { LayoutGrid, Calendar, Users, MessageSquare, BarChart3, Apple, PanelLeftOpen, PanelLeftClose, Utensils } from '@lucide/vue'
 import { ref } from 'vue';
 
 const props = withDefaults(defineProps<{ class?: string }>(), { class: '' })
@@ -15,7 +15,7 @@ const voci = [
   { nome: 'Dashboard', routeName: 'dashboard', routeNamesAttivi: ['dashboard'], icona: LayoutGrid },
   { nome: 'Agenda', icona: Calendar },
   { nome: 'Pazienti', routeName: 'pazienti', routeNamesAttivi: ['pazienti', 'paziente-nuovo', 'paziente-dettaglio'], icona: Users },
-  { nome: 'Piani alimentari', icona: FileText },
+  { nome: 'Piani alimentari', icona: Utensils },
   { nome: 'Chat', icona: MessageSquare },
   { nome: 'Analytics', icona: BarChart3 },
 ]

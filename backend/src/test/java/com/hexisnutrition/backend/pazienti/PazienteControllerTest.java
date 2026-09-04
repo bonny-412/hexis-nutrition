@@ -731,21 +731,29 @@ class PazienteControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void ricercaConStatoAccountSessoEIntervalloDataNascita() throws Exception {
+    void ricercaConStatoAccountObiettivoEIntervalloDataUltimaVisita() throws Exception {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-ricerca4@example.com", "hash", "Anna", "Bianchi"));
         Paziente match = new Paziente(professionista.getId(), "Marco", "Rossi",
                 "RSSMRC90A01H501U", "marco-ricerca4@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null);
         match.setStatoAccount(StatoAccountPaziente.ATTIVO);
         pazienteRepository.save(match);
-        pazienteRepository.save(new Paziente(professionista.getId(), "Marco", "Bianchi",
-                "BNCMRC70A01H501U", "marco-vecchio-ricerca4@example.com", null, LocalDate.of(1970, 1, 1), Sesso.M, null, null, null));
+        visitaRepository.save(new Visita(match.getId(), LocalDate.of(2026, 6, 1), 178, new java.math.BigDecimal("75.0"),
+                null, null, null, null, null, null, null, null, null, null, null,
+                ProtocolloVita.OMS, null, ObiettivoVisita.IPERTROFIA));
+        Paziente altro = new Paziente(professionista.getId(), "Marco", "Bianchi",
+                "BNCMRC70A01H501U", "marco-vecchio-ricerca4@example.com", null, LocalDate.of(1970, 1, 1), Sesso.M, null, null, null);
+        altro.setStatoAccount(StatoAccountPaziente.ATTIVO);
+        pazienteRepository.save(altro);
+        visitaRepository.save(new Visita(altro.getId(), LocalDate.of(2025, 1, 1), 178, new java.math.BigDecimal("75.0"),
+                null, null, null, null, null, null, null, null, null, null, null,
+                ProtocolloVita.OMS, null, ObiettivoVisita.IPERTROFIA));
 
         mockMvc.perform(get("/pazienti/ricerca")
                         .param("statoAccount", "ATTIVO")
-                        .param("sesso", "M")
-                        .param("dataNascitaDa", "1985-01-01")
-                        .param("dataNascitaA", "1995-01-01")
+                        .param("obiettivo", "IPERTROFIA")
+                        .param("dataUltimaVisitaDa", "2026-01-01")
+                        .param("dataUltimaVisitaA", "2026-12-31")
                         .header("Authorization", "Bearer " + tokenPer(professionista)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.contenuto.length()").value(1))
@@ -795,6 +803,34 @@ class PazienteControllerTest extends AbstractIntegrationTest {
     void ricercaSenzaAutenticazioneRestituisce401() throws Exception {
         mockMvc.perform(get("/pazienti/ricerca"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void ricercaIncludeObiettivoEDataDellUltimaVisita() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-ricerca6@example.com", "hash", "Anna", "Bianchi"));
+        Paziente conVisite = pazienteRepository.save(new Paziente(professionista.getId(), "Marco", "Rossi",
+                "RSSMRC90A01H501U", "marco-ricerca6@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
+        Paziente senzaVisite = pazienteRepository.save(new Paziente(professionista.getId(), "Giulia", "Verdi",
+                "VRDGLI85A41H501U", "giulia-ricerca6@example.com", null, LocalDate.of(1985, 3, 10), Sesso.F, null, null, null));
+
+        visitaRepository.save(new Visita(conVisite.getId(), LocalDate.of(2026, 1, 12), 178, BigDecimal.valueOf(84.5),
+                null, null, null, null, null, null, null, null, null, null, null,
+                ProtocolloVita.OMS, null, ObiettivoVisita.DIMAGRIMENTO));
+        visitaRepository.save(new Visita(conVisite.getId(), LocalDate.of(2026, 6, 1), 178, BigDecimal.valueOf(80.9),
+                null, null, null, null, null, null, null, null, null, null, null,
+                ProtocolloVita.OMS, null, ObiettivoVisita.IPERTROFIA));
+
+        mockMvc.perform(get("/pazienti/ricerca")
+                        .param("ordinaPer", "nome")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenuto[0].nome").value("Giulia"))
+                .andExpect(jsonPath("$.contenuto[0].obiettivoUltimaVisita").doesNotExist())
+                .andExpect(jsonPath("$.contenuto[0].dataUltimaVisita").doesNotExist())
+                .andExpect(jsonPath("$.contenuto[1].nome").value("Marco"))
+                .andExpect(jsonPath("$.contenuto[1].obiettivoUltimaVisita").value("IPERTROFIA"))
+                .andExpect(jsonPath("$.contenuto[1].dataUltimaVisita").value("2026-06-01"));
     }
 
     @Test

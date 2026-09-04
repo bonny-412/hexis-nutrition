@@ -323,11 +323,11 @@ async function onSubmit() {
       </div>
 
       <div class="w-full flex justify-end items-center gap-2">
-        <Button type="button" data-test="btn-annulla" variant="outline" :disabled="inCorso" size="lg" class="bg-(--surf) hover:bg-(--surf)/60 active:not-aria-[haspopup]:translate-y-0.5" @click="onAnnullaClick">
+        <Button type="button" data-test="btn-annulla" variant="neutral" :disabled="inCorso" class="active:not-aria-[haspopup]:translate-y-0.5" @click="onAnnullaClick">
           <X :size="16" />
           Annulla
         </Button>
-        <Button type="submit" :disabled="inCorso" size="lg" class="hover:bg-primary/80 active:not-aria-[haspopup]:translate-y-0.5">
+        <Button type="submit" :disabled="inCorso" class="hover:bg-primary/80 active:not-aria-[haspopup]:translate-y-0.5">
           <Save :size="16" />
           {{ inCorso ? 'Salvataggio…' : 'Salva paziente' }}
         </Button>

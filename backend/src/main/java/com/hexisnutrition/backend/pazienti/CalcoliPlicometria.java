@@ -9,11 +9,13 @@ final class CalcoliPlicometria {
     }
 
     static double somma(BigDecimal... valori) {
-        double totale = 0;
+        BigDecimal totale = BigDecimal.ZERO;
         for (BigDecimal valore : valori) {
-            totale += valore.doubleValue();
+            if (valore != null) {
+                totale = totale.add(valore);
+            }
         }
-        return totale;
+        return totale.doubleValue();
     }
 
     static BigDecimal arrotonda(double valore, int scala) {
@@ -21,7 +23,7 @@ final class CalcoliPlicometria {
     }
 
     static double percentualeGrassoSiri(double densitaCorporea) {
-        return 495 / densitaCorporea - 450;
+        return (495.0 / densitaCorporea) - 450.0;
     }
 
     static double applicaLimiteSicurezza(double percentualeGrasso, Sesso sesso) {

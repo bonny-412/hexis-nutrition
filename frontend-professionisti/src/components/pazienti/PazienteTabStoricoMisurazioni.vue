@@ -1,8 +1,19 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { Visita } from '@/api/pazienti'
+import { toast } from 'vue-sonner'
+import { eliminaVisita, type Visita } from '@/api/pazienti'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog'
 import { ETICHETTE_CIRCONFERENZE, ETICHETTE_OBIETTIVO, categoriaBmi, formattaNumero } from '@/utils/visita'
 import { formattaDataItalianaConMese } from '@/utils/data'
 import { ChevronDown } from '@lucide/vue'
@@ -13,6 +24,8 @@ const props = defineProps<{
   erroreVisite: boolean
   visite: Visita[]
 }>()
+
+const emit = defineEmits<{ eliminata: [] }>()
 
 const idAperto = ref<string | null>(null)
 
@@ -32,6 +45,33 @@ watch(
 
 function toggle(id: string) {
   idAperto.value = idAperto.value === id ? null : id
+}
+
+// `dialogEliminaAperto` è disaccoppiato da `visitaDaEliminare`: AlertDialogAction chiude
+// la dialog internamente (è una DialogClose sotto il cofano) prima che `@click` giri,
+// quindi se il target vivesse nello stesso stato di apertura verrebbe azzerato troppo presto.
+const dialogEliminaAperto = ref(false)
+const visitaDaEliminare = ref<Visita | null>(null)
+const eliminazioneInCorso = ref(false)
+
+function chiediConferma(visita: Visita) {
+  visitaDaEliminare.value = visita
+  dialogEliminaAperto.value = true
+}
+
+async function confermaEliminazione() {
+  if (!visitaDaEliminare.value) return
+  eliminazioneInCorso.value = true
+  try {
+    await eliminaVisita(props.pazienteId, visitaDaEliminare.value.id)
+    toast.success('Visita eliminata.')
+    visitaDaEliminare.value = null
+    emit('eliminata')
+  } catch {
+    toast.error('Non è stato possibile eliminare la visita.')
+  } finally {
+    eliminazioneInCorso.value = false
+  }
 }
 
 interface RigaStorico {
@@ -55,10 +95,10 @@ const righe = computed<RigaStorico[]>(() => {
     return {
       visita,
       rel: indice === 0 ? 'Più recente' : indice === 1 ? '1 visita fa' : `${indice} visite fa`,
-      deltaPeso: precedente ? +(visita.pesoKg - precedente.pesoKg).toFixed(1) : null,
+      deltaPeso: precedente ? +(visita.pesoKg - precedente.pesoKg).toFixed(2) : null,
       deltaMg:
         precedente && visita.plicometria && precedente.plicometria
-          ? +(visita.plicometria.percentualeGrassoCorporeo - precedente.plicometria.percentualeGrassoCorporeo).toFixed(1)
+          ? +(visita.plicometria.percentualeGrassoCorporeo - precedente.plicometria.percentualeGrassoCorporeo).toFixed(2)
           : null,
       categoriaBmi: categoriaBmi(visita.bmi),
       circonferenze,
@@ -77,11 +117,11 @@ const righe = computed<RigaStorico[]>(() => {
     <div v-for="n in 3" :key="n" data-test="storico-skeleton" class="h-16 animate-pulse rounded-2xl bg-(--hover)" />
   </div>
 
-  <div
-    v-else-if="visite.length === 0"
-    class="rounded-2xl border border-(--bd) bg-(--hover)/40 p-8 text-center text-sm text-(--fg3)"
-  >
-    Nessuna visita registrata.
+  <div v-else-if="visite.length === 0" class="rounded-2xl border border-(--bd) bg-(--surf) p-8 text-center text-sm text-(--fg3)">
+    <h4 class="font-heading text-lg italic text-(--fg)">Nessuna visita registrata</h4>
+    <p class="mx-auto mt-1.5 max-w-sm text-sm text-(--fg3)">
+      Lo storico del paziente è vuoto. Registra la prima visita per iniziare a documentare il suo percorso.
+    </p>
   </div>
 
   <div v-else class="relative lg:pl-2">
@@ -123,7 +163,7 @@ const righe = computed<RigaStorico[]>(() => {
             </div>
 
             <div v-if="riga.visita.bmi !== null" class="flex flex-col gap-0.5">
-              <span class="font-heading text-lg text-(--fg)">{{ formattaNumero(riga.visita.bmi) }} <span class="text-xs font-sans text-(--fg4)">BMI</span></span>
+              <span class="font-heading text-lg text-(--fg)">{{ formattaNumero(riga.visita.bmi, 1) }} <span class="text-xs font-sans text-(--fg4)">BMI</span></span>
               <span class="text-xs text-(--fg4)">{{ riga.categoriaBmi }}</span>
             </div>
 
@@ -147,7 +187,16 @@ const righe = computed<RigaStorico[]>(() => {
             <Button as-child variant="outline" size="sm">
               <router-link :to="`/pazienti/${pazienteId}/visite/${riga.visita.id}/modifica`">Modifica visita</router-link>
             </Button>
-            <Button variant="outline" size="sm" disabled title="Presto disponibile">Elimina visita</Button>
+            <Button
+              type="button"
+              variant="destructive-outline"
+              size="sm"
+              data-test="elimina-visita"
+              class="text-(--danger)"
+              @click="chiediConferma(riga.visita)"
+            >
+              Elimina visita
+            </Button>
           </div>
 
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -155,7 +204,7 @@ const righe = computed<RigaStorico[]>(() => {
               <h5 class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Generali</h5>
               <dl class="mt-2 space-y-1 text-sm">
                 <div class="flex items-center justify-between"><dt class="text-(--fg2)">Peso</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.pesoKg) }} kg</dd></div>
-                <div v-if="riga.visita.bmi !== null" class="flex items-center justify-between"><dt class="text-(--fg2)">BMI</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.bmi) }}</dd></div>
+                <div v-if="riga.visita.bmi !== null" class="flex items-center justify-between"><dt class="text-(--fg2)">BMI</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.bmi, 1) }}</dd></div>
               </dl>
               <p v-if="riga.visita.note" class="mt-2 border-t border-(--div2) pt-2 text-xs leading-relaxed text-(--fg3)">{{ riga.visita.note }}</p>
             </div>
@@ -190,4 +239,26 @@ const righe = computed<RigaStorico[]>(() => {
       </div>
     </div>
   </div>
+
+  <AlertDialog v-model:open="dialogEliminaAperto">
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Eliminare la visita del {{ visitaDaEliminare ? formattaDataItalianaConMese(visitaDaEliminare.dataVisita) : '' }}?</AlertDialogTitle>
+        <AlertDialogDescription>
+          L'operazione è irreversibile: tutti i dati registrati per questa visita (misurazioni, plicometria, circonferenze) andranno persi.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel data-test="elimina-visita-annulla" variant="neutral" :disabled="eliminazioneInCorso">Annulla</AlertDialogCancel>
+        <AlertDialogAction
+          data-test="elimina-visita-conferma"
+          :disabled="eliminazioneInCorso"
+          class="bg-(--danger) hover:bg-(--danger)/80"
+          @click="confermaEliminazione"
+        >
+          {{ eliminazioneInCorso ? 'Eliminazione…' : 'Elimina' }}
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 </template>

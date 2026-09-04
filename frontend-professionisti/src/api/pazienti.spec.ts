@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { apiRequest } from './client'
-import { lista, dettaglio, crea, invita, archivia, deArchivia, cerca, visite, creaVisita, dettaglioVisita, aggiornaVisita } from './pazienti'
+import { lista, dettaglio, crea, invita, archivia, deArchivia, cerca, visite, creaVisita, dettaglioVisita, aggiornaVisita, eliminaVisita } from './pazienti'
 
 vi.mock('./client', () => ({ apiRequest: vi.fn() }))
 
@@ -84,13 +84,13 @@ describe('api/pazienti', () => {
 
     await cerca({
       pagina: 1, dimensione: 10, ordinaPer: 'dataNascita', direzione: 'desc',
-      ricerca: 'marco', statoAccount: 'ATTIVO', sesso: 'M',
-      dataNascitaDa: '1990-01-01', dataNascitaA: '2000-01-01', archiviato: true,
+      ricerca: 'marco', statoAccount: 'ATTIVO', obiettivo: 'IPERTROFIA',
+      dataUltimaVisitaDa: '1990-01-01', dataUltimaVisitaA: '2000-01-01', archiviato: true,
     })
 
     expect(apiRequest).toHaveBeenCalledWith(
       '/pazienti/ricerca?pagina=1&dimensione=10&ordinaPer=dataNascita&direzione=desc&ricerca=marco' +
-      '&statoAccount=ATTIVO&sesso=M&dataNascitaDa=1990-01-01&dataNascitaA=2000-01-01&archiviato=true',
+      '&statoAccount=ATTIVO&obiettivo=IPERTROFIA&dataUltimaVisitaDa=1990-01-01&dataUltimaVisitaA=2000-01-01&archiviato=true',
     )
   })
 
@@ -162,5 +162,13 @@ describe('api/pazienti', () => {
 
     expect(apiRequest).toHaveBeenCalledWith('/pazienti/1/visite/v1', { method: 'PUT', body: { altezzaCm: 180, pesoKg: 82 } })
     expect(risultato).toEqual(visitaEsempio)
+  })
+
+  it('eliminaVisita chiama DELETE /pazienti/{id}/visite/{visitaId}', async () => {
+    vi.mocked(apiRequest).mockResolvedValue(undefined)
+
+    await eliminaVisita('1', 'v1')
+
+    expect(apiRequest).toHaveBeenCalledWith('/pazienti/1/visite/v1', { method: 'DELETE' })
   })
 })

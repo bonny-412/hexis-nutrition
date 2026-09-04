@@ -8,6 +8,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -55,17 +57,19 @@ public class PazienteController {
             @RequestParam(defaultValue = "asc") DirezioneOrdinamento direzione,
             @RequestParam(required = false) String ricerca,
             @RequestParam(required = false) StatoAccountPaziente statoAccount,
-            @RequestParam(required = false) Sesso sesso,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataNascitaDa,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataNascitaA,
+            @RequestParam(required = false) ObiettivoVisita obiettivo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataUltimaVisitaDa,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataUltimaVisitaA,
             @RequestParam(defaultValue = "false") boolean archiviato) {
         int paginaEffettiva = Math.max(pagina, 0);
         int dimensioneEffettiva = Math.min(Math.max(dimensione, 1), 100);
         Sort.Direction direzioneSort = direzione == DirezioneOrdinamento.desc ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(paginaEffettiva, dimensioneEffettiva, Sort.by(direzioneSort, ordinaPer.name()));
-        CriteriRicercaPazienti criteri = new CriteriRicercaPazienti(ricerca, statoAccount, sesso, dataNascitaDa, dataNascitaA, archiviato);
+        CriteriRicercaPazienti criteri = new CriteriRicercaPazienti(ricerca, statoAccount, obiettivo, dataUltimaVisitaDa, dataUltimaVisitaA, archiviato);
         Page<Paziente> pagina1 = pazienteService.cerca(professionistaId, criteri, pageable);
-        return PazienteListaPaginataResponse.da(pagina1);
+        List<UUID> idPagina = pagina1.getContent().stream().map(Paziente::getId).toList();
+        Map<UUID, Visita> ultimeVisite = pazienteService.ultimeVisitePerPazienti(idPagina);
+        return PazienteListaPaginataResponse.da(pagina1, ultimeVisite);
     }
 
     @GetMapping("/{id}")
@@ -101,6 +105,13 @@ public class PazienteController {
     public VisitaResponse aggiornaVisita(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id,
                                           @PathVariable UUID visitaId, @Valid @RequestBody VisitaRequest request) {
         return pazienteService.aggiornaVisita(professionistaId, id, visitaId, request);
+    }
+
+    @DeleteMapping("/{id}/visite/{visitaId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void eliminaVisita(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id,
+                               @PathVariable UUID visitaId) {
+        pazienteService.eliminaVisita(professionistaId, id, visitaId);
     }
 
     @PostMapping("/{id}/invito")

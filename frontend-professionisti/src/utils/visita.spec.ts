@@ -33,9 +33,9 @@ describe('categoriaBmi', () => {
 })
 
 describe('formattaNumero', () => {
-  it('formatta con la notazione italiana e una cifra decimale di default', () => {
-    expect(formattaNumero(77.5)).toBe('77,5')
-    expect(formattaNumero(80)).toBe('80,0')
+  it('formatta con la notazione italiana e due cifre decimali di default', () => {
+    expect(formattaNumero(77.5)).toBe('77,50')
+    expect(formattaNumero(80)).toBe('80,00')
   })
 
   it('rispetta il numero di decimali richiesto', () => {

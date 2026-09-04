@@ -81,13 +81,14 @@ function cambiaSelezione() {
       <PopoverAnchor as-child>
         <Input
           data-test="input-cerca-paziente"
+          class="bg-(--surf)"
           :model-value="testoRicerca"
           @update:model-value="onInput"
           type="text"
           placeholder="Cerca paziente per nome, email o codice fiscale…"
         />
       </PopoverAnchor>
-      <PopoverContent class="w-80 p-1" @open-auto-focus.prevent>
+      <PopoverContent class="w-(--reka-popper-anchor-width) p-1" @open-auto-focus.prevent>
         <p v-if="ricercaInCorso" class="px-3 py-2 text-xs text-(--fg3)">Ricerca in corso…</p>
         <p v-else-if="erroreRicerca" class="px-3 py-2 text-xs text-(--danger)">Ricerca non riuscita, riprova.</p>
         <p v-else-if="risultati.length === 0" class="px-3 py-2 text-xs text-(--fg3)">Nessun paziente trovato.</p>

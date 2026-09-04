@@ -17,12 +17,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { ChevronRight, ArrowUp, ArrowDown, ArrowUpDown, UserPlus } from '@lucide/vue'
-import { calcolaEta } from '@/utils/data'
+import { calcolaEta, formattaDataItalianaConMese } from '@/utils/data'
+import { ETICHETTE_OBIETTIVO } from '@/utils/visita'
 
 type CampoOrdinamento = NonNullable<CriteriRicercaPazienti['ordinaPer']>
 
@@ -48,9 +48,9 @@ const CLASSI_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
 const ricercaInput = ref('')
 const ricercaEffettiva = ref('')
 const statoAccount = ref<'TUTTI' | Paziente['statoAccount']>('TUTTI')
-const sesso = ref<'TUTTI' | 'M' | 'F' | 'ALTRO'>('TUTTI')
-const dataNascitaDa = ref('')
-const dataNascitaA = ref('')
+const obiettivo = ref<'TUTTI' | NonNullable<Paziente['obiettivoUltimaVisita']>>('TUTTI')
+const dataUltimaVisitaDa = ref('')
+const dataUltimaVisitaA = ref('')
 const mostraArchiviati = ref(false)
 const filtriAvanzatiAperti = ref(false)
 const pagina = ref(0)
@@ -76,7 +76,7 @@ watch(ricercaInput, (valore) => {
 onUnmounted(() => clearTimeout(debounceHandle))
 
 const filtriAvanzatiAttivi = computed(() =>
-  [sesso.value !== 'TUTTI', !!dataNascitaDa.value, !!dataNascitaA.value, mostraArchiviati.value].filter(Boolean).length,
+  [obiettivo.value !== 'TUTTI', !!dataUltimaVisitaDa.value, !!dataUltimaVisitaA.value, mostraArchiviati.value].filter(Boolean).length,
 )
 
 const filtriAttivi = computed(() =>
@@ -91,9 +91,9 @@ function criteriCorrenti(): CriteriRicercaPazienti {
     direzione: direzione.value,
     ricerca: ricercaEffettiva.value.trim() || undefined,
     statoAccount: statoAccount.value === 'TUTTI' ? undefined : statoAccount.value,
-    sesso: sesso.value === 'TUTTI' ? undefined : sesso.value,
-    dataNascitaDa: dataNascitaDa.value || undefined,
-    dataNascitaA: dataNascitaA.value || undefined,
+    obiettivo: obiettivo.value === 'TUTTI' ? undefined : obiettivo.value,
+    dataUltimaVisitaDa: dataUltimaVisitaDa.value || undefined,
+    dataUltimaVisitaA: dataUltimaVisitaA.value || undefined,
     archiviato: mostraArchiviati.value,
   }
 }
@@ -121,7 +121,7 @@ async function carica() {
 }
 
 watch(
-  [ricercaEffettiva, statoAccount, sesso, dataNascitaDa, dataNascitaA, mostraArchiviati, pagina, ordinaPer, direzione],
+  [ricercaEffettiva, statoAccount, obiettivo, dataUltimaVisitaDa, dataUltimaVisitaA, mostraArchiviati, pagina, ordinaPer, direzione],
   carica,
 )
 
@@ -132,23 +132,23 @@ function selezionaStato(valore: typeof statoAccount.value) {
   pagina.value = 0
 }
 
-function onSessoChange(valore: AcceptableValue) {
-  sesso.value = valore as typeof sesso.value
+function onObiettivoChange(valore: AcceptableValue) {
+  obiettivo.value = valore as typeof obiettivo.value
   pagina.value = 0
 }
 
-function onDataNascitaDaChange(valore: string) {
-  dataNascitaDa.value = valore
+function onDataUltimaVisitaDaChange(valore: string) {
+  dataUltimaVisitaDa.value = valore
   pagina.value = 0
 }
 
-function onDataNascitaAChange(valore: string) {
-  dataNascitaA.value = valore
+function onDataUltimaVisitaAChange(valore: string) {
+  dataUltimaVisitaA.value = valore
   pagina.value = 0
 }
 
-function onMostraArchiviatiChange(valore: boolean | 'indeterminate') {
-  mostraArchiviati.value = valore === true
+function onMostraArchiviatiChange(valore: boolean) {
+  mostraArchiviati.value = valore
   pagina.value = 0
 }
 
@@ -175,9 +175,9 @@ function pulisciFiltri() {
   ricercaInput.value = ''
   ricercaEffettiva.value = ''
   statoAccount.value = 'TUTTI'
-  sesso.value = 'TUTTI'
-  dataNascitaDa.value = ''
-  dataNascitaA.value = ''
+  obiettivo.value = 'TUTTI'
+  dataUltimaVisitaDa.value = ''
+  dataUltimaVisitaA.value = ''
   mostraArchiviati.value = false
   pagina.value = 0
 }
@@ -240,7 +240,7 @@ const conteggioTesto = computed(() => {
         <h1 class="font-heading text-3xl italic text-(--fg)">Pazienti</h1>
         <p class="mt-1 text-sm text-(--fg3)">Gestisci la lista dei pazienti, gli inviti e le cartelle cliniche.</p>
       </div>
-      <Button as-child size="lg" class="hover:bg-primary/80">
+      <Button as-child class="hover:bg-primary/80">
         <router-link to="/pazienti/nuovo"><UserPlus :size="16" /> Nuovo paziente</router-link>
       </Button>
     </div>
@@ -285,33 +285,38 @@ const conteggioTesto = computed(() => {
 
       <div v-if="filtriAvanzatiAperti" class="mt-3 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] items-end gap-2.5">
         <div class="flex flex-col gap-1.5">
-          <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Sesso</Label>
-          <Select :model-value="sesso" @update:model-value="onSessoChange">
+          <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Obiettivo</Label>
+          <Select :model-value="obiettivo" @update:model-value="onObiettivoChange">
             <SelectTrigger class="w-full"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="TUTTI">Tutti</SelectItem>
-              <SelectItem value="M">Maschio</SelectItem>
-              <SelectItem value="F">Femmina</SelectItem>
-              <SelectItem value="ALTRO">Altro</SelectItem>
+              <SelectItem v-for="(etichetta, valore) in ETICHETTE_OBIETTIVO" :key="valore" :value="valore">{{ etichetta }}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div class="flex flex-col gap-1.5">
-          <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Data di nascita da</Label>
-          <DatePicker id="data-nascita-da" :model-value="dataNascitaDa" @update:model-value="onDataNascitaDaChange" />
+          <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Data ultima visita da</Label>
+          <DatePicker id="data-ultima-visita-da" :model-value="dataUltimaVisitaDa" @update:model-value="onDataUltimaVisitaDaChange" />
         </div>
         <div class="flex flex-col gap-1.5">
-          <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Data di nascita a</Label>
-          <DatePicker id="data-nascita-a" :model-value="dataNascitaA" @update:model-value="onDataNascitaAChange" />
+          <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Data ultima visita a</Label>
+          <DatePicker id="data-ultima-visita-a" :model-value="dataUltimaVisitaA" @update:model-value="onDataUltimaVisitaAChange" />
         </div>
-        <label class="flex items-center gap-2 pb-1.5">
-          <Checkbox
+        <div class="flex items-end pb-px">
+          <button
             id="filtro-mostra-archiviati"
-            :model-value="mostraArchiviati"
-            @update:model-value="onMostraArchiviatiChange"
-          />
-          <span class="text-sm text-(--fg2)">Mostra pazienti archiviati</span>
-        </label>
+            type="button"
+            role="switch"
+            :aria-checked="mostraArchiviati"
+            class="rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
+            :class="mostraArchiviati
+              ? 'border-(--danger) bg-(--danger)/10 text-(--danger)'
+              : 'border-(--bd2) bg-(--surf) text-(--fg2) hover:border-(--danger) hover:text-(--danger)'"
+            @click="onMostraArchiviatiChange(!mostraArchiviati)"
+          >
+            Mostra pazienti archiviati
+          </button>
+        </div>
         <button
           type="button"
           class="rounded-lg border border-dashed border-(--dash) px-3 py-2 text-xs font-bold text-(--fg3) hover:border-(--fg4) hover:text-(--fg)"
@@ -343,7 +348,7 @@ const conteggioTesto = computed(() => {
                     <component :is="iconaOrdinamento('nome')" :size="12" :class="ordinaPer === 'nome' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
-                <TableHead class="uppercase tracking-wide text-(--fg4)">Contatto</TableHead>
+                <TableHead class="uppercase tracking-wide text-(--fg4)">Obiettivo</TableHead>
                 <TableHead class="uppercase">
                   <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('dataNascita')">
                     Età
@@ -374,7 +379,13 @@ const conteggioTesto = computed(() => {
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>{{ paziente.telefono ?? '—' }}</TableCell>
+                <TableCell>
+                  <template v-if="paziente.obiettivoUltimaVisita">
+                    <div class="font-semibold text-(--fg)">{{ ETICHETTE_OBIETTIVO[paziente.obiettivoUltimaVisita] }}</div>
+                    <div class="text-xs text-(--fg4)">dal {{ formattaDataItalianaConMese(paziente.dataUltimaVisita!) }}</div>
+                  </template>
+                  <span v-else class="text-(--fg4)">—</span>
+                </TableCell>
                 <TableCell>{{ paziente.dataNascita ? (calcolaEta(paziente.dataNascita) ?? '—') : '—' }}</TableCell>
                 <TableCell><Badge :class="CLASSI_STATO_ACCOUNT[paziente.statoAccount]">{{ ETICHETTE_STATO_ACCOUNT[paziente.statoAccount] }}</Badge></TableCell>
                 <TableCell class="text-right">

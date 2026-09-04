@@ -67,6 +67,7 @@ describe('PazienteNuovoView', () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '42', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
       telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      obiettivoUltimaVisita: null, dataUltimaVisita: null,
     })
     const router = creaRouter()
     router.push('/pazienti/nuovo')
@@ -104,6 +105,7 @@ describe('PazienteNuovoView', () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '43', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
       telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      obiettivoUltimaVisita: null, dataUltimaVisita: null,
     })
     const router = creaRouter()
     router.push('/pazienti/nuovo')
@@ -354,6 +356,7 @@ describe('PazienteNuovoView', () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '44', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
       telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      obiettivoUltimaVisita: null, dataUltimaVisita: null,
     })
     const router = creaRouter()
     router.push('/pazienti/nuovo')
@@ -396,6 +399,7 @@ describe('PazienteNuovoView', () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '45', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
       telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      obiettivoUltimaVisita: null, dataUltimaVisita: null,
     })
     const router = creaRouter()
     router.push('/pazienti/nuovo')

@@ -22,12 +22,13 @@ import {
   ArrowDown,
   Pencil,
   AlertCircle,
-  Plus,
   Scale,
   Ruler,
   Percent,
   Dumbbell,
   CalendarX2,
+  ClipboardPlus,
+  Utensils,
 } from '@lucide/vue'
 
 const ETICHETTE_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
@@ -181,7 +182,7 @@ onMounted(() => {
               </Badge>
               <Button
                 variant="ghost"
-                size="icon-sm"
+                size="icon"
                 title="Modifica dati anagrafici"
                 aria-label="Modifica dati anagrafici"
                 @click="mostraModificaAnagrafica = true"
@@ -215,13 +216,13 @@ onMounted(() => {
         </div>
 
         <div class="flex flex-wrap items-center gap-2 ">
-          <Button variant="outline" size="sm" disabled>
-            <Plus :size="15" />
+          <Button variant="outline" disabled>
+            <Utensils :size="15" />
             <span>Nuovo piano</span>
           </Button>
-          <Button as-child size="sm" class="hover:bg-primary/80">
+          <Button as-child class="hover:bg-primary/80">
             <router-link :to="`/pazienti/${paziente.id}/visite/nuova`">
-              <Plus :size="15" />
+              <ClipboardPlus :size="15" />
               <span>Nuova visita</span>
             </router-link>
           </Button>
@@ -263,7 +264,7 @@ onMounted(() => {
           <div v-if="visiteInCaricamento" class="mt-2 h-6 w-12 animate-pulse rounded bg-(--hover)" />
           <template v-else>
             <p class="mt-1 text-xl font-heading text-(--fg)">
-              {{ andamento.bmi.ultimo !== null ? formattaNumero(andamento.bmi.ultimo) : '—' }}
+              {{ andamento.bmi.ultimo !== null ? formattaNumero(andamento.bmi.ultimo, 1) : '—' }}
             </p>
             <p
               v-if="andamento.bmi.delta !== null"
@@ -272,7 +273,7 @@ onMounted(() => {
             >
               <ArrowDown v-if="andamento.bmi.delta < 0" :size="11" />
               <ArrowUp v-else-if="andamento.bmi.delta > 0" :size="11" />
-              {{ formattaNumero(Math.abs(andamento.bmi.delta)) }} vs prec.
+              {{ formattaNumero(Math.abs(andamento.bmi.delta), 1) }} vs prec.
             </p>
           </template>
         </div>
@@ -369,6 +370,7 @@ onMounted(() => {
             :visite-in-caricamento="visiteInCaricamento"
             :errore-visite="erroreVisite"
             :visite="visite"
+            @eliminata="caricaAndamento"
           />
 
           <PazienteTabConfrontoVisite v-else-if="tabAttivo === 'confronto'" :visite="visite" />

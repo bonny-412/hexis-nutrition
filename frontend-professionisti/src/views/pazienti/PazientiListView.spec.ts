@@ -6,7 +6,7 @@ import { toast } from 'vue-sonner'
 import PazientiListView from './PazientiListView.vue'
 import { DatePicker } from '@/components/ui/date-picker'
 import * as pazientiApi from '@/api/pazienti'
-import type { PaginaPazienti } from '@/api/pazienti'
+import type { PaginaPazienti, Paziente } from '@/api/pazienti'
 
 vi.mock('@/api/pazienti')
 vi.mock('vue-sonner', () => ({
@@ -30,6 +30,8 @@ const pazienteEsempio = {
   id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
   telefono: '3331234567', dataNascita: '1990-01-01', sesso: 'M', lavoro: 'Impiegato', tipoLavoro: 'ATTIVO' as const, note: null,
   statoAccount: 'MAI_INVITATO' as const, archiviato: false,
+  obiettivoUltimaVisita: null as Paziente['obiettivoUltimaVisita'],
+  dataUltimaVisita: null as Paziente['dataUltimaVisita'],
 }
 
 function paginaCon(contenuto: typeof pazienteEsempio[]): PaginaPazienti {
@@ -61,8 +63,22 @@ describe('PazientiListView', () => {
 
     expect(wrapper.text()).toContain('Luca Verdi')
     expect(wrapper.text()).toContain('luca@example.com · RSSMRA80A01H501U')
-    expect(wrapper.text()).toContain('3331234567')
+    expect(wrapper.text()).toContain('Obiettivo')
     expect(wrapper.text()).toContain('Invita')
+  })
+
+  it('mostra l\'obiettivo dell\'ultima visita con la data quando presente, "—" quando assente', async () => {
+    vi.mocked(pazientiApi.cerca).mockResolvedValue(paginaCon([
+      { ...pazienteEsempio, id: '1', obiettivoUltimaVisita: 'IPERTROFIA', dataUltimaVisita: '2026-01-12' },
+      { ...pazienteEsempio, id: '2', email: 'senza-visite@example.com' },
+    ]))
+    const wrapper = await montaView()
+
+    expect(wrapper.text()).toContain('Ipertrofia')
+    expect(wrapper.text()).toContain('dal 12 gen 2026')
+
+    const righe = wrapper.findAll('tbody tr')
+    expect(righe[1].text()).toContain('—')
   })
 
   it('chiama cerca() invece di lista() e non richiede lista completa', async () => {
@@ -100,7 +116,7 @@ describe('PazientiListView', () => {
     expect(pazientiApi.cerca).toHaveBeenCalledWith(expect.objectContaining({ statoAccount: 'ATTIVO', pagina: 0 }))
   })
 
-  it('i filtri avanzati (sesso, intervallo date) richiamano cerca() con i parametri', async () => {
+  it('i filtri avanzati (obiettivo, intervallo date ultima visita) richiamano cerca() con i parametri', async () => {
     vi.mocked(pazientiApi.cerca).mockResolvedValue(paginaCon([pazienteEsempio]))
     const wrapper = await montaView()
 
@@ -109,11 +125,11 @@ describe('PazientiListView', () => {
     await flushPromises()
     vi.mocked(pazientiApi.cerca).mockClear()
 
-    const pickerDataDa = wrapper.findAllComponents(DatePicker).find((c) => c.props('id') === 'data-nascita-da')
+    const pickerDataDa = wrapper.findAllComponents(DatePicker).find((c) => c.props('id') === 'data-ultima-visita-da')
     await pickerDataDa?.vm.$emit('update:modelValue', '1990-01-01')
     await flushPromises()
 
-    expect(pazientiApi.cerca).toHaveBeenCalledWith(expect.objectContaining({ dataNascitaDa: '1990-01-01', pagina: 0 }))
+    expect(pazientiApi.cerca).toHaveBeenCalledWith(expect.objectContaining({ dataUltimaVisitaDa: '1990-01-01', pagina: 0 }))
   })
 
   it('il toggle "Mostra pazienti archiviati" richiama cerca() con archiviato:true e nasconde Invita', async () => {
@@ -145,8 +161,8 @@ describe('PazientiListView', () => {
     await flushPromises()
 
     expect(pazientiApi.cerca).toHaveBeenLastCalledWith(expect.objectContaining({
-      ricerca: undefined, statoAccount: undefined, sesso: undefined,
-      dataNascitaDa: undefined, dataNascitaA: undefined, archiviato: false, pagina: 0,
+      ricerca: undefined, statoAccount: undefined, obiettivo: undefined,
+      dataUltimaVisitaDa: undefined, dataUltimaVisitaA: undefined, archiviato: false, pagina: 0,
     }))
   })
 

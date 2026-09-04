@@ -16,13 +16,21 @@ public record PazienteResponse(
         String tipoLavoro,
         String note,
         String statoAccount,
-        boolean archiviato
+        boolean archiviato,
+        String obiettivoUltimaVisita,
+        LocalDate dataUltimaVisita
 ) {
     public static PazienteResponse da(Paziente paziente) {
+        return da(paziente, null);
+    }
+
+    public static PazienteResponse da(Paziente paziente, Visita ultimaVisita) {
         return new PazienteResponse(paziente.getId(), paziente.getNome(), paziente.getCognome(),
                 paziente.getCodiceFiscale(), paziente.getEmail(), paziente.getTelefono(), paziente.getDataNascita(),
                 paziente.getSesso().name(), paziente.getLavoro(),
                 paziente.getTipoLavoro() != null ? paziente.getTipoLavoro().name() : null,
-                paziente.getNote(), paziente.getStatoAccount().name(), paziente.isArchiviato());
+                paziente.getNote(), paziente.getStatoAccount().name(), paziente.isArchiviato(),
+                ultimaVisita != null ? ultimaVisita.getObiettivo().name() : null,
+                ultimaVisita != null ? ultimaVisita.getDataVisita() : null);
     }
 }

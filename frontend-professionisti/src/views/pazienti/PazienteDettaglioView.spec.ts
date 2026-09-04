@@ -54,6 +54,7 @@ async function montaConPaziente(pazienteOverrides: Partial<pazientiApi.Paziente>
   vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
     id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
     telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+    obiettivoUltimaVisita: null, dataUltimaVisita: null,
     ...pazienteOverrides,
   })
   const router = creaRouter()
@@ -169,14 +170,14 @@ describe('PazienteDettaglioView', () => {
       const wrapper = await montaConPaziente()
 
       expect(wrapper.text()).toContain('Peso attuale')
-      expect(wrapper.text()).toContain('77,5 kg')
-      expect(wrapper.text()).toContain('2,5 kg vs prec.')
+      expect(wrapper.text()).toContain('77,50 kg')
+      expect(wrapper.text()).toContain('2,50 kg vs prec.')
       expect(wrapper.text()).toContain('BMI')
       expect(wrapper.text()).toContain('24,4')
       expect(wrapper.text()).toContain('Massa grassa')
-      expect(wrapper.text()).toContain('18,2%')
+      expect(wrapper.text()).toContain('18,20%')
       expect(wrapper.text()).toContain('Massa magra')
-      expect(wrapper.text()).toContain('63,4 kg')
+      expect(wrapper.text()).toContain('63,40 kg')
       expect(wrapper.text()).toContain('Aderenza piano')
       expect(wrapper.text()).toContain('Presto disponibile')
     })
@@ -232,7 +233,9 @@ describe('PazienteDettaglioView', () => {
       const tabConfronto = wrapper.findAll('button').find((b) => b.text() === 'Confronto visite')
       await tabConfronto?.trigger('click')
 
-      expect(wrapper.text()).toContain('Circonferenze')
+      // Nessuna circonferenza registrata in questa fixture: la sezione resta nascosta, non mostrata vuota.
+      expect(wrapper.text()).not.toContain('Circonferenze')
+      expect(wrapper.text()).toContain('Obiettivo')
       expect(wrapper.text()).toContain('Variazione')
     })
 

@@ -19,7 +19,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { ClipboardPlus, FolderOpen, MoreHorizontal, Trash2 } from '@lucide/vue'
+import { ArchiveRestore, ClipboardPlus, FolderOpen, MoreHorizontal, Trash2 } from '@lucide/vue'
 
 const props = defineProps<{
   paziente: Paziente
@@ -95,7 +95,8 @@ function etichettaAzione(paziente: Paziente) {
           <Trash2 />
           Archivia paziente
         </DropdownMenuItem>
-        <DropdownMenuItem v-else data-test="menu-de-archivia" @click="apriConferma">
+        <DropdownMenuItem v-else data-test="menu-de-archivia" class="cursor-pointer" @click="apriConferma">
+          <ArchiveRestore />
           De-archivia paziente
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -116,8 +117,14 @@ function etichettaAzione(paziente: Paziente) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel data-test="conferma-annulla">Annulla</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-conferma" @click="confermaAzione" class="hover:bg-primary/80">Conferma</AlertDialogAction>
+          <AlertDialogCancel data-test="conferma-annulla" variant="neutral">Annulla</AlertDialogCancel>
+          <AlertDialogAction
+            data-test="conferma-conferma"
+            :class="mostraArchiviati ? 'hover:bg-primary/80' : 'bg-(--danger) hover:bg-(--danger)/80'"
+            @click="confermaAzione"
+          >
+            Conferma
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

@@ -91,13 +91,16 @@ const chartConfigComposizione: ChartConfig = {
         <div v-for="n in 3" :key="n" data-test="andamento-chart-skeleton" class="h-48 animate-pulse rounded-xl bg-(--hover)" />
       </div>
 
-      <div v-else-if="visite.length === 0" class="rounded-2xl border border-(--bd) bg-(--hover)/40 p-8 text-center text-sm text-(--fg3) shadow-sm">
-        Nessuna visita registrata. L'andamento apparirà dopo la prima visita.
+      <div v-else-if="visite.length === 0" class="rounded-2xl border border-(--bd) bg-(--surf) p-8 text-center text-sm text-(--fg3)">
+        <h4 class="font-heading text-lg italic text-(--fg)">Nessuna visita registrata</h4>
+        <p class="mx-auto mt-1.5 max-w-sm text-sm text-(--fg3)">
+          Nessun dato clinico da mostrare. I dettagli dell'ultima visita appariranno qui non appena registrata.
+        </p>
       </div>
 
       <div v-else class="space-y-4">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          <AndamentoChart titolo="Peso" unita="kg" :andamento="andamento.peso" colore="var(--chart-1)" />
+          <AndamentoChart titolo="Peso" unita="kg" :andamento="andamento.peso" colore="var(--chart-1)" :decimali="2" />
           <AndamentoChart titolo="BMI" unita="" :andamento="andamento.bmi" colore="var(--chart-2)" />
 
           <Card>

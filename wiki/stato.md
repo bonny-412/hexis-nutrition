@@ -3,8 +3,8 @@ title: Stato del progetto
 tags: [stato]
 stato: stabile
 creato: 2026-08-08
-aggiornato: 2026-09-03
-fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, sorgenti/2026-08-09-test-su-postgres-locale.md, sorgenti/2026-08-09-docker-solo-in-produzione.md, sorgenti/2026-08-30-hash-pulizia-invalidazione-token.md, ../docs/superpowers/specs/2026-08-31-nuovo-paziente-con-visita-design.md, ../docs/superpowers/specs/2026-09-01-plicometria-circonferenze-design.md, ../docs/superpowers/plans/2026-09-01-plicometria-circonferenze.md, log.md#2026-08-31-handoff--bug-fix-controlli-pazientenuovoview--ux-maiuscola-errori-live, log.md#2026-09-01-handoff--pagina-nuovo-paziente-eta-componente-visita-e-data-nascita-obbligatoria, log.md#2026-09-01-handoff--modulo-plicometria-e-redesign-circonferenze, log.md#2026-09-02-handoff--rifiniture-plicometria-fix-typescript-sulle-select-riorganizzazione-views, ../docs/superpowers/specs/2026-09-02-lista-pazienti-paginata-design.md, ../docs/superpowers/plans/2026-09-02-lista-pazienti-paginata.md, log.md#2026-09-02-handoff--lista-pazienti-paginata-redesign-ui-ricercafiltri-lato-server-archiviazione-paziente, log.md#2026-09-02-handoff--toast-di-notifica-globale-bug-fix-invito-rifiniture-lista-pazienti, ../docs/superpowers/specs/2026-09-02-dettaglio-paziente-andamento-design.md, ../docs/superpowers/plans/2026-09-02-dettaglio-paziente-andamento.md, log.md#2026-09-02-handoff--sezione-andamento-e-redesign-completo-della-pagina-di-dettaglio-paziente]
+aggiornato: 2026-09-04
+fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, sorgenti/2026-08-09-test-su-postgres-locale.md, sorgenti/2026-08-09-docker-solo-in-produzione.md, sorgenti/2026-08-30-hash-pulizia-invalidazione-token.md, ../docs/superpowers/specs/2026-08-31-nuovo-paziente-con-visita-design.md, ../docs/superpowers/specs/2026-09-01-plicometria-circonferenze-design.md, ../docs/superpowers/plans/2026-09-01-plicometria-circonferenze.md, log.md#2026-08-31-handoff--bug-fix-controlli-pazientenuovoview--ux-maiuscola-errori-live, log.md#2026-09-01-handoff--pagina-nuovo-paziente-eta-componente-visita-e-data-nascita-obbligatoria, log.md#2026-09-01-handoff--modulo-plicometria-e-redesign-circonferenze, log.md#2026-09-02-handoff--rifiniture-plicometria-fix-typescript-sulle-select-riorganizzazione-views, ../docs/superpowers/specs/2026-09-02-lista-pazienti-paginata-design.md, ../docs/superpowers/plans/2026-09-02-lista-pazienti-paginata.md, log.md#2026-09-02-handoff--lista-pazienti-paginata-redesign-ui-ricercafiltri-lato-server-archiviazione-paziente, log.md#2026-09-02-handoff--toast-di-notifica-globale-bug-fix-invito-rifiniture-lista-pazienti, ../docs/superpowers/specs/2026-09-02-dettaglio-paziente-andamento-design.md, ../docs/superpowers/plans/2026-09-02-dettaglio-paziente-andamento.md, log.md#2026-09-02-handoff--sezione-andamento-e-redesign-completo-della-pagina-di-dettaglio-paziente, log.md#2026-09-04-handoff--rifiniture-dettagliolista-paziente-elimina-visita-filtri-lato-server-ridisegnati]
 ---
 
 # Stato — hexis-nutrition
@@ -265,23 +265,50 @@ Aggiornati `api-contracts.md` e `modello-dati.md`.
 
 **Handoff esplicito**: lavoro **in staging** (`git add` fatto su tutto il repo), **nessun commit** — tocca ad Andrea verificare a mano prima del prossimo avvio di sessione, in particolare il flusso "Nuova visita" dalla Dashboard (selezione paziente, incluso il nuovo suggerimento altezza/obiettivo) e da tutti e tre gli altri entry point, oltre alla modifica di una visita esistente.
 
+## Sessione del 4 settembre 2026 — rifiniture dettaglio/lista paziente, "Elimina visita", filtri lato server ridisegnati
+
+Sessione lunga di richieste puntuali, una alla volta, quasi tutte bounded. Dettaglio completo in [log](log.md#2026-09-04-handoff--rifiniture-dettagliolista-paziente-elimina-visita-filtri-lato-server-ridisegnati).
+
+**Dettaglio paziente**: numeri Peso/BMI in `font-heading`; nuova card `ConfrontoBarChart.vue` (bar chart Plicometria + barre orizzontali Circonferenze) nella tab Confronto Visite; sezioni Plicometria/Circonferenze spariscono del tutto se senza dati invece di mostrare tabelle vuote; riga "Obiettivo" in tabella; colore delle variazioni uniformato a un "colore di avviso" invece del verde/rosso automatico (la valutazione clinica spetta al dietista) — BMI escluso, mai menzionato nella richiesta.
+
+**Due bug reali trovati e risolti con TDD**: (1) `Calendar.vue` si apriva sempre sul mese odierno invece che sul valore selezionato (il wrapper shadcn-vue inizializzava un `placeholder` locale sempre a `today()`, bypassando la logica di reka-ui che lo deriva da `modelValue`); (2) `AlertDialogAction` di reka-ui è internamente una `DialogClose` e chiude la dialog **prima** che il gestore `@click` custom giri — nella funzione "Elimina visita", legare lo stato "quale visita eliminare" allo stesso v-model di apertura/chiusura lo azzerava troppo presto, silenziando la chiamata API senza errori visibili.
+
+**Colonna "Obiettivo" nella lista pazienti** (sostituisce "Prossima visita", che mostrava sempre `—` — l'agenda non esiste ancora): obiettivo dell'ultima visita + data. Nuova query batch (`VisitaRepository.findAllByPazienteIdIn`, niente N+1) + `PazienteResponse` esteso.
+
+**Precisione decimale**: peso/plicometria/circonferenze a 2 cifre decimali invece di 1; BMI resta a 1 ovunque.
+
+**Funzione "Elimina visita"** (esplicitamente fuori scope il 3 settembre, ora costruita): nuovo `DELETE /pazienti/{id}/visite/{visitaId}`, `AlertDialog` di conferma. CORS non permetteva ancora `DELETE` (stesso gap già capitato con `PUT`), corretto. Bottoni dialog: "Annulla" sempre `variant="neutral"`, "Conferma" rosso/danger solo per azioni distruttive.
+
+**Bug controlli input Plicometria**: `PlicaInput.vue` non replicava il workaround anti-desync del DOM già usato in `DatiVisitaForm.vue` — stesso fix applicato.
+
+**Filtri di ricerca ridisegnati**: `sesso`→`obiettivo` (dell'ultima visita), `dataNascitaDa/A`→`dataUltimaVisitaDa/A`. Nessuna relazione JPA `Paziente`↔`Visita`: subquery correlate in `PazienteSpecifications`. Un paziente senza visite non compare mai con questi filtri attivi. Filtro "Mostra archiviati" ristilizzato come chip danger.
+
+**Rifinitura finale**: il date-picker si chiude ora in automatico alla selezione di una data.
+
+**Modifiche esterne non ispezionate**: `CalcoliPlicometria.java`, `JacksonPollock3Calcolatore.java`, `JacksonPollock7Calcolatore.java`, `AppSidebar.vue` modificati ma non toccati da questa sessione — presumibilmente rifiniture a mano di Andrea, prese così come sono.
+
+**Verifica**: backend `mvn test` → **146/146 verdi, BUILD SUCCESS**. Frontend `npx vitest run` → **248/248 verdi**, `tsc --noEmit` e `npm run build` puliti. Nessuna verifica manuale in browser in nessun punto della sessione.
+
+**Handoff esplicito**: Andrea ha chiesto di salvare tutto per riprendere più tardi. Lavoro **in staging** (`git add` su tutto il repo), **nessun commit** — tocca ad Andrea.
+
 ## Prossimo passo consigliato
 
-Entrambi i flussi annunciati alla fine della sessione precedente (modifica anagrafica paziente, inserimento/modifica visita) sono **stati completati** in questa sessione — vedi sopra. Andrea non ha ancora indicato il prossimo passo: da chiedere a inizio sessione, dopo aver verificato a mano i due flussi appena costruiti.
+Andrea non ha ancora indicato il prossimo passo per la prossima sessione: da chiedere a inizio sessione. La sessione del 4 settembre 2026 ha coperto tutte le rifiniture richieste fino a quel momento — nessun flusso annunciato e non completato in sospeso.
 
-Punti ancora aperti, non bloccanti per il prossimo passo:
+Punti ancora aperti, non bloccanti:
 
 1. Apri Claude Code su `progetti/hexis-nutrition/` (non sulla radice del workspace, non dentro una singola sottocartella da sola).
 2. Controlla `git status`/`git diff` a inizio sessione: se Andrea ha già committato, la working tree dovrebbe risultare pulita — verificalo prima di assumere lo stato descritto qui.
-3. **Isolamento test in `PazienteRigaAzioni.spec.ts`**: 3 test segnalati falliti-se-eseguiti-insieme nelle sessioni precedenti — non riprodotto nella sessione del 3 settembre 2026 (parte 2), passati in ogni esecuzione della suite completa. Non investigato, potrebbe ripresentarsi: da tenere d'occhio con `superpowers:systematic-debugging` se Andrea lo richiede o se ricompare.
-4. Provare a mano il flusso archiviazione/de-archiviazione e la ricerca/filtri della lista pazienti contro l'app in esecuzione, e la migrazione V15 contro il database `hexis` reale.
-5. Valutare i 9 Minor parcheggiati dalla revisione finale della lista pazienti (dettaglio nel [log](log.md#2026-09-02-handoff--lista-pazienti-paginata-redesign-ui-ricercafiltri-lato-server-archiviazione-paziente)) e la domanda di prodotto sul conteggio dashboard/archiviati.
-6. Provare a mano reset password contro l'app in esecuzione (l'invito ora è verificato).
-7. Colmare il gap di validazione server-side su `CreaPazienteRequest` per nome/cognome/telefono/lavoro, se Andrea lo ritiene prioritario.
-8. Aggiungere test di regressione dedicati per due fix della revisione finale del modulo Plicometria (esclusione pliche non richieste dal protocollo; presenza del messaggio nel body del 400) — vedi "Cosa resta aperto".
-9. Configurare `RESEND_API_KEY`/`RESEND_FROM_EMAIL` per l'invio email reale, se Andrea decide di riprenderlo (esplicitamente rimandato il 2 settembre 2026).
-10. Scrivere con `superpowers:writing-plans` il piano per `frontend-cliente/` di "Fondamenta" — non ancora iniziato. Poi il brainstorming di "Piano alimentare", prossimo sotto-progetto della roadmap (vedi [architettura](architettura.md)).
-11. **Decisione prodotto non risolta**: il colore del delta nella sezione Andamento/striscia statistiche è fisso (giù=verde, su=rosso) per tutte le metriche — inverso per un paziente sottopeso che riprende peso. Segnalato ad Andrea, nessuna modifica fatta in attesa di una scelta.
+3. Provare a mano, contro l'app in esecuzione: i nuovi filtri "Obiettivo"/"Data ultima visita" nella lista pazienti, la funzione "Elimina visita", l'auto-chiusura del date-picker, e in generale tutte le rifiniture della sessione del 4 settembre 2026 — nessuna verifica manuale in browser è stata fatta dall'agente.
+4. Le 4 modifiche esterne non ispezionate (`CalcoliPlicometria.java`, `JacksonPollock3Calcolatore.java`, `JacksonPollock7Calcolatore.java`, `AppSidebar.vue`) andrebbero riviste da Andrea o segnalate esplicitamente se vanno incluse in una revisione futura.
+5. Provare a mano il flusso archiviazione/de-archiviazione e la ricerca/filtri della lista pazienti contro l'app in esecuzione, e la migrazione V15 contro il database `hexis` reale.
+6. Valutare i 9 Minor parcheggiati dalla revisione finale della lista pazienti (dettaglio nel [log](log.md#2026-09-02-handoff--lista-pazienti-paginata-redesign-ui-ricercafiltri-lato-server-archiviazione-paziente)) e la domanda di prodotto sul conteggio dashboard/archiviati.
+7. Provare a mano reset password contro l'app in esecuzione (l'invito ora è verificato).
+8. Colmare il gap di validazione server-side su `CreaPazienteRequest` per nome/cognome/telefono/lavoro, se Andrea lo ritiene prioritario.
+9. Aggiungere test di regressione dedicati per due fix della revisione finale del modulo Plicometria (esclusione pliche non richieste dal protocollo; presenza del messaggio nel body del 400) — vedi "Cosa resta aperto".
+10. Configurare `RESEND_API_KEY`/`RESEND_FROM_EMAIL` per l'invio email reale, se Andrea decide di riprenderlo (esplicitamente rimandato il 2 settembre 2026).
+11. Scrivere con `superpowers:writing-plans` il piano per `frontend-cliente/` di "Fondamenta" — non ancora iniziato. Poi il brainstorming di "Piano alimentare", prossimo sotto-progetto della roadmap (vedi [architettura](architettura.md)).
+12. **Decisione prodotto non risolta**: il colore del delta nella sezione Andamento/striscia statistiche è fisso (giù=verde, su=rosso) per tutte le metriche — inverso per un paziente sottopeso che riprende peso. Segnalato ad Andrea, nessuna modifica fatta in attesa di una scelta.
 
 ## Divisione dei compiti
 

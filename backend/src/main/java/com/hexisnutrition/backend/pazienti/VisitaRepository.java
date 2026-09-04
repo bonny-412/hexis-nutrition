@@ -9,4 +9,6 @@ public interface VisitaRepository extends JpaRepository<Visita, UUID> {
     List<Visita> findAllByPazienteId(UUID pazienteId);
 
     List<Visita> findAllByPazienteIdOrderByDataVisitaAsc(UUID pazienteId);
+
+    List<Visita> findAllByPazienteIdIn(List<UUID> pazienteIds);
 }

@@ -1,5 +1,9 @@
 package com.hexisnutrition.backend.pazienti;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
@@ -8,6 +12,15 @@ import java.util.UUID;
 public final class PazienteSpecifications {
 
     private PazienteSpecifications() {
+    }
+
+    /** Nessuna relazione JPA tra Paziente e Visita (FK grezza): l'ultima visita è quella con `dataVisita` massima per quel paziente. */
+    private static Subquery<LocalDate> dataUltimaVisita(Root<Paziente> paziente, CriteriaQuery<?> query, CriteriaBuilder cb) {
+        Subquery<LocalDate> sub = query.subquery(LocalDate.class);
+        var visita = sub.from(Visita.class);
+        sub.select(cb.greatest(visita.<LocalDate>get("dataVisita")))
+                .where(cb.equal(visita.get("pazienteId"), paziente.get("id")));
+        return sub;
     }
 
     public static Specification<Paziente> delProfessionista(UUID professionistaId) {
@@ -31,20 +44,32 @@ public final class PazienteSpecifications {
         return (root, query, cb) -> cb.equal(root.get("statoAccount"), statoAccount);
     }
 
-    public static Specification<Paziente> conSesso(Sesso sesso) {
-        return (root, query, cb) -> cb.equal(root.get("sesso"), sesso);
+    public static Specification<Paziente> conObiettivoUltimaVisita(ObiettivoVisita obiettivo) {
+        return (root, query, cb) -> {
+            Subquery<UUID> visitaConObiettivo = query.subquery(UUID.class);
+            var visita = visitaConObiettivo.from(Visita.class);
+            visitaConObiettivo.select(visita.get("id"))
+                    .where(cb.and(
+                            cb.equal(visita.get("pazienteId"), root.get("id")),
+                            cb.equal(visita.get("obiettivo"), obiettivo),
+                            cb.equal(visita.get("dataVisita"), dataUltimaVisita(root, query, cb))));
+
+            return cb.exists(visitaConObiettivo);
+        };
     }
 
-    public static Specification<Paziente> conDataNascitaTra(LocalDate da, LocalDate a) {
+    /** Nullo per i pazienti senza visite: correttamente esclusi quando questo filtro è attivo. */
+    public static Specification<Paziente> conDataUltimaVisitaTra(LocalDate da, LocalDate a) {
         return (root, query, cb) -> {
+            Subquery<LocalDate> dataUltimaVisita = dataUltimaVisita(root, query, cb);
             if (da != null && a != null) {
-                return cb.between(root.get("dataNascita"), da, a);
+                return cb.between(dataUltimaVisita, da, a);
             }
             if (da != null) {
-                return cb.greaterThanOrEqualTo(root.get("dataNascita"), da);
+                return cb.greaterThanOrEqualTo(dataUltimaVisita, da);
             }
             if (a != null) {
-                return cb.lessThanOrEqualTo(root.get("dataNascita"), a);
+                return cb.lessThanOrEqualTo(dataUltimaVisita, a);
             }
             return cb.conjunction();
         };

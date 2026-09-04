@@ -14,6 +14,8 @@ export interface Paziente {
   note: string | null
   statoAccount: 'MAI_INVITATO' | 'INVITATO' | 'ATTIVO'
   archiviato: boolean
+  obiettivoUltimaVisita: 'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'EDUCATIVO' | 'PREPARAZIONE_SPORTIVA' | null
+  dataUltimaVisita: string | null
 }
 
 export interface CriteriRicercaPazienti {
@@ -23,9 +25,9 @@ export interface CriteriRicercaPazienti {
   direzione?: 'asc' | 'desc'
   ricerca?: string
   statoAccount?: Paziente['statoAccount']
-  sesso?: 'M' | 'F' | 'ALTRO'
-  dataNascitaDa?: string
-  dataNascitaA?: string
+  obiettivo?: NonNullable<Paziente['obiettivoUltimaVisita']>
+  dataUltimaVisitaDa?: string
+  dataUltimaVisitaA?: string
   archiviato?: boolean
 }
 
@@ -184,9 +186,9 @@ export function cerca(criteri: CriteriRicercaPazienti = {}): Promise<PaginaPazie
   if (criteri.direzione) parametri.set('direzione', criteri.direzione)
   if (criteri.ricerca) parametri.set('ricerca', criteri.ricerca)
   if (criteri.statoAccount) parametri.set('statoAccount', criteri.statoAccount)
-  if (criteri.sesso) parametri.set('sesso', criteri.sesso)
-  if (criteri.dataNascitaDa) parametri.set('dataNascitaDa', criteri.dataNascitaDa)
-  if (criteri.dataNascitaA) parametri.set('dataNascitaA', criteri.dataNascitaA)
+  if (criteri.obiettivo) parametri.set('obiettivo', criteri.obiettivo)
+  if (criteri.dataUltimaVisitaDa) parametri.set('dataUltimaVisitaDa', criteri.dataUltimaVisitaDa)
+  if (criteri.dataUltimaVisitaA) parametri.set('dataUltimaVisitaA', criteri.dataUltimaVisitaA)
   if (criteri.archiviato !== undefined) parametri.set('archiviato', String(criteri.archiviato))
 
   const query = parametri.toString()
@@ -207,4 +209,8 @@ export function dettaglioVisita(pazienteId: string, visitaId: string): Promise<V
 
 export function aggiornaVisita(pazienteId: string, visitaId: string, request: CreaVisitaRequest): Promise<Visita> {
   return apiRequest<Visita>(`/pazienti/${pazienteId}/visite/${visitaId}`, { method: 'PUT', body: request })
+}
+
+export function eliminaVisita(pazienteId: string, visitaId: string): Promise<void> {
+  return apiRequest<void>(`/pazienti/${pazienteId}/visite/${visitaId}`, { method: 'DELETE' })
 }

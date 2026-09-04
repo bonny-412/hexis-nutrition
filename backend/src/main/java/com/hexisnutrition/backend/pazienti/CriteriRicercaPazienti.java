@@ -5,9 +5,9 @@ import java.time.LocalDate;
 public record CriteriRicercaPazienti(
         String ricerca,
         StatoAccountPaziente statoAccount,
-        Sesso sesso,
-        LocalDate dataNascitaDa,
-        LocalDate dataNascitaA,
+        ObiettivoVisita obiettivo,
+        LocalDate dataUltimaVisitaDa,
+        LocalDate dataUltimaVisitaA,
         boolean archiviato
 ) {
 }

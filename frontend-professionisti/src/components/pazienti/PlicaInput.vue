@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -34,20 +34,36 @@ watch(mediaCalcolata, (media) => {
   emit('update:modelValue', media !== null ? media.toFixed(2).replace('.', ',') : '')
 })
 
+const MARCATORE_INVISIBILE = '​'
+
+/**
+ * Se il valore filtrato coincide con quello attuale, Vue non aggiorna il DOM dell'input:
+ * il carattere non valido appena digitato (es. una lettera) resta visibile a schermo anche
+ * se il valore "vero" non è cambiato. Un marcatore invisibile temporaneo forza il resync,
+ * stesso workaround già usato in DatiVisitaForm.vue per altezza/peso/circonferenze.
+ */
+async function imposta(valoreAttuale: string, valoreFiltrato: string, applica: (valore: string) => void) {
+  if (valoreFiltrato === valoreAttuale) {
+    applica(`${valoreFiltrato}${MARCATORE_INVISIBILE}`)
+    await nextTick()
+  }
+  applica(valoreFiltrato)
+}
+
 function onSingoloInput(valore: string | number) {
-  emit('update:modelValue', filtraDecimaleItaliano(String(valore)))
+  imposta(props.modelValue, filtraDecimaleItaliano(String(valore)), (v) => emit('update:modelValue', v))
 }
 
 function onMisura1Input(valore: string | number) {
-  misura1.value = filtraDecimaleItaliano(String(valore))
+  imposta(misura1.value, filtraDecimaleItaliano(String(valore)), (v) => { misura1.value = v })
 }
 
 function onMisura2Input(valore: string | number) {
-  misura2.value = filtraDecimaleItaliano(String(valore))
+  imposta(misura2.value, filtraDecimaleItaliano(String(valore)), (v) => { misura2.value = v })
 }
 
 function onMisura3Input(valore: string | number) {
-  misura3.value = filtraDecimaleItaliano(String(valore))
+  imposta(misura3.value, filtraDecimaleItaliano(String(valore)), (v) => { misura3.value = v })
 }
 
 function onTriplaChange(valore: boolean) {

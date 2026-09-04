@@ -85,11 +85,18 @@ onMounted(() => {
 })
 
 const sottotitolo = computed(() => {
-  if (!paziente.value) return ''
+  if (!paziente.value) return pazienteIdRoute ? '' : 'Seleziona il paziente per cui registrare la nuova visita.'
   const base = `${paziente.value.nome} ${paziente.value.cognome}`
   if (!ultimaVisita.value) return base
   return `${base} · ultima visita ${formattaDataItalianaConMese(ultimaVisita.value.dataVisita)} con peso ${formattaNumero(ultimaVisita.value.pesoKg)} kg`
 })
+
+/**
+ * Da `/pazienti/visite/nuova` (link "Nuova visita" della dashboard) si torna alla dashboard.
+ * Da `/pazienti/:id/visite/...` (creazione o modifica avviata dal dettaglio paziente) si torna lì.
+ */
+const linkIndietro = computed(() => (pazienteIdRoute ? `/pazienti/${pazienteIdRoute}` : '/'))
+const testoLinkIndietro = computed(() => (pazienteIdRoute ? 'Torna al paziente' : 'Torna alla dashboard'))
 
 function tornaIndietro() {
   if (paziente.value) {
@@ -129,11 +136,12 @@ async function onSubmit() {
   <AppShell>
     <div class="mb-6">
       <router-link
-        to="/pazienti"
+        :to="linkIndietro"
+        data-test="link-indietro"
         class="inline-flex items-center gap-2 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)"
       >
         <ArrowLeft :size="16" />
-        <span>Torna alla lista pazienti</span>
+        <span>{{ testoLinkIndietro }}</span>
       </router-link>
       <h1 class="font-heading text-3xl italic text-(--fg)">{{ modalitaModifica ? 'Modifica visita' : 'Nuova visita' }}</h1>
       <p v-if="sottotitolo" class="mt-1 text-sm text-(--fg3)">{{ sottotitolo }}</p>
@@ -170,10 +178,10 @@ async function onSubmit() {
         </div>
 
         <div class="w-full flex justify-end items-center gap-2">
-          <Button type="button" variant="outline" :disabled="inCorso" size="lg" class="bg-(--surf) hover:bg-(--surf)/60" @click="tornaIndietro">
+          <Button type="button" variant="neutral" :disabled="inCorso" @click="tornaIndietro">
             Annulla
           </Button>
-          <Button type="submit" :disabled="inCorso" size="lg" class="hover:bg-primary/80">
+          <Button type="submit" :disabled="inCorso" class="hover:bg-primary/80">
             <Save :size="16" />
             {{ inCorso ? 'Salvataggio…' : 'Salva visita' }}
           </Button>

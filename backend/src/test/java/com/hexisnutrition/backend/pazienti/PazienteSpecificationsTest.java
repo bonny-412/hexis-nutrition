@@ -20,12 +20,23 @@ class PazienteSpecificationsTest extends AbstractIntegrationTest {
     private PazienteRepository pazienteRepository;
 
     @Autowired
+    private VisitaRepository visitaRepository;
+
+    @Autowired
     private ProfessionistaRepository professionistaRepository;
 
     @AfterEach
     void pulisci() {
+        visitaRepository.deleteAll();
         pazienteRepository.deleteAll();
         professionistaRepository.deleteAll();
+    }
+
+    private Visita creaVisita(UUID pazienteId, LocalDate dataVisita, ObiettivoVisita obiettivo) {
+        Visita visita = new Visita(pazienteId, dataVisita, 178, new java.math.BigDecimal("75.0"),
+                null, null, null, null, null, null, null, null, null, null, null,
+                ProtocolloVita.OMS, null, obiettivo);
+        return visitaRepository.save(visita);
     }
 
     private Paziente creaPaziente(UUID professionistaId, String nome, String cognome, String email,
@@ -78,38 +89,46 @@ class PazienteSpecificationsTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void conSessoFiltraPerSesso() {
+    void conObiettivoUltimaVisitaFiltraPerObiettivoDellaVisitaPiuRecente() {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-spec3@example.com", "hash", "Anna", "Bianchi"));
-        creaPaziente(professionista.getId(), "Marco", "Rossi", "marco-m@example.com",
+        Paziente ipertrofia = creaPaziente(professionista.getId(), "Marco", "Rossi", "marco-m@example.com",
                 "RSSMRC80A01H501U", LocalDate.of(1990, 1, 1), Sesso.M);
-        creaPaziente(professionista.getId(), "Giulia", "Verdi", "giulia-f@example.com",
+        // Prima visita "Dimagrimento", poi passato a "Ipertrofia": deve contare solo l'ultima.
+        creaVisita(ipertrofia.getId(), LocalDate.of(2026, 1, 1), ObiettivoVisita.DIMAGRIMENTO);
+        creaVisita(ipertrofia.getId(), LocalDate.of(2026, 6, 1), ObiettivoVisita.IPERTROFIA);
+        Paziente dimagrimento = creaPaziente(professionista.getId(), "Giulia", "Verdi", "giulia-f@example.com",
                 "VRDGLI85A41H501U", LocalDate.of(1985, 3, 10), Sesso.F);
+        creaVisita(dimagrimento.getId(), LocalDate.of(2026, 1, 1), ObiettivoVisita.DIMAGRIMENTO);
+        // Nessuna visita: non deve mai comparire in nessun filtro per obiettivo.
+        creaPaziente(professionista.getId(), "Anna", "Neri", "anna-senza-visite@example.com",
+                "NRIANN90A01H501U", LocalDate.of(1990, 1, 1), Sesso.F);
 
         Specification<Paziente> spec = Specification.allOf(
                 PazienteSpecifications.delProfessionista(professionista.getId()),
                 PazienteSpecifications.conArchiviato(false),
-                PazienteSpecifications.conSesso(Sesso.F));
+                PazienteSpecifications.conObiettivoUltimaVisita(ObiettivoVisita.IPERTROFIA));
 
         List<Paziente> risultato = pazienteRepository.findAll(spec);
 
-        assertThat(risultato).hasSize(1);
-        assertThat(risultato.get(0).getSesso()).isEqualTo(Sesso.F);
+        assertThat(risultato).extracting(Paziente::getEmail).containsExactly("marco-m@example.com");
     }
 
     @Test
-    void conDataNascitaTraFiltraPerIntervallo() {
+    void conDataUltimaVisitaTraFiltraPerIntervallo() {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-spec4@example.com", "hash", "Anna", "Bianchi"));
-        creaPaziente(professionista.getId(), "Marco", "Rossi", "marco-1970@example.com",
+        Paziente vecchia = creaPaziente(professionista.getId(), "Marco", "Rossi", "marco-1970@example.com",
                 "RSSMRC70A01H501U", LocalDate.of(1970, 1, 1), Sesso.M);
-        creaPaziente(professionista.getId(), "Giulia", "Verdi", "giulia-1995@example.com",
+        creaVisita(vecchia.getId(), LocalDate.of(1970, 1, 1), ObiettivoVisita.MANTENIMENTO);
+        Paziente recente = creaPaziente(professionista.getId(), "Giulia", "Verdi", "giulia-1995@example.com",
                 "VRDGLI95A41H501U", LocalDate.of(1995, 3, 10), Sesso.F);
+        creaVisita(recente.getId(), LocalDate.of(1995, 3, 10), ObiettivoVisita.MANTENIMENTO);
 
         Specification<Paziente> spec = Specification.allOf(
                 PazienteSpecifications.delProfessionista(professionista.getId()),
                 PazienteSpecifications.conArchiviato(false),
-                PazienteSpecifications.conDataNascitaTra(LocalDate.of(1990, 1, 1), LocalDate.of(2000, 1, 1)));
+                PazienteSpecifications.conDataUltimaVisitaTra(LocalDate.of(1990, 1, 1), LocalDate.of(2000, 1, 1)));
 
         List<Paziente> risultato = pazienteRepository.findAll(spec);
 
@@ -118,18 +137,20 @@ class PazienteSpecificationsTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void conDataNascitaTraSoloMinoroFiltraPerDataDa() {
+    void conDataUltimaVisitaTraSoloMinoroFiltraPerDataDa() {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-spec4b@example.com", "hash", "Anna", "Bianchi"));
-        creaPaziente(professionista.getId(), "Marco", "Rossi", "marco-1970@example.com",
+        Paziente vecchia = creaPaziente(professionista.getId(), "Marco", "Rossi", "marco-1970@example.com",
                 "RSSMRC70A01H501U", LocalDate.of(1970, 1, 1), Sesso.M);
-        creaPaziente(professionista.getId(), "Giulia", "Verdi", "giulia-1995@example.com",
+        creaVisita(vecchia.getId(), LocalDate.of(1970, 1, 1), ObiettivoVisita.MANTENIMENTO);
+        Paziente recente = creaPaziente(professionista.getId(), "Giulia", "Verdi", "giulia-1995@example.com",
                 "VRDGLI95A41H501U", LocalDate.of(1995, 3, 10), Sesso.F);
+        creaVisita(recente.getId(), LocalDate.of(1995, 3, 10), ObiettivoVisita.MANTENIMENTO);
 
         Specification<Paziente> spec = Specification.allOf(
                 PazienteSpecifications.delProfessionista(professionista.getId()),
                 PazienteSpecifications.conArchiviato(false),
-                PazienteSpecifications.conDataNascitaTra(LocalDate.of(1990, 1, 1), null));
+                PazienteSpecifications.conDataUltimaVisitaTra(LocalDate.of(1990, 1, 1), null));
 
         List<Paziente> risultato = pazienteRepository.findAll(spec);
 
@@ -138,18 +159,20 @@ class PazienteSpecificationsTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void conDataNascitaTraSoloMassimoFiltraPerDataA() {
+    void conDataUltimaVisitaTraSoloMassimoFiltraPerDataA() {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-spec4c@example.com", "hash", "Anna", "Bianchi"));
-        creaPaziente(professionista.getId(), "Marco", "Rossi", "marco-1970@example.com",
+        Paziente vecchia = creaPaziente(professionista.getId(), "Marco", "Rossi", "marco-1970@example.com",
                 "RSSMRC70A01H501U", LocalDate.of(1970, 1, 1), Sesso.M);
-        creaPaziente(professionista.getId(), "Giulia", "Verdi", "giulia-1995@example.com",
+        creaVisita(vecchia.getId(), LocalDate.of(1970, 1, 1), ObiettivoVisita.MANTENIMENTO);
+        Paziente recente = creaPaziente(professionista.getId(), "Giulia", "Verdi", "giulia-1995@example.com",
                 "VRDGLI95A41H501U", LocalDate.of(1995, 3, 10), Sesso.F);
+        creaVisita(recente.getId(), LocalDate.of(1995, 3, 10), ObiettivoVisita.MANTENIMENTO);
 
         Specification<Paziente> spec = Specification.allOf(
                 PazienteSpecifications.delProfessionista(professionista.getId()),
                 PazienteSpecifications.conArchiviato(false),
-                PazienteSpecifications.conDataNascitaTra(null, LocalDate.of(1980, 1, 1)));
+                PazienteSpecifications.conDataUltimaVisitaTra(null, LocalDate.of(1980, 1, 1)));
 
         List<Paziente> risultato = pazienteRepository.findAll(spec);
 

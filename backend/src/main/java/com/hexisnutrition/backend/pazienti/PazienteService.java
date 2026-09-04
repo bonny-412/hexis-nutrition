@@ -20,7 +20,9 @@ import org.springframework.web.client.RestClientException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class PazienteService {
@@ -95,6 +97,16 @@ public class PazienteService {
         return pazienteRepository.findAllByProfessionistaId(professionistaId);
     }
 
+    /** Ultima visita (per data) di ciascun paziente tra gli id passati, in un'unica query. */
+    public Map<UUID, Visita> ultimeVisitePerPazienti(List<UUID> pazienteIds) {
+        if (pazienteIds.isEmpty()) {
+            return Map.of();
+        }
+        return visitaRepository.findAllByPazienteIdIn(pazienteIds).stream()
+                .collect(Collectors.toMap(Visita::getPazienteId, v -> v,
+                        (v1, v2) -> v1.getDataVisita().isAfter(v2.getDataVisita()) ? v1 : v2));
+    }
+
     public Page<Paziente> cerca(UUID professionistaId, CriteriRicercaPazienti criteri, Pageable pageable) {
         List<Specification<Paziente>> specifiche = new ArrayList<>();
         specifiche.add(PazienteSpecifications.delProfessionista(professionistaId));
@@ -105,11 +117,11 @@ public class PazienteService {
         if (criteri.statoAccount() != null) {
             specifiche.add(PazienteSpecifications.conStatoAccount(criteri.statoAccount()));
         }
-        if (criteri.sesso() != null) {
-            specifiche.add(PazienteSpecifications.conSesso(criteri.sesso()));
+        if (criteri.obiettivo() != null) {
+            specifiche.add(PazienteSpecifications.conObiettivoUltimaVisita(criteri.obiettivo()));
         }
-        if (criteri.dataNascitaDa() != null || criteri.dataNascitaA() != null) {
-            specifiche.add(PazienteSpecifications.conDataNascitaTra(criteri.dataNascitaDa(), criteri.dataNascitaA()));
+        if (criteri.dataUltimaVisitaDa() != null || criteri.dataUltimaVisitaA() != null) {
+            specifiche.add(PazienteSpecifications.conDataUltimaVisitaTra(criteri.dataUltimaVisitaDa(), criteri.dataUltimaVisitaA()));
         }
         return pazienteRepository.findAll(Specification.allOf(specifiche), pageable);
     }
@@ -197,6 +209,14 @@ public class PazienteService {
         visitaRepository.save(visita);
 
         return VisitaResponse.da(visita, plicometriaRepository.findByVisitaId(visita.getId()).orElse(null));
+    }
+
+    @Transactional
+    public void eliminaVisita(UUID professionistaId, UUID pazienteId, UUID visitaId) {
+        dettaglio(professionistaId, pazienteId);
+        Visita visita = visitaDelPaziente(pazienteId, visitaId);
+        plicometriaRepository.deleteByVisitaId(visita.getId());
+        visitaRepository.delete(visita);
     }
 
     @Transactional

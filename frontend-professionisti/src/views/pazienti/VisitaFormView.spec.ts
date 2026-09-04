@@ -35,6 +35,7 @@ function pazienteEsempio(overrides: Partial<Paziente> = {}): Paziente {
     id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
     telefono: null, dataNascita: '1990-01-01', sesso: 'M', lavoro: null, tipoLavoro: null, note: null,
     statoAccount: 'MAI_INVITATO', archiviato: false,
+    obiettivoUltimaVisita: null, dataUltimaVisita: null,
     ...overrides,
   }
 }
@@ -81,7 +82,7 @@ describe('VisitaFormView', () => {
 
     const { wrapper } = await monta('/pazienti/1/visite/nuova')
 
-    expect(wrapper.text()).toContain('ultima visita 01 giu 2026 con peso 82,5 kg')
+    expect(wrapper.text()).toContain('ultima visita 01 giu 2026 con peso 82,50 kg')
   })
 
   it('in creazione precompila altezza e obiettivo con i valori dell\'ultima visita', async () => {
@@ -120,6 +121,38 @@ describe('VisitaFormView', () => {
 
     expect(wrapper.find('#altezza').exists()).toBe(true)
     expect(wrapper.text()).toContain('Luca Verdi')
+  })
+
+  it('senza paziente nella route (arrivo dalla dashboard) mostra l\'invito a sceglierne uno e il link torna alla dashboard', async () => {
+    const { wrapper } = await monta('/pazienti/visite/nuova')
+
+    expect(wrapper.text()).toContain('Seleziona il paziente per cui registrare la nuova visita.')
+    const link = wrapper.get('[data-test="link-indietro"]')
+    expect(link.text()).toContain('Torna alla dashboard')
+    expect(link.attributes('href')).toBe('/')
+  })
+
+  it('con paziente noto dalla route (creazione avviata dal dettaglio paziente) il link "indietro" torna al paziente', async () => {
+    vi.mocked(pazientiApi.dettaglio).mockResolvedValue(pazienteEsempio())
+    vi.mocked(pazientiApi.visite).mockResolvedValue([])
+
+    const { wrapper } = await monta('/pazienti/1/visite/nuova')
+
+    const link = wrapper.get('[data-test="link-indietro"]')
+    expect(link.text()).toContain('Torna al paziente')
+    expect(link.attributes('href')).toBe('/pazienti/1')
+  })
+
+  it('in modalità modifica il link "indietro" torna al paziente', async () => {
+    vi.mocked(pazientiApi.dettaglio).mockResolvedValue(pazienteEsempio())
+    vi.mocked(pazientiApi.visite).mockResolvedValue([])
+    vi.mocked(pazientiApi.dettaglioVisita).mockResolvedValue(visitaEsempio())
+
+    const { wrapper } = await monta('/pazienti/1/visite/v1/modifica')
+
+    const link = wrapper.get('[data-test="link-indietro"]')
+    expect(link.text()).toContain('Torna al paziente')
+    expect(link.attributes('href')).toBe('/pazienti/1')
   })
 
   it('selezionando un paziente dal combobox, precompila altezza suggerita solo dopo il caricamento dell\'ultima visita (nessuna race condition)', async () => {

@@ -19,9 +19,12 @@ const emits = defineEmits<CalendarRootEmits>()
 
 const delegatedProps = reactiveOmit(props, 'class', 'layout', 'placeholder')
 
+const valoreInizialePlaceholder = Array.isArray(props.modelValue) ? props.modelValue.at(-1) : props.modelValue
+
 const placeholder = useVModel(props, 'placeholder', emits, {
   passive: true,
-  defaultValue: props.defaultPlaceholder ?? today(getLocalTimeZone()),
+  // Se il calendario ha già un valore selezionato, si apre su quel mese, non su quello odierno.
+  defaultValue: props.defaultPlaceholder ?? valoreInizialePlaceholder ?? today(getLocalTimeZone()),
 }) as Ref<DateValue>
 
 const formatter = useDateFormatter(props.locale ?? 'en')

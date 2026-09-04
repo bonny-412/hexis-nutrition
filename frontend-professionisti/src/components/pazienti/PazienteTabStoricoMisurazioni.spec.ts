@@ -1,8 +1,18 @@
-import { describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { describe, expect, it, vi } from 'vitest'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
+import { toast } from 'vue-sonner'
 import PazienteTabStoricoMisurazioni from './PazienteTabStoricoMisurazioni.vue'
+import * as pazientiApi from '@/api/pazienti'
 import type { Visita } from '@/api/pazienti'
+
+vi.mock('@/api/pazienti', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/api/pazienti')>()),
+  eliminaVisita: vi.fn(),
+}))
+vi.mock('vue-sonner', () => ({
+  toast: { error: vi.fn(), success: vi.fn() },
+}))
 
 function creaRouter() {
   return createRouter({
@@ -33,12 +43,17 @@ function visita(overrides: Partial<Visita> = {}): Visita {
   }
 }
 
-function monta(visite: Visita[], props: Partial<{ visiteInCaricamento: boolean; erroreVisite: boolean }> = {}) {
+function monta(
+  visite: Visita[],
+  props: Partial<{ visiteInCaricamento: boolean; erroreVisite: boolean }> = {},
+  attachTo?: HTMLElement,
+) {
   const router = creaRouter()
   router.push('/')
   return mount(PazienteTabStoricoMisurazioni, {
     props: { pazienteId: 'p1', visiteInCaricamento: false, erroreVisite: false, visite, ...props },
     global: { plugins: [router] },
+    attachTo,
   })
 }
 
@@ -55,7 +70,8 @@ describe('PazienteTabStoricoMisurazioni', () => {
 
   it('mostra un messaggio quando non ci sono visite', () => {
     const wrapper = monta([])
-    expect(wrapper.text()).toContain('Nessuna visita registrata.')
+    expect(wrapper.text()).toContain('Nessuna visita registrata')
+    expect(wrapper.text()).toContain('Lo storico del paziente è vuoto. Registra la prima visita per iniziare a documentare il suo percorso.')
   })
 
   it('elenca le visite dalla più recente, con obiettivo e delta rispetto alla precedente', () => {
@@ -68,8 +84,8 @@ describe('PazienteTabStoricoMisurazioni', () => {
     expect(testo.indexOf('01 ago 2026')).toBeLessThan(testo.indexOf('01 giu 2026'))
     expect(testo).toContain('Più recente')
     expect(testo).toContain('Mantenimento')
-    expect(testo).toContain('77,5')
-    expect(testo).toContain('2,5 kg')
+    expect(testo).toContain('77,50')
+    expect(testo).toContain('2,50 kg')
   })
 
   it('apre di default la visita più recente, mostrando generali, BIA, plicometria e circonferenze', async () => {
@@ -96,9 +112,9 @@ describe('PazienteTabStoricoMisurazioni', () => {
     expect(dettaglio.text()).toContain('BIA')
     expect(dettaglio.text()).toContain('Dati non disponibili')
     expect(dettaglio.text()).toContain('Plicometria')
-    expect(dettaglio.text()).toContain('18,2%')
+    expect(dettaglio.text()).toContain('18,20%')
     expect(dettaglio.text()).toContain('Circonferenze')
-    expect(dettaglio.text()).toContain('84,0 cm')
+    expect(dettaglio.text()).toContain('84,00 cm')
 
     await wrapper.get('[data-test="storico-riga"]').trigger('click')
     expect(wrapper.find('[data-test="storico-dettaglio"]').exists()).toBe(false)
@@ -130,15 +146,12 @@ describe('PazienteTabStoricoMisurazioni', () => {
     expect(dettaglio.text()).toContain('Nessuna circonferenza registrata.')
   })
 
-  it('collega "Modifica visita" alla pagina di modifica e lascia disabilitata "Elimina visita"', () => {
+  it('collega "Modifica visita" alla pagina di modifica', () => {
     const wrapper = monta([visita({ id: 'v1' })])
 
     const link = wrapper.find('a')
     expect(link.text()).toBe('Modifica visita')
     expect(link.attributes('href')).toBe('/pazienti/p1/visite/v1/modifica')
-
-    const bottoneElimina = wrapper.findAll('button').find((b) => b.text() === 'Elimina visita')
-    expect(bottoneElimina?.attributes('disabled')).not.toBeUndefined()
   })
 
   it('mostra un bordo evidenziato al passaggio del mouse sulla card', () => {
@@ -146,5 +159,54 @@ describe('PazienteTabStoricoMisurazioni', () => {
     const card = wrapper.get('[data-test="storico-riga"]').element.parentElement
     const haBordoHover = [...(card?.classList ?? [])].some((c) => c.startsWith('hover:border-'))
     expect(haBordoHover).toBe(true)
+  })
+
+  it('chiede conferma prima di eliminare e non chiama l\'API finché non si conferma', async () => {
+    const wrapper = monta([visita({ id: 'v1', dataVisita: '2026-06-01' })], {}, document.body)
+
+    await wrapper.get('[data-test="elimina-visita"]').trigger('click')
+
+    expect(pazientiApi.eliminaVisita).not.toHaveBeenCalled()
+    expect(document.body.textContent).toContain('Eliminare la visita del 01 giu 2026?')
+    wrapper.unmount()
+  })
+
+  it('elimina la visita dopo la conferma, emette "eliminata" e mostra un toast di successo', async () => {
+    vi.mocked(pazientiApi.eliminaVisita).mockResolvedValue(undefined)
+    const wrapper = monta([visita({ id: 'v1' })], {}, document.body)
+
+    await wrapper.get('[data-test="elimina-visita"]').trigger('click')
+    document.querySelector<HTMLElement>('[data-test="elimina-visita-conferma"]')?.click()
+    await flushPromises()
+
+    expect(pazientiApi.eliminaVisita).toHaveBeenCalledWith('p1', 'v1')
+    expect(wrapper.emitted('eliminata')).toHaveLength(1)
+    expect(toast.success).toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('annullando la conferma non elimina la visita', async () => {
+    const wrapper = monta([visita({ id: 'v1' })], {}, document.body)
+
+    await wrapper.get('[data-test="elimina-visita"]').trigger('click')
+    document.querySelector<HTMLElement>('[data-test="elimina-visita-annulla"]')?.click()
+    await flushPromises()
+
+    expect(pazientiApi.eliminaVisita).not.toHaveBeenCalled()
+    expect(wrapper.emitted('eliminata')).toBeUndefined()
+    wrapper.unmount()
+  })
+
+  it('mostra un toast di errore se l\'eliminazione fallisce, senza emettere "eliminata"', async () => {
+    vi.mocked(pazientiApi.eliminaVisita).mockRejectedValue(new Error('errore'))
+    const wrapper = monta([visita({ id: 'v1' })], {}, document.body)
+
+    await wrapper.get('[data-test="elimina-visita"]').trigger('click')
+    document.querySelector<HTMLElement>('[data-test="elimina-visita-conferma"]')?.click()
+    await flushPromises()
+
+    expect(toast.error).toHaveBeenCalled()
+    expect(wrapper.emitted('eliminata')).toBeUndefined()
+    wrapper.unmount()
   })
 })

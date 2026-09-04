@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -280,5 +281,100 @@ class PazienteVisiteControllerTest extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"altezzaCm\":170,\"pesoKg\":70.0}"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void eliminaVisitaRestituisce204ELaRimuove() throws Exception {
+        Professionista professionista = creaProfessionista("prof-elimina-visita@example.com");
+        Paziente paziente = creaPaziente(professionista, "paz-elimina-visita@example.com");
+        Visita visita = new Visita(paziente.getId(), LocalDate.of(2026, 1, 1), 178, new java.math.BigDecimal("80.0"),
+                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
+        visitaRepository.save(visita);
+
+        mockMvc.perform(delete("/pazienti/" + paziente.getId() + "/visite/" + visita.getId())
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isNoContent());
+
+        assertThat(visitaRepository.findById(visita.getId())).isEmpty();
+    }
+
+    @Test
+    void eliminaVisitaConPlicometriaRimuoveAncheQuella() throws Exception {
+        Professionista professionista = creaProfessionista("prof-elimina-visita-plico@example.com");
+        Paziente paziente = creaPaziente(professionista, "paz-elimina-visita-plico@example.com");
+
+        String risposta = mockMvc.perform(post("/pazienti/" + paziente.getId() + "/visite")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"dataVisita":"2026-01-15","altezzaCm":180,"pesoKg":80.00,
+                                 "plicometria":{"protocollo":"JACKSON_POLLOCK_3",
+                                 "plicaPettoraleMm":10.00,"plicaAddominaleMm":10.00,"plicaCosciaMm":10.00}}
+                                """))
+                .andReturn().getResponse().getContentAsString();
+        String visitaId = com.jayway.jsonpath.JsonPath.read(risposta, "$.id");
+
+        mockMvc.perform(delete("/pazienti/" + paziente.getId() + "/visite/" + visitaId)
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isNoContent());
+
+        assertThat(plicometriaRepository.findAll()).isEmpty();
+        assertThat(visitaRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    void eliminaVisitaInesistenteRestituisce404() throws Exception {
+        Professionista professionista = creaProfessionista("prof-elimina-404@example.com");
+        Paziente paziente = creaPaziente(professionista, "paz-elimina-404@example.com");
+
+        mockMvc.perform(delete("/pazienti/" + paziente.getId() + "/visite/" + UUID.randomUUID())
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void eliminaVisitaDiUnAltroPazienteRestituisce404ENonLaRimuove() throws Exception {
+        Professionista professionista = creaProfessionista("prof-elimina-altro-paz@example.com");
+        Paziente pazienteA = creaPaziente(professionista, "paz-elimina-altro-a@example.com");
+        Paziente pazienteB = creaPaziente(professionista, "paz-elimina-altro-b@example.com");
+        Visita visitaDiB = new Visita(pazienteB.getId(), LocalDate.of(2026, 1, 1), 170, new java.math.BigDecimal("70.0"),
+                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
+        visitaRepository.save(visitaDiB);
+
+        mockMvc.perform(delete("/pazienti/" + pazienteA.getId() + "/visite/" + visitaDiB.getId())
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isNotFound());
+
+        assertThat(visitaRepository.findById(visitaDiB.getId())).isPresent();
+    }
+
+    @Test
+    void eliminaVisitaDiPazienteDiAltroProfessionistaRestituisce404ENonLaRimuove() throws Exception {
+        Professionista professionistaA = creaProfessionista("prof-elimina-visita-a@example.com");
+        Professionista professionistaB = creaProfessionista("prof-elimina-visita-b@example.com");
+        Paziente pazienteDiB = creaPaziente(professionistaB, "paz-elimina-visita-b@example.com");
+        Visita visitaDiB = new Visita(pazienteDiB.getId(), LocalDate.of(2026, 1, 1), 170, new java.math.BigDecimal("70.0"),
+                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
+        visitaRepository.save(visitaDiB);
+
+        mockMvc.perform(delete("/pazienti/" + pazienteDiB.getId() + "/visite/" + visitaDiB.getId())
+                        .header("Authorization", "Bearer " + tokenPer(professionistaA)))
+                .andExpect(status().isNotFound());
+
+        assertThat(visitaRepository.findById(visitaDiB.getId())).isPresent();
+    }
+
+    @Test
+    void eliminaVisitaSenzaAutenticazioneRestituisce401() throws Exception {
+        Professionista professionista = creaProfessionista("prof-elimina-401@example.com");
+        Paziente paziente = creaPaziente(professionista, "paz-elimina-401@example.com");
+        Visita visita = new Visita(paziente.getId(), LocalDate.of(2026, 1, 1), 178, new java.math.BigDecimal("80.0"),
+                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
+        visitaRepository.save(visita);
+
+        mockMvc.perform(delete("/pazienti/" + paziente.getId() + "/visite/" + visita.getId()))
+                .andExpect(status().isUnauthorized());
+
+        assertThat(visitaRepository.findById(visita.getId())).isPresent();
     }
 }
