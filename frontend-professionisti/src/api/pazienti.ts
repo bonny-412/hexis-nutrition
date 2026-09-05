@@ -10,11 +10,11 @@ export interface Paziente {
   dataNascita: string | null
   sesso: string
   lavoro: string | null
-  tipoLavoro: 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO' | null
+  stileDiVita: 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO' | 'ESTREMAMENTE_ATTIVO' | null
   note: string | null
   statoAccount: 'MAI_INVITATO' | 'INVITATO' | 'ATTIVO'
   archiviato: boolean
-  obiettivoUltimaVisita: 'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'EDUCATIVO' | 'PREPARAZIONE_SPORTIVA' | null
+  obiettivoUltimaVisita: 'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'PREPARAZIONE_SPORTIVA' | 'EDUCATIVO' | 'PATOLOGIA_CLINICA' | 'GRAVIDANZA_ALLATTAMENTO' | null
   dataUltimaVisita: string | null
 }
 
@@ -84,7 +84,7 @@ export interface Visita {
   circonferenze: Circonferenze
   protocolloVita: 'OMS' | 'OMBELICALE' | 'ALTRO'
   note: string | null
-  obiettivo: 'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'EDUCATIVO' | 'PREPARAZIONE_SPORTIVA'
+  obiettivo: 'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'PREPARAZIONE_SPORTIVA' | 'EDUCATIVO' | 'PATOLOGIA_CLINICA' | 'GRAVIDANZA_ALLATTAMENTO'
   plicometria: Plicometria | null
 }
 
@@ -119,7 +119,7 @@ export interface CreaVisitaRequest {
   circonferenzaCavigliaCm?: number
   protocolloVita?: 'OMS' | 'OMBELICALE' | 'ALTRO'
   note?: string
-  obiettivo?: 'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'EDUCATIVO' | 'PREPARAZIONE_SPORTIVA'
+  obiettivo?: 'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'PREPARAZIONE_SPORTIVA' | 'EDUCATIVO' | 'PATOLOGIA_CLINICA' | 'GRAVIDANZA_ALLATTAMENTO'
   plicometria?: CreaPlicometriaRequest
 }
 
@@ -132,7 +132,7 @@ export interface CreaPazienteRequest {
   dataNascita: string
   sesso: 'M' | 'F' | 'ALTRO'
   lavoro?: string
-  tipoLavoro?: 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO'
+  stileDiVita?: 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO' | 'ESTREMAMENTE_ATTIVO'
   note?: string
   visita: CreaVisitaRequest
 }
@@ -146,7 +146,7 @@ export interface AggiornaPazienteRequest {
   dataNascita: string
   sesso: 'M' | 'F' | 'ALTRO'
   lavoro?: string
-  tipoLavoro?: 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO'
+  stileDiVita?: 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO' | 'ESTREMAMENTE_ATTIVO'
   note?: string
 }
 

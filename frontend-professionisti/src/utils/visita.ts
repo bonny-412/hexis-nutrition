@@ -6,8 +6,10 @@ export const ETICHETTE_OBIETTIVO: Record<Visita['obiettivo'], string> = {
   IPERTROFIA: 'Ipertrofia',
   RICOMPOSIZIONE: 'Ricomposizione',
   MANTENIMENTO: 'Mantenimento',
-  EDUCATIVO: 'Educativo',
   PREPARAZIONE_SPORTIVA: 'Preparazione sportiva',
+  EDUCATIVO: 'Educativo',
+  PATOLOGIA_CLINICA: 'Patologia clinica',
+  GRAVIDANZA_ALLATTAMENTO: 'Gravidanza/Allattamento',
 }
 
 /** Etichette dei campi di `Circonferenze`, nell'ordine in cui vanno mostrate. */

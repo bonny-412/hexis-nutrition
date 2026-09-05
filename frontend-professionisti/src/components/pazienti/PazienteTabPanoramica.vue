@@ -16,11 +16,12 @@ const ETICHETTE_SESSO: Record<string, string> = {
   ALTRO: 'Altro',
 }
 
-const ETICHETTE_TIPO_LAVORO: Record<string, string> = {
+const ETICHETTE_STILE_DI_VITA: Record<string, string> = {
   SEDENTARIO: 'Sedentario',
   POCO_ATTIVO: 'Poco attivo',
   ATTIVO: 'Attivo',
   MOLTO_ATTIVO: 'Molto attivo',
+  ESTREMAMENTE_ATTIVO: 'Estremamente attivo',
 }
 
 const props = defineProps<{
@@ -286,7 +287,7 @@ const chartConfigComposizione: ChartConfig = {
             <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Occupazione</dt>
             <dd class="font-medium text-(--fg)">
               {{ paziente.lavoro ?? '—' }}
-              <span v-if="paziente.tipoLavoro" class="text-xs text-(--fg3)">· {{ ETICHETTE_TIPO_LAVORO[paziente.tipoLavoro] }}</span>
+              <span v-if="paziente.stileDiVita" class="text-xs text-(--fg3)">· {{ ETICHETTE_STILE_DI_VITA[paziente.stileDiVita] }}</span>
             </dd>
           </div>
         </div>

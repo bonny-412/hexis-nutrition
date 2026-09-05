@@ -66,7 +66,7 @@ describe('PazienteNuovoView', () => {
   it('crea il paziente con i dati anagrafici e della visita, poi naviga al suo dettaglio', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '42', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
       obiettivoUltimaVisita: null, dataUltimaVisita: null,
     })
     const router = creaRouter()
@@ -87,7 +87,7 @@ describe('PazienteNuovoView', () => {
 
     expect(pazientiApi.crea).toHaveBeenCalledWith({
       nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: undefined, dataNascita: '1990-05-20', sesso: 'M', lavoro: undefined, tipoLavoro: undefined, note: undefined,
+      telefono: undefined, dataNascita: '1990-05-20', sesso: 'M', lavoro: undefined, stileDiVita: undefined, note: undefined,
       visita: {
         dataVisita: oggiIso(), altezzaCm: 178, pesoKg: 82.5,
         circonferenzaVitaCm: undefined, circonferenzaFianchiCm: undefined, circonferenzaAddomeCm: undefined,
@@ -104,7 +104,7 @@ describe('PazienteNuovoView', () => {
   it('invia tutte le circonferenze della visita con i valori corretti nei rispettivi campi', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '43', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
       obiettivoUltimaVisita: null, dataUltimaVisita: null,
     })
     const router = creaRouter()
@@ -141,7 +141,7 @@ describe('PazienteNuovoView', () => {
 
     expect(pazientiApi.crea).toHaveBeenCalledWith({
       nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: undefined, dataNascita: '1990-05-20', sesso: 'M', lavoro: undefined, tipoLavoro: undefined, note: undefined,
+      telefono: undefined, dataNascita: '1990-05-20', sesso: 'M', lavoro: undefined, stileDiVita: undefined, note: undefined,
       visita: {
         dataVisita: oggiIso(), altezzaCm: 178, pesoKg: 82.5,
         circonferenzaVitaCm: 90.1, circonferenzaFianchiCm: 91.2, circonferenzaAddomeCm: 92.3,
@@ -355,7 +355,7 @@ describe('PazienteNuovoView', () => {
   it('include la plicometria nel payload quando protocollo e pliche sono compilati', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '44', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
       obiettivoUltimaVisita: null, dataUltimaVisita: null,
     })
     const router = creaRouter()
@@ -398,7 +398,7 @@ describe('PazienteNuovoView', () => {
   it('permette di riportare il tipo lavoro allo stato non selezionato', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '45', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
       obiettivoUltimaVisita: null, dataUltimaVisita: null,
     })
     const router = creaRouter()
@@ -420,7 +420,7 @@ describe('PazienteNuovoView', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
-    expect(pazientiApi.crea).toHaveBeenCalledWith(expect.objectContaining({ tipoLavoro: undefined }))
+    expect(pazientiApi.crea).toHaveBeenCalledWith(expect.objectContaining({ stileDiVita: undefined }))
   })
 
   it('annulla con form vuoto naviga subito senza chiedere conferma', async () => {

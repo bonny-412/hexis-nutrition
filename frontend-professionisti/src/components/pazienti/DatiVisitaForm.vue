@@ -244,8 +244,10 @@ defineExpose({
             <SelectItem value="IPERTROFIA">Ipertrofia</SelectItem>
             <SelectItem value="RICOMPOSIZIONE">Ricomposizione</SelectItem>
             <SelectItem value="MANTENIMENTO">Mantenimento</SelectItem>
-            <SelectItem value="EDUCATIVO">Educativo</SelectItem>
             <SelectItem value="PREPARAZIONE_SPORTIVA">Preparazione sportiva</SelectItem>
+            <SelectItem value="EDUCATIVO">Educativo</SelectItem>
+            <SelectItem value="PATOLOGIA_CLINICA">Patologia clinica</SelectItem>
+            <SelectItem value="GRAVIDANZA_ALLATTAMENTO">Gravidanza/Allattamento</SelectItem>
           </SelectContent>
         </Select>
       </div>

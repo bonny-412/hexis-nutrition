@@ -6,7 +6,7 @@ vi.mock('./client', () => ({ apiRequest: vi.fn() }))
 
 const pazienteEsempio = {
   id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-  telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, statoAccount: 'MAI_INVITATO',
+  telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, statoAccount: 'MAI_INVITATO',
   archiviato: false,
 }
 

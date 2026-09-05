@@ -7,7 +7,7 @@ vi.mock('@/api/pazienti', () => ({ cerca: vi.fn() }))
 
 const pazienteEsempio: Paziente = {
   id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-  telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO',
+  telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO',
   archiviato: false,
   obiettivoUltimaVisita: null, dataUltimaVisita: null,
 }

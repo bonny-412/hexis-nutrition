@@ -17,7 +17,7 @@ public record CreaPazienteRequest(
         @NotNull LocalDate dataNascita,
         @NotNull Sesso sesso,
         String lavoro,
-        TipoLavoro tipoLavoro,
+        StileDiVita stileDiVita,
         String note,
         @NotNull @Valid VisitaRequest visita
 ) {

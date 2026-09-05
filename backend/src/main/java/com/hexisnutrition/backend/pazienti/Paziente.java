@@ -48,8 +48,8 @@ public class Paziente {
     private String lavoro;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_lavoro")
-    private TipoLavoro tipoLavoro;
+    @Column(name = "stile_di_vita")
+    private StileDiVita stileDiVita;
 
     @Column(columnDefinition = "TEXT")
     private String note;
@@ -71,7 +71,7 @@ public class Paziente {
     }
 
     public Paziente(UUID professionistaId, String nome, String cognome, String codiceFiscale, String email,
-                     String telefono, LocalDate dataNascita, Sesso sesso, String lavoro, TipoLavoro tipoLavoro,
+                     String telefono, LocalDate dataNascita, Sesso sesso, String lavoro, StileDiVita stileDiVita,
                      String note) {
         this.professionistaId = professionistaId;
         this.nome = nome;
@@ -82,7 +82,7 @@ public class Paziente {
         this.dataNascita = dataNascita;
         this.sesso = sesso;
         this.lavoro = lavoro;
-        this.tipoLavoro = tipoLavoro;
+        this.stileDiVita = stileDiVita;
         this.note = note;
     }
 
@@ -158,12 +158,12 @@ public class Paziente {
         this.lavoro = lavoro;
     }
 
-    public TipoLavoro getTipoLavoro() {
-        return tipoLavoro;
+    public StileDiVita getStileDiVita() {
+        return stileDiVita;
     }
 
-    public void setTipoLavoro(TipoLavoro tipoLavoro) {
-        this.tipoLavoro = tipoLavoro;
+    public void setStileDiVita(StileDiVita stileDiVita) {
+        this.stileDiVita = stileDiVita;
     }
 
     public String getNote() {

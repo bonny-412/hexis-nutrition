@@ -28,7 +28,7 @@ function creaRouter() {
 
 const pazienteEsempio = {
   id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-  telefono: '3331234567', dataNascita: '1990-01-01', sesso: 'M', lavoro: 'Impiegato', tipoLavoro: 'ATTIVO' as const, note: null,
+  telefono: '3331234567', dataNascita: '1990-01-01', sesso: 'M', lavoro: 'Impiegato', stileDiVita: 'ATTIVO' as const, note: null,
   statoAccount: 'MAI_INVITATO' as const, archiviato: false,
   obiettivoUltimaVisita: null as Paziente['obiettivoUltimaVisita'],
   dataUltimaVisita: null as Paziente['dataUltimaVisita'],

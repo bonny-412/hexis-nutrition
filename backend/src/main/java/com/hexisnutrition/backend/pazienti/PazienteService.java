@@ -59,7 +59,7 @@ public class PazienteService {
     @Transactional
     public Paziente crea(UUID professionistaId, CreaPazienteRequest request) {
         Paziente paziente = new Paziente(professionistaId, request.nome(), request.cognome(), request.codiceFiscale(), request.email(),
-                request.telefono(), request.dataNascita(), request.sesso(), request.lavoro(), request.tipoLavoro(),
+                request.telefono(), request.dataNascita(), request.sesso(), request.lavoro(), request.stileDiVita(),
                 request.note());
         pazienteRepository.save(paziente);
 
@@ -88,7 +88,7 @@ public class PazienteService {
         paziente.setDataNascita(request.dataNascita());
         paziente.setSesso(request.sesso());
         paziente.setLavoro(request.lavoro());
-        paziente.setTipoLavoro(request.tipoLavoro());
+        paziente.setStileDiVita(request.stileDiVita());
         paziente.setNote(request.note());
         return pazienteRepository.save(paziente);
     }

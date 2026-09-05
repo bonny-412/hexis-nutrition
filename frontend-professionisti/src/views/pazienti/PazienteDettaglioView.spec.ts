@@ -53,7 +53,7 @@ function visita(overrides: Partial<Visita> = {}): Visita {
 async function montaConPaziente(pazienteOverrides: Partial<pazientiApi.Paziente> = {}) {
   vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
     id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-    telefono: null, dataNascita: null, sesso: 'M', lavoro: null, tipoLavoro: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+    telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     obiettivoUltimaVisita: null, dataUltimaVisita: null,
     ...pazienteOverrides,
   })
@@ -82,7 +82,7 @@ describe('PazienteDettaglioView', () => {
 
   it('mostra i campi anagrafici aggiuntivi (telefono, età, sesso, lavoro) quando presenti', async () => {
     const wrapper = await montaConPaziente({
-      telefono: '3331234567', dataNascita: '1990-05-20', sesso: 'M', lavoro: 'Impiegato', tipoLavoro: 'ATTIVO',
+      telefono: '3331234567', dataNascita: '1990-05-20', sesso: 'M', lavoro: 'Impiegato', stileDiVita: 'ATTIVO',
     })
 
     expect(wrapper.text()).toContain('3331234567')

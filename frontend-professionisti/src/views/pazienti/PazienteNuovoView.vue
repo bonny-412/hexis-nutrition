@@ -56,7 +56,7 @@ const email = ref('')
 const telefono = ref('')
 const dataNascita = ref('')
 const lavoro = ref('')
-const tipoLavoro = ref<'' | 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO'>('')
+const stileDiVita = ref<'' | 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO' | 'ESTREMAMENTE_ATTIVO'>('')
 const note = ref('')
 
 const eta = computed(() => calcolaEta(dataNascita.value))
@@ -117,8 +117,8 @@ function onSessoChange(valore: AcceptableValue) {
   pulisciErroreSeCorretto('sesso', erroreSesso, valore as string)
 }
 
-function onTipoLavoroChange(valore: AcceptableValue) {
-  tipoLavoro.value = valore === VALORE_SELEZIONA ? '' : (valore as typeof tipoLavoro.value)
+function onStileDiVitaChange(valore: AcceptableValue) {
+  stileDiVita.value = valore === VALORE_SELEZIONA ? '' : (valore as typeof stileDiVita.value)
 }
 
 // --- ANNULLA ---
@@ -132,7 +132,7 @@ function formValorizzata(): boolean {
     telefono.value !== '' ||
     dataNascita.value !== '' ||
     lavoro.value !== '' ||
-    tipoLavoro.value !== '' ||
+    stileDiVita.value !== '' ||
     note.value !== '' ||
     (datiVisitaForm.value?.valorizzato() ?? false)
   )
@@ -196,7 +196,7 @@ async function onSubmit() {
       dataNascita: dataNascita.value,
       sesso: sesso.value as 'M' | 'F' | 'ALTRO',
       lavoro: lavoro.value || undefined,
-      tipoLavoro: tipoLavoro.value || undefined,
+      stileDiVita: stileDiVita.value || undefined,
       note: note.value || undefined,
       visita: datiVisitaForm.value!.ottieniDati(),
     })
@@ -295,9 +295,9 @@ async function onSubmit() {
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="tipo-lavoro" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Tipo lavoro</Label>
-            <Select :model-value="tipoLavoro || VALORE_SELEZIONA" @update:model-value="onTipoLavoroChange">
-              <SelectTrigger id="tipo-lavoro" class="w-full">
+            <Label for="stile-di-vita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Stile di vita</Label>
+            <Select :model-value="stileDiVita || VALORE_SELEZIONA" @update:model-value="onStileDiVitaChange">
+              <SelectTrigger id="stile-di-vita" class="w-full">
                 <SelectValue placeholder="Seleziona" />
               </SelectTrigger>
               <SelectContent>
@@ -306,6 +306,7 @@ async function onSubmit() {
                 <SelectItem value="POCO_ATTIVO">Poco attivo</SelectItem>
                 <SelectItem value="ATTIVO">Attivo</SelectItem>
                 <SelectItem value="MOLTO_ATTIVO">Molto attivo</SelectItem>
+                <SelectItem value="ESTREMAMENTE_ATTIVO">Estremamente attivo</SelectItem>
               </SelectContent>
             </Select>
           </div>

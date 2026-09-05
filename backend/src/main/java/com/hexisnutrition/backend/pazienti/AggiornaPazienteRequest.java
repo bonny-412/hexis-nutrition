@@ -16,7 +16,7 @@ public record AggiornaPazienteRequest(
         @NotNull LocalDate dataNascita,
         @NotNull Sesso sesso,
         String lavoro,
-        TipoLavoro tipoLavoro,
+        StileDiVita stileDiVita,
         String note
 ) {
 }

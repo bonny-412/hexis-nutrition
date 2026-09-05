@@ -13,7 +13,7 @@ public record PazienteResponse(
         LocalDate dataNascita,
         String sesso,
         String lavoro,
-        String tipoLavoro,
+        String stileDiVita,
         String note,
         String statoAccount,
         boolean archiviato,
@@ -28,7 +28,7 @@ public record PazienteResponse(
         return new PazienteResponse(paziente.getId(), paziente.getNome(), paziente.getCognome(),
                 paziente.getCodiceFiscale(), paziente.getEmail(), paziente.getTelefono(), paziente.getDataNascita(),
                 paziente.getSesso().name(), paziente.getLavoro(),
-                paziente.getTipoLavoro() != null ? paziente.getTipoLavoro().name() : null,
+                paziente.getStileDiVita() != null ? paziente.getStileDiVita().name() : null,
                 paziente.getNote(), paziente.getStatoAccount().name(), paziente.isArchiviato(),
                 ultimaVisita != null ? ultimaVisita.getObiettivo().name() : null,
                 ultimaVisita != null ? ultimaVisita.getDataVisita() : null);

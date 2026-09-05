@@ -83,14 +83,14 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .content("""
                                 {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca@example.com",
                                  "telefono":"333123456","dataNascita":"1990-05-20","sesso":"M",
-                                 "lavoro":"Impiegato","tipoLavoro":"ATTIVO",
+                                 "lavoro":"Impiegato","stileDiVita":"ATTIVO",
                                  "visita":{"altezzaCm":178,"pesoKg":82.5,"circonferenzaVitaCm":95.0}}
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.email").value("luca@example.com"))
                 .andExpect(jsonPath("$.codiceFiscale").value("RSSMRA80A01H501U"))
                 .andExpect(jsonPath("$.lavoro").value("Impiegato"))
-                .andExpect(jsonPath("$.tipoLavoro").value("ATTIVO"))
+                .andExpect(jsonPath("$.stileDiVita").value("ATTIVO"))
                 .andExpect(jsonPath("$.statoAccount").value("MAI_INVITATO"))
                 .andExpect(jsonPath("$.archiviato").value(false));
 
@@ -407,7 +407,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void creaPazienteConLavoroETipoLavoroLiRestituisceNellaRisposta() throws Exception {
+    void creaPazienteConLavoroEStileDiVitaLiRestituisceNellaRisposta() throws Exception {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-lavoro@example.com", "hash", "Anna", "Bianchi"));
 
@@ -417,12 +417,12 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .content("""
                                 {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-lavoro@example.com",
                                  "dataNascita":"1990-05-20","sesso":"M",
-                                 "lavoro":"Impiegato","tipoLavoro":"ATTIVO",
+                                 "lavoro":"Impiegato","stileDiVita":"ATTIVO",
                                  "visita":{"altezzaCm":178,"pesoKg":82.5}}
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.lavoro").value("Impiegato"))
-                .andExpect(jsonPath("$.tipoLavoro").value("ATTIVO"));
+                .andExpect(jsonPath("$.stileDiVita").value("ATTIVO"));
     }
 
     @Test
@@ -431,7 +431,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                 new Professionista("prof-aggiorna@example.com", "hash", "Anna", "Bianchi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
                 "RSSMRA80A01H501U", "luca-aggiorna@example.com", "333123456", LocalDate.of(1990, 1, 1), Sesso.M,
-                "Impiegato", TipoLavoro.SEDENTARIO, "Nota iniziale"));
+                "Impiegato", StileDiVita.SEDENTARIO, "Nota iniziale"));
 
         mockMvc.perform(put("/pazienti/" + paziente.getId())
                         .header("Authorization", "Bearer " + tokenPer(professionista))
@@ -440,14 +440,14 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                                 {"nome":"Luca","cognome":"Rossi","codiceFiscale":"RSSMRA80A01H501U",
                                  "email":"luca-aggiornato@example.com","telefono":"333999888",
                                  "dataNascita":"1990-01-01","sesso":"M","lavoro":"Libero professionista",
-                                 "tipoLavoro":"ATTIVO","note":"Nota aggiornata"}
+                                 "stileDiVita":"ATTIVO","note":"Nota aggiornata"}
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.cognome").value("Rossi"))
                 .andExpect(jsonPath("$.email").value("luca-aggiornato@example.com"))
                 .andExpect(jsonPath("$.telefono").value("333999888"))
                 .andExpect(jsonPath("$.lavoro").value("Libero professionista"))
-                .andExpect(jsonPath("$.tipoLavoro").value("ATTIVO"))
+                .andExpect(jsonPath("$.stileDiVita").value("ATTIVO"))
                 .andExpect(jsonPath("$.note").value("Nota aggiornata"));
 
         Paziente aggiornato = pazienteRepository.findById(paziente.getId()).orElseThrow();
