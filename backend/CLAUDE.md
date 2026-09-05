@@ -17,7 +17,7 @@ mvn test                                          # da backend/
 
 Richiede il servizio `postgresql-x64-13` attivo e il database `hexis_test` (utente `hexis`, password `hexis`).
 
-Riporta l'esito **reale**, mai una previsione: se i test non sono stati eseguiti, dillo esplicitamente invece di lasciar intendere che passino. Se aggiungi una tabella, aggiungila al `TRUNCATE` in `AbstractIntegrationTest`, altrimenti i dati sopravvivono tra un test e l'altro.
+Riporta l'esito **reale**, mai una previsione: se i test non sono stati eseguiti, dillo esplicitamente invece di lasciar intendere che passino. Se aggiungi una tabella, aggiungila al `TRUNCATE` in `AbstractIntegrationTest`, altrimenti i dati sopravvivono tra un test e l'altro. Eccezioni deliberate: `durnin_womersley_coefficienti` e `alimenti` sono tabelle di riferimento seminate una tantum da migrazione e **non vanno mai aggiunte al `TRUNCATE`** — vedi [wiki/decisioni/0005-alimenti-bda-e-custom.md](../wiki/decisioni/0005-alimenti-bda-e-custom.md) per il motivo (un `TRUNCATE ... CASCADE` le svuoterebbe, e per `alimenti` cancellerebbe le 1109 righe BDA seminate senza un meccanismo di re-seed).
 
 **Divisione dei compiti**: la suite automatica è responsabilità dell'agente, da eseguire sempre. Le **verifiche manuali del prodotto** (avviare l'app, provare i flussi da browser o client HTTP, controllare le email inviate) le fa **Andrea**: non avviare l'applicazione per provarla di tua iniziativa e non trattare quella verifica come condizione per considerare finito il lavoro. Segnala invece cosa resta da provare a mano.
 

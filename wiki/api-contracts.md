@@ -3,8 +3,8 @@ title: Contratti API
 tags: [api]
 stato: in-discussione
 creato: 2026-08-08
-aggiornato: 2026-09-04
-fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, log.md#2026-09-03-handoff--modifica-anagrafica-paziente-e-creazionemodifica-visita]
+aggiornato: 2026-09-05
+fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, log.md#2026-09-03-handoff--modifica-anagrafica-paziente-e-creazionemodifica-visita, decisioni/0005-alimenti-bda-e-custom.md]
 ---
 
 # Contratti API — hexis-nutrition
@@ -47,3 +47,18 @@ Dal 2026-09-04: `PazienteResponse` (in tutti gli endpoint che lo restituiscono) 
 Richiesta/risposta dettagliate (campi, validazioni) sono nel codice: `AuthController`/`PazienteController`/`InvitoController` e i relativi DTO in `backend/src/main/java/com/hexisnutrition/backend/{auth,pazienti,inviti}/`. Nessun endpoint di self-signup professionista esiste (per scelta, vedi ADR 0002).
 
 Quando `frontend-professionisti/` e `frontend-cliente/` inizieranno a consumare questi endpoint, tenere questa tabella allineata a eventuali cambi di contratto.
+
+## Endpoint del catalogo Alimenti (sotto-progetto "Piano alimentare", primo pezzo)
+
+Vedi [decisioni/0005](decisioni/0005-alimenti-bda-e-custom.md) e [modello-dati](modello-dati.md) per il modello (`alimenti`, tabella unica BDA + custom, `professionista_id` nullable). Consumati solo da `frontend-professionisti/` in questa iterazione; nessuna vista in `frontend-cliente`.
+
+| Metodo | Path | Ruolo | Descrizione |
+|---|---|---|---|
+| GET | `/alimenti/ricerca` | PROFESSIONISTA | Lista alimenti paginata/filtrata: `pagina` (default 0), `dimensione` (default 20, clampata 1-100), `ricerca` (testo libero su nome o categoria, opzionale), `fonte` (`TUTTI`/`BDA`/`PERSONALIZZATI`, default `TUTTI`); ordinata sempre per `nome` ascendente. Restituisce sempre gli alimenti BDA globali più i soli alimenti custom del professionista autenticato, mai quelli di altri professionisti. 401 senza token valido |
+| GET | `/alimenti/{id}` | PROFESSIONISTA | Dettaglio di un alimento (`AlimentoResponse`, include `bda: boolean`); 404 se l'alimento è un custom di un altro professionista o non esiste |
+| POST | `/alimenti` | PROFESSIONISTA | Crea un alimento custom del professionista autenticato (mai BDA, `professionista_id` è sempre valorizzato lato server), 201; `nome`/`categoria` obbligatori non vuoti, `kcal`/`proteineG`/`grassiG`/`carboidratiG` obbligatori (`>= 0`), `acquaG`/`fibreG`/`zuccheriG`/`ferroMg`/`calcioMg`/`sodioMg` opzionali (se presenti, `>= 0`); 400 su validazione |
+| PUT | `/alimenti/{id}` | PROFESSIONISTA | Aggiorna un alimento custom **proprio** (stessi campi/validazioni di `POST /alimenti`); 409 se l'alimento è BDA (`AlimentoNonModificabileException`, immutabile per qualunque professionista), 404 se è un custom di un altro professionista o non esiste, 400 su validazione |
+| DELETE | `/alimenti/{id}` | PROFESSIONISTA | Elimina definitivamente un alimento custom **proprio**, 204; 409 se l'alimento è BDA, 404 se è un custom di un altro professionista o non esiste |
+| POST | `/alimenti/{id}/duplica` | PROFESSIONISTA | "Duplica come personalizzato": crea una copia di un alimento (tipicamente BDA, ma funziona anche su un custom altrui visibile solo se BDA data la regola di visibilità) con `professionista_id` = professionista autenticato, nome originale + `" (copia)"`, stessi valori nutrizionali, 201, `bda: false` nella risposta; 404 se l'alimento sorgente non esiste o è un custom di un altro professionista |
+
+Nessun endpoint di ricerca/lettura richiede parametri di query obbligatori oltre all'autenticazione. `AlimentoResponse` espone tutti i campi nutrizionali per 100g più `bda` (derivato da `professionista_id IS NULL`, mai una colonna propria). Richiesta/risposta dettagliate: `AlimentoController`/`AlimentoService` e i DTO in `backend/src/main/java/com/hexisnutrition/backend/alimenti/`.

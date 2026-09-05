@@ -10,6 +10,7 @@ function creaRouter() {
     routes: [
       { path: '/', name: 'dashboard', component: { template: '<div/>' } },
       { path: '/pazienti', name: 'pazienti', component: { template: '<div/>' } },
+      { path: '/alimenti', name: 'alimenti', component: { template: '<div/>' } },
       { path: '/login', name: 'login', component: { template: '<div/>' } },
     ],
   })

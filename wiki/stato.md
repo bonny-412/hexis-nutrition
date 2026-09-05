@@ -3,7 +3,7 @@ title: Stato del progetto
 tags: [stato]
 stato: stabile
 creato: 2026-08-08
-aggiornato: 2026-09-04
+aggiornato: 2026-09-05
 fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, sorgenti/2026-08-09-test-su-postgres-locale.md, sorgenti/2026-08-09-docker-solo-in-produzione.md, sorgenti/2026-08-30-hash-pulizia-invalidazione-token.md, ../docs/superpowers/specs/2026-08-31-nuovo-paziente-con-visita-design.md, ../docs/superpowers/specs/2026-09-01-plicometria-circonferenze-design.md, ../docs/superpowers/plans/2026-09-01-plicometria-circonferenze.md, log.md#2026-08-31-handoff--bug-fix-controlli-pazientenuovoview--ux-maiuscola-errori-live, log.md#2026-09-01-handoff--pagina-nuovo-paziente-eta-componente-visita-e-data-nascita-obbligatoria, log.md#2026-09-01-handoff--modulo-plicometria-e-redesign-circonferenze, log.md#2026-09-02-handoff--rifiniture-plicometria-fix-typescript-sulle-select-riorganizzazione-views, ../docs/superpowers/specs/2026-09-02-lista-pazienti-paginata-design.md, ../docs/superpowers/plans/2026-09-02-lista-pazienti-paginata.md, log.md#2026-09-02-handoff--lista-pazienti-paginata-redesign-ui-ricercafiltri-lato-server-archiviazione-paziente, log.md#2026-09-02-handoff--toast-di-notifica-globale-bug-fix-invito-rifiniture-lista-pazienti, ../docs/superpowers/specs/2026-09-02-dettaglio-paziente-andamento-design.md, ../docs/superpowers/plans/2026-09-02-dettaglio-paziente-andamento.md, log.md#2026-09-02-handoff--sezione-andamento-e-redesign-completo-della-pagina-di-dettaglio-paziente, log.md#2026-09-04-handoff--rifiniture-dettagliolista-paziente-elimina-visita-filtri-lato-server-ridisegnati]
 ---
 
@@ -14,6 +14,8 @@ fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brain
 Il backend del sotto-progetto **"Fondamenta"** (autenticazione JWT con ruoli, anagrafica paziente, invito via email, reset password) è **scritto, revisionato, testato su database reale e su GitHub**. Il frontend `frontend-professionisti/` di "Fondamenta" è **scritto, testato (57 test verdi), buildato, e in staging** (login, dashboard, lista/dettaglio/creazione paziente, reset password) — vedi sessione del 30 agosto 2026 (parte 2) più sotto. Il salvataggio di un paziente da `PazienteNuovoView.vue` è stato **verificato a mano da Andrea** il 31 agosto 2026 (parte 2), che riparte da lì per lavorare sulla lista pazienti. `frontend-cliente/` non esiste ancora: contiene solo un `CLAUDE.md`.
 
 Sessione del 1° settembre 2026 (parti 3-4): aggiunto il **modulo Plicometria** (6 protocolli clinici) e ridisegnato il modulo **Circonferenze** della visita, poi rifinito dopo la prima verifica manuale di Andrea (build/avvio confermati ok) — vedi sessioni dedicate più sotto. Backend 92/92 verdi, frontend 83/85 (le 2 falliti sono i test preesistenti e scollegati di `LoginView.spec.ts`, non toccati). Tutto **in staging, nessun commit** — Andrea farà alcune modifiche a mano prima del prossimo avvio di sessione.
+
+Sessione del 5 settembre 2026: avviato il sotto-progetto **"Piano alimentare"**, primo pezzo — catalogo **Alimenti** (BDA-IEO + custom per professionista), backend e UI in `frontend-professionisti` completi. Vedi sessione dedicata più sotto.
 
 Il progetto vive in **un unico repo git**, `bonny-412/hexis-nutrition`, con la radice in `progetti/hexis-nutrition/`.
 
@@ -291,6 +293,18 @@ Sessione lunga di richieste puntuali, una alla volta, quasi tutte bounded. Detta
 
 **Handoff esplicito**: Andrea ha chiesto di salvare tutto per riprendere più tardi. Lavoro **in staging** (`git add` su tutto il repo), **nessun commit** — tocca ad Andrea.
 
+## Sessione del 5 settembre 2026 — catalogo Alimenti (BDA-IEO + custom), revisione finale whole-branch
+
+Percorso completo: brainstorming ([sorgenti/2026-09-05-brainstorming-alimenti-design](sorgenti/2026-09-05-brainstorming-alimenti-design.md), [decisioni/0005](decisioni/0005-alimenti-bda-e-custom.md)) → piano (`docs/superpowers/plans/2026-09-05-alimenti.md`, 8 task) → esecuzione in un worktree isolato (`.claude/worktrees/alimenti`) → revisione finale whole-branch → fix wave.
+
+**Backend**: tabella unica `alimenti` (V18) con `professionista_id` nullable senza FK verso `professionisti` (per non subire la `CASCADE` del `TRUNCATE` nei test — vedi ADR 0005); seed di 1109 alimenti BDA-IEO da `ProgettoEdo` via migrazione generata da script Node una tantum (V19); `AlimentoSpecifications` (visibilità multi-tenant + BDA, ricerca testo, filtro fonte); `AlimentoService`/`AlimentoController` con `GET /alimenti/ricerca`, `GET /alimenti/{id}`, `POST /alimenti`, `PUT /alimenti/{id}`, `DELETE /alimenti/{id}`, `POST /alimenti/{id}/duplica` (ruolo PROFESSIONISTA); immutabilità BDA applicata nel service (409 su modifica/eliminazione), mai a DB. **Frontend**: `AlimentiListView.vue` (lista/ricerca/filtri fonte/paginazione, stesso pattern di `PazientiListView.vue`), `AlimentoFormDialog.vue` (dialog unico crea/visualizza/modifica/duplica), `AlimentoRigaAzioni.vue` (menu azioni riga).
+
+**Revisione finale whole-branch**: trovato e corretto 1 Critical — `zuccheri_g` nella migrazione V19 derivava dalla somma dei soli tre monosaccaridi della fonte (`zuccheri.glucosio_g`/`fruttosio_g`/`galattosio_g`), non dal campo `carboidrati_solubili_g` (zuccheri totali) — sbagliato su circa il 37% delle 1109 righe seminate (es. il latte intero mostrava 0g zuccheri invece del lattosio). Rigenerata la migrazione con lo script corretto, database `hexis_test` resettato (`DELETE FROM flyway_schema_history WHERE version='19'` + `TRUNCATE alimenti`) e riseminato pulito. Trovati e corretti anche diversi Important: cleanup delle righe BDA-shaped create dai test non a prova di assertion-failure in 3 classi di test (`AlimentoRepositoryTest`/`AlimentoSpecificationsTest`/`AlimentoControllerTest` — ora tracciate in una lista e ripulite in `@AfterEach` indipendentemente dall'esito del test); `wiki/api-contracts.md` non documentava i 6 nuovi endpoint; `wiki/modello-dati.md` dava ancora `Alimento` come "non ancora implementato"; nessun handoff registrato in `stato.md`/`log.md`; `backend/CLAUDE.md` non documentava l'eccezione TRUNCATE per `alimenti` (stesso trattamento di `durnin_womersley_coefficienti`); zero test dei 3 nuovi componenti Vue (~600 righe), ora coperti con test minimi sulla logica di branching BDA/custom/creazione.
+
+**Verifica**: backend `mvn test` → **169/169 verdi, BUILD SUCCESS** (rieseguito dopo il reset del database e dopo il fix wave). Frontend `npx vitest run` → **267/267 verdi, 35 file di test** (inclusi i 3 nuovi file aggiunti nella fix wave per `AlimentoFormDialog.vue`/`AlimentoRigaAzioni.vue`/`AlimentiListView.vue`), `npx tsc --noEmit` pulito. Nessuna verifica manuale in browser del catalogo Alimenti (tocca ad Andrea, per convenzione — vedi punto 13 in "Cosa resta aperto" sopra).
+
+Lavoro eseguito interamente nel worktree isolato `.claude/worktrees/alimenti`, **in staging** (`git add` fatto sui file toccati), **nessun commit** — tocca ad Andrea integrare su `master` e verificare a mano il flusso Alimenti.
+
 ## Prossimo passo consigliato
 
 Andrea non ha ancora indicato il prossimo passo per la prossima sessione: da chiedere a inizio sessione. La sessione del 4 settembre 2026 ha coperto tutte le rifiniture richieste fino a quel momento — nessun flusso annunciato e non completato in sospeso.
@@ -307,7 +321,8 @@ Punti ancora aperti, non bloccanti:
 8. Colmare il gap di validazione server-side su `CreaPazienteRequest` per nome/cognome/telefono/lavoro, se Andrea lo ritiene prioritario.
 9. Aggiungere test di regressione dedicati per due fix della revisione finale del modulo Plicometria (esclusione pliche non richieste dal protocollo; presenza del messaggio nel body del 400) — vedi "Cosa resta aperto".
 10. Configurare `RESEND_API_KEY`/`RESEND_FROM_EMAIL` per l'invio email reale, se Andrea decide di riprenderlo (esplicitamente rimandato il 2 settembre 2026).
-11. Scrivere con `superpowers:writing-plans` il piano per `frontend-cliente/` di "Fondamenta" — non ancora iniziato. Poi il brainstorming di "Piano alimentare", prossimo sotto-progetto della roadmap (vedi [architettura](architettura.md)).
+11. Scrivere con `superpowers:writing-plans` il piano per `frontend-cliente/` di "Fondamenta" — non ancora iniziato. Il catalogo Alimenti (primo pezzo di "Piano alimentare") è ora implementato — vedi sessione del 5 settembre 2026 più sotto; il resto del sotto-progetto "Piano alimentare" (entità Piano alimentare/Pasto) resta da progettare (vedi [architettura](architettura.md)).
+13. **Verifica manuale del catalogo Alimenti** (sessione del 5 settembre 2026): mai provato a mano contro l'app in esecuzione — nessuna verifica UI in browser è stata fatta dall'agente per nessuna delle viste/dialog di `AlimentiListView.vue`/`AlimentoFormDialog.vue`/`AlimentoRigaAzioni.vue`.
 12. **Decisione prodotto non risolta**: il colore del delta nella sezione Andamento/striscia statistiche è fisso (giù=verde, su=rosso) per tutte le metriche — inverso per un paziente sottopeso che riprende peso. Segnalato ad Andrea, nessuna modifica fatta in attesa di una scelta.
 
 ## Divisione dei compiti

@@ -61,14 +61,18 @@ const route = useRoute()
     <div class="flex flex-col gap-2">
       <div>
         <div v-if="!isCollapsed" class="mb-1.5 px-2.5 text-[10px] uppercase tracking-[0.14em] text-(--side-fg2)">Risorse</div>
-        <span
+        <RouterLink
+            :to="{ name: 'alimenti' }"
             :title="isCollapsed ? 'Alimenti' : undefined"
-            class="flex cursor-not-allowed items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium text-(--side-fg2)"
-            :class="{ 'justify-center px-0': isCollapsed }"
+            class="flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium transition-colors"
+            :class="[
+              isCollapsed ? 'justify-center px-0' : '',
+              route.name === 'alimenti' ? 'bg-(--side-act-bg) text-white' : 'text-(--side-fg) hover:bg-(--side-act-bg)/50',
+            ]"
           >
             <Apple :size="16" :stroke-width="1.8" class="shrink-0" />
             <span v-if="!isCollapsed" class="truncate">Alimenti</span>
-          </span>
+          </RouterLink>
       </div>
 
       <!-- Bottone Toggle Collapse -->

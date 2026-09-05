@@ -21,6 +21,7 @@ function creaRouter() {
       { path: '/pazienti', name: 'pazienti', component: { template: '<div/>' } },
       { path: '/pazienti/nuovo', name: 'paziente-nuovo', component: PazienteNuovoView },
       { path: '/pazienti/:id', name: 'paziente-dettaglio', component: { template: '<div/>' } },
+      { path: '/alimenti', name: 'alimenti', component: { template: '<div/>' } },
       { path: '/login', name: 'login', component: { template: '<div/>' } },
     ],
   })

@@ -28,6 +28,7 @@ const router = createRouter({
     { path: '/reset-password', name: 'reset-password', component: () => import('@/views/auth/ResetPasswordView.vue'), meta: { requiresAuth: false } },
     { path: '/', name: 'dashboard', component: () => import('@/views/DashboardView.vue'), meta: { requiresAuth: true } },
     { path: '/pazienti', name: 'pazienti', component: () => import('@/views/pazienti/PazientiListView.vue'), meta: { requiresAuth: true } },
+    { path: '/alimenti', name: 'alimenti', component: () => import('@/views/alimenti/AlimentiListView.vue'), meta: { requiresAuth: true } },
     { path: '/pazienti/nuovo', name: 'paziente-nuovo', component: () => import('@/views/pazienti/PazienteNuovoView.vue'), meta: { requiresAuth: true } },
     { path: '/pazienti/visite/nuova', name: 'visita-nuova-senza-paziente', component: () => import('@/views/pazienti/VisitaFormView.vue'), meta: { requiresAuth: true } },
     { path: '/pazienti/:id', name: 'paziente-dettaglio', component: () => import('@/views/pazienti/PazienteDettaglioView.vue'), meta: { requiresAuth: true } },

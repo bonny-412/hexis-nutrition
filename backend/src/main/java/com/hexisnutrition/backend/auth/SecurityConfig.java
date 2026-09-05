@@ -60,6 +60,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/password-dimenticata", "/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/inviti/*/attiva").permitAll()
                         .requestMatchers("/pazienti/**").hasRole("PROFESSIONISTA")
+                        .requestMatchers("/alimenti/**").hasRole("PROFESSIONISTA")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
