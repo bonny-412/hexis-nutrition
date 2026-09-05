@@ -56,8 +56,8 @@ class AlimentoControllerTest extends AbstractIntegrationTest {
 
     private Alimento creaAlimento(UUID professionistaId, String nome, String categoria) {
         Alimento salvato = alimentoRepository.save(new Alimento(professionistaId, nome, categoria,
-                new BigDecimal("100.00"), new BigDecimal("10.00"), new BigDecimal("5.00"), new BigDecimal("15.00"),
-                null, null, null, null, null, null));
+                new BigDecimal("100.00"), new BigDecimal("100.00"), new BigDecimal("10.00"), new BigDecimal("5.00"),
+                new BigDecimal("15.00"), null, null, null, null, null, null));
         if (professionistaId == null) {
             bdaCreatiInQuestoTest.add(salvato.getId());
         }
@@ -176,6 +176,31 @@ class AlimentoControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void ricercaConDirezioneDescOrdinaPerNomeDecrescente() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-alimenti19@example.com", "hash", "A", "A"));
+        creaAlimento(professionista.getId(), "Alimento ricerca19 Anna", "Categoria ricerca19");
+        creaAlimento(professionista.getId(), "Alimento ricerca19 Bruno", "Categoria ricerca19");
+        creaAlimento(professionista.getId(), "Alimento ricerca19 Carlo", "Categoria ricerca19");
+
+        mockMvc.perform(get("/alimenti/ricerca")
+                        .param("ricerca", "ricerca19")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenuto[0].nome").value("Alimento ricerca19 Anna"))
+                .andExpect(jsonPath("$.contenuto[2].nome").value("Alimento ricerca19 Carlo"));
+
+        mockMvc.perform(get("/alimenti/ricerca")
+                        .param("ricerca", "ricerca19")
+                        .param("ordinaPer", "nome")
+                        .param("direzione", "desc")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenuto[0].nome").value("Alimento ricerca19 Carlo"))
+                .andExpect(jsonPath("$.contenuto[2].nome").value("Alimento ricerca19 Anna"));
+    }
+
+    @Test
     void creaUnAlimentoCustomRestituisce201ConBdaFalse() throws Exception {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-alimenti8@example.com", "hash", "A", "A"));
@@ -187,6 +212,7 @@ class AlimentoControllerTest extends AbstractIntegrationTest {
                                 {
                                   "nome": "Frullato proteico fatto in casa",
                                   "categoria": "Bevande",
+                                  "quantitaG": 100.0,
                                   "kcal": 180.0,
                                   "proteineG": 25.0,
                                   "grassiG": 3.5,
@@ -195,7 +221,52 @@ class AlimentoControllerTest extends AbstractIntegrationTest {
                                 """))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.nome").value("Frullato proteico fatto in casa"))
+                .andExpect(jsonPath("$.quantitaG").value(100.0))
                 .andExpect(jsonPath("$.bda").value(false));
+    }
+
+    @Test
+    void creaConQuantitaMancanteRestituisce400() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-alimenti16@example.com", "hash", "A", "A"));
+
+        mockMvc.perform(post("/alimenti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nome": "Alimento senza quantita",
+                                  "categoria": "Bevande",
+                                  "kcal": 180.0,
+                                  "proteineG": 25.0,
+                                  "grassiG": 3.5,
+                                  "carboidratiG": 12.0
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void creaConUnaQuantitaDiRiferimentoDiversaDaCentoFunziona() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-alimenti17@example.com", "hash", "A", "A"));
+
+        mockMvc.perform(post("/alimenti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "nome": "Snack in busta da 30g",
+                                  "categoria": "Snack",
+                                  "quantitaG": 30.0,
+                                  "kcal": 140.0,
+                                  "proteineG": 2.0,
+                                  "grassiG": 7.0,
+                                  "carboidratiG": 18.0
+                                }
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.quantitaG").value(30.0));
     }
 
     @Test
@@ -232,6 +303,7 @@ class AlimentoControllerTest extends AbstractIntegrationTest {
                                 {
                                   "nome": "Alimento modificato10",
                                   "categoria": "Categoria10 modificata",
+                                  "quantitaG": 50.0,
                                   "kcal": 200.0,
                                   "proteineG": 20.0,
                                   "grassiG": 8.0,
@@ -239,7 +311,8 @@ class AlimentoControllerTest extends AbstractIntegrationTest {
                                 }
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nome").value("Alimento modificato10"));
+                .andExpect(jsonPath("$.nome").value("Alimento modificato10"))
+                .andExpect(jsonPath("$.quantitaG").value(50.0));
     }
 
     @Test
@@ -255,6 +328,7 @@ class AlimentoControllerTest extends AbstractIntegrationTest {
                                 {
                                   "nome": "Tentativo di modifica",
                                   "categoria": "Categoria11",
+                                  "quantitaG": 100.0,
                                   "kcal": 200.0,
                                   "proteineG": 20.0,
                                   "grassiG": 8.0,
@@ -318,6 +392,7 @@ class AlimentoControllerTest extends AbstractIntegrationTest {
                                 {
                                   "nome": "Tentativo di modifica altrui",
                                   "categoria": "Categoria15",
+                                  "quantitaG": 100.0,
                                   "kcal": 100.0,
                                   "proteineG": 10.0,
                                   "grassiG": 5.0,
@@ -325,5 +400,17 @@ class AlimentoControllerTest extends AbstractIntegrationTest {
                                 }
                                 """))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void duplicaCopiaLaQuantitaDiRiferimentoDelloriginale() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-alimenti18@example.com", "hash", "A", "A"));
+        Alimento bda = creaAlimento(null, "Alimento BDA da duplicare18", "Categoria18");
+
+        mockMvc.perform(post("/alimenti/" + bda.getId() + "/duplica")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.quantitaG").value(bda.getQuantitaG().doubleValue()));
     }
 }

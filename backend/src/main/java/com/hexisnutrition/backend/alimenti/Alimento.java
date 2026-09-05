@@ -30,6 +30,9 @@ public class Alimento {
     @Column(nullable = false)
     private String categoria;
 
+    @Column(name = "quantita_g", nullable = false)
+    private BigDecimal quantitaG;
+
     @Column(nullable = false)
     private BigDecimal kcal;
 
@@ -63,12 +66,14 @@ public class Alimento {
     protected Alimento() {
     }
 
-    public Alimento(UUID professionistaId, String nome, String categoria, BigDecimal kcal, BigDecimal proteineG,
-                     BigDecimal grassiG, BigDecimal carboidratiG, BigDecimal acquaG, BigDecimal fibreG,
-                     BigDecimal zuccheriG, BigDecimal ferroMg, BigDecimal calcioMg, BigDecimal sodioMg) {
+    public Alimento(UUID professionistaId, String nome, String categoria, BigDecimal quantitaG, BigDecimal kcal,
+                     BigDecimal proteineG, BigDecimal grassiG, BigDecimal carboidratiG, BigDecimal acquaG,
+                     BigDecimal fibreG, BigDecimal zuccheriG, BigDecimal ferroMg, BigDecimal calcioMg,
+                     BigDecimal sodioMg) {
         this.professionistaId = professionistaId;
         this.nome = nome;
         this.categoria = categoria;
+        this.quantitaG = quantitaG;
         this.kcal = kcal;
         this.proteineG = proteineG;
         this.grassiG = grassiG;
@@ -107,6 +112,14 @@ public class Alimento {
 
     public void setCategoria(String categoria) {
         this.categoria = categoria;
+    }
+
+    public BigDecimal getQuantitaG() {
+        return quantitaG;
+    }
+
+    public void setQuantitaG(BigDecimal quantitaG) {
+        this.quantitaG = quantitaG;
     }
 
     public BigDecimal getKcal() {

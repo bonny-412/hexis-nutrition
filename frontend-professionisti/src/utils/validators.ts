@@ -110,3 +110,23 @@ export function erroreCirconferenza(valore: string): string | undefined {
     if (valore && !REGEX_NUMERO_DECIMALE_ITALIANO.test(valore)) return 'Inserisci un numero valido (es. 95,50).'
     return undefined
 }
+
+export function erroreNumeroDecimale(valore: string): string | undefined {
+    if (valore && !REGEX_NUMERO_DECIMALE_ITALIANO.test(valore)) return 'Inserisci un numero valido (es. 12,50).'
+    return undefined
+}
+
+export function erroreNumeroDecimaleObbligatorio(valore: string): string | undefined {
+    if (!valore.trim()) return 'Il valore è obbligatorio.'
+    return erroreNumeroDecimale(valore)
+}
+
+export function erroreNomeAlimento(valore: string): string | undefined {
+    if (!valore.trim()) return 'Il nome è obbligatorio.'
+    return undefined
+}
+
+export function erroreCategoriaAlimento(valore: string): string | undefined {
+    if (!valore.trim()) return 'La categoria è obbligatoria.'
+    return undefined
+}

@@ -188,86 +188,88 @@ async function onSubmit() {
         <DialogTitle>Modifica dati anagrafici</DialogTitle>
       </DialogHeader>
 
-      <form class="space-y-5" @submit.prevent="onSubmit">
-        <div class="grid gap-5 sm:grid-cols-2">
-          <div class="flex flex-col gap-1.5">
-            <Label for="modifica-nome" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Nome*</Label>
-            <Input id="modifica-nome" :model-value="nome" @update:model-value="onNomeInput" type="text" :aria-invalid="!!errori.nome" placeholder="Es. Mario" />
-            <p v-if="errori.nome" class="text-xs font-medium text-(--danger)">{{ errori.nome }}</p>
+      <form class="flex min-h-0 flex-1 flex-col gap-4" @submit.prevent="onSubmit">
+        <div class="min-h-0 flex-1 space-y-5 overflow-y-auto px-0.5 py-0.5">
+          <div class="grid gap-5 sm:grid-cols-2">
+            <div class="flex flex-col gap-1.5">
+              <Label for="modifica-nome" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Nome*</Label>
+              <Input id="modifica-nome" :model-value="nome" @update:model-value="onNomeInput" type="text" :aria-invalid="!!errori.nome" placeholder="Es. Mario" />
+              <p v-if="errori.nome" class="text-xs font-medium text-(--danger)">{{ errori.nome }}</p>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <Label for="modifica-cognome" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Cognome*</Label>
+              <Input id="modifica-cognome" :model-value="cognome" @update:model-value="onCognomeInput" type="text" :aria-invalid="!!errori.cognome" placeholder="Es. Rossi" />
+              <p v-if="errori.cognome" class="text-xs font-medium text-(--danger)">{{ errori.cognome }}</p>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <Label for="modifica-codice-fiscale" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Codice fiscale*</Label>
+              <Input id="modifica-codice-fiscale" :model-value="codiceFiscale" @update:model-value="onCodiceFiscaleInput" type="text" :aria-invalid="!!errori.codiceFiscale" placeholder="Es. RSSMRA80A01H501U" />
+              <p v-if="errori.codiceFiscale" class="text-xs font-medium text-(--danger)">{{ errori.codiceFiscale }}</p>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <Label for="modifica-sesso" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Sesso*</Label>
+              <Select :model-value="sesso" @update:model-value="onSessoChange">
+                <SelectTrigger id="modifica-sesso" class="w-full" :aria-invalid="!!errori.sesso">
+                  <SelectValue placeholder="Seleziona" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="M">Maschio</SelectItem>
+                  <SelectItem value="F">Femmina</SelectItem>
+                  <SelectItem value="ALTRO">Altro</SelectItem>
+                </SelectContent>
+              </Select>
+              <p v-if="errori.sesso" class="text-xs font-medium text-(--danger)">{{ errori.sesso }}</p>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <Label for="modifica-data-nascita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Data di nascita*</Label>
+              <DatePicker id="modifica-data-nascita" :model-value="dataNascita" @update:model-value="onDataNascitaChange" />
+              <p v-if="errori.dataNascita" class="text-xs font-medium text-(--danger)">{{ errori.dataNascita }}</p>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <Label for="modifica-email" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Email*</Label>
+              <Input id="modifica-email" :model-value="email" @update:model-value="onEmailInput" type="text" :aria-invalid="!!errori.email" placeholder="Es. mariorossi@gmail.com" />
+              <p v-if="errori.email" class="text-xs font-medium text-(--danger)">{{ errori.email }}</p>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <Label for="modifica-telefono" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Telefono</Label>
+              <Input id="modifica-telefono" :model-value="telefono" @update:model-value="onTelefonoInput" type="text" inputmode="numeric" :aria-invalid="!!errori.telefono" placeholder="Es. 3325676543" />
+              <p v-if="errori.telefono" class="text-xs font-medium text-(--danger)">{{ errori.telefono }}</p>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <Label for="modifica-lavoro" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Lavoro</Label>
+              <Input id="modifica-lavoro" :model-value="lavoro" @update:model-value="onLavoroInput" type="text" placeholder="Es. Impiegato" />
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <Label for="modifica-stile-di-vita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Stile di vita</Label>
+              <Select :model-value="stileDiVita || VALORE_SELEZIONA" @update:model-value="onStileDiVitaChange">
+                <SelectTrigger id="modifica-stile-di-vita" class="w-full">
+                  <SelectValue placeholder="Seleziona" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="VALORE_SELEZIONA">Seleziona</SelectItem>
+                  <SelectItem value="SEDENTARIO">Sedentario</SelectItem>
+                  <SelectItem value="POCO_ATTIVO">Poco attivo</SelectItem>
+                  <SelectItem value="ATTIVO">Attivo</SelectItem>
+                  <SelectItem value="MOLTO_ATTIVO">Molto attivo</SelectItem>
+                  <SelectItem value="ESTREMAMENTE_ATTIVO">Estremamente attivo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="modifica-cognome" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Cognome*</Label>
-            <Input id="modifica-cognome" :model-value="cognome" @update:model-value="onCognomeInput" type="text" :aria-invalid="!!errori.cognome" placeholder="Es. Rossi" />
-            <p v-if="errori.cognome" class="text-xs font-medium text-(--danger)">{{ errori.cognome }}</p>
+            <Label for="modifica-note" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Note</Label>
+            <Textarea id="modifica-note" v-model="note" maxlength="500" placeholder="Allergie, patologie, indicazioni utili…" />
+            <p class="text-right text-xs text-(--fg3)">{{ note.length }}/500</p>
           </div>
-
-          <div class="flex flex-col gap-1.5">
-            <Label for="modifica-codice-fiscale" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Codice fiscale*</Label>
-            <Input id="modifica-codice-fiscale" :model-value="codiceFiscale" @update:model-value="onCodiceFiscaleInput" type="text" :aria-invalid="!!errori.codiceFiscale" placeholder="Es. RSSMRA80A01H501U" />
-            <p v-if="errori.codiceFiscale" class="text-xs font-medium text-(--danger)">{{ errori.codiceFiscale }}</p>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <Label for="modifica-sesso" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Sesso*</Label>
-            <Select :model-value="sesso" @update:model-value="onSessoChange">
-              <SelectTrigger id="modifica-sesso" class="w-full" :aria-invalid="!!errori.sesso">
-                <SelectValue placeholder="Seleziona" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="M">Maschio</SelectItem>
-                <SelectItem value="F">Femmina</SelectItem>
-                <SelectItem value="ALTRO">Altro</SelectItem>
-              </SelectContent>
-            </Select>
-            <p v-if="errori.sesso" class="text-xs font-medium text-(--danger)">{{ errori.sesso }}</p>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <Label for="modifica-data-nascita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Data di nascita*</Label>
-            <DatePicker id="modifica-data-nascita" :model-value="dataNascita" @update:model-value="onDataNascitaChange" />
-            <p v-if="errori.dataNascita" class="text-xs font-medium text-(--danger)">{{ errori.dataNascita }}</p>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <Label for="modifica-email" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Email*</Label>
-            <Input id="modifica-email" :model-value="email" @update:model-value="onEmailInput" type="text" :aria-invalid="!!errori.email" placeholder="Es. mariorossi@gmail.com" />
-            <p v-if="errori.email" class="text-xs font-medium text-(--danger)">{{ errori.email }}</p>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <Label for="modifica-telefono" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Telefono</Label>
-            <Input id="modifica-telefono" :model-value="telefono" @update:model-value="onTelefonoInput" type="text" inputmode="numeric" :aria-invalid="!!errori.telefono" placeholder="Es. 3325676543" />
-            <p v-if="errori.telefono" class="text-xs font-medium text-(--danger)">{{ errori.telefono }}</p>
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <Label for="modifica-lavoro" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Lavoro</Label>
-            <Input id="modifica-lavoro" :model-value="lavoro" @update:model-value="onLavoroInput" type="text" placeholder="Es. Impiegato" />
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <Label for="modifica-stile-di-vita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Stile di vita</Label>
-            <Select :model-value="stileDiVita || VALORE_SELEZIONA" @update:model-value="onStileDiVitaChange">
-              <SelectTrigger id="modifica-stile-di-vita" class="w-full">
-                <SelectValue placeholder="Seleziona" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem :value="VALORE_SELEZIONA">Seleziona</SelectItem>
-                <SelectItem value="SEDENTARIO">Sedentario</SelectItem>
-                <SelectItem value="POCO_ATTIVO">Poco attivo</SelectItem>
-                <SelectItem value="ATTIVO">Attivo</SelectItem>
-                <SelectItem value="MOLTO_ATTIVO">Molto attivo</SelectItem>
-                <SelectItem value="ESTREMAMENTE_ATTIVO">Estremamente attivo</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div class="flex flex-col gap-1.5">
-          <Label for="modifica-note" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Note</Label>
-          <Textarea id="modifica-note" v-model="note" maxlength="500" placeholder="Allergie, patologie, indicazioni utili…" />
-          <p class="text-right text-xs text-(--fg3)">{{ note.length }}/500</p>
         </div>
 
         <DialogFooter>

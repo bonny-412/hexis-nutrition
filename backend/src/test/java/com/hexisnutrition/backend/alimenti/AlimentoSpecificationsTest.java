@@ -34,8 +34,8 @@ class AlimentoSpecificationsTest extends AbstractIntegrationTest {
 
     private Alimento creaAlimento(UUID professionistaId, String nome, String categoria) {
         Alimento salvato = alimentoRepository.save(new Alimento(professionistaId, nome, categoria,
-                new BigDecimal("100.00"), new BigDecimal("10.00"), new BigDecimal("5.00"), new BigDecimal("15.00"),
-                null, null, null, null, null, null));
+                new BigDecimal("100.00"), new BigDecimal("100.00"), new BigDecimal("10.00"), new BigDecimal("5.00"),
+                new BigDecimal("15.00"), null, null, null, null, null, null));
         if (professionistaId == null) {
             bdaCreatiInQuestoTest.add(salvato.getId());
         }

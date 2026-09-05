@@ -4,7 +4,7 @@ import AlimentoRigaAzioni from './AlimentoRigaAzioni.vue'
 import type { Alimento } from '@/api/alimenti'
 
 const alimentoBda: Alimento = {
-  id: '1', nome: 'Petto di pollo, crudo', categoria: 'Carni', kcal: 165, proteineG: 31, grassiG: 3.6,
+  id: '1', nome: 'Petto di pollo, crudo', categoria: 'Carni', quantitaG: 100, kcal: 165, proteineG: 31, grassiG: 3.6,
   carboidratiG: 0, acquaG: 65, fibreG: null, zuccheriG: null, ferroMg: 1, calcioMg: 15, sodioMg: 74, bda: true,
 }
 

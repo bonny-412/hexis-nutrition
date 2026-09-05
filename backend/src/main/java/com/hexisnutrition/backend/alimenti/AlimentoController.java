@@ -35,11 +35,14 @@ public class AlimentoController {
             @AuthenticationPrincipal UUID professionistaId,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int dimensione,
+            @RequestParam(defaultValue = "nome") CampoOrdinamentoAlimenti ordinaPer,
+            @RequestParam(defaultValue = "asc") DirezioneOrdinamento direzione,
             @RequestParam(required = false) String ricerca,
             @RequestParam(defaultValue = "TUTTI") FonteAlimento fonte) {
         int paginaEffettiva = Math.max(pagina, 0);
         int dimensioneEffettiva = Math.min(Math.max(dimensione, 1), 100);
-        Pageable pageable = PageRequest.of(paginaEffettiva, dimensioneEffettiva, Sort.by(Sort.Direction.ASC, "nome"));
+        Sort.Direction direzioneSort = direzione == DirezioneOrdinamento.desc ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(paginaEffettiva, dimensioneEffettiva, Sort.by(direzioneSort, ordinaPer.name()));
         CriteriRicercaAlimenti criteri = new CriteriRicercaAlimenti(ricerca, fonte);
         Page<Alimento> risultato = alimentoService.cerca(professionistaId, criteri, pageable);
         return AlimentoListaPaginataResponse.da(risultato);

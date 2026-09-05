@@ -4,6 +4,7 @@ export interface Alimento {
   id: string
   nome: string
   categoria: string
+  quantitaG: number
   kcal: number
   proteineG: number
   grassiG: number
@@ -20,6 +21,8 @@ export interface Alimento {
 export interface CriteriRicercaAlimenti {
   pagina?: number
   dimensione?: number
+  ordinaPer?: 'nome'
+  direzione?: 'asc' | 'desc'
   ricerca?: string
   fonte?: 'TUTTI' | 'BDA' | 'PERSONALIZZATI'
 }
@@ -35,6 +38,7 @@ export interface PaginaAlimenti {
 export interface CreaAlimentoRequest {
   nome: string
   categoria: string
+  quantitaG: number
   kcal: number
   proteineG: number
   grassiG: number
@@ -53,6 +57,8 @@ export function cerca(criteri: CriteriRicercaAlimenti = {}): Promise<PaginaAlime
   const parametri = new URLSearchParams()
   if (criteri.pagina !== undefined) parametri.set('pagina', String(criteri.pagina))
   if (criteri.dimensione !== undefined) parametri.set('dimensione', String(criteri.dimensione))
+  if (criteri.ordinaPer) parametri.set('ordinaPer', criteri.ordinaPer)
+  if (criteri.direzione) parametri.set('direzione', criteri.direzione)
   if (criteri.ricerca) parametri.set('ricerca', criteri.ricerca)
   if (criteri.fonte) parametri.set('fonte', criteri.fonte)
 

@@ -43,9 +43,9 @@ public class AlimentoService {
 
     @Transactional
     public Alimento crea(UUID professionistaId, CreaAlimentoRequest request) {
-        Alimento alimento = new Alimento(professionistaId, request.nome(), request.categoria(), request.kcal(),
-                request.proteineG(), request.grassiG(), request.carboidratiG(), request.acquaG(), request.fibreG(),
-                request.zuccheriG(), request.ferroMg(), request.calcioMg(), request.sodioMg());
+        Alimento alimento = new Alimento(professionistaId, request.nome(), request.categoria(), request.quantitaG(),
+                request.kcal(), request.proteineG(), request.grassiG(), request.carboidratiG(), request.acquaG(),
+                request.fibreG(), request.zuccheriG(), request.ferroMg(), request.calcioMg(), request.sodioMg());
         return alimentoRepository.save(alimento);
     }
 
@@ -57,6 +57,7 @@ public class AlimentoService {
         }
         alimento.setNome(request.nome());
         alimento.setCategoria(request.categoria());
+        alimento.setQuantitaG(request.quantitaG());
         alimento.setKcal(request.kcal());
         alimento.setProteineG(request.proteineG());
         alimento.setGrassiG(request.grassiG());
@@ -83,9 +84,9 @@ public class AlimentoService {
     public Alimento duplica(UUID professionistaId, UUID alimentoId) {
         Alimento originale = dettaglio(professionistaId, alimentoId);
         Alimento copia = new Alimento(professionistaId, originale.getNome() + " (copia)", originale.getCategoria(),
-                originale.getKcal(), originale.getProteineG(), originale.getGrassiG(), originale.getCarboidratiG(),
-                originale.getAcquaG(), originale.getFibreG(), originale.getZuccheriG(), originale.getFerroMg(),
-                originale.getCalcioMg(), originale.getSodioMg());
+                originale.getQuantitaG(), originale.getKcal(), originale.getProteineG(), originale.getGrassiG(),
+                originale.getCarboidratiG(), originale.getAcquaG(), originale.getFibreG(), originale.getZuccheriG(),
+                originale.getFerroMg(), originale.getCalcioMg(), originale.getSodioMg());
         return alimentoRepository.save(copia);
     }
 }

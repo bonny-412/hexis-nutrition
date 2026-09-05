@@ -24,8 +24,13 @@ function creaRouter() {
 }
 
 const alimentoEsempio: Alimento = {
-  id: '1', nome: 'Petto di pollo, crudo', categoria: 'Carni', kcal: 165, proteineG: 31, grassiG: 3.6,
+  id: '1', nome: 'Petto di pollo, crudo', categoria: 'Carni', quantitaG: 100, kcal: 165, proteineG: 31, grassiG: 3.6,
   carboidratiG: 0, acquaG: 65, fibreG: null, zuccheriG: null, ferroMg: 1, calcioMg: 15, sodioMg: 74, bda: true,
+}
+
+const alimentoCustomEsempio: Alimento = {
+  id: '2', nome: 'Snack in busta', categoria: 'Snack', quantitaG: 30, kcal: 140, proteineG: 2, grassiG: 7,
+  carboidratiG: 18, acquaG: null, fibreG: null, zuccheriG: null, ferroMg: null, calcioMg: null, sodioMg: null, bda: false,
 }
 
 function paginaCon(contenuto: Alimento[]): PaginaAlimenti {
@@ -93,6 +98,35 @@ describe('AlimentiListView', () => {
     expect(alimentiApi.cerca).toHaveBeenCalledWith(expect.objectContaining({ fonte: 'BDA', pagina: 0 }))
   })
 
+  it('il click sull\'header Alimento cicla asc → desc → nessun ordinamento su tre click', async () => {
+    vi.mocked(alimentiApi.cerca).mockResolvedValue(paginaCon([alimentoEsempio]))
+    const wrapper = await montaView()
+    vi.mocked(alimentiApi.cerca).mockClear()
+
+    const headerAlimento = wrapper.findAll('button').find((b) => b.text().includes('Alimento'))
+
+    await headerAlimento?.trigger('click')
+    await flushPromises()
+    expect(alimentiApi.cerca).toHaveBeenLastCalledWith(expect.objectContaining({ ordinaPer: 'nome', direzione: 'asc' }))
+
+    await headerAlimento?.trigger('click')
+    await flushPromises()
+    expect(alimentiApi.cerca).toHaveBeenLastCalledWith(expect.objectContaining({ ordinaPer: 'nome', direzione: 'desc' }))
+
+    await headerAlimento?.trigger('click')
+    await flushPromises()
+    expect(alimentiApi.cerca).toHaveBeenLastCalledWith(expect.objectContaining({ ordinaPer: undefined, direzione: 'asc' }))
+  })
+
+  it('mostra la quantità di riferimento solo per gli alimenti personalizzati, non per quelli BDA', async () => {
+    vi.mocked(alimentiApi.cerca).mockResolvedValue(paginaCon([alimentoEsempio, alimentoCustomEsempio]))
+    const wrapper = await montaView()
+
+    const righe = wrapper.findAll('tbody tr')
+    expect(righe[0].text()).not.toContain('100 g')
+    expect(righe[1].text()).toContain('30 g')
+  })
+
   it('mostra un errore con bottone Riprova se il caricamento fallisce, e Riprova richiama cerca()', async () => {
     vi.mocked(alimentiApi.cerca).mockRejectedValue(new Error('500'))
     const wrapper = await montaView()
@@ -112,5 +146,25 @@ describe('AlimentiListView', () => {
     const wrapper = await montaView()
 
     expect(wrapper.text()).toContain('Nessun alimento trovato')
+  })
+
+  it('lo stato vuoto mostra un bottone Pulisci filtri che resetta ricerca e fonte', async () => {
+    vi.mocked(alimentiApi.cerca).mockResolvedValue(paginaCon([alimentoEsempio]))
+    const wrapper = await montaView()
+
+    vi.mocked(alimentiApi.cerca).mockResolvedValueOnce(paginaCon([]))
+    const chipBda = wrapper.findAll('button').find((b) => b.text() === 'BDA')
+    await chipBda?.trigger('click')
+    await flushPromises()
+
+    const pulisci = wrapper.findAll('button').find((b) => b.text() === 'Pulisci filtri')
+    expect(pulisci).toBeDefined()
+
+    vi.mocked(alimentiApi.cerca).mockClear()
+    vi.mocked(alimentiApi.cerca).mockResolvedValue(paginaCon([alimentoEsempio]))
+    await pulisci?.trigger('click')
+    await flushPromises()
+
+    expect(alimentiApi.cerca).toHaveBeenCalledWith(expect.objectContaining({ fonte: 'TUTTI', ricerca: undefined, pagina: 0 }))
   })
 })

@@ -417,10 +417,10 @@ const conteggioTesto = computed(() => {
       <div v-if="paginaDati && !errore" class="flex items-center justify-between gap-3 border-t border-(--div) bg-(--soft) px-4.5 py-3">
         <span class="text-xs text-(--fg3)">{{ conteggioTesto }}</span>
         <div class="flex gap-2">
-          <Button type="button" variant="outline" size="sm" :disabled="pagina === 0" @click="paginaPrecedente">Precedente</Button>
+          <Button type="button" variant="neutral" size="sm" :disabled="pagina === 0" @click="paginaPrecedente">Precedente</Button>
           <Button
             type="button"
-            variant="outline"
+            variant="neutral"
             size="sm"
             :disabled="!paginaDati || pagina >= paginaDati.totalePagine - 1"
             @click="paginaSuccessiva"

@@ -5,7 +5,7 @@ import { cerca, dettaglio, crea, aggiorna, elimina, duplica } from './alimenti'
 vi.mock('./client', () => ({ apiRequest: vi.fn() }))
 
 const alimentoEsempio = {
-  id: '1', nome: 'Petto di pollo, crudo', categoria: 'Carni', kcal: 100, proteineG: 23.3, grassiG: 0.8,
+  id: '1', nome: 'Petto di pollo, crudo', categoria: 'Carni', quantitaG: 100, kcal: 100, proteineG: 23.3, grassiG: 0.8,
   carboidratiG: 0, acquaG: 74.4, fibreG: 0, zuccheriG: 0, ferroMg: null, calcioMg: null, sodioMg: null, bda: true,
 }
 
@@ -39,22 +39,22 @@ describe('api/alimenti', () => {
   it('crea chiama POST /alimenti con i dati del form', async () => {
     vi.mocked(apiRequest).mockResolvedValue(alimentoEsempio)
 
-    await crea({ nome: 'Frullato', categoria: 'Bevande', kcal: 180, proteineG: 25, grassiG: 3.5, carboidratiG: 12 })
+    await crea({ nome: 'Frullato', categoria: 'Bevande', quantitaG: 100, kcal: 180, proteineG: 25, grassiG: 3.5, carboidratiG: 12 })
 
     expect(apiRequest).toHaveBeenCalledWith('/alimenti', {
       method: 'POST',
-      body: { nome: 'Frullato', categoria: 'Bevande', kcal: 180, proteineG: 25, grassiG: 3.5, carboidratiG: 12 },
+      body: { nome: 'Frullato', categoria: 'Bevande', quantitaG: 100, kcal: 180, proteineG: 25, grassiG: 3.5, carboidratiG: 12 },
     })
   })
 
   it('aggiorna chiama PUT /alimenti/{id} con i dati del form', async () => {
     vi.mocked(apiRequest).mockResolvedValue(alimentoEsempio)
 
-    await aggiorna('1', { nome: 'Frullato', categoria: 'Bevande', kcal: 180, proteineG: 25, grassiG: 3.5, carboidratiG: 12 })
+    await aggiorna('1', { nome: 'Frullato', categoria: 'Bevande', quantitaG: 100, kcal: 180, proteineG: 25, grassiG: 3.5, carboidratiG: 12 })
 
     expect(apiRequest).toHaveBeenCalledWith('/alimenti/1', {
       method: 'PUT',
-      body: { nome: 'Frullato', categoria: 'Bevande', kcal: 180, proteineG: 25, grassiG: 3.5, carboidratiG: 12 },
+      body: { nome: 'Frullato', categoria: 'Bevande', quantitaG: 100, kcal: 180, proteineG: 25, grassiG: 3.5, carboidratiG: 12 },
     })
   })
 

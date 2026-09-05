@@ -8,7 +8,9 @@ import AlimentoFormDialog from '@/components/alimenti/AlimentoFormDialog.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
-import { Plus } from '@lucide/vue'
+import { Plus, ArrowUp, ArrowDown, ArrowUpDown } from '@lucide/vue'
+
+type CampoOrdinamento = NonNullable<CriteriRicercaAlimenti['ordinaPer']>
 
 const chipFonte: { valore: NonNullable<CriteriRicercaAlimenti['fonte']>; etichetta: string }[] = [
   { valore: 'TUTTI', etichetta: 'Tutti' },
@@ -20,6 +22,8 @@ const ricercaInput = ref('')
 const ricercaEffettiva = ref('')
 const fonte = ref<NonNullable<CriteriRicercaAlimenti['fonte']>>('TUTTI')
 const pagina = ref(0)
+const ordinaPer = ref<CampoOrdinamento | undefined>(undefined)
+const direzione = ref<'asc' | 'desc'>('asc')
 
 const paginaDati = ref<PaginaAlimenti | null>(null)
 const caricamentoIniziale = ref(true)
@@ -45,6 +49,8 @@ function criteriCorrenti(): CriteriRicercaAlimenti {
   return {
     pagina: pagina.value,
     dimensione: 20,
+    ordinaPer: ordinaPer.value,
+    direzione: direzione.value,
     ricerca: ricercaEffettiva.value.trim() || undefined,
     fonte: fonte.value,
   }
@@ -72,12 +78,38 @@ async function carica() {
   }
 }
 
-watch([ricercaEffettiva, fonte, pagina], carica)
+watch([ricercaEffettiva, fonte, pagina, ordinaPer, direzione], carica)
 
 onMounted(carica)
 
 function selezionaFonte(valore: typeof fonte.value) {
   fonte.value = valore
+  pagina.value = 0
+}
+
+function ordina(campo: CampoOrdinamento) {
+  if (ordinaPer.value !== campo) {
+    ordinaPer.value = campo
+    direzione.value = 'asc'
+  } else if (direzione.value === 'asc') {
+    direzione.value = 'desc'
+  } else {
+    ordinaPer.value = undefined
+    direzione.value = 'asc'
+  }
+  pagina.value = 0
+}
+
+function iconaOrdinamento(campo: CampoOrdinamento) {
+  if (ordinaPer.value !== campo) return ArrowUpDown
+  return direzione.value === 'asc' ? ArrowUp : ArrowDown
+}
+
+function pulisciFiltri() {
+  clearTimeout(debounceHandle)
+  ricercaInput.value = ''
+  ricercaEffettiva.value = ''
+  fonte.value = 'TUTTI'
   pagina.value = 0
 }
 
@@ -124,7 +156,7 @@ const conteggioTesto = computed(() => {
   if (totaleElementi === 0) return 'Nessun alimento trovato'
   const primo = paginaCorrente * dimensionePagina + 1
   const ultimo = paginaCorrente * dimensionePagina + contenuto.length
-  return `Mostrati ${primo}-${ultimo} di ${totaleElementi} alimenti · valori per 100 g`
+  return `Mostrati ${primo}-${ultimo} di ${totaleElementi} alimenti`
 })
 </script>
 
@@ -175,7 +207,12 @@ const conteggioTesto = computed(() => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead class="uppercase tracking-wide text-(--fg4)">Alimento</TableHead>
+                <TableHead>
+                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('nome')">
+                    Alimento
+                    <component :is="iconaOrdinamento('nome')" :size="12" :class="ordinaPer === 'nome' ? 'text-(--fg)' : 'text-(--fg4)'" />
+                  </button>
+                </TableHead>
                 <TableHead class="uppercase tracking-wide text-(--fg4)">Fonte</TableHead>
                 <TableHead class="text-right uppercase tracking-wide text-(--fg4)">kcal</TableHead>
                 <TableHead class="text-right uppercase tracking-wide text-(--fg4)">Prot.</TableHead>
@@ -194,15 +231,17 @@ const conteggioTesto = computed(() => {
                 <TableCell>
                   <div class="flex flex-col gap-0.5">
                     <span class="font-heading font-semibold text-(--fg)">{{ alimento.nome }}</span>
-                    <span class="text-xs text-(--fg3)">{{ alimento.categoria }}</span>
+                    <span class="text-xs text-(--fg3)">
+                      {{ alimento.categoria }}<template v-if="!alimento.bda"> · {{ alimento.quantitaG.toFixed(0) }} g</template>
+                    </span>
                   </div>
                 </TableCell>
                 <TableCell>
                   <span
                     class="rounded px-2 py-0.5 text-[10.5px] font-bold tracking-wide"
-                    :class="alimento.bda ? 'bg-(--mint) text-(--green)' : 'border border-(--green) text-(--green)'"
+                    :class="alimento.bda ? 'bg-(--mint) text-(--green)' : 'bg-(--warn-bg) text-(--warn-fg)'"
                   >
-                    {{ alimento.bda ? 'BDA' : 'Personalizzato' }}
+                    {{ alimento.bda ? 'BDA' : 'PERSONALIZZATO' }}
                   </span>
                 </TableCell>
                 <TableCell class="text-right font-semibold tabular-nums">{{ alimento.kcal.toFixed(0) }}</TableCell>
@@ -221,15 +260,16 @@ const conteggioTesto = computed(() => {
       <div v-else class="flex flex-col items-center gap-2 p-16 text-center">
         <p class="font-bold">Nessun alimento trovato</p>
         <p class="max-w-xs text-xs text-muted-foreground">Prova a modificare la ricerca o i filtri.</p>
+        <Button type="button" variant="outline" @click="pulisciFiltri">Pulisci filtri</Button>
       </div>
 
       <div v-if="paginaDati && !errore" class="flex items-center justify-between gap-3 border-t border-(--div) bg-(--soft) px-4.5 py-3">
         <span class="text-xs text-(--fg3)">{{ conteggioTesto }}</span>
         <div class="flex gap-2">
-          <Button type="button" variant="outline" size="sm" :disabled="pagina === 0" @click="paginaPrecedente">Precedente</Button>
+          <Button type="button" variant="neutral" size="sm" :disabled="pagina === 0" @click="paginaPrecedente">Precedente</Button>
           <Button
             type="button"
-            variant="outline"
+            variant="neutral"
             size="sm"
             :disabled="!paginaDati || pagina >= paginaDati.totalePagine - 1"
             @click="paginaSuccessiva"
