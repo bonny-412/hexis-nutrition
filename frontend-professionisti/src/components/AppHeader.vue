@@ -3,6 +3,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { useRouter } from 'vue-router'
 import { Menu, Bell, ChevronDown, LogOut, Moon } from '@lucide/vue'
+import CommandPalette from './CommandPalette.vue'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -46,6 +47,8 @@ function onLogout() {
     </div>
 
     <div class="flex items-center gap-2.5">
+      <CommandPalette />
+
       <Button variant="neutral" size="icon" class="relative" aria-label="Notifiche">
         <Bell :size="16" />
         <span class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-(--green) shadow-[0_0_0_2px_var(--surf)]"></span>
