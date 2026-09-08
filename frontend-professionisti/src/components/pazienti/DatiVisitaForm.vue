@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, type Ref } from 'vue'
+import { computed, nextTick, ref, type Ref } from 'vue'
 import type { AcceptableValue } from 'reka-ui'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -20,7 +20,7 @@ import {
 import { DatePicker } from '@/components/ui/date-picker'
 import { Ruler, ScissorsLineDashed } from '@lucide/vue'
 import type { CreaVisitaRequest, Visita } from '@/api/pazienti'
-import { formattaNumero } from '@/utils/visita'
+import { calcolaBmi, fasciaBmi, formattaNumero, type FasciaBmi } from '@/utils/visita'
 import PlicometriaForm from './PlicometriaForm.vue'
 
 import {
@@ -67,7 +67,7 @@ const circonferenzaAvambraccio = ref(valoreIniziale(props.datiIniziali?.circonfe
 const circonferenzaCaviglia = ref(valoreIniziale(props.datiIniziali?.circonferenze.cavigliaCm))
 const protocolloVita = ref<'' | 'OMS' | 'OMBELICALE' | 'ALTRO'>(props.datiIniziali?.protocolloVita ?? '')
 const note = ref(props.datiIniziali?.note ?? '')
-const obiettivo = ref<'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'EDUCATIVO' | 'PREPARAZIONE_SPORTIVA'>(
+const obiettivo = ref<Visita['obiettivo']>(
   props.datiIniziali?.obiettivo ?? props.obiettivoSuggerito ?? 'MANTENIMENTO',
 )
 
@@ -116,6 +116,24 @@ function conFiltro(
 
 const onAltezzaInput = conFiltro(altezzaCm, (v) => filtraSoloCifre(v, 3), 'altezzaCm', erroreAltezza)
 const onPesoInput = conFiltro(pesoKg, filtraDecimaleItaliano, 'pesoKg', errorePeso)
+
+// --- BMI (calcolato live da altezza e peso) ---
+const bmi = computed(() => {
+  if (erroreAltezza(altezzaCm.value) || errorePeso(pesoKg.value)) return null
+  return calcolaBmi(numeroItaliano(altezzaCm.value), numeroItaliano(pesoKg.value))
+})
+const fasciaBmiAttiva = computed(() => fasciaBmi(bmi.value))
+
+function classeBadgeFascia(fascia: FasciaBmi): string {
+  switch (fascia.livello) {
+    case 'normale':
+      return 'border-transparent bg-(--mint) text-(--green)'
+    case 'moderato':
+      return 'border-transparent bg-(--warn-bg) text-(--warn-fg)'
+    case 'severo':
+      return 'border-transparent bg-(--danger)/10 text-(--danger)'
+  }
+}
 
 const creaHandlerCirconferenza = (rif: Ref<string>, chiave: string) =>
   conFiltro(rif, filtraDecimaleItaliano, chiave, erroreCirconferenza)
@@ -267,6 +285,18 @@ defineExpose({
         <Label for="peso" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Peso (kg)*</Label>
         <Input id="peso" :model-value="pesoKg" @update:model-value="onPesoInput" type="text" inputmode="decimal" :aria-invalid="!!errori.pesoKg" placeholder="Es. 78,50" />
         <p v-if="errori.pesoKg" class="text-xs font-medium text-(--danger)">{{ errori.pesoKg }}</p>
+      </div>
+    </div>
+
+    <div class="mt-5 flex flex-col gap-1.5">
+      <Label for="bmi" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">BMI</Label>
+      <div class="flex items-center gap-2.5">
+        <Input id="bmi" :model-value="bmi !== null ? formattaNumero(bmi, 1) : ''" type="text" disabled placeholder="Compila altezza e peso" class="sm:max-w-40" />
+        <span
+          v-if="fasciaBmiAttiva"
+          class="rounded-4xl border px-2 py-0.5 text-xs font-medium"
+          :class="classeBadgeFascia(fasciaBmiAttiva)"
+        >{{ fasciaBmiAttiva.etichetta }}</span>
       </div>
     </div>
 
