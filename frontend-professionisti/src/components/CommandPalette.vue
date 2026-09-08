@@ -29,6 +29,7 @@ const inputRef = ref<InstanceType<typeof Input> | null>(null)
 
 const pazientiRisultati = ref<Paziente[]>([])
 const pazientiTotale = ref(0)
+const ricercaInCorso = ref(false)
 
 let debounceHandle: ReturnType<typeof setTimeout> | undefined
 
@@ -39,7 +40,11 @@ const azioniFiltrate = computed(() =>
 )
 
 const nessunRisultato = computed(
-  () => testoNormalizzato.value !== '' && azioniFiltrate.value.length === 0 && pazientiRisultati.value.length === 0,
+  () =>
+    testoNormalizzato.value !== '' &&
+    !ricercaInCorso.value &&
+    azioniFiltrate.value.length === 0 &&
+    pazientiRisultati.value.length === 0,
 )
 
 watch(testo, (valore) => {
@@ -48,8 +53,10 @@ watch(testo, (valore) => {
   if (query === '') {
     pazientiRisultati.value = []
     pazientiTotale.value = 0
+    ricercaInCorso.value = false
     return
   }
+  ricercaInCorso.value = true
   debounceHandle = setTimeout(async () => {
     try {
       const risultato = await cerca({ ricerca: query, dimensione: 5, archiviato: false })
@@ -58,6 +65,8 @@ watch(testo, (valore) => {
     } catch {
       pazientiRisultati.value = []
       pazientiTotale.value = 0
+    } finally {
+      ricercaInCorso.value = false
     }
   }, 300)
 })
@@ -67,6 +76,7 @@ function apri() {
   testo.value = ''
   pazientiRisultati.value = []
   pazientiTotale.value = 0
+  ricercaInCorso.value = false
   nextTick(() => inputRef.value?.$el?.focus())
 }
 
@@ -116,6 +126,8 @@ function inizialiPaziente(paziente: Paziente) {
 <template>
   <button
     type="button"
+    aria-label="Cerca ovunque"
+    data-test="command-palette-trigger"
     class="flex items-center gap-2.5 rounded-lg border border-(--bd2) bg-(--surf) px-3 py-2 text-(--fg4) transition-colors hover:border-(--sage)"
     @click="apri"
   >
@@ -127,7 +139,7 @@ function inizialiPaziente(paziente: Paziente) {
   <Teleport to="body">
     <div
       v-if="aperta"
-      class="fixed inset-0 z-[60] flex items-start justify-center bg-black/30 pt-24 backdrop-blur-[2px]"
+      class="fixed inset-0 z-[60] flex items-start justify-center bg-black/30 px-4 pt-24 backdrop-blur-[2px]"
       @click="chiudi"
     >
       <div
@@ -141,7 +153,7 @@ function inizialiPaziente(paziente: Paziente) {
             v-model="testo"
             type="text"
             placeholder="Cerca pazienti o un'azione…"
-            class="h-auto flex-1 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
+            class="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
           />
           <kbd class="rounded-md border border-(--bd2) px-1.5 py-0.5 text-[10px] font-semibold text-(--fg3)">Esc</kbd>
         </div>

@@ -23,6 +23,7 @@ const props = defineProps<{
   visiteInCaricamento: boolean
   erroreVisite: boolean
   visite: Visita[]
+  archiviato: boolean
 }>()
 
 const emit = defineEmits<{ eliminata: [] }>()
@@ -183,7 +184,7 @@ const righe = computed<RigaStorico[]>(() => {
         </button>
 
         <div v-if="idAperto === riga.visita.id" data-test="storico-dettaglio" class="border-t border-(--div) px-5 pb-5 pt-4">
-          <div class="mb-4 flex justify-end gap-2">
+          <div v-if="!archiviato" class="mb-4 flex justify-end gap-2">
             <Button as-child variant="outline" size="sm">
               <router-link :to="`/pazienti/${pazienteId}/visite/${riga.visita.id}/modifica`">Modifica visita</router-link>
             </Button>

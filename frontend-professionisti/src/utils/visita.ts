@@ -27,15 +27,6 @@ export const ETICHETTE_CIRCONFERENZE: Record<keyof Visita['circonferenze'], stri
   cavigliaCm: 'Caviglia',
 }
 
-/** Classificazione OMS del BMI. Restituisce `null` se il bmi non è disponibile. */
-export function categoriaBmi(bmi: number | null): string | null {
-  if (bmi === null) return null
-  if (bmi < 18.5) return 'sottopeso'
-  if (bmi < 25) return 'normopeso'
-  if (bmi < 30) return 'sovrappeso'
-  return 'obesità'
-}
-
 export interface FasciaBmi {
   chiave: string
   etichetta: string
@@ -51,7 +42,7 @@ export const FASCE_BMI: FasciaBmi[] = [
   { chiave: 'sottopeso-moderato', etichetta: 'Sottopeso moderato', sogliaMin: 16, sogliaMax: 17, livello: 'severo' },
   { chiave: 'sottopeso-lieve', etichetta: 'Sottopeso lieve', sogliaMin: 17, sogliaMax: 18.5, livello: 'moderato' },
   { chiave: 'normopeso', etichetta: 'Normopeso', sogliaMin: 18.5, sogliaMax: 25, livello: 'normale' },
-  { chiave: 'sovrappeso', etichetta: 'Sovrappeso', sogliaMin: 25, sogliaMax: 30, livello: 'moderato' },
+  { chiave: 'sovrappeso', etichetta: 'Sovrappeso (pre-obesità)', sogliaMin: 25, sogliaMax: 30, livello: 'moderato' },
   { chiave: 'obesita-1', etichetta: 'Obesità classe I', sogliaMin: 30, sogliaMax: 35, livello: 'moderato' },
   { chiave: 'obesita-2', etichetta: 'Obesità classe II', sogliaMin: 35, sogliaMax: 40, livello: 'severo' },
   { chiave: 'obesita-3', etichetta: 'Obesità classe III', sogliaMin: 40, sogliaMax: Infinity, livello: 'severo' },
@@ -61,6 +52,11 @@ export const FASCE_BMI: FasciaBmi[] = [
 export function fasciaBmi(bmi: number | null): FasciaBmi | null {
   if (bmi === null) return null
   return FASCE_BMI.find((fascia) => bmi >= fascia.sogliaMin && bmi < fascia.sogliaMax) ?? null
+}
+
+/** Etichetta della fascia OMS del BMI. Restituisce `null` se il bmi non è disponibile. */
+export function categoriaBmi(bmi: number | null): string | null {
+  return fasciaBmi(bmi)?.etichetta ?? null
 }
 
 /** Calcola il BMI da altezza (cm) e peso (kg). Restituisce `null` se uno dei due valori non è disponibile o non è positivo. */

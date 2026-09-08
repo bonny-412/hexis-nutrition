@@ -45,13 +45,13 @@ function visita(overrides: Partial<Visita> = {}): Visita {
 
 function monta(
   visite: Visita[],
-  props: Partial<{ visiteInCaricamento: boolean; erroreVisite: boolean }> = {},
+  props: Partial<{ visiteInCaricamento: boolean; erroreVisite: boolean; archiviato: boolean }> = {},
   attachTo?: HTMLElement,
 ) {
   const router = creaRouter()
   router.push('/')
   return mount(PazienteTabStoricoMisurazioni, {
-    props: { pazienteId: 'p1', visiteInCaricamento: false, erroreVisite: false, visite, ...props },
+    props: { pazienteId: 'p1', visiteInCaricamento: false, erroreVisite: false, visite, archiviato: false, ...props },
     global: { plugins: [router] },
     attachTo,
   })

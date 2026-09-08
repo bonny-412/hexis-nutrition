@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import AppShell from '@/components/AppShell.vue'
 import { cerca, elimina, type Alimento, type PaginaAlimenti, type CriteriRicercaAlimenti } from '@/api/alimenti'
@@ -84,9 +84,17 @@ watch([ricercaEffettiva, fonte, pagina, ordinaPer, direzione], carica)
 onMounted(carica)
 
 const route = useRoute()
-onMounted(() => {
-  if (route.query.azione === 'nuovo') apriCreazione()
-})
+const router = useRouter()
+watch(
+  () => route.query.azione,
+  (azione) => {
+    if (azione === 'nuovo') {
+      apriCreazione()
+      router.replace({ query: { ...route.query, azione: undefined } })
+    }
+  },
+  { immediate: true },
+)
 
 function selezionaFonte(valore: typeof fonte.value) {
   fonte.value = valore

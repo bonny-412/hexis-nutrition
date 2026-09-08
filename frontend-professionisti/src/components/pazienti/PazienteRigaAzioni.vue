@@ -78,13 +78,13 @@ function etichettaAzione(paziente: Paziente) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" class="w-52">
-        <DropdownMenuItem as-child data-test="menu-nuova-visita" class="cursor-pointer">
+        <DropdownMenuItem v-if="!mostraArchiviati" as-child data-test="menu-nuova-visita" class="cursor-pointer">
           <router-link :to="`/pazienti/${paziente.id}/visite/nuova`">
             <ClipboardPlus />
             Nuova visita
           </router-link>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator v-if="!mostraArchiviati" />
         <DropdownMenuItem
           v-if="!mostraArchiviati"
           data-test="menu-archivia"

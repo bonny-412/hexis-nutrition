@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import type { AcceptableValue } from 'reka-ui'
 import { toast } from 'vue-sonner'
 import AppShell from '@/components/AppShell.vue'
@@ -129,12 +129,17 @@ watch(
 onMounted(carica)
 
 const route = useRoute()
-onMounted(() => {
-  const ricercaQuery = route.query.ricerca
-  if (typeof ricercaQuery === 'string' && ricercaQuery !== '') {
-    ricercaInput.value = ricercaQuery
-  }
-})
+const router = useRouter()
+watch(
+  () => route.query.ricerca,
+  (ricercaQuery) => {
+    if (typeof ricercaQuery === 'string' && ricercaQuery !== '') {
+      ricercaInput.value = ricercaQuery
+      router.replace({ query: { ...route.query, ricerca: undefined } })
+    }
+  },
+  { immediate: true },
+)
 
 function selezionaStato(valore: typeof statoAccount.value) {
   statoAccount.value = valore

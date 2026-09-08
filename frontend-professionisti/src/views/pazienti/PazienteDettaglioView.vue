@@ -3,11 +3,21 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
 import AppShell from '@/components/AppShell.vue'
-import { dettaglio, invita, visite as caricaVisite, type Paziente, type Visita } from '@/api/pazienti'
+import { dettaglio, invita, deArchivia, visite as caricaVisite, type Paziente, type Visita } from '@/api/pazienti'
 import { ApiError } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog'
 import type { AcceptableValue } from 'reka-ui'
 import PazienteTabPanoramica from '@/components/pazienti/PazienteTabPanoramica.vue'
 import PazienteTabStoricoMisurazioni from '@/components/pazienti/PazienteTabStoricoMisurazioni.vue'
@@ -29,6 +39,8 @@ import {
   CalendarX2,
   ClipboardPlus,
   Utensils,
+  Archive,
+  ArchiveRestore,
 } from '@lucide/vue'
 
 const ETICHETTE_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
@@ -60,6 +72,8 @@ const paziente = ref<Paziente | null>(null)
 const erroreCaricamento = ref<string | null>(null)
 const invitoInCorso = ref(false)
 const mostraModificaAnagrafica = ref(false)
+const confermaDeArchiviaAperta = ref(false)
+const deArchiviazioneInCorso = ref(false)
 
 // Stato Visite e Andamento
 const visite = ref<Visita[]>([])
@@ -120,6 +134,21 @@ async function onInvita() {
   }
 }
 
+async function onDeArchivia() {
+  if (!paziente.value) return
+  deArchiviazioneInCorso.value = true
+  try {
+    await deArchivia(paziente.value.id)
+    paziente.value.archiviato = false
+    toast.success('Paziente ripristinato.')
+  } catch {
+    toast.error('Non è stato possibile completare l\'operazione.')
+  } finally {
+    deArchiviazioneInCorso.value = false
+    confermaDeArchiviaAperta.value = false
+  }
+}
+
 onMounted(() => {
   carica()
   caricaAndamento()
@@ -169,8 +198,8 @@ onMounted(() => {
       <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
         <div class="flex items-start gap-4">
           <span
-            class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-heading text-xl font-semibold select-none"
-            :class="CLASSI_STATO_ACCOUNT[paziente.statoAccount]"
+            class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-heading text-2xl font-semibold select-none"
+            :class="paziente.archiviato ? 'bg-(--danger)/10 text-(--danger) border border-(--danger)' : CLASSI_STATO_ACCOUNT[paziente.statoAccount]"
           >
             {{ paziente.nome[0] }}{{ paziente.cognome[0] }}
           </span>
@@ -181,6 +210,7 @@ onMounted(() => {
                 {{ ETICHETTE_STATO_ACCOUNT[paziente.statoAccount] }}
               </Badge>
               <Button
+                v-if="!paziente.archiviato"
                 variant="ghost"
                 size="icon"
                 title="Modifica dati anagrafici"
@@ -190,7 +220,7 @@ onMounted(() => {
                 <Pencil :size="14" />
               </Button>
               <button
-                v-if="paziente.statoAccount !== 'ATTIVO'"
+                v-if="paziente.statoAccount !== 'ATTIVO' && !paziente.archiviato"
                 type="button"
                 :disabled="invitoInCorso"
                 class="text-sm font-semibold text-(--green) underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
@@ -207,7 +237,14 @@ onMounted(() => {
               <span v-if="primaVisita">paziente dal {{ formattaDataItalianaConMese(primaVisita.dataVisita) }}</span>
             </div>
             <div class="mt-2.5 flex flex-wrap items-center gap-2">
-              <span class="inline-flex items-center gap-1.5 rounded-full bg-(--warn-bg) px-2.5 py-1 text-xs font-bold text-(--warn-fg) border border-(--warn-fg)">
+              <span
+                v-if="paziente.archiviato"
+                class="inline-flex items-center gap-1.5 rounded-full bg-(--danger)/10 px-2.5 py-1 text-xs font-bold text-(--danger) border border-(--danger)"
+              >
+                <Archive :size="16" />
+                Paziente archiviato
+              </span>
+              <span v-else class="inline-flex items-center gap-1.5 rounded-full bg-(--warn-bg) px-2.5 py-1 text-xs font-bold text-(--warn-fg) border border-(--warn-fg)">
                 <CalendarX2 :size="16" />
                 Nessuna visita programmata
               </span>
@@ -215,7 +252,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2 ">
+        <div v-if="!paziente.archiviato" class="flex flex-wrap items-center gap-2 ">
           <Button variant="outline" disabled>
             <Utensils :size="15" />
             <span>Nuovo piano</span>
@@ -225,6 +262,12 @@ onMounted(() => {
               <ClipboardPlus :size="15" />
               <span>Nuova visita</span>
             </router-link>
+          </Button>
+        </div>
+        <div v-else class="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="neutral" @click="confermaDeArchiviaAperta = true">
+            <ArchiveRestore :size="15" />
+            <span>De-archivia paziente</span>
           </Button>
         </div>
       </div>
@@ -370,6 +413,7 @@ onMounted(() => {
             :visite-in-caricamento="visiteInCaricamento"
             :errore-visite="erroreVisite"
             :visite="visite"
+            :archiviato="paziente.archiviato"
             @eliminata="caricaAndamento"
           />
 
@@ -395,4 +439,19 @@ onMounted(() => {
     :paziente="paziente"
     @aggiornato="onPazienteAggiornato"
   />
+
+  <AlertDialog v-if="paziente" v-model:open="confermaDeArchiviaAperta">
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>De-archiviare {{ paziente.nome }} {{ paziente.cognome }}?</AlertDialogTitle>
+        <AlertDialogDescription>Il paziente tornerà visibile nella lista pazienti attivi.</AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel variant="neutral" :disabled="deArchiviazioneInCorso">Annulla</AlertDialogCancel>
+        <AlertDialogAction class="hover:bg-primary/80" :disabled="deArchiviazioneInCorso" @click="onDeArchivia">
+          {{ deArchiviazioneInCorso ? 'De-archiviazione…' : 'Conferma' }}
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 </template>

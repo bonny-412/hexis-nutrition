@@ -19,16 +19,16 @@ describe('categoriaBmi', () => {
   })
 
   it('classifica correttamente le fasce OMS', () => {
-    expect(categoriaBmi(17)).toBe('sottopeso')
-    expect(categoriaBmi(22)).toBe('normopeso')
-    expect(categoriaBmi(27)).toBe('sovrappeso')
-    expect(categoriaBmi(32)).toBe('obesità')
+    expect(categoriaBmi(17)).toBe('Sottopeso lieve')
+    expect(categoriaBmi(22)).toBe('Normopeso')
+    expect(categoriaBmi(27)).toBe('Sovrappeso (pre-obesità)')
+    expect(categoriaBmi(32)).toBe('Obesità classe I')
   })
 
   it('tratta i valori di confine come appartenenti alla fascia superiore', () => {
-    expect(categoriaBmi(18.5)).toBe('normopeso')
-    expect(categoriaBmi(25)).toBe('sovrappeso')
-    expect(categoriaBmi(30)).toBe('obesità')
+    expect(categoriaBmi(18.5)).toBe('Normopeso')
+    expect(categoriaBmi(25)).toBe('Sovrappeso (pre-obesità)')
+    expect(categoriaBmi(30)).toBe('Obesità classe I')
   })
 })
 
