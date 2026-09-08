@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
 import { useRouter } from 'vue-router'
-import { Menu, Bell, ChevronDown, LogOut } from '@lucide/vue'
+import { Menu, Bell, ChevronDown, LogOut, Moon } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -11,11 +12,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuItem,
+  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
 
 defineEmits<{ 'apri-menu': [] }>()
 
 const auth = useAuthStore()
+const tema = useThemeStore()
 const router = useRouter()
 
 function onLogout() {
@@ -26,7 +29,7 @@ function onLogout() {
 
 <template>
   <header
-    class="sticky top-0 z-30 flex items-center justify-between bg-(--surf) py-3 px-2 lg:px-4 lg:bg-(--bg-blur) lg:backdrop-blur-[10px]"
+    class="sticky top-0 z-30 flex items-center justify-between bg-(--surf) py-3 px-2 dark:bg-(--side) lg:px-4 lg:bg-(--bg-blur) lg:dark:bg-(--bg-blur) lg:backdrop-blur-[10px]"
   >
     <div class="flex items-center gap-2.5">
       <Button variant="ghost" size="icon" class="lg:hidden" aria-label="Apri menu" @click="$emit('apri-menu')">
@@ -38,17 +41,17 @@ function onLogout() {
       data-test="brand-mobile"
       class="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2.5 lg:hidden"
     >
-      <img src="@/assets/hexis-logo.svg" alt="Hexis" class="h-9 w-9 rounded-xl bg-(--green)" />
+      <img src="@/assets/hexis-logo.svg" alt="Hexis" class="h-9 w-9" />
       <span class="font-heading text-xl font-semibold text-(--fg)">Hexis</span>
     </div>
 
     <div class="flex items-center gap-2.5">
-      <Button variant="outline" size="icon" class="relative" aria-label="Notifiche">
+      <Button variant="neutral" size="icon" class="relative" aria-label="Notifiche">
         <Bell :size="16" />
         <span class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-(--green) shadow-[0_0_0_2px_var(--surf)]"></span>
       </Button>
 
-      <div class="mx-1 h-5.5 w-px bg-(--bd)"></div>
+      <div class="mx-1 h-5.5 w-px bg-(--bd) hidden lg:flex"></div>
 
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
@@ -79,6 +82,16 @@ function onLogout() {
             <div class="text-xs font-bold text-(--fg)">{{ auth.professionista?.nome }} {{ auth.professionista?.cognome }}</div>
             <div class="mt-0.5 text-[11px] font-normal text-(--fg4)">{{ auth.professionista?.email }}</div>
           </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuCheckboxItem
+            data-test="toggle-tema"
+            class="cursor-pointer"
+            :model-value="tema.isDark"
+            @update:model-value="tema.toggleTheme"
+          >
+            <Moon :size="14" />
+            Tema scuro
+          </DropdownMenuCheckboxItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem data-test="logout" class="cursor-pointer" variant="destructive" @click="onLogout">
             <LogOut :size="14" />

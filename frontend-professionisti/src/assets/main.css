@@ -74,6 +74,35 @@
   --sidebar-ring: var(--sage);
 }
 
+.dark {
+  --bg: #0F1417;
+  --surf: #171D21;
+  --bd: #283035;
+  --bd2: #2E373D;
+  --div: #212930;
+  --soft: #1B2226;
+  --hover: #232C32;
+  --fg: #E8EDF0;
+  --fg2: #AAB5BC;
+  --fg3: #8B959C;
+  --fg4: #78838A;
+  --green: #7BC299;
+  --green-d: #96D3AF;
+  --on-green: #0F1417;
+  --mint: #1F2C29;
+  --sage: #7BC299;
+  --danger: #E28068;
+  --warn-bg: #332A1D;
+  --warn-fg: #DDB585;
+  --bg-blur: rgba(15, 20, 23, 0.88);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+
+  /* Sidebar: variante "Scura tenue" in dark mode, vedi mockup Opzioni Dashboard */
+  --side: #1A252A;
+
+  color-scheme: dark;
+}
+
 @theme inline {
   --font-sans: Figtree, system-ui, sans-serif;
   --font-heading: Fraunces, serif;

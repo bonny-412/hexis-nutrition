@@ -29,7 +29,7 @@ const route = useRoute()
   >
     <div>
       <div class="mb-5 flex items-center gap-2.5 px-1.5" :class="{ 'justify-center px-0': isCollapsed }">
-        <img src="@/assets/hexis-logo.svg" alt="Hexis" class="h-8.5 w-8.5 flex-none rounded-[10px] bg-white" />
+        <img src="@/assets/hexis-logo.svg" alt="Hexis" class="h-10 w-10 flex-none rounded-[6px]" />
         <div v-if="!isCollapsed" class="flex flex-col gap-px overflow-hidden whitespace-nowrap">
           <span class="font-heading text-base font-semibold leading-tight text-white">Hexis</span>
           <span class="text-[10px] uppercase tracking-[0.14em] text-(--side-fg2)">Professionisti</span>

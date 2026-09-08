@@ -42,14 +42,14 @@ async function onSubmit() {
 <template>
   <div class="grid min-h-screen grid-cols-1 bg-(--bg) md:grid-cols-12">
     <!-- HERO / LEFT PANEL (7 Colonne) -->
-    <div class="relative hidden flex-col justify-between overflow-hidden bg-(--green) p-12 text-white md:col-span-6 md:flex lg:col-span-7 xl:p-16">
+    <div class="relative hidden flex-col justify-between overflow-hidden bg-(--side) p-12 text-white md:col-span-6 md:flex lg:col-span-7 xl:p-16">
       <!-- Glow Decorativo di Sfondo -->
       <div class="pointer-events-none absolute -left-20 -top-20 h-96 w-96 rounded-full bg-(--sage)/20 blur-3xl" />
-      <div class="pointer-events-none absolute -bottom-32 -right-32 h-120 w-120 rounded-full bg-(--mint)/10 blur-3xl" />
+      <div class="pointer-events-none absolute -bottom-32 -right-32 h-120 w-120 rounded-full bg-(--sage)/10 blur-3xl" />
 
       <!-- Top: Logo & Brand -->
       <div class="relative z-10 flex items-center gap-3">
-        <div class="flex size-11 items-center justify-center rounded-2xl bg-white/10 p-2 backdrop-blur-md ring-1 ring-white/20">
+        <div class="flex size-11 items-center justify-center">
           <img src="@/assets/hexis-logo.svg" alt="Hexis" class="h-full w-full object-contain" />
         </div>
         <span class="font-heading text-xl font-semibold tracking-tight text-white">Hexis Nutrition</span>
@@ -57,7 +57,7 @@ async function onSubmit() {
 
       <!-- Center: Copy Editorial -->
       <div class="relative z-10 my-auto max-w-lg py-12">
-        <div class="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-medium text-(--mint) backdrop-blur-md ring-1 ring-white/15">
+        <div class="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-medium text-(--side-fg) backdrop-blur-md ring-1 ring-white/15">
           <ShieldCheck :size="14" />
           <span>Piattaforma clinica avanzata</span>
         </div>
@@ -81,8 +81,8 @@ async function onSubmit() {
       <div class="w-full max-w-sm">
         <!-- Logo Mobile -->
         <div class="mb-8 flex items-center gap-3 md:hidden">
-          <img src="@/assets/hexis-logo.svg" alt="Hexis" class="size-10 rounded-xl bg-(--green) p-2" />
-          <span class="font-heading text-lg font-semibold text-(--fg)">Hexis Nutrition</span>
+          <img src="@/assets/hexis-logo.svg" alt="Hexis" class="size-10 rounded-xl" />
+          <span class="font-heading text-xl font-semibold text-(--fg)">Hexis Nutrition</span>
         </div>
 
         <div class="mb-8">
@@ -147,7 +147,7 @@ async function onSubmit() {
           <Button
             type="submit"
             :disabled="inCorso"
-            class="mt-2 h-11 w-full rounded-xl bg-(--green) text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary/80 active:not-aria-[haspopup]:translate-y-0.5"
+            class="mt-2 h-11 w-full rounded-xl bg-(--green) text-sm font-semibold text-(--on-green) shadow-sm transition-all hover:bg-primary/80 active:not-aria-[haspopup]:translate-y-0.5"
           >
             <Loader2 v-if="inCorso" :size="18" class="mr-2 animate-spin" />
             <span>{{ inCorso ? 'Accesso in corso…' : 'Accedi' }}</span>
