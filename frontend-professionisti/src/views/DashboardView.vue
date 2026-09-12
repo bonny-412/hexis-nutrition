@@ -64,9 +64,11 @@ onMounted(async () => {
             <CalendarPlus :size="16" />
             Nuovo appuntamento
           </DropdownMenuItem>
-          <DropdownMenuItem disabled class="gap-2 px-2.5 py-1.5 cursor-pointer">
-            <FileText :size="16" />
-            Nuovo piano alimentare
+          <DropdownMenuItem as-child class="gap-2 px-2.5 py-1.5 cursor-pointer">
+            <router-link to="/piani-alimentari/nuovo">
+              <FileText :size="16" />
+              Nuovo piano alimentare
+            </router-link>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

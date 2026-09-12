@@ -26,6 +26,9 @@ function creaRouter() {
       { path: '/pazienti/:id/visite/nuova', name: 'visita-nuova', component: VisitaFormView },
       { path: '/pazienti/:id/visite/:visitaId/modifica', name: 'visita-modifica', component: VisitaFormView },
       { path: '/alimenti', name: 'alimenti', component: { template: '<div/>' } },
+      { path: '/piani-alimentari', name: 'piani-alimentari', component: { template: '<div/>' } },
+      { path: '/piani-alimentari/nuovo', name: 'piano-alimentare-nuovo', component: { template: '<div/>' } },
+      { path: '/piani-alimentari/:id', name: 'piano-alimentare-modifica', component: { template: '<div/>' } },
       { path: '/login', name: 'login', component: { template: '<div/>' } },
     ],
   })

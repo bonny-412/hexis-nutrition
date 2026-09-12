@@ -15,7 +15,7 @@ const voci = [
   { nome: 'Dashboard', routeName: 'dashboard', routeNamesAttivi: ['dashboard'], icona: LayoutGrid },
   { nome: 'Agenda', icona: Calendar },
   { nome: 'Pazienti', routeName: 'pazienti', routeNamesAttivi: ['pazienti', 'paziente-nuovo', 'paziente-dettaglio'], icona: Users },
-  { nome: 'Piani alimentari', icona: Utensils },
+  { nome: 'Piani alimentari', routeName: 'piani-alimentari', routeNamesAttivi: ['piani-alimentari', 'piano-alimentare-nuovo', 'piano-alimentare-modifica'], icona: Utensils },
   { nome: 'Chat', icona: MessageSquare },
   { nome: 'Analytics', icona: BarChart3 },
 ]

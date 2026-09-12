@@ -17,7 +17,7 @@ const AZIONI: AzionePalette[] = [
   { id: 'nuovo-paziente', etichetta: 'Nuovo paziente', icona: UserPlus, href: '/pazienti/nuovo' },
   { id: 'nuova-visita', etichetta: 'Nuova visita', icona: ClipboardPlus, href: '/pazienti/visite/nuova' },
   { id: 'nuovo-appuntamento', etichetta: 'Nuovo appuntamento', icona: CalendarPlus, disabilitata: true },
-  { id: 'nuovo-piano-alimentare', etichetta: 'Nuovo piano alimentare', icona: FileText, disabilitata: true },
+  { id: 'nuovo-piano-alimentare', etichetta: 'Nuovo piano alimentare', icona: FileText, href: '/piani-alimentari/nuovo' },
   { id: 'nuovo-alimento', etichetta: 'Nuovo alimento', icona: Apple, href: '/alimenti?azione=nuovo' },
 ]
 

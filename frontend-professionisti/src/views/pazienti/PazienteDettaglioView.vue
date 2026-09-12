@@ -253,9 +253,11 @@ onMounted(() => {
         </div>
 
         <div v-if="!paziente.archiviato" class="flex flex-wrap items-center gap-2 ">
-          <Button variant="outline" disabled>
-            <Utensils :size="15" />
-            <span>Nuovo piano</span>
+          <Button variant="outline" as-child>
+            <router-link :to="`/piani-alimentari/nuovo?pazienteId=${paziente.id}`">
+              <Utensils :size="15" />
+              <span>Nuovo piano</span>
+            </router-link>
           </Button>
           <Button as-child class="hover:bg-primary/80">
             <router-link :to="`/pazienti/${paziente.id}/visite/nuova`">
