@@ -149,7 +149,9 @@ describe('PianoAlimentareFormView', () => {
     await vi.waitFor(() => expect(api.dettaglio).toHaveBeenCalled())
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.text()).toContain('1100')
+    // Il suggerimento (kcal) è mostrato come placeholder dell'input, non come testo visibile.
+    const campoObiettivo = wrapper.find('[data-test="obiettivo-kcal-input"]').element as HTMLInputElement
+    expect(campoObiettivo.placeholder).toBe('1100')
     expect(wrapper.text()).toContain('sotto la soglia')
   })
 

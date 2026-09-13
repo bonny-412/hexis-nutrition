@@ -15,6 +15,10 @@ export interface RigaAlimento {
   carboidrati100g: number
   grassi100g: number
   zuccheri100g: number | null
+  fibre100g: number | null
+  ferro100mg: number | null
+  calcio100mg: number | null
+  acqua100g: number | null
   grammi: number
 }
 
@@ -68,6 +72,7 @@ export interface CreaPianoAlimentareRequest {
   pazienteId: string
   nome: string
   modalita: ModalitaPiano
+  dataInizio?: string
 }
 
 export interface RigaAlimentoRequest {
@@ -78,6 +83,10 @@ export interface RigaAlimentoRequest {
   carboidrati100g: number
   grassi100g: number
   zuccheri100g: number | null
+  fibre100g: number | null
+  ferro100mg: number | null
+  calcio100mg: number | null
+  acqua100g: number | null
   grammi: number
 }
 

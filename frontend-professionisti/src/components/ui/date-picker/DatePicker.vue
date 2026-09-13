@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, type HTMLAttributes } from 'vue'
 import { DateFormatter, getLocalTimeZone, parseDate, type DateValue } from '@internationalized/date'
 import { Calendar as CalendarIcon } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
@@ -7,10 +7,13 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 
+defineOptions({ inheritAttrs: false })
+
 const props = withDefaults(defineProps<{
   modelValue?: string
   placeholder?: string
   id?: string
+  class?: HTMLAttributes['class']
 }>(), {
   modelValue: '',
   placeholder: 'Seleziona una data',
@@ -47,6 +50,7 @@ const testoVisualizzato = computed(() =>
         :class="cn(
           'w-full justify-start border-input bg-transparent px-2.5 py-1 text-left text-base font-normal hover:bg-transparent dark:bg-input/30 md:text-sm',
           !valore && 'text-muted-foreground',
+          props.class,
         )"
       >
         <CalendarIcon :size="16" class="mr-2 shrink-0" />

@@ -45,6 +45,18 @@ public class PianoAlimentoRiga {
     @Column(name = "zuccheri_100g")
     private BigDecimal zuccheri100g;
 
+    @Column(name = "fibre_100g")
+    private BigDecimal fibre100g;
+
+    @Column(name = "ferro_100mg")
+    private BigDecimal ferro100mg;
+
+    @Column(name = "calcio_100mg")
+    private BigDecimal calcio100mg;
+
+    @Column(name = "acqua_100g")
+    private BigDecimal acqua100g;
+
     @Column(nullable = false)
     private BigDecimal grammi;
 
@@ -56,6 +68,7 @@ public class PianoAlimentoRiga {
 
     public static PianoAlimentoRiga perPasto(UUID pastoId, UUID alimentoId, String nome, BigDecimal kcal100g,
             BigDecimal proteine100g, BigDecimal carboidrati100g, BigDecimal grassi100g, BigDecimal zuccheri100g,
+            BigDecimal fibre100g, BigDecimal ferro100mg, BigDecimal calcio100mg, BigDecimal acqua100g,
             BigDecimal grammi, int ordine) {
         PianoAlimentoRiga riga = new PianoAlimentoRiga();
         riga.pastoId = pastoId;
@@ -66,6 +79,10 @@ public class PianoAlimentoRiga {
         riga.carboidrati100g = carboidrati100g;
         riga.grassi100g = grassi100g;
         riga.zuccheri100g = zuccheri100g;
+        riga.fibre100g = fibre100g;
+        riga.ferro100mg = ferro100mg;
+        riga.calcio100mg = calcio100mg;
+        riga.acqua100g = acqua100g;
         riga.grammi = grammi;
         riga.ordine = ordine;
         return riga;
@@ -73,6 +90,7 @@ public class PianoAlimentoRiga {
 
     public static PianoAlimentoRiga perEsempio(UUID esempioId, UUID alimentoId, String nome, BigDecimal kcal100g,
             BigDecimal proteine100g, BigDecimal carboidrati100g, BigDecimal grassi100g, BigDecimal zuccheri100g,
+            BigDecimal fibre100g, BigDecimal ferro100mg, BigDecimal calcio100mg, BigDecimal acqua100g,
             BigDecimal grammi, int ordine) {
         PianoAlimentoRiga riga = new PianoAlimentoRiga();
         riga.esempioId = esempioId;
@@ -83,6 +101,10 @@ public class PianoAlimentoRiga {
         riga.carboidrati100g = carboidrati100g;
         riga.grassi100g = grassi100g;
         riga.zuccheri100g = zuccheri100g;
+        riga.fibre100g = fibre100g;
+        riga.ferro100mg = ferro100mg;
+        riga.calcio100mg = calcio100mg;
+        riga.acqua100g = acqua100g;
         riga.grammi = grammi;
         riga.ordine = ordine;
         return riga;
@@ -126,6 +148,22 @@ public class PianoAlimentoRiga {
 
     public BigDecimal getZuccheri100g() {
         return zuccheri100g;
+    }
+
+    public BigDecimal getFibre100g() {
+        return fibre100g;
+    }
+
+    public BigDecimal getFerro100mg() {
+        return ferro100mg;
+    }
+
+    public BigDecimal getCalcio100mg() {
+        return calcio100mg;
+    }
+
+    public BigDecimal getAcqua100g() {
+        return acqua100g;
     }
 
     public BigDecimal getGrammi() {

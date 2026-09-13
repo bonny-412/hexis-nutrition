@@ -76,6 +76,9 @@ public class PianoAlimentareService {
         Optional<Visita> visitaOpt = ultimaVisita(paziente.getId());
         PianoAlimentare piano = new PianoAlimentare(paziente.getId(), professionistaId,
                 visitaOpt.map(Visita::getId).orElse(null), request.nome(), request.modalita());
+        if (request.dataInizio() != null) {
+            piano.setDataInizio(request.dataInizio());
+        }
 
         if (visitaOpt.isPresent()) {
             Visita visita = visitaOpt.get();
@@ -222,7 +225,8 @@ public class PianoAlimentareService {
         for (RigaAlimentoRequest riga : righe) {
             pianoAlimentoRigaRepository.save(PianoAlimentoRiga.perPasto(pastoId, riga.alimentoId(), riga.nome(),
                     riga.kcal100g(), riga.proteine100g(), riga.carboidrati100g(), riga.grassi100g(),
-                    riga.zuccheri100g(), riga.grammi(), ordineRiga++));
+                    riga.zuccheri100g(), riga.fibre100g(), riga.ferro100mg(), riga.calcio100mg(), riga.acqua100g(),
+                    riga.grammi(), ordineRiga++));
         }
     }
 
@@ -294,7 +298,8 @@ public class PianoAlimentareService {
                 for (RigaAlimentoRequest riga : richiesta.righe()) {
                     pianoAlimentoRigaRepository.save(PianoAlimentoRiga.perEsempio(esempio.getId(), riga.alimentoId(),
                             riga.nome(), riga.kcal100g(), riga.proteine100g(), riga.carboidrati100g(),
-                            riga.grassi100g(), riga.zuccheri100g(), riga.grammi(), ordineRiga++));
+                            riga.grassi100g(), riga.zuccheri100g(), riga.fibre100g(), riga.ferro100mg(),
+                            riga.calcio100mg(), riga.acqua100g(), riga.grammi(), ordineRiga++));
                 }
             }
         }

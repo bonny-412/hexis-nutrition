@@ -2,13 +2,15 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppShell from '@/components/AppShell.vue'
-import { cerca, type PaginaPianiAlimentari, type StatoPiano } from '@/api/pianiAlimentari'
+import { cerca, type PaginaPianiAlimentari, type StatoPiano, type CriteriRicercaPianiAlimentari } from '@/api/pianiAlimentari'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
-import { Plus } from '@lucide/vue'
+import { Plus, ArrowUp, ArrowDown, ArrowUpDown } from '@lucide/vue'
+import { formattaDataItaliana } from '@/utils/data'
 
-const router = useRouter()
+type CampoOrdinamento = NonNullable<CriteriRicercaPianiAlimentari['ordinaPer']>
 
 const CHIP_STATI: { valore: StatoPiano | 'TUTTI'; etichetta: string }[] = [
   { valore: 'TUTTI', etichetta: 'Tutti' },
@@ -18,13 +20,32 @@ const CHIP_STATI: { valore: StatoPiano | 'TUTTI'; etichetta: string }[] = [
   { valore: 'TERMINATO', etichetta: 'Terminato' },
 ]
 
+const ETICHETTE_STATO: Record<StatoPiano, string> = {
+  BOZZA: 'Bozza',
+  ATTIVO: 'Attivo',
+  SCADUTO: 'Scaduto',
+  TERMINATO: 'Terminato',
+}
+
+const CLASSI_STATO: Record<StatoPiano, string> = {
+  BOZZA: 'bg-(--hover) text-(--fg4)',
+  ATTIVO: 'bg-(--mint) text-(--green)',
+  SCADUTO: 'bg-(--danger)/10 text-(--danger)',
+  TERMINATO: 'bg-(--warn-bg) text-(--warn-fg)',
+}
+
+const router = useRouter()
+
 const ricercaInput = ref('')
 const ricercaEffettiva = ref('')
 const statoFiltro = ref<StatoPiano | 'TUTTI'>('TUTTI')
 const pagina = ref(0)
+const ordinaPer = ref<CampoOrdinamento | undefined>(undefined)
+const direzione = ref<'asc' | 'desc'>('asc')
 
 const paginaDati = ref<PaginaPianiAlimentari | null>(null)
 const caricamentoIniziale = ref(true)
+const aggiornamentoInCorso = ref(false)
 const errore = ref(false)
 
 let debounceHandle: ReturnType<typeof setTimeout> | undefined
@@ -37,29 +58,68 @@ watch(ricercaInput, (valore) => {
 })
 onUnmounted(() => clearTimeout(debounceHandle))
 
+const filtriAttivi = computed(() => ricercaEffettiva.value.trim() !== '' || statoFiltro.value !== 'TUTTI')
+
 function selezionaStato(valore: StatoPiano | 'TUTTI') {
   statoFiltro.value = valore
   pagina.value = 0
 }
 
+function criteriCorrenti(): CriteriRicercaPianiAlimentari {
+  return {
+    pagina: pagina.value,
+    dimensione: 20,
+    ordinaPer: ordinaPer.value,
+    direzione: direzione.value,
+    ricerca: ricercaEffettiva.value.trim() || undefined,
+    stato: statoFiltro.value === 'TUTTI' ? undefined : statoFiltro.value,
+  }
+}
+
 async function carica() {
-  caricamentoIniziale.value = paginaDati.value === null
+  if (paginaDati.value === null) {
+    caricamentoIniziale.value = true
+  } else {
+    aggiornamentoInCorso.value = true
+  }
   errore.value = false
   try {
-    paginaDati.value = await cerca({
-      pagina: pagina.value,
-      dimensione: 20,
-      ricerca: ricercaEffettiva.value.trim() || undefined,
-      stato: statoFiltro.value === 'TUTTI' ? undefined : statoFiltro.value,
-    })
+    paginaDati.value = await cerca(criteriCorrenti())
   } catch {
     errore.value = true
   } finally {
     caricamentoIniziale.value = false
+    aggiornamentoInCorso.value = false
   }
 }
-watch([ricercaEffettiva, statoFiltro, pagina], carica)
+watch([ricercaEffettiva, statoFiltro, pagina, ordinaPer, direzione], carica)
 onMounted(carica)
+
+function ordina(campo: CampoOrdinamento) {
+  if (ordinaPer.value !== campo) {
+    ordinaPer.value = campo
+    direzione.value = 'asc'
+  } else if (direzione.value === 'asc') {
+    direzione.value = 'desc'
+  } else {
+    ordinaPer.value = undefined
+    direzione.value = 'asc'
+  }
+  pagina.value = 0
+}
+
+function iconaOrdinamento(campo: CampoOrdinamento) {
+  if (ordinaPer.value !== campo) return ArrowUpDown
+  return direzione.value === 'asc' ? ArrowUp : ArrowDown
+}
+
+function pulisciFiltri() {
+  clearTimeout(debounceHandle)
+  ricercaInput.value = ''
+  ricercaEffettiva.value = ''
+  statoFiltro.value = 'TUTTI'
+  pagina.value = 0
+}
 
 function paginaPrecedente() {
   if (pagina.value > 0) pagina.value -= 1
@@ -74,7 +134,7 @@ function apriPiano(id: string) {
 const conteggioTesto = computed(() => {
   if (!paginaDati.value) return ''
   const { totaleElementi, paginaCorrente, dimensionePagina, contenuto } = paginaDati.value
-  if (totaleElementi === 0) return ''
+  if (totaleElementi === 0) return 'Nessun piano'
   const primo = paginaCorrente * dimensionePagina + 1
   const ultimo = paginaCorrente * dimensionePagina + contenuto.length
   return `Mostrati ${primo}-${ultimo} di ${totaleElementi} piani`
@@ -83,63 +143,104 @@ const conteggioTesto = computed(() => {
 
 <template>
   <AppShell>
-    <div class="flex flex-col gap-4 p-6">
-      <div class="flex items-end justify-between gap-4">
-        <h1 class="font-heading text-2xl italic text-(--fg)">Piani alimentari</h1>
-        <Button @click="router.push('/piani-alimentari/nuovo')">
-          <Plus :size="14" /> Crea nuovo piano
-        </Button>
+    <div class="mb-6 flex items-center justify-between">
+      <div>
+        <h1 class="font-heading text-3xl italic text-(--fg)">Piani alimentari</h1>
+        <p class="mt-1 text-sm text-(--fg3)">Gestisci i piani alimentari dei tuoi pazienti.</p>
       </div>
+      <Button as-child class="hover:bg-primary/80">
+        <router-link to="/piani-alimentari/nuovo"><Plus :size="16" /> Nuovo piano</router-link>
+      </Button>
+    </div>
 
-      <div class="flex flex-wrap items-center gap-2">
-        <Input v-model="ricercaInput" placeholder="Cerca paziente o piano…" class="min-w-60" />
-        <button
-          v-for="chip in CHIP_STATI" :key="chip.valore" :data-test="`chip-stato-${chip.valore}`"
-          class="rounded-full border px-3 py-1 text-xs font-bold"
-          :class="statoFiltro === chip.valore ? 'border-(--green) bg-(--green) text-(--on-green)' : 'border-(--bd2) bg-(--surf) text-(--fg2)'"
-          @click="selezionaStato(chip.valore)"
-        >
-          {{ chip.etichetta }}
-        </button>
-        <span class="ml-auto text-xs text-(--fg3)">{{ conteggioTesto }}</span>
-      </div>
-
-      <div v-if="caricamentoIniziale" class="text-sm text-(--fg3)">Caricamento…</div>
-      <div v-else-if="errore" class="text-sm text-(--danger)">Non è stato possibile caricare i piani.</div>
-      <div v-else class="rounded-2xl border border-(--bd) bg-(--surf)">
-        <Table v-if="paginaDati && paginaDati.contenuto.length > 0">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Paziente</TableHead>
-              <TableHead>Piano</TableHead>
-              <TableHead>Stato</TableHead>
-              <TableHead class="text-right">Obiettivo</TableHead>
-              <TableHead>Scadenza</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow
-              v-for="riga in paginaDati.contenuto" :key="riga.id"
-              class="cursor-pointer" @click="apriPiano(riga.id)"
-            >
-              <TableCell class="font-heading font-semibold">{{ riga.pazienteNomeCompleto }}</TableCell>
-              <TableCell>{{ riga.nome }}</TableCell>
-              <TableCell>{{ riga.stato }}</TableCell>
-              <TableCell class="text-right">{{ riga.obiettivoKcal ?? '—' }} kcal</TableCell>
-              <TableCell>{{ riga.dataFine ?? '—' }}</TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-        <div v-else class="flex flex-col items-center gap-2 p-10 text-center">
-          <p class="text-sm font-bold">Nessun piano trovato</p>
-          <p class="text-xs text-(--fg3)">Prova a modificare la ricerca o i filtri.</p>
+    <section class="mb-3.5 rounded-2xl border border-(--bd) bg-(--surf) p-3.5">
+      <div class="flex flex-wrap items-center gap-2.5">
+        <Input v-model="ricercaInput" type="search" placeholder="Cerca paziente o piano…" class="min-w-70 flex-1" />
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="chip in CHIP_STATI" :key="chip.valore" type="button" :data-test="`chip-stato-${chip.valore}`"
+            class="rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
+            :class="statoFiltro === chip.valore
+              ? 'border-(--sage) bg-(--mint) text-(--green)'
+              : 'border-(--bd2) bg-(--surf) text-(--fg2) hover:border-(--sage)'"
+            @click="selezionaStato(chip.valore)"
+          >
+            {{ chip.etichetta }}
+          </button>
         </div>
       </div>
+    </section>
 
-      <div v-if="paginaDati && paginaDati.totalePagine > 1" class="flex items-center justify-end gap-2">
-        <Button variant="outline" size="sm" :disabled="pagina === 0" @click="paginaPrecedente">Precedente</Button>
-        <Button variant="outline" size="sm" :disabled="pagina >= paginaDati.totalePagine - 1" @click="paginaSuccessiva">Successivo</Button>
+    <section class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)">
+      <div v-if="errore" class="flex flex-col items-center gap-3 p-14 text-center">
+        <p class="text-(--danger)">Non è stato possibile caricare i piani.</p>
+        <Button type="button" variant="outline" @click="carica">Riprova</Button>
       </div>
-    </div>
+
+      <div v-else-if="caricamentoIniziale" class="flex flex-col gap-2 p-4">
+        <div v-for="n in 6" :key="n" class="h-9 animate-pulse rounded-lg bg-(--hover)" />
+      </div>
+
+      <template v-else-if="paginaDati && paginaDati.contenuto.length > 0">
+        <div class="overflow-x-auto" :class="{ 'pointer-events-none opacity-60': aggiornamentoInCorso }">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead class="uppercase tracking-wide text-(--fg4)">Paziente</TableHead>
+                <TableHead>
+                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('nome')">
+                    Piano
+                    <component :is="iconaOrdinamento('nome')" :size="12" :class="ordinaPer === 'nome' ? 'text-(--fg)' : 'text-(--fg4)'" />
+                  </button>
+                </TableHead>
+                <TableHead class="uppercase tracking-wide text-(--fg4)">Stato</TableHead>
+                <TableHead class="text-right uppercase tracking-wide text-(--fg4)">Obiettivo</TableHead>
+                <TableHead>
+                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('dataFine')">
+                    Scadenza
+                    <component :is="iconaOrdinamento('dataFine')" :size="12" :class="ordinaPer === 'dataFine' ? 'text-(--fg)' : 'text-(--fg4)'" />
+                  </button>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow
+                v-for="riga in paginaDati.contenuto" :key="riga.id"
+                class="cursor-pointer hover:bg-(--soft)" @click="apriPiano(riga.id)"
+              >
+                <TableCell class="font-heading font-semibold text-(--fg)">{{ riga.pazienteNomeCompleto }}</TableCell>
+                <TableCell>{{ riga.nome }}</TableCell>
+                <TableCell><Badge :class="CLASSI_STATO[riga.stato]">{{ ETICHETTE_STATO[riga.stato] }}</Badge></TableCell>
+                <TableCell class="text-right">{{ riga.obiettivoKcal ? `${riga.obiettivoKcal} kcal` : '—' }}</TableCell>
+                <TableCell>{{ riga.dataFine ? formattaDataItaliana(riga.dataFine) : '—' }}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      </template>
+
+      <div v-else class="flex flex-col items-center gap-2 p-16 text-center">
+        <p class="font-heading text-lg italic">Nessun piano trovato</p>
+        <p class="text-xs text-muted-foreground max-w-xs">Prova a modificare la ricerca o i filtri.</p>
+        <Button v-if="filtriAttivi" type="button" variant="outline" @click="pulisciFiltri">Pulisci filtri</Button>
+        <Button v-else as-child><router-link to="/piani-alimentari/nuovo">Nuovo piano</router-link></Button>
+      </div>
+
+      <div v-if="paginaDati && !errore" class="flex items-center justify-between gap-3 border-t border-(--div) bg-(--soft) px-4.5 py-3">
+        <span class="text-xs text-(--fg3)">{{ conteggioTesto }}</span>
+        <div class="flex gap-2">
+          <Button type="button" variant="neutral" size="sm" :disabled="pagina === 0" @click="paginaPrecedente">Precedente</Button>
+          <Button
+            type="button"
+            variant="neutral"
+            size="sm"
+            :disabled="!paginaDati || pagina >= paginaDati.totalePagine - 1"
+            @click="paginaSuccessiva"
+          >
+            Successivo
+          </Button>
+        </div>
+      </div>
+    </section>
   </AppShell>
 </template>

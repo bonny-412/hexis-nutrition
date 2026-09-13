@@ -133,6 +133,10 @@ public class PianoAlimentare {
         return dataInizio;
     }
 
+    public void setDataInizio(LocalDate dataInizio) {
+        this.dataInizio = dataInizio;
+    }
+
     public LocalDate getDataFine() {
         return dataFine;
     }

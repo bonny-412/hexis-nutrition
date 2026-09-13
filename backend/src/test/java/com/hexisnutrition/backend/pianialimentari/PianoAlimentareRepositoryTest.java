@@ -42,7 +42,8 @@ class PianoAlimentareRepositoryTest extends AbstractIntegrationTest {
                 new Pasto(piano.getId(), GiornoSettimana.LUNEDI, "Colazione", TipoPasto.COLAZIONE, null, 0));
         pianoAlimentoRigaRepository.save(PianoAlimentoRiga.perPasto(pasto.getId(), null, "Avena",
                 java.math.BigDecimal.valueOf(372), java.math.BigDecimal.valueOf(12.9), java.math.BigDecimal.valueOf(65),
-                java.math.BigDecimal.valueOf(6.5), java.math.BigDecimal.valueOf(1.1), java.math.BigDecimal.valueOf(60), 0));
+                java.math.BigDecimal.valueOf(6.5), java.math.BigDecimal.valueOf(1.1), null, null, null, null,
+                java.math.BigDecimal.valueOf(60), 0));
 
         assertThat(pianoAlimentareRepository.findAllByPazienteIdAndStato(paziente.getId(), StatoPiano.BOZZA))
                 .hasSize(1);

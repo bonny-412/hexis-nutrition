@@ -40,7 +40,8 @@ describe('AggiungiAlimentoDialog', () => {
 
     expect(wrapper.emitted('aggiunto')?.[0]?.[0]).toEqual({
       alimentoId: 'a1', nome: 'Avena in fiocchi', kcal100g: 372, proteine100g: 12.9, carboidrati100g: 65,
-      grassi100g: 6.5, zuccheri100g: 1.1, grammi: 100,
+      grassi100g: 6.5, zuccheri100g: 1.1, fibre100g: null, ferro100mg: null, calcio100mg: null, acqua100g: null,
+      grammi: 100,
     })
     expect(wrapper.emitted('update:open')?.[0]).toEqual([false])
   })
@@ -62,7 +63,8 @@ describe('AggiungiAlimentoDialog', () => {
 
     expect(wrapper.emitted('aggiunto')?.[0]?.[0]).toEqual({
       alimentoId: 'p1', nome: 'Barretta proteica', kcal100g: 200, proteine100g: 20, carboidrati100g: 30,
-      grassi100g: 10, zuccheri100g: 10, grammi: 100,
+      grassi100g: 10, zuccheri100g: 10, fibre100g: null, ferro100mg: null, calcio100mg: null, acqua100g: null,
+      grammi: 100,
     })
   })
 
@@ -91,7 +93,8 @@ describe('AggiungiAlimentoDialog', () => {
 
     expect(wrapper.emitted('aggiunto')?.[0]?.[0]).toEqual({
       alimentoId: null, nome: 'Insalata mista', kcal100g: 50, proteine100g: 2, carboidrati100g: 5,
-      grassi100g: 1, zuccheri100g: null, grammi: 100,
+      grassi100g: 1, zuccheri100g: null, fibre100g: null, ferro100mg: null, calcio100mg: null, acqua100g: null,
+      grammi: 100,
     })
   })
 })

@@ -15,6 +15,10 @@ public record RigaAlimentoRequest(
         @NotNull @PositiveOrZero BigDecimal carboidrati100g,
         @NotNull @PositiveOrZero BigDecimal grassi100g,
         @PositiveOrZero BigDecimal zuccheri100g,
+        @PositiveOrZero BigDecimal fibre100g,
+        @PositiveOrZero BigDecimal ferro100mg,
+        @PositiveOrZero BigDecimal calcio100mg,
+        @PositiveOrZero BigDecimal acqua100g,
         @NotNull @PositiveOrZero BigDecimal grammi
 ) {
 }

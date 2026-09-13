@@ -25,7 +25,10 @@ export function filtraSoloCifre(valore: string, maxCifre: number): string {
 }
 
 export function filtraDecimaleItaliano(valore: string): string {
-    const pulito = valore.replace(/[^\d,]/g, '')
+    // Il punto è accettato come separatore decimale alternativo (es. tastierino numerico,
+    // che su molte configurazioni Windows invia "." indipendentemente dal layout) e
+    // normalizzato a virgola, così il valore mostrato/salvato resta sempre in formato italiano.
+    const pulito = valore.replace(/\./g, ',').replace(/[^\d,]/g, '')
     const indiceVirgola = pulito.indexOf(',')
     if (indiceVirgola === -1) {
         return pulito.slice(0, 4)
@@ -33,6 +36,28 @@ export function filtraDecimaleItaliano(valore: string): string {
     const intero = pulito.slice(0, indiceVirgola).slice(0, 4)
     const decimali = pulito.slice(indiceVirgola + 1).replace(/,/g, '').slice(0, 2)
     return `${intero},${decimali}`
+}
+
+const TASTI_NAVIGAZIONE_CONSENTITI = new Set([
+    'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+    'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End',
+])
+
+/**
+ * Handler `@keydown` che impedisce fisicamente di digitare un carattere non numerico
+ * (cifre, virgola o punto — quest'ultimo normalizzato a virgola da `filtraDecimaleItaliano`),
+ * invece di affidarsi solo al filtro post-digitazione su `@update:model-value` (che pulisce
+ * comunque anche un incolla da appunti). Lascia passare le combinazioni con modificatore
+ * (copia/incolla/seleziona tutto), i tasti di navigazione/cancellazione, e qualunque tasto
+ * il cui `key` non sia un singolo carattere stampabile (tastiere virtuali/IME mobile spesso
+ * riportano valori come "Unidentified"/"Process": bloccarli impedirebbe di scrivere del tutto).
+ */
+export function bloccaTastoNonNumerico(evento: KeyboardEvent): void {
+    if (evento.ctrlKey || evento.metaKey || evento.altKey) return
+    if (TASTI_NAVIGAZIONE_CONSENTITI.has(evento.key)) return
+    if (evento.key.length !== 1) return
+    if (/^[0-9,.]$/.test(evento.key)) return
+    evento.preventDefault()
 }
 
 export function filtraEmail(valore: string): string {
