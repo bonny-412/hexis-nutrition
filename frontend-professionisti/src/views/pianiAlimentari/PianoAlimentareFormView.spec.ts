@@ -4,12 +4,14 @@ import { createTestingPinia } from '@pinia/testing'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import PianoAlimentareFormView from './PianoAlimentareFormView.vue'
 import * as api from '@/api/pianiAlimentari'
+import * as apiPazienti from '@/api/pazienti'
 
 vi.mock('@/api/pianiAlimentari')
+vi.mock('@/api/pazienti')
 
 const pianoVuoto = {
   id: 'piano1', pazienteId: 'p1', pazienteNomeCompleto: 'Mario Bianchi', nome: 'Ipertrofia · fase 1',
-  modalita: 'PASTI', stato: 'BOZZA', dataInizio: '2026-09-12', dataFine: null,
+  modalita: 'PASTI', stato: 'BOZZA', dataInizio: '2026-09-12', dataFine: '2026-12-12',
   obiettivoKcal: 2800, obiettivoKcalSuggerito: 2800, bmrCalcolato: 1806.45, tdeeCalcolato: 2800,
   formulaBmrUsata: 'MIFFLIN_ST_JEOR', sottoSogliaSicurezza: false,
   pasti: [
@@ -54,6 +56,9 @@ describe('PianoAlimentareFormView', () => {
     vi.mocked(api.dettaglio).mockResolvedValue(pianoVuoto as never)
     vi.mocked(api.crea).mockResolvedValue(pianoVuoto as never)
     vi.mocked(api.aggiorna).mockResolvedValue(pianoVuoto as never)
+    // Ultima visita del paziente, caricata da caricaPiano per il sottotitolo (vedi
+    // sottotitoloVisita): nessuna di default, i singoli test la impostano se serve.
+    vi.mocked(apiPazienti.visite).mockResolvedValue([])
   })
 
   afterEach(() => {
@@ -149,11 +154,22 @@ describe('PianoAlimentareFormView', () => {
     await vi.waitFor(() => expect(api.dettaglio).toHaveBeenCalled())
     await wrapper.vm.$nextTick()
 
-    // Il suggerimento (kcal) è mostrato come placeholder dell'input, non come testo visibile.
+    // Il suggerimento (kcal) è mostrato come placeholder dell'input; formula e avviso soglia
+    // sono nel title dell'icona informativa, non come testo visibile (vedi titleObiettivoKcal).
     const campoObiettivo = wrapper.find('[data-test="obiettivo-kcal-input"]').element as HTMLInputElement
     expect(campoObiettivo.placeholder).toBe('1100')
-    expect(wrapper.text()).toContain('sotto la soglia')
+    const infoObiettivo = wrapper.find('[data-test="obiettivo-kcal-info"]').element as HTMLElement
+    expect(infoObiettivo.title).toContain('sotto la soglia')
   })
+
+  // "Attiva piano"/"Elimina" sono ora voci del menu "Altre opzioni" (icona), non più bottoni
+  // diretti: il contenuto del DropdownMenu è teleportato in document.body (DropdownMenuPortal,
+  // stesso motivo/pattern dell'AlertDialog già documentato sotto), va aperto con "opzioni-piano"
+  // e raggiunto con document.querySelector, non wrapper.find — serve quindi attachTo: document.body.
+  async function apriMenuOpzioni(wrapper: ReturnType<typeof mount>) {
+    await wrapper.find('[data-test="opzioni-piano"]').trigger('click')
+    await flushPromises()
+  }
 
   it('attiva salva e poi chiama attiva, senza mostrare più il bottone su un piano già attivo', async () => {
     vi.mocked(api.attiva).mockResolvedValue(undefined as never)
@@ -163,11 +179,12 @@ describe('PianoAlimentareFormView', () => {
       .mockResolvedValueOnce(pianoVuoto as never)
       .mockResolvedValueOnce(pianoAttivato as never)
     const router = await creaRouter('/piani-alimentari/piano1')
-    const wrapper = mount(PianoAlimentareFormView, { global: { plugins: [router] } })
+    const wrapper = mount(PianoAlimentareFormView, { global: { plugins: [router] }, attachTo: document.body })
     await vi.waitFor(() => expect(api.dettaglio).toHaveBeenCalled())
     await wrapper.vm.$nextTick()
 
-    await wrapper.find('[data-test="attiva-piano"]').trigger('click')
+    await apriMenuOpzioni(wrapper)
+    document.querySelector<HTMLElement>('[data-test="attiva-piano"]')?.click()
     await vi.waitFor(() => expect(api.attiva).toHaveBeenCalledWith('piano1'))
 
     expect(api.aggiorna).toHaveBeenCalled()
@@ -176,11 +193,12 @@ describe('PianoAlimentareFormView', () => {
   it('se il salvataggio fallisce, attiva piano non chiama l\'API attiva (niente stato ambiguo)', async () => {
     vi.mocked(api.aggiorna).mockRejectedValueOnce(new Error('errore di rete'))
     const router = await creaRouter('/piani-alimentari/piano1')
-    const wrapper = mount(PianoAlimentareFormView, { global: { plugins: [router] } })
+    const wrapper = mount(PianoAlimentareFormView, { global: { plugins: [router] }, attachTo: document.body })
     await vi.waitFor(() => expect(api.dettaglio).toHaveBeenCalled())
     await wrapper.vm.$nextTick()
 
-    await wrapper.find('[data-test="attiva-piano"]').trigger('click')
+    await apriMenuOpzioni(wrapper)
+    document.querySelector<HTMLElement>('[data-test="attiva-piano"]')?.click()
     await vi.waitFor(() => expect(api.aggiorna).toHaveBeenCalled())
     await flushPromises()
 
@@ -194,7 +212,9 @@ describe('PianoAlimentareFormView', () => {
     await vi.waitFor(() => expect(api.dettaglio).toHaveBeenCalled())
     await wrapper.vm.$nextTick()
 
-    await wrapper.find('[data-test="elimina-piano"]').trigger('click')
+    await apriMenuOpzioni(wrapper)
+    document.querySelector<HTMLElement>('[data-test="elimina-piano"]')?.click()
+    await flushPromises()
     // Il contenuto dell'AlertDialog è teleportato in document.body: non raggiungibile con wrapper.find
     // (stessa convenzione di PazienteTabStoricoMisurazioni.spec.ts / AlimentoRigaAzioni.spec.ts).
     document.querySelector<HTMLElement>('[data-test="conferma-elimina-piano"]')?.click()

@@ -39,17 +39,22 @@ public class PianoGiornoMacroTarget {
     @Column(name = "grassi_target")
     private BigDecimal grassiTarget;
 
+    @Column(columnDefinition = "TEXT")
+    private String nota;
+
     protected PianoGiornoMacroTarget() {
     }
 
     public PianoGiornoMacroTarget(UUID pianoId, GiornoSettimana giornoSettimana, BigDecimal kcalTarget,
-                                   BigDecimal proteineTarget, BigDecimal carboidratiTarget, BigDecimal grassiTarget) {
+                                   BigDecimal proteineTarget, BigDecimal carboidratiTarget, BigDecimal grassiTarget,
+                                   String nota) {
         this.pianoId = pianoId;
         this.giornoSettimana = giornoSettimana;
         this.kcalTarget = kcalTarget;
         this.proteineTarget = proteineTarget;
         this.carboidratiTarget = carboidratiTarget;
         this.grassiTarget = grassiTarget;
+        this.nota = nota;
     }
 
     public UUID getId() {
@@ -78,5 +83,9 @@ public class PianoGiornoMacroTarget {
 
     public BigDecimal getGrassiTarget() {
         return grassiTarget;
+    }
+
+    public String getNota() {
+        return nota;
     }
 }

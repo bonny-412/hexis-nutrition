@@ -113,6 +113,17 @@ export function erroreDataNascita(valore: string): string | undefined {
     return undefined
 }
 
+export function erroreDataInizioPiano(valore: string): string | undefined {
+    if (!valore.trim()) return 'La data di partenza è obbligatoria.'
+    return undefined
+}
+
+export function erroreDataFinePiano(valore: string, dataInizio?: string): string | undefined {
+    if (!valore.trim()) return 'La data di fine è obbligatoria.'
+    if (dataInizio && valore <= dataInizio) return 'La data di fine deve essere successiva alla data di partenza.'
+    return undefined
+}
+
 export function erroreSesso(valore: string): string | undefined {
     if (!valore) return 'Il sesso è obbligatorio.'
     return undefined

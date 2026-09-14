@@ -91,16 +91,29 @@ const sottotitolo = computed(() => {
   return `${base} · ultima visita ${formattaDataItalianaConMese(ultimaVisita.value.dataVisita)} con peso ${formattaNumero(ultimaVisita.value.pesoKg)} kg`
 })
 
-/**
- * Da `/pazienti/visite/nuova` (link "Nuova visita" della dashboard) si torna alla dashboard.
- * Da `/pazienti/:id/visite/...` (creazione o modifica avviata dal dettaglio paziente) si torna lì.
- */
-const linkIndietro = computed(() => (pazienteIdRoute ? `/pazienti/${pazienteIdRoute}` : '/'))
-const testoLinkIndietro = computed(() => (pazienteIdRoute ? 'Torna al paziente' : 'Torna alla dashboard'))
+// Da `/pazienti/:id/visite/...` (creazione o modifica avviata dal dettaglio paziente, o dalla
+// riga paziente in lista) il paziente è già noto dalla route: si torna sempre lì.
+// Da `/pazienti/visite/nuova` (nessun id in route) invece il paziente si scopre solo dopo aver
+// scelto dal combobox (vedi onPazienteCambiato) — prima di allora non c'è un paziente noto.
+// Questa route è raggiungibile non solo dal link "Nuova visita" della dashboard ma anche dalla
+// Command Palette (Ctrl+K), disponibile da qualunque pagina: un fallback fisso alla dashboard
+// sbaglierebbe la pagina chiamante in tutti quei casi, quindi si preferisce router.back() (la
+// vera pagina precedente in cronologia) quando disponibile, e solo in mancanza di cronologia si
+// ripiega sulla dashboard. Stessa identica logica sia per il link in alto sia per "Annulla".
+const pazienteIdConosciuto = computed(() => pazienteIdRoute ?? paziente.value?.id)
+// Quando si andrà indietro con router.back() (nessun paziente noto ma c'è cronologia), la
+// destinazione reale non è la dashboard ma la pagina chiamante: l'etichetta deve dirlo in modo
+// generico ("Torna indietro"), altrimenti mentirebbe su dove porta il click.
+const haCronologia = !!router.options.history.state.back
+const linkIndietro = computed(() => (pazienteIdConosciuto.value ? `/pazienti/${pazienteIdConosciuto.value}` : '/'))
+const testoLinkIndietro = computed(() => {
+  if (pazienteIdConosciuto.value) return 'Torna al paziente'
+  return haCronologia ? 'Torna indietro' : 'Torna alla dashboard'
+})
 
 function tornaIndietro() {
-  if (paziente.value) {
-    router.push(`/pazienti/${paziente.value.id}`)
+  if (pazienteIdConosciuto.value) {
+    router.push(`/pazienti/${pazienteIdConosciuto.value}`)
   } else if (router.options.history.state.back) {
     router.back()
   } else {
@@ -139,6 +152,7 @@ async function onSubmit() {
         :to="linkIndietro"
         data-test="link-indietro"
         class="inline-flex items-center gap-2 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)"
+        @click.prevent="tornaIndietro"
       >
         <ArrowLeft :size="16" />
         <span>{{ testoLinkIndietro }}</span>

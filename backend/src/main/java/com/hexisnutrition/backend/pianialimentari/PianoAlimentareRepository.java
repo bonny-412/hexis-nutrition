@@ -8,4 +8,6 @@ import java.util.UUID;
 public interface PianoAlimentareRepository extends JpaRepository<PianoAlimentare, UUID>,
         org.springframework.data.jpa.repository.JpaSpecificationExecutor<PianoAlimentare> {
     List<PianoAlimentare> findAllByPazienteIdAndStato(UUID pazienteId, StatoPiano stato);
+
+    List<PianoAlimentare> findAllByPazienteIdIn(List<UUID> pazienteIds);
 }

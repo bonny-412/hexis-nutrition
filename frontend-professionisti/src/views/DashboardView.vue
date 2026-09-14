@@ -5,7 +5,7 @@ import { lista } from '@/api/pazienti'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
-import { Plus, ChevronDown, UserPlus, ClipboardPlus, CalendarPlus, FileText } from '@lucide/vue'
+import { Plus, ChevronDown, UserPlus, ClipboardPlus, CalendarPlus, Utensils } from '@lucide/vue'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
@@ -54,19 +54,19 @@ onMounted(async () => {
               Nuovo paziente
             </router-link>
           </DropdownMenuItem>
+          <DropdownMenuItem disabled class="gap-2 px-2.5 py-1.5 cursor-pointer">
+            <CalendarPlus :size="16" />
+            Nuovo appuntamento
+          </DropdownMenuItem>
           <DropdownMenuItem as-child class="gap-2 px-2.5 py-1.5 cursor-pointer">
             <router-link to="/pazienti/visite/nuova">
               <ClipboardPlus :size="16" />
               Nuova visita
             </router-link>
           </DropdownMenuItem>
-          <DropdownMenuItem disabled class="gap-2 px-2.5 py-1.5 cursor-pointer">
-            <CalendarPlus :size="16" />
-            Nuovo appuntamento
-          </DropdownMenuItem>
           <DropdownMenuItem as-child class="gap-2 px-2.5 py-1.5 cursor-pointer">
             <router-link to="/piani-alimentari/nuovo">
-              <FileText :size="16" />
+              <Utensils :size="16" />
               Nuovo piano alimentare
             </router-link>
           </DropdownMenuItem>

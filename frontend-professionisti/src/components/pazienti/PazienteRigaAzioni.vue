@@ -19,7 +19,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { ArchiveRestore, ClipboardPlus, FolderOpen, MoreHorizontal, Trash2 } from '@lucide/vue'
+import { ArchiveRestore, ClipboardPlus, FolderOpen, MoreHorizontal, Trash2, Utensils } from '@lucide/vue'
 
 const props = defineProps<{
   paziente: Paziente
@@ -82,6 +82,12 @@ function etichettaAzione(paziente: Paziente) {
           <router-link :to="`/pazienti/${paziente.id}/visite/nuova`">
             <ClipboardPlus />
             Nuova visita
+          </router-link>
+        </DropdownMenuItem>
+        <DropdownMenuItem v-if="!mostraArchiviati" as-child data-test="menu-nuovo-piano" class="cursor-pointer">
+          <router-link :to="`/piani-alimentari/nuovo?pazienteId=${paziente.id}`">
+            <Utensils />
+            Nuovo piano
           </router-link>
         </DropdownMenuItem>
         <DropdownMenuSeparator v-if="!mostraArchiviati" />

@@ -22,7 +22,7 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { ChevronRight, ArrowUp, ArrowDown, ArrowUpDown, UserPlus } from '@lucide/vue'
-import { calcolaEta, formattaDataItalianaConMese } from '@/utils/data'
+import { formattaDataItalianaConMese, isoATimestamp } from '@/utils/data'
 import { ETICHETTE_OBIETTIVO } from '@/utils/visita'
 
 type CampoOrdinamento = NonNullable<CriteriRicercaPazienti['ordinaPer']>
@@ -44,6 +44,54 @@ const CLASSI_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
   MAI_INVITATO: 'bg-(--hover) text-(--fg4)',
   INVITATO: 'bg-(--warn-bg) text-(--warn-fg)',
   ATTIVO: 'bg-(--mint) text-(--green)',
+}
+
+const CLASSE_TESTO_STATO_PIANO: Record<NonNullable<Paziente['pianoStato']>, string> = {
+  BOZZA: 'text-(--fg4)',
+  ATTIVO: 'text-(--fg)',
+  SCADUTO: 'text-(--danger)',
+  TERMINATO: 'text-(--warn-fg)',
+}
+
+function giorniDaOggi(dataIso: string): number {
+  const oggi = new Date()
+  const oggiIso = `${oggi.getFullYear()}-${String(oggi.getMonth() + 1).padStart(2, '0')}-${String(oggi.getDate()).padStart(2, '0')}`
+  return Math.round((isoATimestamp(dataIso) - isoATimestamp(oggiIso)) / 86_400_000)
+}
+
+// dataUltimaVisita è sempre una data passata o odierna (è l'ultima visita registrata, non un
+// appuntamento futuro: "Appuntamento" è un sotto-progetto non ancora implementato — vedi
+// wiki/modello-dati.md, sezione "Entità previste ma non ancora progettate"). Niente ramo per
+// una data futura, non può mai verificarsi con questo campo.
+function testoUltimaVisita(dataIso: string): string {
+  return giorniDaOggi(dataIso) === 0 ? 'Oggi' : formattaDataItalianaConMese(dataIso)
+}
+
+function notaUltimaVisita(dataIso: string): string | null {
+  const giorni = giorniDaOggi(dataIso)
+  if (giorni === 0) return null
+  const giorniFa = Math.abs(giorni)
+  if (giorniFa < 7) return `${giorniFa} giorn${giorniFa === 1 ? 'o' : 'i'} fa`
+  const settimaneFa = Math.floor(giorniFa / 7)
+  return `${settimaneFa} settiman${settimaneFa === 1 ? 'a' : 'e'} fa`
+}
+
+// Nota sotto il nome del piano: solo dati realmente disponibili. Nessuna aderenza o data di
+// prossimo appuntamento: "Appuntamento" è un sotto-progetto non ancora implementato (vedi
+// wiki/modello-dati.md, sezione "Entità previste ma non ancora progettate").
+function notaPiano(paziente: Paziente): string {
+  if (paziente.pianoStato === 'BOZZA') return 'bozza, non ancora attivato'
+  if (paziente.pianoStato === 'TERMINATO') return 'terminato'
+  if (!paziente.pianoDataFine) return paziente.pianoStato === 'ATTIVO' ? 'senza scadenza' : ''
+
+  const giorni = giorniDaOggi(paziente.pianoDataFine)
+  if (paziente.pianoStato === 'SCADUTO') {
+    const assoluto = Math.abs(giorni)
+    return `scaduto da ${assoluto} giorn${assoluto === 1 ? 'o' : 'i'}`
+  }
+  if (giorni === 0) return 'scade oggi'
+  if (giorni === 1) return 'scade domani'
+  return `scade tra ${giorni} giorni`
 }
 
 const ricercaInput = ref('')
@@ -363,10 +411,16 @@ const conteggioTesto = computed(() => {
                   </button>
                 </TableHead>
                 <TableHead class="uppercase tracking-wide text-(--fg4)">Obiettivo</TableHead>
-                <TableHead class="uppercase">
-                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('dataNascita')">
-                    Età
-                    <component :is="iconaOrdinamento('dataNascita')" :size="12" :class="ordinaPer === 'dataNascita' ? 'text-(--fg)' : 'text-(--fg4)'" />
+                <TableHead>
+                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('dataUltimaVisita')">
+                    Ultima/prossima visita
+                    <component :is="iconaOrdinamento('dataUltimaVisita')" :size="12" :class="ordinaPer === 'dataUltimaVisita' ? 'text-(--fg)' : 'text-(--fg4)'" />
+                  </button>
+                </TableHead>
+                <TableHead>
+                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('piano')">
+                    Piano alimentare
+                    <component :is="iconaOrdinamento('piano')" :size="12" :class="ordinaPer === 'piano' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
                 <TableHead>
@@ -382,7 +436,10 @@ const conteggioTesto = computed(() => {
               <TableRow v-for="paziente in paginaDati.contenuto" :key="paziente.id" class="hover:bg-(--soft)">
                 <TableCell>
                   <div class="flex items-center gap-2.5">
-                    <span class="flex h-9 w-9 items-center justify-center rounded-full font-heading font-semibold" :class="CLASSI_STATO_ACCOUNT[paziente.statoAccount]">
+                    <span
+                      class="flex h-9 w-9 items-center justify-center rounded-full font-heading font-semibold"
+                      :class="paziente.archiviato ? 'bg-(--danger)/10 text-(--danger)' : CLASSI_STATO_ACCOUNT[paziente.statoAccount]"
+                    >
                       {{ paziente.nome[0] }}{{ paziente.cognome[0] }}
                     </span>
                     <div>
@@ -396,11 +453,26 @@ const conteggioTesto = computed(() => {
                 <TableCell>
                   <template v-if="paziente.obiettivoUltimaVisita">
                     <div class="font-semibold text-(--fg)">{{ ETICHETTE_OBIETTIVO[paziente.obiettivoUltimaVisita] }}</div>
-                    <div class="text-xs text-(--fg4)">dal {{ formattaDataItalianaConMese(paziente.dataUltimaVisita!) }}</div>
+                    <div v-if="paziente.dataInizioObiettivo" class="text-xs text-(--fg4)">dal {{ formattaDataItalianaConMese(paziente.dataInizioObiettivo) }}</div>
                   </template>
                   <span v-else class="text-(--fg4)">—</span>
                 </TableCell>
-                <TableCell>{{ paziente.dataNascita ? (calcolaEta(paziente.dataNascita) ?? '—') : '—' }}</TableCell>
+                <TableCell>
+                  <template v-if="paziente.dataUltimaVisita">
+                    <div class="font-semibold text-(--fg)">{{ testoUltimaVisita(paziente.dataUltimaVisita) }}</div>
+                    <div v-if="notaUltimaVisita(paziente.dataUltimaVisita)" class="text-xs text-(--danger)">
+                      {{ notaUltimaVisita(paziente.dataUltimaVisita) }}
+                    </div>
+                  </template>
+                  <span v-else class="text-(--fg4)">—</span>
+                </TableCell>
+                <TableCell>
+                  <template v-if="paziente.pianoNome">
+                    <div class="font-semibold" :class="CLASSE_TESTO_STATO_PIANO[paziente.pianoStato!]">{{ paziente.pianoNome }}</div>
+                    <div class="text-xs text-(--fg4)">{{ notaPiano(paziente) }}</div>
+                  </template>
+                  <span v-else class="text-(--fg4)">—</span>
+                </TableCell>
                 <TableCell><Badge :class="CLASSI_STATO_ACCOUNT[paziente.statoAccount]">{{ ETICHETTE_STATO_ACCOUNT[paziente.statoAccount] }}</Badge></TableCell>
                 <TableCell class="text-right">
                   <PazienteRigaAzioni

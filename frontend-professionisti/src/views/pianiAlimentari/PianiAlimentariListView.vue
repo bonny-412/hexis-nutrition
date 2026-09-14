@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { toast } from 'vue-sonner'
 import AppShell from '@/components/AppShell.vue'
-import { cerca, type PaginaPianiAlimentari, type StatoPiano, type CriteriRicercaPianiAlimentari } from '@/api/pianiAlimentari'
+import {
+  cerca, attiva, elimina,
+  type PaginaPianiAlimentari, type PianoAlimentareRigaLista, type StatoPiano, type CriteriRicercaPianiAlimentari,
+} from '@/api/pianiAlimentari'
+import PianoAlimentareRigaAzioni from '@/components/pianiAlimentari/PianoAlimentareRigaAzioni.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -34,7 +38,14 @@ const CLASSI_STATO: Record<StatoPiano, string> = {
   TERMINATO: 'bg-(--warn-bg) text-(--warn-fg)',
 }
 
-const router = useRouter()
+// Stesso avatar a iniziali della lista pazienti (PazientiListView.vue), colorato però con
+// CLASSI_STATO (stato del piano) invece che con lo stato account, che qui non è disponibile.
+function inizialiPaziente(nomeCompleto: string): string {
+  const parti = nomeCompleto.trim().split(/\s+/)
+  const prima = parti[0]?.[0] ?? ''
+  const ultima = parti.length > 1 ? parti[parti.length - 1][0] : ''
+  return `${prima}${ultima}`.toUpperCase()
+}
 
 const ricercaInput = ref('')
 const ricercaEffettiva = ref('')
@@ -127,8 +138,24 @@ function paginaPrecedente() {
 function paginaSuccessiva() {
   if (paginaDati.value && pagina.value < paginaDati.value.totalePagine - 1) pagina.value += 1
 }
-function apriPiano(id: string) {
-  router.push(`/piani-alimentari/${id}`)
+async function onAttiva(riga: PianoAlimentareRigaLista) {
+  try {
+    await attiva(riga.id)
+    toast.success('Piano attivato.')
+    await carica()
+  } catch {
+    toast.error('Non è stato possibile attivare il piano.')
+  }
+}
+
+async function onElimina(riga: PianoAlimentareRigaLista) {
+  try {
+    await elimina(riga.id)
+    toast.success('Piano eliminato.')
+    await carica()
+  } catch {
+    toast.error('Non è stato possibile eliminare il piano.')
+  }
 }
 
 const conteggioTesto = computed(() => {
@@ -201,18 +228,26 @@ const conteggioTesto = computed(() => {
                     <component :is="iconaOrdinamento('dataFine')" :size="12" :class="ordinaPer === 'dataFine' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
+                <TableHead class="text-right uppercase tracking-wide text-(--fg4)">Azioni</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              <TableRow
-                v-for="riga in paginaDati.contenuto" :key="riga.id"
-                class="cursor-pointer hover:bg-(--soft)" @click="apriPiano(riga.id)"
-              >
-                <TableCell class="font-heading font-semibold text-(--fg)">{{ riga.pazienteNomeCompleto }}</TableCell>
+              <TableRow v-for="riga in paginaDati.contenuto" :key="riga.id" class="hover:bg-(--soft)">
+                <TableCell>
+                  <div class="flex items-center gap-2.5">
+                    <span class="flex h-9 w-9 flex-none items-center justify-center rounded-full font-heading font-semibold" :class="CLASSI_STATO[riga.stato]">
+                      {{ inizialiPaziente(riga.pazienteNomeCompleto) }}
+                    </span>
+                    <span class="font-heading font-semibold text-(--fg)">{{ riga.pazienteNomeCompleto }}</span>
+                  </div>
+                </TableCell>
                 <TableCell>{{ riga.nome }}</TableCell>
                 <TableCell><Badge :class="CLASSI_STATO[riga.stato]">{{ ETICHETTE_STATO[riga.stato] }}</Badge></TableCell>
                 <TableCell class="text-right">{{ riga.obiettivoKcal ? `${riga.obiettivoKcal} kcal` : '—' }}</TableCell>
                 <TableCell>{{ riga.dataFine ? formattaDataItaliana(riga.dataFine) : '—' }}</TableCell>
+                <TableCell class="text-right">
+                  <PianoAlimentareRigaAzioni :riga="riga" @attiva="onAttiva" @elimina="onElimina" />
+                </TableCell>
               </TableRow>
             </TableBody>
           </Table>

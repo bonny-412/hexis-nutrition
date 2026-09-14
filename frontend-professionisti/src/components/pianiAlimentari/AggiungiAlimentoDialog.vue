@@ -142,7 +142,7 @@ function aggiungiManuale() {
   <Dialog :open="props.open" @update:open="(v) => !v && chiudi()">
     <DialogContent class="sm:max-w-lg">
       <DialogHeader>
-        <DialogTitle class="font-heading italic">Aggiungi alimento</DialogTitle>
+        <DialogTitle>Aggiungi alimento</DialogTitle>
       </DialogHeader>
 
       <div class="flex gap-1 border-b border-(--div) px-1">

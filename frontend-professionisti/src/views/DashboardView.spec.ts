@@ -25,9 +25,9 @@ function creaRouter() {
 describe('DashboardView', () => {
   it('mostra il numero di pazienti attivi calcolato dalla lista reale', async () => {
     vi.mocked(pazientiApi.lista).mockResolvedValue([
-      { id: '1', nome: 'A', cognome: 'A', codiceFiscale: 'RSSMRA80A01H501U', email: 'a@a.it', telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'ATTIVO', archiviato: false, obiettivoUltimaVisita: null, dataUltimaVisita: null },
-      { id: '2', nome: 'B', cognome: 'B', codiceFiscale: 'RSSMRA80A01H501U', email: 'b@b.it', telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'ATTIVO', archiviato: false, obiettivoUltimaVisita: null, dataUltimaVisita: null },
-      { id: '3', nome: 'C', cognome: 'C', codiceFiscale: 'RSSMRA80A01H501U', email: 'c@c.it', telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false, obiettivoUltimaVisita: null, dataUltimaVisita: null },
+      { id: '1', nome: 'A', cognome: 'A', codiceFiscale: 'RSSMRA80A01H501U', email: 'a@a.it', telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'ATTIVO', archiviato: false, obiettivoUltimaVisita: null, dataUltimaVisita: null, pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null },
+      { id: '2', nome: 'B', cognome: 'B', codiceFiscale: 'RSSMRA80A01H501U', email: 'b@b.it', telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'ATTIVO', archiviato: false, obiettivoUltimaVisita: null, dataUltimaVisita: null, pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null },
+      { id: '3', nome: 'C', cognome: 'C', codiceFiscale: 'RSSMRA80A01H501U', email: 'c@c.it', telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false, obiettivoUltimaVisita: null, dataUltimaVisita: null, pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null },
     ])
     const router = creaRouter()
     router.push('/')

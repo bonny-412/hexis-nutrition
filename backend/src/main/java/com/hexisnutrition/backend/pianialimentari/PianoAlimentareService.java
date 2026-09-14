@@ -116,14 +116,14 @@ public class PianoAlimentareService {
     private void creaGiorniMacroTemplate(UUID pianoId) {
         for (GiornoSettimana giorno : GiornoSettimana.values()) {
             pianoGiornoMacroTargetRepository.save(
-                    new PianoGiornoMacroTarget(pianoId, giorno, null, null, null, null));
+                    new PianoGiornoMacroTarget(pianoId, giorno, null, null, null, null, null));
         }
     }
 
     private void creaEsempiTemplate(UUID pianoId) {
         int ordine = 0;
         for (TipoPasto tipo : PASTI_TEMPLATE) {
-            pianoEsempioRepository.save(new PianoEsempio(pianoId, tipo, NOMI_PASTI_TEMPLATE.get(tipo), ordine++));
+            pianoEsempioRepository.save(new PianoEsempio(pianoId, tipo, NOMI_PASTI_TEMPLATE.get(tipo), ordine++, null));
         }
     }
 
@@ -236,7 +236,7 @@ public class PianoAlimentareService {
         for (GiornoMacroTargetRequest richiesta : richieste) {
             pianoGiornoMacroTargetRepository.save(new PianoGiornoMacroTarget(pianoId, richiesta.giornoSettimana(),
                     richiesta.kcalTarget(), richiesta.proteineTarget(), richiesta.carboidratiTarget(),
-                    richiesta.grassiTarget()));
+                    richiesta.grassiTarget(), richiesta.nota()));
         }
     }
 
@@ -292,7 +292,7 @@ public class PianoAlimentareService {
         int ordine = 0;
         for (EsempioRequest richiesta : richieste) {
             PianoEsempio esempio = pianoEsempioRepository.save(
-                    new PianoEsempio(pianoId, richiesta.tipoPasto(), richiesta.nome(), ordine++));
+                    new PianoEsempio(pianoId, richiesta.tipoPasto(), richiesta.nome(), ordine++, richiesta.nota()));
             if (richiesta.righe() != null) {
                 int ordineRiga = 0;
                 for (RigaAlimentoRequest riga : richiesta.righe()) {

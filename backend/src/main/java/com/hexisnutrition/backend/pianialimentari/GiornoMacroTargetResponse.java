@@ -7,10 +7,12 @@ public record GiornoMacroTargetResponse(
         BigDecimal kcalTarget,
         BigDecimal proteineTarget,
         BigDecimal carboidratiTarget,
-        BigDecimal grassiTarget
+        BigDecimal grassiTarget,
+        String nota
 ) {
     public static GiornoMacroTargetResponse da(PianoGiornoMacroTarget target) {
         return new GiornoMacroTargetResponse(target.getGiornoSettimana(), target.getKcalTarget(),
-                target.getProteineTarget(), target.getCarboidratiTarget(), target.getGrassiTarget());
+                target.getProteineTarget(), target.getCarboidratiTarget(), target.getGrassiTarget(),
+                target.getNota());
     }
 }

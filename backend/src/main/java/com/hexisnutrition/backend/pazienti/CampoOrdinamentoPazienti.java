@@ -4,5 +4,7 @@ public enum CampoOrdinamentoPazienti {
     nome,
     cognome,
     dataNascita,
-    statoAccount
+    statoAccount,
+    dataUltimaVisita,
+    piano
 }

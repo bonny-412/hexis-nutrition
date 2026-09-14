@@ -192,4 +192,8 @@ public class PianoAlimentare {
     public void setSottoSogliaSicurezza(boolean sottoSogliaSicurezza) {
         this.sottoSogliaSicurezza = sottoSogliaSicurezza;
     }
+
+    public Instant getCreatoIl() {
+        return creatoIl;
+    }
 }

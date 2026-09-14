@@ -1,5 +1,6 @@
 package com.hexisnutrition.backend.pazienti;
 
+import com.hexisnutrition.backend.pianialimentari.PianoAlimentare;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -69,7 +70,9 @@ public class PazienteController {
         Page<Paziente> pagina1 = pazienteService.cerca(professionistaId, criteri, pageable);
         List<UUID> idPagina = pagina1.getContent().stream().map(Paziente::getId).toList();
         Map<UUID, Visita> ultimeVisite = pazienteService.ultimeVisitePerPazienti(idPagina);
-        return PazienteListaPaginataResponse.da(pagina1, ultimeVisite);
+        Map<UUID, PianoAlimentare> ultimiPiani = pazienteService.ultimiPianiPerPazienti(idPagina);
+        Map<UUID, LocalDate> dataInizioObiettivo = pazienteService.dataInizioObiettivoPerPazienti(idPagina);
+        return PazienteListaPaginataResponse.da(pagina1, ultimeVisite, ultimiPiani, dataInizioObiettivo);
     }
 
     @GetMapping("/{id}")

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, UserPlus, ClipboardPlus, CalendarPlus, FileText, Apple } from '@lucide/vue'
+import { Search, UserPlus, ClipboardPlus, CalendarPlus, Apple, Utensils } from '@lucide/vue'
 import { Input } from '@/components/ui/input'
 import { cerca, type Paziente } from '@/api/pazienti'
 
@@ -15,9 +15,9 @@ interface AzionePalette {
 
 const AZIONI: AzionePalette[] = [
   { id: 'nuovo-paziente', etichetta: 'Nuovo paziente', icona: UserPlus, href: '/pazienti/nuovo' },
-  { id: 'nuova-visita', etichetta: 'Nuova visita', icona: ClipboardPlus, href: '/pazienti/visite/nuova' },
   { id: 'nuovo-appuntamento', etichetta: 'Nuovo appuntamento', icona: CalendarPlus, disabilitata: true },
-  { id: 'nuovo-piano-alimentare', etichetta: 'Nuovo piano alimentare', icona: FileText, href: '/piani-alimentari/nuovo' },
+  { id: 'nuova-visita', etichetta: 'Nuova visita', icona: ClipboardPlus, href: '/pazienti/visite/nuova' },
+  { id: 'nuovo-piano-alimentare', etichetta: 'Nuovo piano alimentare', icona: Utensils, href: '/piani-alimentari/nuovo' },
   { id: 'nuovo-alimento', etichetta: 'Nuovo alimento', icona: Apple, href: '/alimenti?azione=nuovo' },
 ]
 
@@ -139,11 +139,11 @@ function inizialiPaziente(paziente: Paziente) {
   <Teleport to="body">
     <div
       v-if="aperta"
-      class="fixed inset-0 z-[60] flex items-start justify-center bg-black/30 px-4 pt-24 backdrop-blur-[2px]"
+      class="fixed inset-0 z-60 flex items-start justify-center bg-black/30 px-4 pt-24 backdrop-blur-[2px]"
       @click="chiudi"
     >
       <div
-        class="w-full max-w-[520px] overflow-hidden rounded-2xl border border-(--bd) bg-(--surf) shadow-2xl"
+        class="w-full max-w-130 overflow-hidden rounded-2xl border border-(--bd) bg-(--surf) shadow-2xl"
         @click.stop
       >
         <div class="flex items-center gap-2.5 border-b border-(--div) px-4 py-3.5">

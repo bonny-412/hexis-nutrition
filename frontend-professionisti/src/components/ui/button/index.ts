@@ -16,6 +16,8 @@ export const buttonVariants = cva(
         'destructive-outline': 'border-destructive/30 text-destructive bg-background hover:bg-destructive/10 hover:border-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:border-destructive/40 dark:hover:bg-destructive/20',
         link: 'text-primary underline-offset-4 hover:underline',
         neutral: 'bg-card text-foreground border-border [a]:hover:bg-muted hover:bg-muted aria-expanded:bg-muted',
+        'destructive-ghost': 'text-destructive hover:bg-destructive/10 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 hover:text-destructive dark:hover:bg-destructive/20 aria-expanded:bg-destructive/10',
+        'ghost-primary': 'text-(--green) hover:bg-(--mint) hover:text-(--green) dark:hover:bg-(--mint)/20 aria-expanded:bg-(--mint)',
       },
       size: {
         'default': 'h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',

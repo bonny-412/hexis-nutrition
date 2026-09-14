@@ -6,11 +6,15 @@ import com.hexisnutrition.backend.inviti.TipoToken;
 import com.hexisnutrition.backend.inviti.TokenAzione;
 import com.hexisnutrition.backend.inviti.TokenAzioneRepository;
 import com.hexisnutrition.backend.inviti.TokenNonValidoException;
+import com.hexisnutrition.backend.pianialimentari.PianoAlimentare;
+import com.hexisnutrition.backend.pianialimentari.PianoAlimentareRepository;
 import com.hexisnutrition.backend.professionisti.ProfessionistaRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,10 +22,16 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,8 +39,16 @@ public class PazienteService {
 
     private static final Logger log = LoggerFactory.getLogger(PazienteService.class);
 
+    // Campi di ordinamento non presenti come colonna su Paziente (derivati da tabelle collegate,
+    // popolati in batch solo per la pagina corrente — vedi ultimeVisitePerPazienti/
+    // ultimiPianiPerPazienti): non ordinabili a livello di query con Specification+Pageable,
+    // gestiti a parte in cerca() caricando l'intero risultato e ordinandolo in Java.
+    private static final Set<CampoOrdinamentoPazienti> ORDINAMENTI_DERIVATI =
+            Set.of(CampoOrdinamentoPazienti.dataUltimaVisita, CampoOrdinamentoPazienti.piano);
+
     private final PazienteRepository pazienteRepository;
     private final VisitaRepository visitaRepository;
+    private final PianoAlimentareRepository pianoAlimentareRepository;
     private final ProfessionistaRepository professionistaRepository;
     private final TokenAzioneRepository tokenAzioneRepository;
     private final EmailSender emailSender;
@@ -40,6 +58,7 @@ public class PazienteService {
 
     public PazienteService(PazienteRepository pazienteRepository,
                             VisitaRepository visitaRepository,
+                            PianoAlimentareRepository pianoAlimentareRepository,
                             ProfessionistaRepository professionistaRepository,
                             TokenAzioneRepository tokenAzioneRepository,
                             EmailSender emailSender,
@@ -48,6 +67,7 @@ public class PazienteService {
                             PlicometriaRepository plicometriaRepository) {
         this.pazienteRepository = pazienteRepository;
         this.visitaRepository = visitaRepository;
+        this.pianoAlimentareRepository = pianoAlimentareRepository;
         this.professionistaRepository = professionistaRepository;
         this.tokenAzioneRepository = tokenAzioneRepository;
         this.emailSender = emailSender;
@@ -107,6 +127,51 @@ public class PazienteService {
                         (v1, v2) -> v1.getDataVisita().isAfter(v2.getDataVisita()) ? v1 : v2));
     }
 
+    /**
+     * Data della prima visita (in ordine cronologico, partendo dall'ultima e risalendo) con lo
+     * stesso obiettivo dell'ultima visita di ciascun paziente — cioè da quando è impostato
+     * l'obiettivo attuale, non semplicemente la data dell'ultima visita. Se l'obiettivo è
+     * cambiato all'ultima visita rispetto alla precedente, coincide con la data dell'ultima
+     * visita stessa. Una sola query per tutti i pazienti passati (nessuna per paziente).
+     */
+    public Map<UUID, LocalDate> dataInizioObiettivoPerPazienti(List<UUID> pazienteIds) {
+        if (pazienteIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<UUID, List<Visita>> visitePerPaziente = visitaRepository.findAllByPazienteIdIn(pazienteIds).stream()
+                .collect(Collectors.groupingBy(Visita::getPazienteId));
+
+        Map<UUID, LocalDate> risultato = new HashMap<>();
+        for (Map.Entry<UUID, List<Visita>> voce : visitePerPaziente.entrySet()) {
+            List<Visita> visiteOrdinate = voce.getValue().stream()
+                    .sorted(Comparator.comparing(Visita::getDataVisita))
+                    .toList();
+            Visita ultima = visiteOrdinate.get(visiteOrdinate.size() - 1);
+            LocalDate dataInizio = ultima.getDataVisita();
+            for (int i = visiteOrdinate.size() - 2; i >= 0; i--) {
+                if (visiteOrdinate.get(i).getObiettivo() != ultima.getObiettivo()) {
+                    break;
+                }
+                dataInizio = visiteOrdinate.get(i).getDataVisita();
+            }
+            risultato.put(voce.getKey(), dataInizio);
+        }
+        return risultato;
+    }
+
+    /**
+     * Piano più di recente creazione di ciascun paziente tra gli id passati, in un'unica query
+     * — qualunque sia il suo stato (bozza/attivo/scaduto/terminato), non solo quello attivo.
+     */
+    public Map<UUID, PianoAlimentare> ultimiPianiPerPazienti(List<UUID> pazienteIds) {
+        if (pazienteIds.isEmpty()) {
+            return Map.of();
+        }
+        return pianoAlimentareRepository.findAllByPazienteIdIn(pazienteIds).stream()
+                .collect(Collectors.toMap(PianoAlimentare::getPazienteId, p -> p,
+                        (p1, p2) -> p1.getCreatoIl().isAfter(p2.getCreatoIl()) ? p1 : p2));
+    }
+
     public Page<Paziente> cerca(UUID professionistaId, CriteriRicercaPazienti criteri, Pageable pageable) {
         List<Specification<Paziente>> specifiche = new ArrayList<>();
         specifiche.add(PazienteSpecifications.delProfessionista(professionistaId));
@@ -123,7 +188,51 @@ public class PazienteService {
         if (criteri.dataUltimaVisitaDa() != null || criteri.dataUltimaVisitaA() != null) {
             specifiche.add(PazienteSpecifications.conDataUltimaVisitaTra(criteri.dataUltimaVisitaDa(), criteri.dataUltimaVisitaA()));
         }
-        return pazienteRepository.findAll(Specification.allOf(specifiche), pageable);
+        Specification<Paziente> specifica = Specification.allOf(specifiche);
+
+        Sort.Order ordinePrincipale = pageable.getSort().stream().findFirst().orElse(null);
+        if (ordinePrincipale != null && ORDINAMENTI_DERIVATI.contains(CampoOrdinamentoPazienti.valueOf(ordinePrincipale.getProperty()))) {
+            return cercaConOrdinamentoDerivato(specifica, pageable, ordinePrincipale);
+        }
+        return pazienteRepository.findAll(specifica, pageable);
+    }
+
+    /**
+     * Ramo per dataUltimaVisita/piano (vedi ORDINAMENTI_DERIVATI): non essendo colonne di
+     * Paziente non sono esprimibili in un Sort passato a Specification+Pageable, quindi si
+     * carica l'intero risultato filtrato, si ordina in Java e si pagina manualmente. Accettabile
+     * per il volume di pazienti per professionista di questo dominio (uno studio, non pensato
+     * per migliaia di pazienti): evita una query nativa con subquery correlate solo per due
+     * colonne derivate usate raramente come criterio di ordinamento.
+     */
+    private Page<Paziente> cercaConOrdinamentoDerivato(Specification<Paziente> specifica, Pageable pageable,
+            Sort.Order ordine) {
+        List<Paziente> tutti = pazienteRepository.findAll(specifica);
+        List<UUID> tuttiGliId = tutti.stream().map(Paziente::getId).toList();
+        boolean desc = ordine.getDirection() == Sort.Direction.DESC;
+
+        Comparator<Paziente> comparatore;
+        if (ordine.getProperty().equals(CampoOrdinamentoPazienti.dataUltimaVisita.name())) {
+            Map<UUID, Visita> ultimeVisite = ultimeVisitePerPazienti(tuttiGliId);
+            comparatore = comparatoreConNullUltimo(
+                    p -> Optional.ofNullable(ultimeVisite.get(p.getId())).map(Visita::getDataVisita).orElse(null), desc);
+        } else {
+            Map<UUID, PianoAlimentare> ultimiPiani = ultimiPianiPerPazienti(tuttiGliId);
+            comparatore = comparatoreConNullUltimo(
+                    p -> Optional.ofNullable(ultimiPiani.get(p.getId())).map(PianoAlimentare::getNome).orElse(null), desc);
+        }
+        List<Paziente> ordinati = tutti.stream().sorted(comparatore).toList();
+
+        int totale = ordinati.size();
+        int daIndice = Math.min((int) pageable.getOffset(), totale);
+        int aIndice = Math.min(daIndice + pageable.getPageSize(), totale);
+        return new PageImpl<>(ordinati.subList(daIndice, aIndice), pageable, totale);
+    }
+
+    /** I pazienti senza il valore (nessuna visita / nessun piano) vanno sempre in fondo, a prescindere dalla direzione. */
+    private <T extends Comparable<T>> Comparator<Paziente> comparatoreConNullUltimo(Function<Paziente, T> chiave, boolean desc) {
+        Comparator<T> base = desc ? Comparator.<T>naturalOrder().reversed() : Comparator.naturalOrder();
+        return Comparator.comparing(chiave, Comparator.nullsLast(base));
     }
 
     public Paziente dettaglio(UUID professionistaId, UUID pazienteId) {

@@ -38,12 +38,14 @@ export interface GiornoMacroTarget {
   proteineTarget: number | null
   carboidratiTarget: number | null
   grassiTarget: number | null
+  nota: string | null
 }
 
 export interface Esempio {
   id: string
   tipoPasto: TipoPasto
   nome: string
+  nota: string | null
   ordine: number
   righe: RigaAlimento[]
 }
@@ -104,11 +106,13 @@ export interface GiornoMacroTargetRequest {
   proteineTarget: number | null
   carboidratiTarget: number | null
   grassiTarget: number | null
+  nota: string | null
 }
 
 export interface EsempioRequest {
   tipoPasto: TipoPasto
   nome: string
+  nota: string | null
   righe: RigaAlimentoRequest[]
 }
 
@@ -128,6 +132,7 @@ export interface CriteriRicercaPianiAlimentari {
   direzione?: 'asc' | 'desc'
   ricerca?: string
   stato?: StatoPiano
+  pazienteId?: string
 }
 
 export interface PianoAlimentareRigaLista {
@@ -175,6 +180,7 @@ export function cerca(criteri: CriteriRicercaPianiAlimentari = {}): Promise<Pagi
   if (criteri.direzione) parametri.set('direzione', criteri.direzione)
   if (criteri.ricerca) parametri.set('ricerca', criteri.ricerca)
   if (criteri.stato) parametri.set('stato', criteri.stato)
+  if (criteri.pazienteId) parametri.set('pazienteId', criteri.pazienteId)
 
   const query = parametri.toString()
   return apiRequest<PaginaPianiAlimentari>(`/piani-alimentari/ricerca${query ? `?${query}` : ''}`)

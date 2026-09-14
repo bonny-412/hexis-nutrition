@@ -10,6 +10,7 @@ function pazienteEsempio(overrides: Partial<Paziente> = {}): Paziente {
     telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null,
     statoAccount: 'MAI_INVITATO', archiviato: false,
     obiettivoUltimaVisita: null, dataUltimaVisita: null,
+    pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null,
     ...overrides,
   }
 }

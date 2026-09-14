@@ -9,6 +9,7 @@ public record GiornoMacroTargetRequest(
         BigDecimal kcalTarget,
         BigDecimal proteineTarget,
         BigDecimal carboidratiTarget,
-        BigDecimal grassiTarget
+        BigDecimal grassiTarget,
+        String nota
 ) {
 }

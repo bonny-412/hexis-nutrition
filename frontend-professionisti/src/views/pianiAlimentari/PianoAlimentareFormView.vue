@@ -26,10 +26,13 @@ import {
   crea, dettaglio, aggiorna, attiva as attivaApi, elimina as eliminaApi, cerca as cercaPiani,
   type PianoAlimentare, type ModalitaPiano, type GiornoSettimana, type TipoPasto,
 } from '@/api/pianiAlimentari'
-import { filtraDecimaleItaliano, numeroItalianoOpzionale, bloccaTastoNonNumerico } from '@/utils/validators'
+import {
+  filtraDecimaleItaliano, numeroItalianoOpzionale, bloccaTastoNonNumerico,
+  erroreDataInizioPiano, erroreDataFinePiano, erroreNumeroDecimaleObbligatorio,
+} from '@/utils/validators'
 import { formattaDataItalianaEstesa } from '@/utils/data'
-import { ArrowLeft, MoreHorizontal, Trash2, Pencil } from '@lucide/vue'
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import { ArrowLeft, MoreHorizontal, Trash2, Pencil, X, Save, Printer, CircleCheck } from '@lucide/vue'
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 
 function oggiIso(): string {
   const oggi = new Date()
@@ -41,7 +44,7 @@ function oggiIso(): string {
 
 const ETICHETTA_MODALITA: Record<ModalitaPiano, string> = {
   PASTI: 'Piano con pasti',
-  MACRO: 'Solo target macro',
+  MACRO: 'Macros',
   ESEMPI: 'Esempi intercambiabili',
 }
 
@@ -128,6 +131,32 @@ const obiettivoKcalInput = ref('')
 const dataFineInput = ref('')
 // Data di partenza: impostabile solo alla creazione (immutabile dopo, come modalità e paziente).
 const dataInizioInput = ref(oggiIso())
+// Dopo il salvataggio dataInizioInput non riflette più la data di partenza reale (resta quella
+// digitata prima del salvataggio, il campo non è più editabile né aggiornato): per validare la
+// data di fine contro la data di partenza vera va usata piano.dataInizio quando il piano esiste.
+const dataInizioEffettiva = computed(() => piano.value?.dataInizio ?? dataInizioInput.value)
+
+const errori = ref<Record<string, string>>({})
+function pulisciErroreSeCorretto(chiave: string, valida: (valore: string) => string | undefined, valore: string) {
+  if (errori.value[chiave] && !valida(valore)) {
+    const nuovi = { ...errori.value }
+    delete nuovi[chiave]
+    errori.value = nuovi
+  }
+}
+function onDataInizioChange(valore: string) {
+  dataInizioInput.value = valore
+  pulisciErroreSeCorretto('dataInizio', erroreDataInizioPiano, valore)
+}
+function onDataFineChange(valore: string) {
+  dataFineInput.value = valore
+  pulisciErroreSeCorretto('dataFine', (v) => erroreDataFinePiano(v, dataInizioEffettiva.value), valore)
+}
+function onObiettivoKcalInput(valore: string | number) {
+  const filtrato = filtraDecimaleItaliano(String(valore))
+  obiettivoKcalInput.value = filtrato
+  pulisciErroreSeCorretto('obiettivoKcal', erroreNumeroDecimaleObbligatorio, filtrato)
+}
 
 // Un paziente scelto (o un piano già caricato) basta per mostrare il builder.
 const pronto = computed(() => piano.value !== null || pazienteSelezionato.value !== null)
@@ -138,32 +167,58 @@ const nomePazienteVisualizzato = computed(() => {
   return ''
 })
 
-const linkIndietro = computed(() => {
-  if (piano.value) return '/piani-alimentari'
-  return pazienteIdQuery ? `/pazienti/${pazienteIdQuery}` : '/piani-alimentari'
-})
+// pazienteIdQuery (presente solo aprendo questa pagina da "Nuovo piano" nella scheda paziente)
+// ha sempre priorità: identifica da dove si è arrivati e resta valido anche dopo il primo
+// salvataggio, quando router.replace porta l'URL da /piani-alimentari/nuovo?pazienteId=X a
+// /piani-alimentari/:id (senza query) e piano.value diventa valorizzato — pazienteIdQuery,
+// letto una sola volta al mount, non cambia con quella navigazione (stessa istanza componente).
+// Senza pazienteIdQuery non si può assumere "/piani-alimentari" come unica origine possibile:
+// questa pagina (sia /piani-alimentari/nuovo sia /piani-alimentari/:id) è raggiungibile anche
+// dalla Command Palette (Ctrl+K, disponibile da qualunque pagina), quindi si preferisce
+// router.back() (la vera pagina precedente) quando c'è cronologia, e solo in mancanza di
+// cronologia si ripiega sulla lista piani. Stessa logica sia per il link in alto sia se in
+// futuro servisse un pulsante "Annulla" equivalente a quello di VisitaFormView.
+// Quando si andrà indietro con router.back() (nessun pazienteIdQuery ma c'è cronologia), la
+// destinazione reale non è la lista piani ma la pagina chiamante: l'etichetta deve dirlo in modo
+// generico ("Torna indietro"), altrimenti mentirebbe su dove porta il click.
+const haCronologia = !!router.options.history.state.back
+const linkIndietro = computed(() => (pazienteIdQuery ? `/pazienti/${pazienteIdQuery}` : '/piani-alimentari'))
 const testoLinkIndietro = computed(() => {
-  if (piano.value) return 'Piani alimentari'
-  return pazienteIdQuery ? 'Torna al paziente' : 'Torna ai piani alimentari'
+  if (pazienteIdQuery) return 'Torna al paziente'
+  return haCronologia ? 'Torna indietro' : 'Torna ai piani alimentari'
 })
 
-// Ultima visita del paziente scelto: guida sia il nome suggerito ("{Obiettivo} · fase {n}")
-// sia la stima TDEE prima che il piano esista sul server (vedi calcolaSuggerimentoTdee).
+function tornaIndietro() {
+  if (pazienteIdQuery) {
+    router.push(`/pazienti/${pazienteIdQuery}`)
+  } else if (router.options.history.state.back) {
+    router.back()
+  } else {
+    router.push('/piani-alimentari')
+  }
+}
+
+// Ultima visita del paziente scelto: guida il nome suggerito ("{Obiettivo} · fase {n}") e la
+// stima TDEE prima che il piano esista sul server (vedi calcolaSuggerimentoTdee) quando si sta
+// creando un piano nuovo; caricata anche per un piano già esistente (vedi caricaPiano) per
+// mostrarla nel sottotitolo della pagina (vedi sottotitoloVisita) in entrambi i flussi.
 // Presa da GET /pazienti/{id}/visite e non da Paziente.obiettivoUltimaVisita: quest'ultimo è
 // valorizzato solo dall'endpoint di ricerca/lista pazienti, non da GET /pazienti/{id} (usato
 // per precompilare il paziente quando si apre questa pagina da "Nuovo piano" nella scheda
 // paziente) — usarlo lasciava il titolo bloccato su "Nuovo piano" in quel solo percorso.
 const ultimaVisitaSelezionato = ref<Visita | null>(null)
+async function caricaUltimaVisita(pazienteId: string): Promise<Visita | null> {
+  try {
+    const lista = await visite(pazienteId)
+    return lista.length > 0 ? lista[lista.length - 1] : null
+  } catch {
+    return null
+  }
+}
 watch(pazienteSelezionato, async (paziente) => {
   ultimaVisitaSelezionato.value = null
   if (!paziente || piano.value) return
-  let ultimaVisita: Visita | null = null
-  try {
-    const lista = await visite(paziente.id)
-    ultimaVisita = lista.length > 0 ? lista[lista.length - 1] : null
-  } catch {
-    ultimaVisita = null
-  }
+  const ultimaVisita = await caricaUltimaVisita(paziente.id)
   ultimaVisitaSelezionato.value = ultimaVisita
   if (!ultimaVisita) return
 
@@ -177,6 +232,12 @@ watch(pazienteSelezionato, async (paziente) => {
   }
 })
 
+const sottotitoloVisita = computed(() => {
+  const visita = ultimaVisitaSelezionato.value
+  if (!visita) return null
+  return `Ultima visita: ${ETICHETTE_OBIETTIVO[visita.obiettivo]} del ${formattaDataItalianaEstesa(visita.dataVisita)}`
+})
+
 const suggerimentoObiettivo = computed(() => {
   if (piano.value) {
     if (piano.value.obiettivoKcalSuggerito === null || piano.value.formulaBmrUsata === null) return null
@@ -188,6 +249,21 @@ const suggerimentoObiettivo = computed(() => {
   }
   if (!pazienteSelezionato.value || !ultimaVisitaSelezionato.value) return null
   return calcolaSuggerimentoTdee(pazienteSelezionato.value, ultimaVisitaSelezionato.value)
+})
+
+const titleObiettivoKcal = computed(() => {
+  if (suggerimentoObiettivo.value) {
+    const nomeFormula = suggerimentoObiettivo.value.formula === 'KATCH_MCARDLE' ? 'Katch-McArdle' : 'Mifflin-St Jeor'
+    let testo = `Suggerimento calcolato con la formula ${nomeFormula}.`
+    if (suggerimentoObiettivo.value.sottoSoglia) {
+      testo += ' Il valore suggerito è sotto la soglia minima indicativa: valutare con attenzione.'
+    }
+    return testo
+  }
+  if (!piano.value && !ultimaVisitaSelezionato.value) {
+    return 'Il paziente non ha ancora una visita registrata: imposta il valore a mano.'
+  }
+  return "Nessun suggerimento automatico disponibile per l'obiettivo di questa visita: imposta il valore a mano."
 })
 
 interface RigaLocale {
@@ -223,6 +299,7 @@ interface GiornoMacroLocale {
   proteineTarget: string
   carboidratiTarget: string
   grassiTarget: string
+  nota: string | null
 }
 const giorniMacroLocali = ref<GiornoMacroLocale[]>([])
 
@@ -250,15 +327,23 @@ const PASTI_STANDARD: { tipo: TipoPasto; nome: string }[] = [
 // server per una bozza appena creata (7 giorni × 5 pasti standard, 7 righe macro vuote, 5
 // esempi standard) — altrimenti il primo salvataggio, sostituendo integralmente la struttura
 // col contenuto (vuoto) di questa pagina, cancellerebbe il template che il server crea da solo.
-pastiLocali.value = GIORNI.flatMap((g) =>
-  PASTI_STANDARD.map((p) => ({
-    clientId: crypto.randomUUID(), giornoSettimana: g.chiave, nome: p.nome, tipo: p.tipo, nota: null, righe: [],
-  })),
-)
+// Stessi template usati per resettare la sezione abbandonata a un cambio modalità (vedi
+// resettaSezione), cosí i dati scartati non riappaiono se si torna sulla stessa modalità.
+function pastiTemplate(): PastoLocale[] {
+  return GIORNI.flatMap((g) =>
+    PASTI_STANDARD.map((p) => ({
+      clientId: crypto.randomUUID(), giornoSettimana: g.chiave, nome: p.nome, tipo: p.tipo, nota: null, righe: [],
+    })),
+  )
+}
+function giorniMacroTemplate(): GiornoMacroLocale[] {
+  return GIORNI.map((g) => ({
+    giornoSettimana: g.chiave, kcalTarget: '', proteineTarget: '', carboidratiTarget: '', grassiTarget: '', nota: null,
+  }))
+}
 
-giorniMacroLocali.value = GIORNI.map((g) => ({
-  giornoSettimana: g.chiave, kcalTarget: '', proteineTarget: '', carboidratiTarget: '', grassiTarget: '',
-}))
+pastiLocali.value = pastiTemplate()
+giorniMacroLocali.value = giorniMacroTemplate()
 
 function applicaGiorniMacroDaRisultato(risultato: PianoAlimentare) {
   giorniMacroLocali.value = GIORNI.map((g) => {
@@ -269,6 +354,7 @@ function applicaGiorniMacroDaRisultato(risultato: PianoAlimentare) {
       proteineTarget: esistente?.proteineTarget != null ? String(esistente.proteineTarget).replace('.', ',') : '',
       carboidratiTarget: esistente?.carboidratiTarget != null ? String(esistente.carboidratiTarget).replace('.', ',') : '',
       grassiTarget: esistente?.grassiTarget != null ? String(esistente.grassiTarget).replace('.', ',') : '',
+      nota: esistente?.nota ?? null,
     }
   })
 }
@@ -277,6 +363,7 @@ interface EsempioLocale {
   clientId: string
   tipoPasto: TipoPasto
   nome: string
+  nota: string | null
   righe: RigaLocale[]
 }
 const esempiLocali = ref<EsempioLocale[]>([])
@@ -291,22 +378,27 @@ const CATEGORIE_ESEMPI: { tipo: TipoPasto; etichetta: string; colore: string }[]
 
 // Stesso motivo del template dei pasti: un esempio "segnaposto" per categoria, come genera
 // PianoAlimentareService.creaBozza() per una bozza ESEMPI appena creata.
-esempiLocali.value = CATEGORIE_ESEMPI.map((c) => ({
-  clientId: crypto.randomUUID(), tipoPasto: c.tipo, nome: c.etichetta, righe: [],
-}))
+function esempiTemplate(): EsempioLocale[] {
+  return CATEGORIE_ESEMPI.map((c) => ({
+    clientId: crypto.randomUUID(), tipoPasto: c.tipo, nome: c.etichetta, nota: null, righe: [],
+  }))
+}
+esempiLocali.value = esempiTemplate()
 
 // Prima del salvataggio, cambiare modalità sostituisce la sezione visibile: i dati già
 // inseriti nella sezione lasciata non vengono mai inviati al server (solo la modalità scelta
 // al momento del salvataggio ha una struttura persistita, vedi salva()), quindi vanno persi.
+// La conferma del cambio (confermaCambioModalita) resetta la sezione lasciata al template
+// vuoto, cosí tornare sulla stessa modalità in seguito non fa riapparire i dati scartati.
 // "Valorizzata" = contiene qualcosa oltre il template vuoto di default.
 function sezioneValorizzata(modalita: ModalitaPiano): boolean {
   if (modalita === 'PASTI') {
     return pastiLocali.value.some((p) => p.righe.length > 0) || pastiLocali.value.length > PASTI_STANDARD.length * GIORNI.length
   }
   if (modalita === 'MACRO') {
-    return giorniMacroLocali.value.some((g) => g.kcalTarget || g.proteineTarget || g.carboidratiTarget || g.grassiTarget)
+    return giorniMacroLocali.value.some((g) => g.kcalTarget || g.proteineTarget || g.carboidratiTarget || g.grassiTarget || g.nota)
   }
-  return esempiLocali.value.some((e) => e.righe.length > 0) || esempiLocali.value.length > CATEGORIE_ESEMPI.length
+  return esempiLocali.value.some((e) => e.righe.length > 0 || e.nota) || esempiLocali.value.length > CATEGORIE_ESEMPI.length
 }
 
 function selezionaModalita(opzione: ModalitaPiano) {
@@ -320,7 +412,12 @@ function selezionaModalita(opzione: ModalitaPiano) {
 }
 
 function confermaCambioModalita() {
-  if (modalitaTarget.value) modalitaScelta.value = modalitaTarget.value
+  if (modalitaTarget.value) {
+    if (modalitaScelta.value === 'PASTI') pastiLocali.value = pastiTemplate()
+    else if (modalitaScelta.value === 'MACRO') giorniMacroLocali.value = giorniMacroTemplate()
+    else esempiLocali.value = esempiTemplate()
+    modalitaScelta.value = modalitaTarget.value
+  }
   modalitaTarget.value = null
   confermaCambioModalitaAperta.value = false
 }
@@ -335,7 +432,7 @@ function esempiPerCategoria(tipo: TipoPasto) {
 
 function aggiungiEsempio(tipo: TipoPasto, etichetta: string) {
   const numero = esempiPerCategoria(tipo).length + 1
-  esempiLocali.value.push({ clientId: crypto.randomUUID(), tipoPasto: tipo, nome: `${etichetta} ${numero}`, righe: [] })
+  esempiLocali.value.push({ clientId: crypto.randomUUID(), tipoPasto: tipo, nome: `${etichetta} ${numero}`, nota: null, righe: [] })
 }
 function rimuoviEsempio(clientId: string) {
   esempiLocali.value = esempiLocali.value.filter((e) => e.clientId !== clientId)
@@ -351,6 +448,7 @@ function applicaEsempiDaRisultato(risultato: PianoAlimentare) {
     clientId: e.id,
     tipoPasto: e.tipoPasto,
     nome: e.nome,
+    nota: e.nota,
     righe: e.righe.map((r) => ({ clientId: r.id, ...r })),
   }))
 }
@@ -375,7 +473,13 @@ function applicaPiano(risultato: PianoAlimentare) {
 async function caricaPiano(id: string) {
   caricamento.value = true
   try {
-    applicaPiano(await dettaglio(id))
+    const risultato = await dettaglio(id)
+    applicaPiano(risultato)
+    // Non bloccante: il sottotitolo si popola appena disponibile, senza ritardare il resto
+    // della pagina (stesso motivo per cui il watch su pazienteSelezionato non è mai atteso).
+    caricaUltimaVisita(risultato.pazienteId).then((visita) => {
+      ultimaVisitaSelezionato.value = visita
+    })
   } catch {
     erroreCaricamento.value = 'Non è stato possibile caricare il piano.'
   } finally {
@@ -569,11 +673,36 @@ function onGrammiInput(pastoClientId: string, rigaClientId: string, valore: stri
   const numero = numeroItalianoOpzionale(filtrato)
   if (riga && numero !== undefined && Number.isFinite(numero)) riga.grammi = numero
 }
+function onGrammiInputEsempio(esempioClientId: string, rigaClientId: string, valore: string | number) {
+  const filtrato = filtraDecimaleItaliano(String(valore))
+  grammiInputPerRiga.value[rigaClientId] = filtrato
+  const esempio = esempiLocali.value.find((e) => e.clientId === esempioClientId)
+  const riga = esempio?.righe.find((r) => r.clientId === rigaClientId)
+  const numero = numeroItalianoOpzionale(filtrato)
+  if (riga && numero !== undefined && Number.isFinite(numero)) riga.grammi = numero
+}
 
 const salvataggioInCorso = ref(false)
 
+// Data di partenza validata solo prima del primo salvataggio: dopo diventa immutabile e non
+// è più mostrata come campo modificabile (vedi il v-else nel template).
+function validaCampi(): boolean {
+  const nuoviErrori: Record<string, string> = {}
+  const assegna = (chiave: string, messaggio: string | undefined) => {
+    if (messaggio) nuoviErrori[chiave] = messaggio
+  }
+
+  if (!piano.value) assegna('dataInizio', erroreDataInizioPiano(dataInizioInput.value))
+  assegna('dataFine', erroreDataFinePiano(dataFineInput.value, dataInizioEffettiva.value))
+  assegna('obiettivoKcal', erroreNumeroDecimaleObbligatorio(obiettivoKcalInput.value))
+
+  errori.value = nuoviErrori
+  return Object.keys(nuoviErrori).length === 0
+}
+
 async function salva(): Promise<boolean> {
   if (!piano.value && !pazienteSelezionato.value) return false
+  if (!validaCampi()) return false
   salvataggioInCorso.value = true
   try {
     let id = piano.value?.id
@@ -609,12 +738,14 @@ async function salva(): Promise<boolean> {
             proteineTarget: numeroItalianoOpzionale(g.proteineTarget) ?? null,
             carboidratiTarget: numeroItalianoOpzionale(g.carboidratiTarget) ?? null,
             grassiTarget: numeroItalianoOpzionale(g.grassiTarget) ?? null,
+            nota: g.nota,
           }))
         : null,
       esempi: modalitaAttiva.value === 'ESEMPI'
         ? esempiLocali.value.map((e) => ({
             tipoPasto: e.tipoPasto,
             nome: e.nome,
+            nota: e.nota,
             righe: e.righe.map(({ clientId: _clientId, ...resto }) => resto),
           }))
         : null,
@@ -679,6 +810,7 @@ function stampaPdf() {
         :to="linkIndietro"
         data-test="link-indietro"
         class="inline-flex w-fit items-center gap-2 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green) print:hidden"
+        @click.prevent="tornaIndietro"
       >
         <ArrowLeft :size="16" />
         <span>{{ testoLinkIndietro }}</span>
@@ -691,29 +823,48 @@ function stampaPdf() {
       </div>
 
       <template v-else>
-        <div class="flex items-end justify-between gap-4 print:hidden">
+        <div class="flex flex-col lg:flex-row items-end lg:justify-between gap-4 print:hidden">
           <div>
             <div class="flex items-center gap-2">
               <Input v-model="nome" class="font-heading! text-3xl! italic! text-(--fg)! border-0 p-0" />
               <Pencil :size="16" class="shrink-0 text-(--fg4)" />
             </div>
-            <p class="mt-1 text-sm text-(--fg3)">{{ nomePazienteVisualizzato }} · {{ ETICHETTA_MODALITA[modalitaAttiva] }}</p>
+            <p class="mt-1 text-sm text-(--fg3)">{{ nomePazienteVisualizzato }} · {{ sottotitoloVisita ?? ETICHETTA_MODALITA[modalitaAttiva] }}</p>
           </div>
           <div class="flex gap-2">
-            <Button v-if="piano" variant="outline" @click="stampaPdf">Stampa PDF</Button>
-            <Button v-if="piano?.stato === 'BOZZA'" data-test="elimina-piano" variant="outline"
-                    @click="confermaEliminaAperta = true">Elimina</Button>
-            <Button v-if="piano?.stato === 'BOZZA'" data-test="attiva-piano" :disabled="attivazioneInCorso"
-                    @click="attivaPiano">Attiva piano</Button>
-            <Button :disabled="salvataggioInCorso || !nome.trim()" @click="salva">
-              {{ salvataggioInCorso ? 'Salvataggio…' : 'Salva' }}
+            <DropdownMenu v-if="piano">
+              <DropdownMenuTrigger as-child>
+                <Button type="button" data-test="opzioni-piano" variant="outline" size="icon" aria-label="Altre opzioni" title="Altre opzioni">
+                  <MoreHorizontal :size="16" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" class="w-52">
+                <DropdownMenuItem class="cursor-pointer" @click="stampaPdf">
+                  <Printer />
+                  Stampa PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem v-if="piano.stato === 'BOZZA'" data-test="attiva-piano" class="cursor-pointer" :disabled="attivazioneInCorso" @click="attivaPiano">
+                  <CircleCheck />
+                  Attiva piano
+                </DropdownMenuItem>
+                <DropdownMenuSeparator v-if="piano.stato === 'BOZZA'" />
+                <DropdownMenuItem
+                  v-if="piano.stato === 'BOZZA'" data-test="elimina-piano"
+                  variant="destructive" class="cursor-pointer text-(--danger) focus:text-(--danger)"
+                  @click="confermaEliminaAperta = true"
+                >
+                  <Trash2 />
+                  Elimina
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button :disabled="salvataggioInCorso || !nome.trim()" @click="salva" class="hover:bg-primary/80" :size="'default'">
+              <Save :size="16" /> {{ salvataggioInCorso ? 'Salvataggio…' : 'Salva' }}
             </Button>
           </div>
         </div>
 
-        <SelezionaPazienteCombobox v-if="!piano" v-model="pazienteSelezionato" class="print:hidden" />
-
-        <div v-if="!piano" class="flex w-fit gap-2 rounded-xl border border-(--bd2) bg-(--soft) p-1 print:hidden">
+        <div v-if="!piano" class="flex w-fit gap-2 rounded-xl border border-(--bd2) p-1 print:hidden">
           <button
             v-for="opzione in (['PASTI', 'MACRO', 'ESEMPI'] as ModalitaPiano[])"
             :key="opzione"
@@ -726,159 +877,259 @@ function stampaPdf() {
           </button>
         </div>
 
-        <div class="flex flex-wrap items-center justify-center gap-6 rounded-2xl border border-(--sage) bg-(--mint) p-4 print:hidden">
+        <div class="flex flex-wrap items-start justify-start lg:justify-center gap-3 lg:gap-6 rounded-2xl border border-(--sage) bg-(--mint) p-4 print:hidden">
+          <div class="flex flex-col gap-1">
+            <span class="text-[10px] font-bold uppercase tracking-wide text-(--green)">Data di partenza*</span>
+            <DatePicker
+              v-if="!piano" id="data-inizio" :model-value="dataInizioInput" @update:model-value="onDataInizioChange"
+              class="border-(--sage) dark:border-(--sage) bg-(--surf) dark:bg-(--surf) text-base font-semibold"
+            />
+            <span v-else class="font-heading text-sm font-semibold text-(--fg)">{{ formattaDataItalianaEstesa(piano.dataInizio) }}</span>
+            <p v-if="errori.dataInizio" class="text-xs font-medium text-(--danger)">{{ errori.dataInizio }}</p>
+          </div>
+          <div class="hidden h-8 w-px bg-(--sage) sm:block" />
           <div class="flex flex-col gap-1">
             <span class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-(--green)">
-              Obiettivo giornaliero
+              Obiettivo giornaliero*
               <span
-                title="Stima da BMR (Mifflin-St Jeor o Katch-McArdle) × livello di attività dell'ultima visita. Modificabile."
+                data-test="obiettivo-kcal-info"
+                :title="titleObiettivoKcal"
                 class="flex h-3.5 w-3.5 cursor-help items-center justify-center rounded-full bg-(--sage)/35 text-[9px] font-bold text-(--green-d)"
               >i</span>
             </span>
             <span class="flex items-center gap-2">
               <Input
                 data-test="obiettivo-kcal-input"
-                type="text" inputmode="decimal" class="w-24 border-(--sage) bg-(--surf) font-heading text-base font-semibold"
+                type="text" inputmode="decimal" class="w-24 border-(--sage) bg-(--surf) text-base font-semibold"
                 :model-value="obiettivoKcalInput"
                 :placeholder="suggerimentoObiettivo ? String(suggerimentoObiettivo.kcal) : undefined"
+                :aria-invalid="!!errori.obiettivoKcal"
                 @keydown="bloccaTastoNonNumerico"
-                @update:model-value="(v) => (obiettivoKcalInput = filtraDecimaleItaliano(String(v)))"
+                @update:model-value="onObiettivoKcalInput"
               />
               <span class="text-xs font-semibold text-(--green)">kcal/giorno</span>
             </span>
-            <p v-if="suggerimentoObiettivo" class="text-xs text-(--green)">
-              Suggerimento calcolato con la formula
-              {{ suggerimentoObiettivo.formula === 'KATCH_MCARDLE' ? 'Katch-McArdle' : 'Mifflin-St Jeor' }}.
-            </p>
-            <p v-else-if="!piano && !ultimaVisitaSelezionato" class="text-xs text-(--fg3)">
-              Il paziente non ha ancora una visita registrata: imposta il valore a mano.
-            </p>
-            <p v-else class="text-xs text-(--fg3)">
-              Nessun suggerimento automatico disponibile per l'obiettivo di questa visita: imposta il valore a mano.
-            </p>
-            <p v-if="suggerimentoObiettivo?.sottoSoglia" class="text-xs text-(--danger)">
-              Il valore suggerito è sotto la soglia minima indicativa: valutare con attenzione.
-            </p>
+            <p v-if="errori.obiettivoKcal" class="text-xs font-medium text-(--danger)">{{ errori.obiettivoKcal }}</p>
           </div>
           <div class="hidden h-8 w-px bg-(--sage) sm:block" />
           <div class="flex flex-col gap-1">
-            <span class="text-[10px] font-bold uppercase tracking-wide text-(--green)">Data di partenza</span>
+            <span class="text-[10px] font-bold uppercase tracking-wide text-(--green)">Fine piano*</span>
             <DatePicker
-              v-if="!piano" id="data-inizio" v-model="dataInizioInput"
-              class="border-(--sage) dark:border-(--sage) bg-(--surf) dark:bg-(--surf) font-heading text-base font-semibold"
+              id="data-fine" :model-value="dataFineInput" @update:model-value="onDataFineChange"
+              class="border-(--sage) dark:border-(--sage) bg-(--surf) dark:bg-(--surf) text-base font-semibold"
             />
-            <span v-else class="font-heading text-sm font-semibold text-(--fg)">{{ formattaDataItalianaEstesa(piano.dataInizio) }}</span>
-          </div>
-          <div class="hidden h-8 w-px bg-(--sage) sm:block" />
-          <div class="flex flex-col gap-1">
-            <span class="text-[10px] font-bold uppercase tracking-wide text-(--green)">Fine piano</span>
-            <DatePicker
-              id="data-fine" v-model="dataFineInput"
-              class="border-(--sage) dark:border-(--sage) bg-(--surf) dark:bg-(--surf) font-heading text-base font-semibold"
-            />
+            <p v-if="errori.dataFine" class="text-xs font-medium text-(--danger)">{{ errori.dataFine }}</p>
           </div>
         </div>
 
         <div v-if="modalitaAttiva === 'ESEMPI'" class="flex flex-col gap-4">
-        <div class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-4">
-          <div v-for="categoria in CATEGORIE_ESEMPI" :key="categoria.tipo" class="rounded-2xl border border-(--bd) bg-(--surf)">
-            <div class="flex items-center gap-2 bg-(--soft) px-3 py-2">
-              <span class="h-2 w-2 flex-none rounded-full" :style="{ background: categoria.colore }" />
-              <p class="font-heading text-sm font-semibold">{{ categoria.etichetta }}</p>
-            </div>
-            <div class="flex flex-col gap-2 p-2">
-              <div
-                v-for="esempio in esempiPerCategoria(categoria.tipo)" :key="esempio.clientId"
-                data-test="card-esempio"
-                class="rounded-xl border border-(--bd2) p-2"
-              >
-                <div class="mb-1 flex items-center justify-between gap-2">
-                  <div class="flex min-w-0 flex-1 items-center gap-1.5">
-                    <Input v-model="esempio.nome" class="min-w-0 border-0 bg-transparent p-0 text-xs font-bold" />
-                    <Pencil :size="11" class="shrink-0 text-(--fg4)" />
+          <div class="grid grid-cols-[repeat(auto-fit,minmax(340px,1fr))] items-start gap-5">
+            <div
+              v-for="categoria in CATEGORIE_ESEMPI"
+              :key="categoria.tipo"
+              class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf) shadow-xs"
+            >
+              <!-- Header della colonna categoria -->
+              <div class="flex items-center gap-2 border-b border-(--div2) bg-(--soft) px-5 py-4">
+                <span class="h-2.5 w-2.5 flex-none rounded-full" :style="{ background: categoria.colore }" />
+                <p class="font-heading text-base font-semibold text-(--fg)">{{ categoria.etichetta }}</p>
+              </div>
+
+              <!-- Contenuto della categoria -->
+              <div class="flex flex-col gap-4 p-4">
+                <!-- Card Esempio -->
+                <div
+                  v-for="esempio in esempiPerCategoria(categoria.tipo)"
+                  :key="esempio.clientId"
+                  data-test="card-esempio"
+                  class="rounded-xl border border-(--bd) bg-(--bg) p-4 transition-shadow hover:shadow-xs"
+                >
+                  <!-- Header dell'esempio (Nome ed Eliminazione) -->
+                  <div class="mb-3 flex items-center justify-between gap-2 border-b border-(--div2)/50 pb-3">
+                    <div class="flex min-w-0 flex-1 items-center gap-1.5">
+                      <Input
+                        v-model="esempio.nome"
+                        class="min-w-0 border-0 bg-transparent p-0 text-sm font-bold text-(--fg) focus-visible:ring-0"
+                      />
+                      <Pencil :size="12" class="shrink-0 text-(--fg4)" />
+                    </div>
+
+                    <!-- Tasto modifica / elimina esempio -->
+                    <Button
+                      type="button"
+                      variant="destructive-ghost"
+                      size="icon-xs"
+                      title="Rimuovi esempio"
+                      @click="chiediRimuoviEsempio(esempio.clientId)"
+                    >
+                      <Trash2 :size="13" />
+                    </Button>
                   </div>
-                  <button class="shrink-0 text-(--fg4)" @click="chiediRimuoviEsempio(esempio.clientId)">✕</button>
+
+                  <!-- Lista righe/alimenti dell'esempio -->
+                  <div v-if="esempio.righe.length" class="mb-3 flex flex-col gap-2">
+                    <div
+                      v-for="riga in esempio.righe"
+                      :key="riga.clientId"
+                      class="group flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-xs transition-colors hover:bg-(--soft)"
+                    >
+                      <span class="min-w-0 flex-1 truncate font-medium text-(--fg2)">{{ riga.nome }}</span>
+                      <span class="flex shrink-0 items-center gap-1">
+                        <Input
+                          type="text" inputmode="decimal" class="h-7 w-16 text-right text-xs"
+                          :model-value="grammiVisualizzati(riga)" @keydown="bloccaTastoNonNumerico"
+                          @update:model-value="(v) => onGrammiInputEsempio(esempio.clientId, riga.clientId, v)"
+                        />
+                        <span class="font-semibold text-(--fg3)">g</span>
+                      </span>
+                      <Button
+                        type="button"
+                        variant="destructive-ghost"
+                        size="icon-xs"
+                        class="opacity-0 group-hover:opacity-100 transition-opacity"
+                        @click="rimuoviRigaEsempio(esempio.clientId, riga.clientId)"
+                      >
+                        <X :size="12" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <!-- Aggiungi alimento all'esempio -->
+                  <button
+                    class="text-xs font-semibold text-(--green) transition-colors hover:text-(--green)/80"
+                    @click="apriAggiungiAlimentoEsempio(esempio.clientId)"
+                  >
+                    + Aggiungi alimento
+                  </button>
+
+                  <!-- Nota dell'esempio -->
+                  <Textarea
+                    data-test="esempio-nota"
+                    :model-value="esempio.nota ?? ''"
+                    @update:model-value="(v) => (esempio.nota = String(v).trim() ? String(v) : null)"
+                    rows="1"
+                    placeholder="Sostituti, varianti…"
+                    class="mt-2.5 min-h-0 resize-none border-0 bg-transparent p-0 text-xs italic text-(--fg2) shadow-none focus-visible:ring-0"
+                  />
                 </div>
-                <div v-for="riga in esempio.righe" :key="riga.clientId" class="flex items-center justify-between gap-1 text-xs">
-                  <span class="min-w-0 flex-1 truncate">{{ riga.nome }}</span>
-                  <span>{{ riga.grammi }}g</span>
-                  <button class="text-(--fg4)" @click="rimuoviRigaEsempio(esempio.clientId, riga.clientId)">✕</button>
-                </div>
-                <button class="mt-1 text-xs font-bold text-(--fg3)" @click="apriAggiungiAlimentoEsempio(esempio.clientId)">
-                  + Aggiungi alimento
+
+                <!-- Pulsante crea nuovo esempio -->
+                <button
+                  :data-test="`nuovo-esempio-${categoria.tipo}`"
+                  class="flex w-full items-center justify-center rounded-xl border border-dashed border-(--bd2) py-2.5 text-xs font-semibold text-(--fg3) transition-colors hover:border-(--green) hover:bg-(--mint)/30 hover:text-(--green)"
+                  @click="aggiungiEsempio(categoria.tipo, categoria.etichetta)"
+                >
+                  + Nuovo esempio
                 </button>
               </div>
-              <button
-                :data-test="`nuovo-esempio-${categoria.tipo}`"
-                class="rounded-lg border border-dashed border-(--bd2) py-2 text-xs font-bold text-(--fg3)"
-                @click="aggiungiEsempio(categoria.tipo, categoria.etichetta)"
-              >
-                + Nuovo esempio
-              </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <div v-if="modalitaAttiva === 'MACRO'" class="flex flex-col gap-4 sm:grid sm:grid-cols-[180px_1fr] sm:items-start">
-        <NativeSelect v-model="giornoSelezionato" class="sm:hidden">
+      <div v-if="modalitaAttiva === 'MACRO'" class="flex flex-col gap-4 sm:grid sm:grid-cols-[200px_1fr] sm:items-start">
+        <!-- Dropdown Mobile -->
+        <NativeSelect v-model="giornoSelezionato" class="w-full sm:hidden">
           <NativeSelectOption v-for="giorno in GIORNI" :key="giorno.chiave" :value="giorno.chiave">
-            {{ giorno.etichetta }}
+            {{ giorno.etichetta }} ({{ kcalGiorno(giorno.chiave) || '—' }} kcal)
           </NativeSelectOption>
         </NativeSelect>
 
-        <div class="hidden rounded-2xl border border-(--bd) bg-(--surf) sm:block">
+        <!-- Sidebar Giorni Desktop -->
+        <div class="hidden overflow-hidden rounded-xl border border-(--bd) bg-(--surf) sm:block divide-y divide-(--div2)">
           <button
-            v-for="giorno in GIORNI" :key="giorno.chiave" data-test="giorno-tab"
-            class="flex w-full items-center justify-between border-b border-(--div2) px-3 py-3 text-left"
-            :class="giornoSelezionato === giorno.chiave ? 'bg-(--mint) text-(--green)' : 'text-(--fg2)'"
+            v-for="giorno in GIORNI"
+            :key="giorno.chiave"
+            data-test="giorno-tab"
+            class="flex w-full items-center justify-between px-4 py-3 text-left transition-all hover:bg-(--mint)/40"
+            :class="giornoSelezionato === giorno.chiave 
+              ? 'bg-(--mint) text-(--green) font-semibold border-l-4 border-(--green) pl-3' 
+              : 'text-(--fg2)'"
             @click="giornoSelezionato = giorno.chiave"
           >
-            <span class="text-sm font-bold">{{ giorno.etichetta }}</span>
+            <span class="text-sm">{{ giorno.etichetta }}</span>
+            <span class="text-xs font-normal opacity-75">{{ kcalGiorno(giorno.chiave) || '—' }}</span>
           </button>
         </div>
 
-        <div v-if="macroDelGiornoSelezionato" class="rounded-2xl border border-(--bd) bg-(--surf) p-4">
-          <div class="mb-3 flex items-center justify-between">
-            <p class="font-heading text-base font-semibold">Target macro · {{ GIORNI.find(g => g.chiave === giornoSelezionato)?.etichetta }}</p>
-            <button data-test="applica-a-tutti" class="text-xs font-bold text-(--green)" @click="applicaMacroATuttiIGiorni">
+        <!-- Pannello Form Target Macro -->
+        <div v-if="macroDelGiornoSelezionato" class="rounded-2xl border border-(--bd) bg-(--surf) p-5 shadow-xs">
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h3 class="font-heading text-base font-semibold text-(--fg)">
+              Target macro · {{ GIORNI.find(g => g.chiave === giornoSelezionato)?.etichetta }}
+            </h3>
+            <Button
+              type="button"
+              variant="ghost-primary"
+              size="sm"
+              data-test="applica-a-tutti"
+              @click="applicaMacroATuttiIGiorni"
+            >
               Applica a tutti i giorni
-            </button>
+            </Button>
           </div>
-          <div class="grid grid-cols-4 gap-3">
-            <label class="flex flex-col gap-1">
-              <span class="text-xs font-bold uppercase text-(--fg3)">Kcal</span>
+
+          <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <label class="flex flex-col gap-1.5">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-(--fg4)">Kcal</span>
               <Input
-                data-test="macro-target-kcal" type="text" inputmode="decimal"
-                :model-value="macroDelGiornoSelezionato.kcalTarget" @keydown="bloccaTastoNonNumerico"
+                data-test="macro-target-kcal" 
+                type="text" 
+                inputmode="decimal"
+                placeholder="0"
+                :model-value="macroDelGiornoSelezionato.kcalTarget" 
+                @keydown="bloccaTastoNonNumerico"
                 @update:model-value="(v) => (macroDelGiornoSelezionato!.kcalTarget = filtraDecimaleItaliano(String(v)))"
               />
             </label>
-            <label class="flex flex-col gap-1">
-              <span class="text-xs font-bold uppercase text-(--fg3)">Proteine (g)</span>
+
+            <label class="flex flex-col gap-1.5">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-(--fg4)">Proteine (g)</span>
               <Input
-                type="text" inputmode="decimal"
-                :model-value="macroDelGiornoSelezionato.proteineTarget" @keydown="bloccaTastoNonNumerico"
+                type="text" 
+                inputmode="decimal"
+                placeholder="0"
+                :model-value="macroDelGiornoSelezionato.proteineTarget" 
+                @keydown="bloccaTastoNonNumerico"
                 @update:model-value="(v) => (macroDelGiornoSelezionato!.proteineTarget = filtraDecimaleItaliano(String(v)))"
               />
             </label>
-            <label class="flex flex-col gap-1">
-              <span class="text-xs font-bold uppercase text-(--fg3)">Carboidrati (g)</span>
+
+            <label class="flex flex-col gap-1.5">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-(--fg4)">Carboidrati (g)</span>
               <Input
-                type="text" inputmode="decimal"
-                :model-value="macroDelGiornoSelezionato.carboidratiTarget" @keydown="bloccaTastoNonNumerico"
+                type="text" 
+                inputmode="decimal"
+                placeholder="0"
+                :model-value="macroDelGiornoSelezionato.carboidratiTarget" 
+                @keydown="bloccaTastoNonNumerico"
                 @update:model-value="(v) => (macroDelGiornoSelezionato!.carboidratiTarget = filtraDecimaleItaliano(String(v)))"
               />
             </label>
-            <label class="flex flex-col gap-1">
-              <span class="text-xs font-bold uppercase text-(--fg3)">Grassi (g)</span>
+
+            <label class="flex flex-col gap-1.5">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-(--fg4)">Grassi (g)</span>
               <Input
-                type="text" inputmode="decimal"
-                :model-value="macroDelGiornoSelezionato.grassiTarget" @keydown="bloccaTastoNonNumerico"
+                type="text" 
+                inputmode="decimal"
+                placeholder="0"
+                :model-value="macroDelGiornoSelezionato.grassiTarget" 
+                @keydown="bloccaTastoNonNumerico"
                 @update:model-value="(v) => (macroDelGiornoSelezionato!.grassiTarget = filtraDecimaleItaliano(String(v)))"
               />
             </label>
           </div>
+
+          <label class="mt-4 flex flex-col gap-1.5">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-(--fg4)">Nota</span>
+            <Textarea
+              data-test="macro-target-nota"
+              :model-value="macroDelGiornoSelezionato.nota ?? ''"
+              @update:model-value="(v) => (macroDelGiornoSelezionato!.nota = String(v).trim() ? String(v) : null)"
+              rows="2"
+              placeholder="Indicazioni per questo giorno…"
+              class="resize-y text-xs"
+            />
+          </label>
         </div>
       </div>
 
@@ -889,15 +1140,19 @@ function stampaPdf() {
           </NativeSelectOption>
         </NativeSelect>
 
-        <div class="hidden rounded-2xl border border-(--bd) bg-(--surf) sm:block">
+        <div class="hidden overflow-hidden rounded-xl border border-(--bd) bg-(--surf) sm:block divide-y divide-(--div2)">
           <button
-            v-for="giorno in GIORNI" :key="giorno.chiave" data-test="giorno-tab"
-            class="flex w-full items-center justify-between border-b border-(--div2) px-3 py-3 text-left"
-            :class="giornoSelezionato === giorno.chiave ? 'bg-(--mint) text-(--green)' : 'text-(--fg2)'"
+            v-for="giorno in GIORNI"
+            :key="giorno.chiave"
+            data-test="giorno-tab"
+            class="flex w-full items-center justify-between px-4 py-3 text-left transition-all hover:bg-(--mint)/40"
+            :class="giornoSelezionato === giorno.chiave 
+              ? 'bg-(--mint) text-(--green) font-semibold border-l-4 border-(--green) pl-3' 
+              : 'text-(--fg2)'"
             @click="giornoSelezionato = giorno.chiave"
           >
-            <span class="text-sm font-bold">{{ giorno.etichetta }}</span>
-            <span class="text-xs">{{ kcalGiorno(giorno.chiave) || '—' }}</span>
+            <span class="text-sm">{{ giorno.etichetta }}</span>
+            <span class="text-xs font-normal opacity-75">{{ kcalGiorno(giorno.chiave) || '—' }}</span>
           </button>
         </div>
 
@@ -925,22 +1180,23 @@ function stampaPdf() {
           <div
             v-for="pasto in pastiDelGiorno" :key="pasto.clientId"
             data-test="card-pasto"
-            class="rounded-2xl border border-(--bd) bg-(--surf)"
+            class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)"
           >
-            <div class="flex items-center justify-between gap-3 bg-(--soft) px-4 py-3">
+            <!-- Header pasto con angoli superiori protetti e bordo inferiore -->
+            <div class="flex items-center justify-between gap-3 border-b border-(--div2) bg-(--soft) px-4 py-3">
               <div class="flex min-w-0 flex-1 items-center gap-2">
                 <span class="h-2 w-2 flex-none rounded-full" :style="{ background: COLORE_TIPO_PASTO[pasto.tipo] }" />
                 <Input
                   v-model="pasto.nome"
-                  class="min-w-0 border-0 bg-transparent p-0 font-heading text-sm font-semibold text-(--fg)"
+                  class="min-w-0 border-0 bg-transparent p-0 font-heading text-sm! font-semibold text-(--fg) focus-visible:ring-0"
                 />
                 <Pencil :size="12" class="shrink-0 text-(--fg4)" />
               </div>
               <div class="flex items-center gap-3">
-                <span class="text-xs text-(--fg3)">{{ kcalPasto(pasto) }} kcal</span>
+                <span class="text-xs font-medium text-(--fg3)">{{ kcalPasto(pasto) }} kcal</span>
                 <DropdownMenu>
                   <DropdownMenuTrigger as-child>
-                    <Button type="button" variant="ghost" size="icon" class="h-7 w-7" aria-label="Opzioni pasto" title="Opzioni pasto">
+                    <Button type="button" variant="ghost" size="icon-sm" aria-label="Opzioni pasto" title="Opzioni pasto">
                       <MoreHorizontal :size="15" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -957,10 +1213,11 @@ function stampaPdf() {
               </div>
             </div>
 
+            <!-- Tabella Alimenti -->
             <div v-if="pasto.righe.length" class="overflow-x-auto">
               <table class="w-full min-w-185">
                 <thead>
-                  <tr>
+                  <tr class="border-b border-(--div2)/50 bg-(--surf)/50">
                     <th class="px-4 pb-1.5 pt-2 text-left text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Alimento</th>
                     <th class="w-20 px-2 pb-1.5 pt-2 text-right text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Qtà</th>
                     <th class="px-2 pb-1.5 pt-2 text-right text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Kcal</th>
@@ -974,17 +1231,17 @@ function stampaPdf() {
                     <th class="w-8"></th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr v-for="riga in pasto.righe" :key="riga.clientId" class="border-t border-(--div2)">
-                    <td class="p-2 pl-4 text-sm font-semibold">{{ riga.nome }}</td>
+                <tbody class="divide-y divide-(--div2)">
+                  <tr v-for="riga in pasto.righe" :key="riga.clientId" class="transition-colors hover:bg-(--soft)/30">
+                    <td class="p-2 pl-4 text-xs font-semibold text-(--fg)">{{ riga.nome }}</td>
                     <td class="p-2 text-right">
                       <Input
-                        type="text" inputmode="decimal" class="w-16 text-right"
+                        type="text" inputmode="decimal" class="h-7 w-16 text-right text-xs"
                         :model-value="grammiVisualizzati(riga)" @keydown="bloccaTastoNonNumerico"
                         @update:model-value="(v) => onGrammiInput(pasto.clientId, riga.clientId, v)"
                       />
                     </td>
-                    <td class="p-2 text-right text-sm font-bold">{{ Math.round(macroRiga(riga).kcal) }}</td>
+                    <td class="p-2 text-right text-xs font-bold text-(--fg)">{{ Math.round(macroRiga(riga).kcal) }}</td>
                     <td class="p-2 text-right text-xs text-(--fg2)">{{ Math.round(macroRiga(riga).proteine) }}</td>
                     <td class="p-2 text-right text-xs text-(--fg2)">{{ Math.round(macroRiga(riga).grassi) }}</td>
                     <td class="p-2 text-right text-xs text-(--fg2)">{{ Math.round(macroRiga(riga).carboidrati) }}</td>
@@ -993,38 +1250,42 @@ function stampaPdf() {
                     <td class="p-2 text-right text-xs text-(--fg2)">{{ Math.round(macroRiga(riga).ferro) }}</td>
                     <td class="p-2 pr-4 text-right text-xs text-(--fg2)">{{ Math.round(macroRiga(riga).calcio) }}</td>
                     <td class="p-2 text-center">
-                      <button class="text-(--fg4)" @click="rimuoviRiga(pasto.clientId, riga.clientId)">✕</button>
+                      <Button variant="destructive-ghost" size="icon-xs" @click="rimuoviRiga(pasto.clientId, riga.clientId)">
+                        <X :size="12" />
+                      </Button>
                     </td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
-            <div class="flex items-center gap-3 p-3">
+            <!-- Aggiungi alimento -->
+            <div class="p-3">
               <button
                 data-test="apri-aggiungi-alimento"
-                class="rounded-lg border border-dashed border-(--bd2) px-3 py-2 text-xs font-bold text-(--fg3)"
+                class="rounded-lg border border-dashed border-(--bd2) px-3 py-1.5 text-xs font-medium text-(--fg3) transition-colors hover:border-(--green) hover:text-(--green)"
                 @click="apriAggiungiAlimento(pasto.clientId)"
               >
                 + Aggiungi alimento
               </button>
             </div>
 
-            <div class="flex items-start gap-2 border-t border-(--div2) px-4 py-2">
-              <span class="mt-1.5 whitespace-nowrap text-[10px] text-(--fg4)">Nota:</span>
+            <!-- Note a piè di card -->
+            <div class="flex items-center gap-2 border-t border-(--div2) bg-(--soft)/40 px-4 py-2">
+              <span class="whitespace-nowrap text-[10px] font-medium uppercase tracking-wide text-(--fg4)">Nota:</span>
               <Textarea
                 :model-value="pasto.nota ?? ''"
                 @update:model-value="(v) => (pasto.nota = String(v).trim() ? String(v) : null)"
                 rows="1"
                 placeholder="Cottura, preferenze, sostituti…"
-                class="min-h-0 resize-y border-0 bg-transparent p-0 text-xs italic text-(--fg2) shadow-none focus-visible:ring-0"
+                class="min-h-0 resize-none border-0 bg-transparent p-0 text-xs italic text-(--fg2) shadow-none focus-visible:ring-0"
               />
             </div>
           </div>
 
           <button
             data-test="aggiungi-pasto"
-            class="rounded-xl border border-dashed border-(--bd2) bg-(--surf) px-4 py-3 text-sm font-bold text-(--fg2)"
+            class="rounded-xl border border-dashed border-(--bd2) bg-(--surf) px-4 py-3 text-sm font-bold text-(--fg2) transition-colors hover:border-(--green) hover:text-(--green)"
             @click="aggiungiPasto"
           >
             + Aggiungi pasto
@@ -1043,8 +1304,8 @@ function stampaPdf() {
           <AlertDialogDescription>L'operazione non è reversibile.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Annulla</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-elimina-piano" variant="destructive" @click="confermaElimina">
+          <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
+          <AlertDialogAction data-test="conferma-elimina-piano" class="bg-(--danger) hover:bg-(--danger)/80" @click="confermaElimina">
             Elimina
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -1060,8 +1321,8 @@ function stampaPdf() {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel @click="annullaCambioModalita">Annulla</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-cambio-modalita" variant="destructive" @click="confermaCambioModalita">
+          <AlertDialogCancel @click="annullaCambioModalita" variant="neutral">Annulla</AlertDialogCancel>
+          <AlertDialogAction data-test="conferma-cambio-modalita" class="bg-(--danger) hover:bg-(--danger)/80" @click="confermaCambioModalita">
             Cambia modalità
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -1075,8 +1336,8 @@ function stampaPdf() {
           <AlertDialogDescription>Gli alimenti già inseriti andranno persi. L'operazione non è reversibile.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel @click="rimozionePendente = null">Annulla</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-rimuovi-elemento" variant="destructive" @click="confermaRimozione">
+          <AlertDialogCancel @click="rimozionePendente = null" variant="neutral">Annulla</AlertDialogCancel>
+          <AlertDialogAction data-test="conferma-rimuovi-elemento" class="bg-(--danger) hover:bg-(--danger)/80" @click="confermaRimozione">
             Rimuovi
           </AlertDialogAction>
         </AlertDialogFooter>

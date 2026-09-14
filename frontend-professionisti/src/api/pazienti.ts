@@ -16,12 +16,19 @@ export interface Paziente {
   archiviato: boolean
   obiettivoUltimaVisita: 'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'PREPARAZIONE_SPORTIVA' | 'EDUCATIVO' | 'PATOLOGIA_CLINICA' | 'GRAVIDANZA_ALLATTAMENTO' | null
   dataUltimaVisita: string | null
+  // Data della prima visita (risalendo dall'ultima) con lo stesso obiettivo dell'ultima visita:
+  // da quando è impostato l'obiettivo attuale, non la data dell'ultima visita in sé.
+  dataInizioObiettivo: string | null
+  // Piano più di recente creazione del paziente, qualunque sia il suo stato (non solo l'attivo).
+  pianoNome: string | null
+  pianoStato: 'BOZZA' | 'ATTIVO' | 'SCADUTO' | 'TERMINATO' | null
+  pianoDataFine: string | null
 }
 
 export interface CriteriRicercaPazienti {
   pagina?: number
   dimensione?: number
-  ordinaPer?: 'nome' | 'cognome' | 'dataNascita' | 'statoAccount'
+  ordinaPer?: 'nome' | 'cognome' | 'dataNascita' | 'statoAccount' | 'dataUltimaVisita' | 'piano'
   direzione?: 'asc' | 'desc'
   ricerca?: string
   statoAccount?: Paziente['statoAccount']

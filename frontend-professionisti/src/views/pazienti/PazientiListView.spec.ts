@@ -36,6 +36,10 @@ const pazienteEsempio = {
   statoAccount: 'MAI_INVITATO' as const, archiviato: false,
   obiettivoUltimaVisita: null as Paziente['obiettivoUltimaVisita'],
   dataUltimaVisita: null as Paziente['dataUltimaVisita'],
+  pianoNome: null as Paziente['pianoNome'],
+  pianoStato: null as Paziente['pianoStato'],
+  pianoDataFine: null as Paziente['pianoDataFine'],
+  dataInizioObiettivo: null as Paziente['dataInizioObiettivo'],
 }
 
 function paginaCon(contenuto: typeof pazienteEsempio[]): PaginaPazienti {
@@ -79,7 +83,7 @@ describe('PazientiListView', () => {
     const wrapper = await montaView()
 
     expect(wrapper.text()).toContain('Ipertrofia')
-    expect(wrapper.text()).toContain('dal 12 gen 2026')
+    expect(wrapper.text()).toContain('12 gen 2026')
 
     const righe = wrapper.findAll('tbody tr')
     expect(righe[1].text()).toContain('—')

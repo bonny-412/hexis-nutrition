@@ -32,14 +32,18 @@ public class PianoEsempio {
     @Column(nullable = false)
     private int ordine;
 
+    @Column(columnDefinition = "TEXT")
+    private String nota;
+
     protected PianoEsempio() {
     }
 
-    public PianoEsempio(UUID pianoId, TipoPasto tipoPasto, String nome, int ordine) {
+    public PianoEsempio(UUID pianoId, TipoPasto tipoPasto, String nome, int ordine, String nota) {
         this.pianoId = pianoId;
         this.tipoPasto = tipoPasto;
         this.nome = nome;
         this.ordine = ordine;
+        this.nota = nota;
     }
 
     public UUID getId() {
@@ -64,5 +68,9 @@ public class PianoEsempio {
 
     public int getOrdine() {
         return ordine;
+    }
+
+    public String getNota() {
+        return nota;
     }
 }
