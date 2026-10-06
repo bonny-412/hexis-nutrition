@@ -128,11 +128,13 @@ export interface AggiornaPianoAlimentareRequest {
 export interface CriteriRicercaPianiAlimentari {
   pagina?: number
   dimensione?: number
-  ordinaPer?: 'nome' | 'dataFine'
+  ordinaPer?: 'nome' | 'dataInizio' | 'dataFine'
   direzione?: 'asc' | 'desc'
   ricerca?: string
   stato?: StatoPiano
   pazienteId?: string
+  escludiAttivo?: boolean
+  escludiBozze?: boolean
 }
 
 export interface PianoAlimentareRigaLista {
@@ -141,6 +143,8 @@ export interface PianoAlimentareRigaLista {
   nome: string
   stato: StatoPiano
   obiettivoKcal: number | null
+  modalita: ModalitaPiano
+  dataInizio: string
   dataFine: string | null
 }
 
@@ -168,6 +172,10 @@ export function attiva(id: string): Promise<void> {
   return apiRequest<void>(`/piani-alimentari/${id}/attiva`, { method: 'POST' })
 }
 
+export function duplica(id: string): Promise<PianoAlimentare> {
+  return apiRequest<PianoAlimentare>(`/piani-alimentari/${id}/duplica`, { method: 'POST' })
+}
+
 export function elimina(id: string): Promise<void> {
   return apiRequest<void>(`/piani-alimentari/${id}`, { method: 'DELETE' })
 }
@@ -181,6 +189,8 @@ export function cerca(criteri: CriteriRicercaPianiAlimentari = {}): Promise<Pagi
   if (criteri.ricerca) parametri.set('ricerca', criteri.ricerca)
   if (criteri.stato) parametri.set('stato', criteri.stato)
   if (criteri.pazienteId) parametri.set('pazienteId', criteri.pazienteId)
+  if (criteri.escludiAttivo) parametri.set('escludiAttivo', 'true')
+  if (criteri.escludiBozze) parametri.set('escludiBozze', 'true')
 
   const query = parametri.toString()
   return apiRequest<PaginaPianiAlimentari>(`/piani-alimentari/ricerca${query ? `?${query}` : ''}`)

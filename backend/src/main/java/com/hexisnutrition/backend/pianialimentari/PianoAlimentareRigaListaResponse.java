@@ -10,6 +10,8 @@ public record PianoAlimentareRigaListaResponse(
         String nome,
         StatoPianoVisualizzato stato,
         BigDecimal obiettivoKcal,
+        ModalitaPiano modalita,
+        LocalDate dataInizio,
         LocalDate dataFine
 ) {
 }

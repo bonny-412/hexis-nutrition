@@ -216,7 +216,7 @@ describe('PianoAlimentareFormView', () => {
     document.querySelector<HTMLElement>('[data-test="elimina-piano"]')?.click()
     await flushPromises()
     // Il contenuto dell'AlertDialog è teleportato in document.body: non raggiungibile con wrapper.find
-    // (stessa convenzione di PazienteTabStoricoMisurazioni.spec.ts / AlimentoRigaAzioni.spec.ts).
+    // (stessa convenzione di PazienteTabStoricoVisite.spec.ts / AlimentoRigaAzioni.spec.ts).
     document.querySelector<HTMLElement>('[data-test="conferma-elimina-piano"]')?.click()
     await flushPromises()
 

@@ -49,6 +49,11 @@ public class PazienteController {
                 .toList();
     }
 
+    @GetMapping("/conteggio-attivi")
+    public ConteggioPazientiResponse conteggioAttivi(@AuthenticationPrincipal UUID professionistaId) {
+        return new ConteggioPazientiResponse(pazienteService.contaAttivi(professionistaId));
+    }
+
     @GetMapping("/ricerca")
     public PazienteListaPaginataResponse ricerca(
             @AuthenticationPrincipal UUID professionistaId,
@@ -89,6 +94,13 @@ public class PazienteController {
     @GetMapping("/{id}/visite")
     public List<VisitaResponse> visite(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id) {
         return pazienteService.visite(professionistaId, id);
+    }
+
+    @GetMapping("/{id}/visite/storico")
+    public VisiteStoricoPaginaResponse storicoVisite(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id,
+                                                      @RequestParam(defaultValue = "0") int pagina,
+                                                      @RequestParam(defaultValue = "5") int dimensione) {
+        return pazienteService.storicoVisite(professionistaId, id, Math.max(pagina, 0), Math.min(Math.max(dimensione, 1), 100));
     }
 
     @PostMapping("/{id}/visite")

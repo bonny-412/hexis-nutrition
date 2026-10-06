@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import AppShell from '@/components/AppShell.vue'
-import { lista } from '@/api/pazienti'
+import { conteggioAttivi } from '@/api/pazienti'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
@@ -23,8 +23,7 @@ const dataOggi = new Intl.DateTimeFormat('it-IT', {
 
 onMounted(async () => {
   try {
-    const pazienti = await lista()
-    pazientiAttivi.value = pazienti.filter((p) => p.statoAccount === 'ATTIVO').length
+    pazientiAttivi.value = await conteggioAttivi()
   } catch {
     erroreCaricamento.value = true
   }

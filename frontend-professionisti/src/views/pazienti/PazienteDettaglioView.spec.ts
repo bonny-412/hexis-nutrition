@@ -5,11 +5,13 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import { toast } from 'vue-sonner'
 import PazienteDettaglioView from './PazienteDettaglioView.vue'
 import * as pazientiApi from '@/api/pazienti'
+import * as pianiApi from '@/api/pianiAlimentari'
 import { ApiError } from '@/api/client'
 import type { Visita } from '@/api/pazienti'
 import { Select, SelectTrigger } from '@/components/ui/select'
 
 vi.mock('@/api/pazienti')
+vi.mock('@/api/pianiAlimentari')
 vi.mock('vue-sonner', () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }))
@@ -209,6 +211,14 @@ describe('PazienteDettaglioView', () => {
       visita({ id: 'v2', dataVisita: '2026-08-15', pesoKg: 77.5, bmi: 24.4 }),
     ]
 
+    const mockStorico = () => {
+      const visiteDecrescenti = dueVisite().reverse()
+      vi.mocked(pazientiApi.storicoVisite).mockResolvedValue({
+        contenuto: visiteDecrescenti.map((v, posizione) => ({ visita: v, posizione, deltaPesoKg: null, deltaPercentualeGrasso: null })),
+        paginaCorrente: 0, dimensionePagina: 5, totaleElementi: visiteDecrescenti.length, totalePagine: 1,
+      })
+    }
+
     it('mostra di default il tab Panoramica con l\'andamento', async () => {
       vi.mocked(pazientiApi.visite).mockResolvedValue(dueVisite())
       const wrapper = await montaConPaziente()
@@ -218,12 +228,14 @@ describe('PazienteDettaglioView', () => {
       expect(wrapper.text()).not.toContain('Nessuna visita registrata.')
     })
 
-    it('passa al tab Storico misurazioni e mostra le visite dalla più recente', async () => {
+    it('passa al tab Storico visite e mostra le visite dalla più recente', async () => {
       vi.mocked(pazientiApi.visite).mockResolvedValue(dueVisite())
+      mockStorico()
       const wrapper = await montaConPaziente()
 
-      const tabStorico = wrapper.findAll('button').find((b) => b.text() === 'Storico misurazioni')
+      const tabStorico = wrapper.findAll('button').find((b) => b.text() === 'Storico visite')
       await tabStorico?.trigger('click')
+      await flushPromises()
 
       const righe = wrapper.findAll('[data-test="storico-riga"]')
       expect(righe).toHaveLength(2)
@@ -244,22 +256,26 @@ describe('PazienteDettaglioView', () => {
       expect(wrapper.text()).toContain('Variazione')
     })
 
-    it('passa al tab Piani alimentari e mostra il placeholder', async () => {
+    it('passa al tab Piani alimentari e mostra lo stato vuoto se il paziente non ha piani', async () => {
+      vi.mocked(pianiApi.cerca).mockResolvedValue({ contenuto: [], paginaCorrente: 0, dimensionePagina: 100, totaleElementi: 0, totalePagine: 0 })
       const wrapper = await montaConPaziente()
 
       const tabPiani = wrapper.findAll('button').find((b) => b.text() === 'Piani alimentari')
       await tabPiani?.trigger('click')
 
-      expect(wrapper.text()).toContain('Nessun piano collegato')
+      await flushPromises()
+
+      expect(wrapper.text()).toContain('Nessun piano attivo')
     })
 
     it('cambia tab anche tramite la select pensata per gli schermi piccoli', async () => {
       vi.mocked(pazientiApi.visite).mockResolvedValue(dueVisite())
+      mockStorico()
       const wrapper = await montaConPaziente()
 
       const select = wrapper.findAllComponents(Select).find((s) => s.findComponent(SelectTrigger).attributes('id') === 'sezione-clinica-tab')
       await select?.vm.$emit('update:modelValue', 'storico')
-      await wrapper.vm.$nextTick()
+      await flushPromises()
 
       expect(wrapper.findAll('[data-test="storico-riga"]')).toHaveLength(2)
     })

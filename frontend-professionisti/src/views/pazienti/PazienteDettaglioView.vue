@@ -20,8 +20,9 @@ import {
 } from '@/components/ui/alert-dialog'
 import type { AcceptableValue } from 'reka-ui'
 import PazienteTabPanoramica from '@/components/pazienti/PazienteTabPanoramica.vue'
-import PazienteTabStoricoMisurazioni from '@/components/pazienti/PazienteTabStoricoMisurazioni.vue'
+import PazienteTabStoricoVisite from '@/components/pazienti/PazienteTabStoricoVisite.vue'
 import PazienteTabConfrontoVisite from '@/components/pazienti/PazienteTabConfrontoVisite.vue'
+import PazienteTabPianiAlimentari from '@/components/pazienti/PazienteTabPianiAlimentari.vue'
 import ModificaPazienteDialog from '@/components/pazienti/ModificaPazienteDialog.vue'
 import { prepareAndamento } from '@/utils/andamento'
 import { formattaDataItalianaConMese } from '@/utils/data'
@@ -57,7 +58,7 @@ const CLASSI_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
 
 const TAB_DEFS = [
   { id: 'panoramica', label: 'Panoramica' },
-  { id: 'storico', label: 'Storico misurazioni' },
+  { id: 'storico', label: 'Storico visite' },
   { id: 'confronto', label: 'Confronto visite' },
   { id: 'piani', label: 'Piani alimentari' },
 ] as const
@@ -409,27 +410,20 @@ onMounted(() => {
             :andamento="andamento"
           />
 
-          <PazienteTabStoricoMisurazioni
+          <PazienteTabStoricoVisite
             v-else-if="tabAttivo === 'storico'"
             :paziente-id="paziente.id"
-            :visite-in-caricamento="visiteInCaricamento"
-            :errore-visite="erroreVisite"
-            :visite="visite"
             :archiviato="paziente.archiviato"
             @eliminata="caricaAndamento"
           />
 
           <PazienteTabConfrontoVisite v-else-if="tabAttivo === 'confronto'" :visite="visite" />
 
-          <div
+          <PazienteTabPianiAlimentari
             v-else-if="tabAttivo === 'piani'"
-            class="rounded-2xl border border-(--bd) bg-(--surf) p-10 text-center shadow-sm"
-          >
-            <h4 class="font-heading text-lg italic text-(--fg)">Nessun piano collegato</h4>
-            <p class="mx-auto mt-1.5 max-w-sm text-sm text-(--fg3)">
-              La sezione piani alimentari per paziente sarà disponibile a breve.
-            </p>
-          </div>
+            :paziente-id="paziente.id"
+            :archiviato="paziente.archiviato"
+          />
         </div>
       </div>
     </div>

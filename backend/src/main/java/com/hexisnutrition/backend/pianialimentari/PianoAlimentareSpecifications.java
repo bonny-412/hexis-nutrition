@@ -36,6 +36,15 @@ public final class PianoAlimentareSpecifications {
         };
     }
 
+    /** Tutti i piani del paziente tranne quello effettivamente attivo (gli scaduti restano inclusi). */
+    public static Specification<PianoAlimentare> nonAttivo() {
+        return Specification.not(conStato(StatoPianoVisualizzato.ATTIVO));
+    }
+
+    public static Specification<PianoAlimentare> nonBozza() {
+        return Specification.not(conStato(StatoPianoVisualizzato.BOZZA));
+    }
+
     public static Specification<PianoAlimentare> conStato(StatoPianoVisualizzato stato) {
         LocalDate oggi = LocalDate.now();
         return switch (stato) {

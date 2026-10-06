@@ -10,6 +10,8 @@ import java.util.UUID;
 public interface PazienteRepository extends JpaRepository<Paziente, UUID>, JpaSpecificationExecutor<Paziente> {
     List<Paziente> findAllByProfessionistaId(UUID professionistaId);
 
+    long countByProfessionistaIdAndArchiviato(UUID professionistaId, boolean archiviato);
+
     Optional<Paziente> findByEmailAndStatoAccount(String email, StatoAccountPaziente statoAccount);
 
     boolean existsByEmailAndStatoAccount(String email, StatoAccountPaziente statoAccount);

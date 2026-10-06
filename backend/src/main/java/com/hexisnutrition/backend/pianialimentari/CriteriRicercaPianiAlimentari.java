@@ -5,6 +5,8 @@ import java.util.UUID;
 public record CriteriRicercaPianiAlimentari(
         String ricerca,
         StatoPianoVisualizzato stato,
-        UUID pazienteId
+        UUID pazienteId,
+        boolean escludiAttivo,
+        boolean escludiBozze
 ) {
 }

@@ -2,13 +2,14 @@ import { describe, expect, it, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { toast } from 'vue-sonner'
-import PazienteTabStoricoMisurazioni from './PazienteTabStoricoMisurazioni.vue'
+import PazienteTabStoricoVisite from './PazienteTabStoricoVisite.vue'
 import * as pazientiApi from '@/api/pazienti'
-import type { Visita } from '@/api/pazienti'
+import type { Visita, VisitaStorico } from '@/api/pazienti'
 
 vi.mock('@/api/pazienti', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/api/pazienti')>()),
   eliminaVisita: vi.fn(),
+  storicoVisite: vi.fn(),
 }))
 vi.mock('vue-sonner', () => ({
   toast: { error: vi.fn(), success: vi.fn() },
@@ -43,41 +44,53 @@ function visita(overrides: Partial<Visita> = {}): Visita {
   }
 }
 
-function monta(
-  visite: Visita[],
-  props: Partial<{ visiteInCaricamento: boolean; erroreVisite: boolean; archiviato: boolean }> = {},
+function riga(v: Visita, posizione: number, deltaPesoKg: number | null = null, deltaPercentualeGrasso: number | null = null): VisitaStorico {
+  return { visita: v, posizione, deltaPesoKg, deltaPercentualeGrasso }
+}
+
+async function monta(
+  righe: VisitaStorico[],
+  props: Partial<{ archiviato: boolean; totale: number }> = {},
   attachTo?: HTMLElement,
 ) {
+  vi.mocked(pazientiApi.storicoVisite).mockResolvedValue({
+    contenuto: righe, paginaCorrente: 0, dimensionePagina: 5, totaleElementi: props.totale ?? righe.length, totalePagine: 1,
+  })
   const router = creaRouter()
   router.push('/')
-  return mount(PazienteTabStoricoMisurazioni, {
-    props: { pazienteId: 'p1', visiteInCaricamento: false, erroreVisite: false, visite, archiviato: false, ...props },
+  const wrapper = mount(PazienteTabStoricoVisite, {
+    props: { pazienteId: 'p1', archiviato: props.archiviato ?? false },
     global: { plugins: [router] },
     attachTo,
   })
+  await flushPromises()
+  return wrapper
 }
 
-describe('PazienteTabStoricoMisurazioni', () => {
-  it('mostra un errore se lo storico non si è caricato', () => {
-    const wrapper = monta([], { erroreVisite: true })
+describe('PazienteTabStoricoVisite', () => {
+  it('mostra un errore se lo storico non si è caricato', async () => {
+    vi.mocked(pazientiApi.storicoVisite).mockRejectedValue(new Error('rete'))
+    const wrapper = mount(PazienteTabStoricoVisite, { props: { pazienteId: 'p1', archiviato: false }, global: { plugins: [creaRouter()] } })
+    await flushPromises()
     expect(wrapper.text()).toContain('Non è stato possibile caricare l\'elenco delle visite.')
   })
 
-  it('mostra uno skeleton mentre le visite sono in caricamento', () => {
-    const wrapper = monta([], { visiteInCaricamento: true })
+  it('mostra uno skeleton mentre le visite sono in caricamento', async () => {
+    vi.mocked(pazientiApi.storicoVisite).mockReturnValue(new Promise(() => {}))
+    const wrapper = mount(PazienteTabStoricoVisite, { props: { pazienteId: 'p1', archiviato: false }, global: { plugins: [creaRouter()] } })
     expect(wrapper.findAll('[data-test="storico-skeleton"]').length).toBeGreaterThan(0)
   })
 
-  it('mostra un messaggio quando non ci sono visite', () => {
-    const wrapper = monta([])
+  it('mostra un messaggio quando non ci sono visite', async () => {
+    const wrapper = await monta([])
     expect(wrapper.text()).toContain('Nessuna visita registrata')
     expect(wrapper.text()).toContain('Lo storico del paziente è vuoto. Registra la prima visita per iniziare a documentare il suo percorso.')
   })
 
-  it('elenca le visite dalla più recente, con obiettivo e delta rispetto alla precedente', () => {
-    const wrapper = monta([
-      visita({ id: 'v1', dataVisita: '2026-06-01', pesoKg: 80, bmi: 25.2, obiettivo: 'DIMAGRIMENTO' }),
-      visita({ id: 'v2', dataVisita: '2026-08-01', pesoKg: 77.5, bmi: 24.4, obiettivo: 'MANTENIMENTO' }),
+  it('elenca le visite dalla più recente, con obiettivo e delta rispetto alla precedente', async () => {
+    const wrapper = await monta([
+      riga(visita({ id: 'v2', dataVisita: '2026-08-01', pesoKg: 77.5, bmi: 24.4, obiettivo: 'MANTENIMENTO' }), 0, -2.5),
+      riga(visita({ id: 'v1', dataVisita: '2026-06-01', pesoKg: 80, bmi: 25.2, obiettivo: 'DIMAGRIMENTO' }), 1),
     ])
 
     const testo = wrapper.text()
@@ -89,8 +102,8 @@ describe('PazienteTabStoricoMisurazioni', () => {
   })
 
   it('apre di default la visita più recente, mostrando generali, BIA, plicometria e circonferenze', async () => {
-    const wrapper = monta([
-      visita({
+    const wrapper = await monta([
+      riga(visita({
         id: 'v1',
         note: 'Prima visita, nessuna allergia nota.',
         plicometria: {
@@ -103,7 +116,7 @@ describe('PazienteTabStoricoMisurazioni', () => {
           vitaCm: 84, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
           polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
         },
-      }),
+      }), 0),
     ])
 
     const dettaglio = wrapper.get('[data-test="storico-dettaglio"]')
@@ -124,9 +137,9 @@ describe('PazienteTabStoricoMisurazioni', () => {
   })
 
   it('apre di default la visita più recente tra più visite, e chiude quella aperta quando se ne apre un\'altra', async () => {
-    const wrapper = monta([
-      visita({ id: 'v1', dataVisita: '2026-06-01' }),
-      visita({ id: 'v2', dataVisita: '2026-08-01' }),
+    const wrapper = await monta([
+      riga(visita({ id: 'v2', dataVisita: '2026-08-01' }), 0),
+      riga(visita({ id: 'v1', dataVisita: '2026-06-01' }), 1),
     ])
 
     const righe = wrapper.findAll('[data-test="storico-riga"]')
@@ -140,29 +153,29 @@ describe('PazienteTabStoricoMisurazioni', () => {
     expect(righe[1].element.parentElement?.querySelector('[data-test="storico-dettaglio"]')).not.toBeNull()
   })
 
-  it('mostra un messaggio se la visita non ha nessuna circonferenza registrata', () => {
-    const wrapper = monta([visita()])
+  it('mostra un messaggio se la visita non ha nessuna circonferenza registrata', async () => {
+    const wrapper = await monta([riga(visita(), 0)])
     const dettaglio = wrapper.get('[data-test="storico-dettaglio"]')
     expect(dettaglio.text()).toContain('Nessuna circonferenza registrata.')
   })
 
-  it('collega "Modifica visita" alla pagina di modifica', () => {
-    const wrapper = monta([visita({ id: 'v1' })])
+  it('collega "Modifica visita" alla pagina di modifica', async () => {
+    const wrapper = await monta([riga(visita({ id: 'v1' }), 0)])
 
     const link = wrapper.find('a')
     expect(link.text()).toBe('Modifica visita')
     expect(link.attributes('href')).toBe('/pazienti/p1/visite/v1/modifica')
   })
 
-  it('mostra un bordo evidenziato al passaggio del mouse sulla card', () => {
-    const wrapper = monta([visita()])
+  it('mostra un bordo evidenziato al passaggio del mouse sulla card', async () => {
+    const wrapper = await monta([riga(visita(), 0)])
     const card = wrapper.get('[data-test="storico-riga"]').element.parentElement
     const haBordoHover = [...(card?.classList ?? [])].some((c) => c.startsWith('hover:border-'))
     expect(haBordoHover).toBe(true)
   })
 
   it('chiede conferma prima di eliminare e non chiama l\'API finché non si conferma', async () => {
-    const wrapper = monta([visita({ id: 'v1', dataVisita: '2026-06-01' })], {}, document.body)
+    const wrapper = await monta([riga(visita({ id: 'v1', dataVisita: '2026-06-01' }), 0)], {}, document.body)
 
     await wrapper.get('[data-test="elimina-visita"]').trigger('click')
 
@@ -173,7 +186,7 @@ describe('PazienteTabStoricoMisurazioni', () => {
 
   it('elimina la visita dopo la conferma, emette "eliminata" e mostra un toast di successo', async () => {
     vi.mocked(pazientiApi.eliminaVisita).mockResolvedValue(undefined)
-    const wrapper = monta([visita({ id: 'v1' })], {}, document.body)
+    const wrapper = await monta([riga(visita({ id: 'v1' }), 0)], {}, document.body)
 
     await wrapper.get('[data-test="elimina-visita"]').trigger('click')
     document.querySelector<HTMLElement>('[data-test="elimina-visita-conferma"]')?.click()
@@ -186,7 +199,7 @@ describe('PazienteTabStoricoMisurazioni', () => {
   })
 
   it('annullando la conferma non elimina la visita', async () => {
-    const wrapper = monta([visita({ id: 'v1' })], {}, document.body)
+    const wrapper = await monta([riga(visita({ id: 'v1' }), 0)], {}, document.body)
 
     await wrapper.get('[data-test="elimina-visita"]').trigger('click')
     document.querySelector<HTMLElement>('[data-test="elimina-visita-annulla"]')?.click()
@@ -199,7 +212,7 @@ describe('PazienteTabStoricoMisurazioni', () => {
 
   it('mostra un toast di errore se l\'eliminazione fallisce, senza emettere "eliminata"', async () => {
     vi.mocked(pazientiApi.eliminaVisita).mockRejectedValue(new Error('errore'))
-    const wrapper = monta([visita({ id: 'v1' })], {}, document.body)
+    const wrapper = await monta([riga(visita({ id: 'v1' }), 0)], {}, document.body)
 
     await wrapper.get('[data-test="elimina-visita"]').trigger('click')
     document.querySelector<HTMLElement>('[data-test="elimina-visita-conferma"]')?.click()

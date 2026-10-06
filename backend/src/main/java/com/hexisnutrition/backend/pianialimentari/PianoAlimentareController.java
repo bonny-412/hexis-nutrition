@@ -37,7 +37,9 @@ public class PianoAlimentareController {
             @RequestParam(defaultValue = "asc") DirezioneOrdinamento direzione,
             @RequestParam(required = false) String ricerca,
             @RequestParam(required = false) StatoPianoVisualizzato stato,
-            @RequestParam(required = false) UUID pazienteId) {
+            @RequestParam(required = false) UUID pazienteId,
+            @RequestParam(defaultValue = "false") boolean escludiAttivo,
+            @RequestParam(defaultValue = "false") boolean escludiBozze) {
         int paginaEffettiva = Math.max(pagina, 0);
         int dimensioneEffettiva = Math.min(Math.max(dimensione, 1), 100);
         org.springframework.data.domain.Sort.Direction direzioneSort =
@@ -47,7 +49,7 @@ public class PianoAlimentareController {
         var pageable = org.springframework.data.domain.PageRequest.of(paginaEffettiva, dimensioneEffettiva,
                 org.springframework.data.domain.Sort.by(direzioneSort, ordinaPer.name()));
         var paginaRisultati = pianoAlimentareService.cerca(professionistaId,
-                new CriteriRicercaPianiAlimentari(ricerca, stato, pazienteId), pageable);
+                new CriteriRicercaPianiAlimentari(ricerca, stato, pazienteId, escludiAttivo, escludiBozze), pageable);
 
         var pazientiPerId = pazienteRepository.findAllById(
                 paginaRisultati.getContent().stream().map(PianoAlimentare::getPazienteId).distinct().toList()).stream()
@@ -57,7 +59,7 @@ public class PianoAlimentareController {
         var contenuto = paginaRisultati.getContent().stream()
                 .map(p -> new PianoAlimentareRigaListaResponse(p.getId(),
                         pazientiPerId.getOrDefault(p.getPazienteId(), "—"), p.getNome(), p.statoEffettivo(),
-                        p.getObiettivoKcal(), p.getDataFine()))
+                        p.getObiettivoKcal(), p.getModalita(), p.getDataInizio(), p.getDataFine()))
                 .toList();
 
         return new PianoAlimentareListaPaginataResponse(contenuto, paginaRisultati.getNumber(),
@@ -79,6 +81,12 @@ public class PianoAlimentareController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void attiva(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id) {
         pianoAlimentareService.attiva(professionistaId, id);
+    }
+
+    @PostMapping("/{id}/duplica")
+    @ResponseStatus(HttpStatus.CREATED)
+    public PianoAlimentareResponse duplica(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id) {
+        return pianoAlimentareService.duplica(professionistaId, id);
     }
 
     @DeleteMapping("/{id}")

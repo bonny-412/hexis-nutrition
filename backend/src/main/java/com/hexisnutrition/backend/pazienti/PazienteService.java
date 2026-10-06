@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClientException;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -115,6 +117,11 @@ public class PazienteService {
 
     public List<Paziente> listaPerProfessionista(UUID professionistaId) {
         return pazienteRepository.findAllByProfessionistaId(professionistaId);
+    }
+
+    /** Pazienti non archiviati, a prescindere dallo stato dell'account (l'invito all'app è facoltativo): il numero mostrato nella dashboard. */
+    public long contaAttivi(UUID professionistaId) {
+        return pazienteRepository.countByProfessionistaIdAndArchiviato(professionistaId, false);
     }
 
     /** Ultima visita (per data) di ciascun paziente tra gli id passati, in un'unica query. */
@@ -249,6 +256,39 @@ public class PazienteService {
         return visitaRepository.findAllByPazienteIdOrderByDataVisitaAsc(pazienteId).stream()
                 .map(v -> VisitaResponse.da(v, plicometriaRepository.findByVisitaId(v.getId()).orElse(null)))
                 .toList();
+    }
+
+    /** Storico visite paginato, dalla più recente: posizione e variazioni sono calcolate qui perché dipendono dalla visita precedente, anche se fuori pagina. */
+    public VisiteStoricoPaginaResponse storicoVisite(UUID professionistaId, UUID pazienteId, int pagina, int dimensione) {
+        dettaglio(professionistaId, pazienteId);
+        Page<Visita> risultati = visitaRepository.findAllByPazienteId(pazienteId,
+                PageRequest.of(pagina, dimensione, Sort.by(Sort.Direction.DESC, "dataVisita")));
+        List<Visita> visite = risultati.getContent();
+        Map<UUID, Plicometria> plicometrie = new HashMap<>();
+        visite.forEach(v -> plicometriaRepository.findByVisitaId(v.getId()).ifPresent(p -> plicometrie.put(v.getId(), p)));
+
+        Visita precedenteDellUltima = visite.isEmpty() ? null
+                : visitaRepository.findFirstByPazienteIdAndDataVisitaLessThanOrderByDataVisitaDesc(
+                        pazienteId, visite.get(visite.size() - 1).getDataVisita()).orElse(null);
+        Plicometria plicometriaPrecedenteDellUltima = precedenteDellUltima == null ? null
+                : plicometriaRepository.findByVisitaId(precedenteDellUltima.getId()).orElse(null);
+
+        List<VisitaStoricoResponse> contenuto = new java.util.ArrayList<>();
+        for (int i = 0; i < visite.size(); i++) {
+            Visita visita = visite.get(i);
+            Visita precedente = i + 1 < visite.size() ? visite.get(i + 1) : precedenteDellUltima;
+            Plicometria plicometria = plicometrie.get(visita.getId());
+            Plicometria plicometriaPrecedente = precedente == null ? null
+                    : i + 1 < visite.size() ? plicometrie.get(precedente.getId()) : plicometriaPrecedenteDellUltima;
+            BigDecimal deltaPeso = precedente == null ? null : visita.getPesoKg().subtract(precedente.getPesoKg());
+            BigDecimal deltaGrasso = plicometria != null && plicometriaPrecedente != null
+                    ? plicometria.getPercentualeGrasso().subtract(plicometriaPrecedente.getPercentualeGrasso())
+                    : null;
+            contenuto.add(new VisitaStoricoResponse(VisitaResponse.da(visita, plicometria),
+                    risultati.getNumber() * risultati.getSize() + i, deltaPeso, deltaGrasso));
+        }
+        return new VisiteStoricoPaginaResponse(contenuto, risultati.getNumber(), risultati.getSize(),
+                risultati.getTotalElements(), risultati.getTotalPages());
     }
 
     private Visita visitaDelPaziente(UUID pazienteId, UUID visitaId) {

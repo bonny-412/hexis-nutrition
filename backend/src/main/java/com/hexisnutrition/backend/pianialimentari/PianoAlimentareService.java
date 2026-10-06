@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 @Service
 public class PianoAlimentareService {
 
+    private static final int NOME_PIANO_MAX = 200;
     private static final List<TipoPasto> PASTI_TEMPLATE = List.of(
             TipoPasto.COLAZIONE, TipoPasto.SPUNTINO_MATTINA, TipoPasto.PRANZO,
             TipoPasto.SPUNTINO_POMERIGGIO, TipoPasto.CENA);
@@ -203,6 +204,44 @@ public class PianoAlimentareService {
         return dettaglio(professionistaId, pianoId);
     }
 
+    /**
+     * Copia un piano in una nuova bozza dello stesso paziente: stessa modalità, struttura e kcal, nome
+     * "{nome} (copia)", data di inizio oggi, nessuna data di fine. Il piano originale non viene toccato.
+     */
+    @Transactional
+    public PianoAlimentareResponse duplica(UUID professionistaId, UUID pianoId) {
+        PianoAlimentareResponse origine = dettaglio(professionistaId, pianoId);
+        String suffisso = " (copia)";
+        String nome = origine.nome().length() + suffisso.length() > NOME_PIANO_MAX
+                ? origine.nome().substring(0, NOME_PIANO_MAX - suffisso.length()) + suffisso
+                : origine.nome() + suffisso;
+
+        PianoAlimentareResponse copia = creaBozza(professionistaId,
+                new CreaPianoAlimentareRequest(origine.pazienteId(), nome, origine.modalita(), null));
+
+        List<PastoRequest> pasti = origine.pasti().stream()
+                .map(p -> new PastoRequest(p.giornoSettimana(), p.nome(), p.tipo(), p.nota(), comeRichieste(p.righe())))
+                .toList();
+        List<GiornoMacroTargetRequest> giorniMacro = origine.giorniMacroTarget().stream()
+                .map(g -> new GiornoMacroTargetRequest(g.giornoSettimana(), g.kcalTarget(), g.proteineTarget(),
+                        g.carboidratiTarget(), g.grassiTarget(), g.nota()))
+                .toList();
+        List<EsempioRequest> esempi = origine.esempi().stream()
+                .map(e -> new EsempioRequest(e.tipoPasto(), e.nome(), e.nota(), comeRichieste(e.righe())))
+                .toList();
+
+        return aggiorna(professionistaId, copia.id(),
+                new AggiornaPianoAlimentareRequest(nome, null, origine.obiettivoKcal(), pasti, giorniMacro, esempi));
+    }
+
+    private List<RigaAlimentoRequest> comeRichieste(List<RigaAlimentoResponse> righe) {
+        return righe.stream()
+                .map(r -> new RigaAlimentoRequest(r.alimentoId(), r.nome(), r.kcal100g(), r.proteine100g(),
+                        r.carboidrati100g(), r.grassi100g(), r.zuccheri100g(), r.fibre100g(), r.ferro100mg(),
+                        r.calcio100mg(), r.acqua100g(), r.grammi()))
+                .toList();
+    }
+
     private void sostituisciPasti(UUID pianoId, List<PastoRequest> richieste) {
         List<Pasto> esistenti = pastoRepository.findAllByPianoIdOrderByGiornoSettimanaAscOrdineAsc(pianoId);
         List<UUID> idEsistenti = esistenti.stream().map(Pasto::getId).toList();
@@ -278,6 +317,12 @@ public class PianoAlimentareService {
         }
         if (criteri.pazienteId() != null) {
             specifiche.add(PianoAlimentareSpecifications.delPaziente(criteri.pazienteId()));
+        }
+        if (criteri.escludiAttivo()) {
+            specifiche.add(PianoAlimentareSpecifications.nonAttivo());
+        }
+        if (criteri.escludiBozze()) {
+            specifiche.add(PianoAlimentareSpecifications.nonBozza());
         }
         return pianoAlimentareRepository.findAll(
                 org.springframework.data.jpa.domain.Specification.allOf(specifiche), pageable);

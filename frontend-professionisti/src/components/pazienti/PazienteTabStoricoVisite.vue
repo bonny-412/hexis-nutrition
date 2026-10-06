@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
-import { eliminaVisita, type Visita } from '@/api/pazienti'
+import { eliminaVisita, storicoVisite, type VisitaStorico } from '@/api/pazienti'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,32 +17,71 @@ import {
 import { ETICHETTE_CIRCONFERENZE, ETICHETTE_OBIETTIVO, categoriaBmi, formattaNumero } from '@/utils/visita'
 import { formattaDataItalianaConMese } from '@/utils/data'
 import { ChevronDown } from '@lucide/vue'
+import type { Visita } from '@/api/pazienti'
 
 const props = defineProps<{
   pazienteId: string
-  visiteInCaricamento: boolean
-  erroreVisite: boolean
-  visite: Visita[]
   archiviato: boolean
 }>()
 
 const emit = defineEmits<{ eliminata: [] }>()
 
+// Lo storico si carica a blocchi dal server, dalla più recente: "Carica altre visite" accoda il
+// blocco successivo a quelle già caricate (stile chat), senza mai sostituirle.
+const BLOCCO_VISITE = 5
+const MAX_DIMENSIONE_RICARICA = 100
+
+const caricate = ref<VisitaStorico[]>([])
+const totale = ref(0)
+const caricamentoIniziale = ref(true)
+const caricamentoAltre = ref(false)
+const errore = ref(false)
 const idAperto = ref<string | null>(null)
 
-// Alla prima visita disponibile si apre di default la più recente; da lì in poi
-// resta sotto il controllo dell'utente (vedi toggle).
-let apertoDiDefault = false
-watch(
-  () => props.visite,
-  (visite) => {
-    if (!apertoDiDefault && visite.length > 0) {
-      idAperto.value = visite[visite.length - 1].id
-      apertoDiDefault = true
-    }
-  },
-  { immediate: true },
-)
+const visiteRimanenti = computed(() => Math.max(totale.value - caricate.value.length, 0))
+
+async function caricaIniziale() {
+  caricamentoIniziale.value = true
+  errore.value = false
+  try {
+    const pagina = await storicoVisite(props.pazienteId, 0, BLOCCO_VISITE)
+    caricate.value = pagina.contenuto
+    totale.value = pagina.totaleElementi
+    // Di default si apre la visita più recente; da lì in poi resta sotto il controllo dell'utente.
+    idAperto.value = pagina.contenuto[0]?.visita.id ?? null
+  } catch {
+    errore.value = true
+  } finally {
+    caricamentoIniziale.value = false
+  }
+}
+onMounted(caricaIniziale)
+
+async function caricaAltre() {
+  caricamentoAltre.value = true
+  try {
+    const pagina = await storicoVisite(props.pazienteId, Math.floor(caricate.value.length / BLOCCO_VISITE), BLOCCO_VISITE)
+    caricate.value = [...caricate.value, ...pagina.contenuto]
+    totale.value = pagina.totaleElementi
+  } catch {
+    toast.error('Non è stato possibile caricare altre visite.')
+  } finally {
+    caricamentoAltre.value = false
+  }
+}
+
+// Dopo un'eliminazione si ricarica da capo la stessa quantità di visite già mostrata (ordinamento
+// e posizioni cambiano), senza far tornare l'elenco a 5.
+async function ricarica() {
+  const dimensione = Math.min(Math.max(caricate.value.length, BLOCCO_VISITE), MAX_DIMENSIONE_RICARICA)
+  try {
+    const pagina = await storicoVisite(props.pazienteId, 0, dimensione)
+    caricate.value = pagina.contenuto
+    totale.value = pagina.totaleElementi
+  } catch {
+    errore.value = true
+  }
+}
 
 function toggle(id: string) {
   idAperto.value = idAperto.value === id ? null : id
@@ -67,6 +106,7 @@ async function confermaEliminazione() {
     await eliminaVisita(props.pazienteId, visitaDaEliminare.value.id)
     toast.success('Visita eliminata.')
     visitaDaEliminare.value = null
+    await ricarica()
     emit('eliminata')
   } catch {
     toast.error('Non è stato possibile eliminare la visita.')
@@ -83,42 +123,39 @@ interface RigaStorico {
   categoriaBmi: string | null
   circonferenze: Array<{ label: string; valore: number | null }>
   haCirconferenze: boolean
+  recentissima: boolean
 }
 
-const righe = computed<RigaStorico[]>(() => {
-  const decrescente = [...props.visite].reverse()
-  return decrescente.map((visita, indice) => {
-    const precedente = decrescente[indice + 1]
+const righe = computed<RigaStorico[]>(() =>
+  caricate.value.map(({ visita, posizione, deltaPesoKg, deltaPercentualeGrasso }) => {
     const circonferenze = (Object.keys(ETICHETTE_CIRCONFERENZE) as Array<keyof Visita['circonferenze']>).map((chiave) => ({
       label: ETICHETTE_CIRCONFERENZE[chiave],
       valore: visita.circonferenze[chiave],
     }))
     return {
       visita,
-      rel: indice === 0 ? 'Più recente' : indice === 1 ? '1 visita fa' : `${indice} visite fa`,
-      deltaPeso: precedente ? +(visita.pesoKg - precedente.pesoKg).toFixed(2) : null,
-      deltaMg:
-        precedente && visita.plicometria && precedente.plicometria
-          ? +(visita.plicometria.percentualeGrassoCorporeo - precedente.plicometria.percentualeGrassoCorporeo).toFixed(2)
-          : null,
+      rel: posizione === 0 ? 'Più recente' : posizione === 1 ? '1 visita fa' : posizione + ' visite fa',
+      deltaPeso: deltaPesoKg !== null ? +deltaPesoKg.toFixed(2) : null,
+      deltaMg: deltaPercentualeGrasso !== null ? +deltaPercentualeGrasso.toFixed(2) : null,
       categoriaBmi: categoriaBmi(visita.bmi),
       circonferenze,
       haCirconferenze: circonferenze.some((c) => c.valore !== null),
+      recentissima: posizione === 0,
     }
-  })
-})
+  }),
+)
 </script>
 
 <template>
-  <div v-if="erroreVisite" class="text-xs font-medium text-(--danger)">
+  <div v-if="errore" class="text-xs font-medium text-(--danger)">
     Non è stato possibile caricare l'elenco delle visite.
   </div>
 
-  <div v-else-if="visiteInCaricamento" class="space-y-3">
+  <div v-else-if="caricamentoIniziale" class="space-y-3">
     <div v-for="n in 3" :key="n" data-test="storico-skeleton" class="h-16 animate-pulse rounded-2xl bg-(--hover)" />
   </div>
 
-  <div v-else-if="visite.length === 0" class="rounded-2xl border border-(--bd) bg-(--surf) p-8 text-center text-sm text-(--fg3)">
+  <div v-else-if="totale === 0" class="rounded-2xl border border-(--bd) bg-(--surf) p-8 text-center text-sm text-(--fg3)">
     <h4 class="font-heading text-lg italic text-(--fg)">Nessuna visita registrata</h4>
     <p class="mx-auto mt-1.5 max-w-sm text-sm text-(--fg3)">
       Lo storico del paziente è vuoto. Registra la prima visita per iniziare a documentare il suo percorso.
@@ -128,11 +165,11 @@ const righe = computed<RigaStorico[]>(() => {
   <div v-else class="relative lg:pl-2">
     <div class="absolute bottom-2 left-7.25 top-2 hidden w-0.5 bg-(--bd2) lg:block"></div>
 
-    <div v-for="(riga, indice) in righe" :key="riga.visita.id" class="relative mb-3.5 flex gap-4 last:mb-0">
+    <div v-for="riga in righe" :key="riga.visita.id" class="relative mb-3.5 flex gap-4 last:mb-0">
       <div class="relative hidden w-11 shrink-0 justify-center pt-4 lg:flex">
         <span
           class="h-3.25 w-3.25 rounded-full"
-          :style="{ background: indice === 0 ? 'var(--green)' : 'var(--sage)', boxShadow: '0 0 0 4px var(--bg), 0 0 0 5px var(--bd2)' }"
+          :style="{ background: riga.recentissima ? 'var(--green)' : 'var(--sage)', boxShadow: '0 0 0 4px var(--bg), 0 0 0 5px var(--bd2)' }"
         />
       </div>
 
@@ -238,6 +275,13 @@ const righe = computed<RigaStorico[]>(() => {
           </div>
         </div>
       </div>
+    </div>
+
+    <div v-if="visiteRimanenti > 0" class="relative mt-3.5 flex justify-center lg:pl-11">
+      <Button type="button" variant="neutral" data-test="carica-altre-visite" :disabled="caricamentoAltre" @click="caricaAltre">
+        {{ caricamentoAltre ? 'Caricamento…' : 'Carica altre visite' }}
+        <span class="text-(--fg4)">({{ visiteRimanenti }} {{ visiteRimanenti === 1 ? 'rimanente' : 'rimanenti' }})</span>
+      </Button>
     </div>
   </div>
 

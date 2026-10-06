@@ -161,6 +161,11 @@ export function lista(): Promise<Paziente[]> {
   return apiRequest<Paziente[]>('/pazienti')
 }
 
+export async function conteggioAttivi(): Promise<number> {
+  const risposta = await apiRequest<{ totale: number }>('/pazienti/conteggio-attivi')
+  return risposta.totale
+}
+
 export function dettaglio(id: string): Promise<Paziente> {
   return apiRequest<Paziente>(`/pazienti/${id}`)
 }
@@ -200,6 +205,26 @@ export function cerca(criteri: CriteriRicercaPazienti = {}): Promise<PaginaPazie
 
   const query = parametri.toString()
   return apiRequest<PaginaPazienti>(`/pazienti/ricerca${query ? `?${query}` : ''}`)
+}
+
+export interface VisitaStorico {
+  visita: Visita
+  /** 0 = la più recente. */
+  posizione: number
+  deltaPesoKg: number | null
+  deltaPercentualeGrasso: number | null
+}
+
+export interface PaginaStoricoVisite {
+  contenuto: VisitaStorico[]
+  paginaCorrente: number
+  dimensionePagina: number
+  totaleElementi: number
+  totalePagine: number
+}
+
+export function storicoVisite(id: string, pagina: number, dimensione: number): Promise<PaginaStoricoVisite> {
+  return apiRequest<PaginaStoricoVisite>(`/pazienti/${id}/visite/storico?pagina=${pagina}&dimensione=${dimensione}`)
 }
 
 export function visite(id: string): Promise<Visita[]> {
