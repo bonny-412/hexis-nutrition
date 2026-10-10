@@ -2,9 +2,12 @@ package com.hexisnutrition.backend.pianialimentari;
 
 import com.hexisnutrition.backend.pazienti.PazienteRepository;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 import java.util.UUID;
 
@@ -39,7 +42,11 @@ public class PianoAlimentareController {
             @RequestParam(required = false) StatoPianoVisualizzato stato,
             @RequestParam(required = false) UUID pazienteId,
             @RequestParam(defaultValue = "false") boolean escludiAttivo,
-            @RequestParam(defaultValue = "false") boolean escludiBozze) {
+            @RequestParam(defaultValue = "false") boolean escludiBozze,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInizioDa,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInizioA,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFineDa,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFineA) {
         int paginaEffettiva = Math.max(pagina, 0);
         int dimensioneEffettiva = Math.min(Math.max(dimensione, 1), 100);
         org.springframework.data.domain.Sort.Direction direzioneSort =
@@ -49,7 +56,8 @@ public class PianoAlimentareController {
         var pageable = org.springframework.data.domain.PageRequest.of(paginaEffettiva, dimensioneEffettiva,
                 org.springframework.data.domain.Sort.by(direzioneSort, ordinaPer.name()));
         var paginaRisultati = pianoAlimentareService.cerca(professionistaId,
-                new CriteriRicercaPianiAlimentari(ricerca, stato, pazienteId, escludiAttivo, escludiBozze), pageable);
+                new CriteriRicercaPianiAlimentari(ricerca, stato, pazienteId, escludiAttivo, escludiBozze,
+                        dataInizioDa, dataInizioA, dataFineDa, dataFineA), pageable);
 
         var pazientiPerId = pazienteRepository.findAllById(
                 paginaRisultati.getContent().stream().map(PianoAlimentare::getPazienteId).distinct().toList()).stream()

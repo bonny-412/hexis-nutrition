@@ -121,6 +121,10 @@ public class PianoAlimentare {
         return modalita;
     }
 
+    public void setModalita(ModalitaPiano modalita) {
+        this.modalita = modalita;
+    }
+
     public StatoPiano getStato() {
         return stato;
     }

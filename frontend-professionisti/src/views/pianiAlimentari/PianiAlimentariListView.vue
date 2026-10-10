@@ -4,15 +4,17 @@ import { toast } from 'vue-sonner'
 import AppShell from '@/components/AppShell.vue'
 import {
   cerca, attiva, elimina,
-  type PaginaPianiAlimentari, type PianoAlimentareRigaLista, type StatoPiano, type CriteriRicercaPianiAlimentari,
+  type PaginaPianiAlimentari, type PianoAlimentareRigaLista, type StatoPiano, type ModalitaPiano, type CriteriRicercaPianiAlimentari,
 } from '@/api/pianiAlimentari'
 import PianoAlimentareRigaAzioni from '@/components/pianiAlimentari/PianoAlimentareRigaAzioni.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Label } from '@/components/ui/label'
+import { DatePicker } from '@/components/ui/date-picker'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
-import { Plus, ArrowUp, ArrowDown, ArrowUpDown } from '@lucide/vue'
-import { formattaDataItaliana } from '@/utils/data'
+import { Plus, ArrowUp, ArrowDown, ArrowUpDown, ChevronRight } from '@lucide/vue'
+import { formattaDataItalianaConMese } from '@/utils/data'
 
 type CampoOrdinamento = NonNullable<CriteriRicercaPianiAlimentari['ordinaPer']>
 
@@ -29,6 +31,12 @@ const ETICHETTE_STATO: Record<StatoPiano, string> = {
   ATTIVO: 'Attivo',
   SCADUTO: 'Scaduto',
   TERMINATO: 'Terminato',
+}
+
+const ETICHETTE_MODALITA: Record<ModalitaPiano, string> = {
+  PASTI: 'Piano con pasti',
+  MACRO: 'Macros',
+  ESEMPI: 'Esempi intercambiabili',
 }
 
 const CLASSI_STATO: Record<StatoPiano, string> = {
@@ -50,6 +58,11 @@ function inizialiPaziente(nomeCompleto: string): string {
 const ricercaInput = ref('')
 const ricercaEffettiva = ref('')
 const statoFiltro = ref<StatoPiano | 'TUTTI'>('TUTTI')
+const dataInizioDa = ref('')
+const dataInizioA = ref('')
+const dataFineDa = ref('')
+const dataFineA = ref('')
+const filtriAvanzatiAperti = ref(false)
 const pagina = ref(0)
 const ordinaPer = ref<CampoOrdinamento | undefined>(undefined)
 const direzione = ref<'asc' | 'desc'>('asc')
@@ -69,7 +82,19 @@ watch(ricercaInput, (valore) => {
 })
 onUnmounted(() => clearTimeout(debounceHandle))
 
-const filtriAttivi = computed(() => ricercaEffettiva.value.trim() !== '' || statoFiltro.value !== 'TUTTI')
+const filtriAvanzatiAttivi = computed(() =>
+  [dataInizioDa.value, dataInizioA.value, dataFineDa.value, dataFineA.value].filter(Boolean).length,
+)
+
+const filtriAttivi = computed(
+  () => ricercaEffettiva.value.trim() !== '' || statoFiltro.value !== 'TUTTI' || filtriAvanzatiAttivi.value > 0,
+)
+
+const filtriData = { dataInizioDa, dataInizioA, dataFineDa, dataFineA }
+function cambiaData(chiave: keyof typeof filtriData, valore: string) {
+  filtriData[chiave].value = valore
+  pagina.value = 0
+}
 
 function selezionaStato(valore: StatoPiano | 'TUTTI') {
   statoFiltro.value = valore
@@ -84,6 +109,10 @@ function criteriCorrenti(): CriteriRicercaPianiAlimentari {
     direzione: direzione.value,
     ricerca: ricercaEffettiva.value.trim() || undefined,
     stato: statoFiltro.value === 'TUTTI' ? undefined : statoFiltro.value,
+    dataInizioDa: dataInizioDa.value || undefined,
+    dataInizioA: dataInizioA.value || undefined,
+    dataFineDa: dataFineDa.value || undefined,
+    dataFineA: dataFineA.value || undefined,
   }
 }
 
@@ -103,7 +132,7 @@ async function carica() {
     aggiornamentoInCorso.value = false
   }
 }
-watch([ricercaEffettiva, statoFiltro, pagina, ordinaPer, direzione], carica)
+watch([ricercaEffettiva, statoFiltro, dataInizioDa, dataInizioA, dataFineDa, dataFineA, pagina, ordinaPer, direzione], carica)
 onMounted(carica)
 
 function ordina(campo: CampoOrdinamento) {
@@ -129,6 +158,10 @@ function pulisciFiltri() {
   ricercaInput.value = ''
   ricercaEffettiva.value = ''
   statoFiltro.value = 'TUTTI'
+  dataInizioDa.value = ''
+  dataInizioA.value = ''
+  dataFineDa.value = ''
+  dataFineA.value = ''
   pagina.value = 0
 }
 
@@ -196,6 +229,47 @@ const conteggioTesto = computed(() => {
           </button>
         </div>
       </div>
+
+      <div class="my-3 h-px bg-(--div)" />
+
+      <button
+        type="button"
+        data-test="filtri-avanzati-toggle"
+        class="flex items-center gap-2 text-xs font-bold text-(--fg2) hover:text-(--fg)"
+        @click="filtriAvanzatiAperti = !filtriAvanzatiAperti"
+      >
+        <ChevronRight :size="14" class="transition-transform" :class="{ 'rotate-90': filtriAvanzatiAperti }" />
+        Filtri avanzati
+        <Badge :variant="filtriAvanzatiAttivi > 0 ? 'secondary' : 'outline'">
+          {{ filtriAvanzatiAttivi > 0 ? ` attivi` : 'Nessuno attivo' }}
+        </Badge>
+      </button>
+
+      <div v-if="filtriAvanzatiAperti" class="mt-3 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] items-end gap-2.5">
+        <div class="flex flex-col gap-1.5">
+          <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Data inizio da</Label>
+          <DatePicker id="data-inizio-da" :model-value="dataInizioDa" :max="dataInizioA" @update:model-value="(v) => cambiaData('dataInizioDa', v)" />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Data inizio a</Label>
+          <DatePicker id="data-inizio-a" :model-value="dataInizioA" :min="dataInizioDa" @update:model-value="(v) => cambiaData('dataInizioA', v)" />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Data scadenza da</Label>
+          <DatePicker id="data-fine-da" :model-value="dataFineDa" :max="dataFineA" @update:model-value="(v) => cambiaData('dataFineDa', v)" />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Data scadenza a</Label>
+          <DatePicker id="data-fine-a" :model-value="dataFineA" :min="dataFineDa" @update:model-value="(v) => cambiaData('dataFineA', v)" />
+        </div>
+        <button
+          type="button"
+          class="rounded-lg border border-dashed border-(--dash) px-3 py-2 text-xs font-bold text-(--fg3) hover:border-(--fg4) hover:text-(--fg)"
+          @click="pulisciFiltri"
+        >
+          Pulisci filtri
+        </button>
+      </div>
     </section>
 
     <section class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)">
@@ -221,7 +295,13 @@ const conteggioTesto = computed(() => {
                   </button>
                 </TableHead>
                 <TableHead class="uppercase tracking-wide text-(--fg4)">Stato</TableHead>
-                <TableHead class="text-right uppercase tracking-wide text-(--fg4)">Obiettivo</TableHead>
+                <TableHead class="uppercase tracking-wide text-(--fg4)">Obiettivo</TableHead>
+                <TableHead>
+                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('dataInizio')">
+                    Inizio
+                    <component :is="iconaOrdinamento('dataInizio')" :size="12" :class="ordinaPer === 'dataInizio' ? 'text-(--fg)' : 'text-(--fg4)'" />
+                  </button>
+                </TableHead>
                 <TableHead>
                   <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('dataFine')">
                     Scadenza
@@ -241,10 +321,20 @@ const conteggioTesto = computed(() => {
                     <span class="font-heading font-semibold text-(--fg)">{{ riga.pazienteNomeCompleto }}</span>
                   </div>
                 </TableCell>
-                <TableCell>{{ riga.nome }}</TableCell>
+                <TableCell>
+                  <div class="font-semibold text-(--fg)">{{ riga.nome }}</div>
+                  <div class="text-xs text-(--fg4)">{{ ETICHETTE_MODALITA[riga.modalita] }}</div>
+                </TableCell>
                 <TableCell><Badge :class="CLASSI_STATO[riga.stato]">{{ ETICHETTE_STATO[riga.stato] }}</Badge></TableCell>
-                <TableCell class="text-right">{{ riga.obiettivoKcal ? `${riga.obiettivoKcal} kcal` : '—' }}</TableCell>
-                <TableCell>{{ riga.dataFine ? formattaDataItaliana(riga.dataFine) : '—' }}</TableCell>
+                <TableCell>
+                  <span v-if="riga.obiettivoKcal" class="font-semibold text-(--fg)">{{ riga.obiettivoKcal }} kcal</span>
+                  <span v-else class="text-(--fg4)">—</span>
+                </TableCell>
+                <TableCell class="font-semibold text-(--fg)">{{ formattaDataItalianaConMese(riga.dataInizio) }}</TableCell>
+                <TableCell>
+                  <span v-if="riga.dataFine" class="font-semibold text-(--fg)">{{ formattaDataItalianaConMese(riga.dataFine) }}</span>
+                  <span v-else class="text-(--fg4)">—</span>
+                </TableCell>
                 <TableCell class="text-right">
                   <PianoAlimentareRigaAzioni :riga="riga" @attiva="onAttiva" @elimina="onElimina" />
                 </TableCell>
@@ -254,11 +344,15 @@ const conteggioTesto = computed(() => {
         </div>
       </template>
 
+      <div v-else-if="!filtriAttivi" class="flex flex-col items-center gap-2 p-16 text-center">
+        <p class="font-heading text-lg italic">Nessun piano presente</p>
+        <p class="text-xs text-muted-foreground max-w-xs">Inizia creando il primo piano alimentare per un tuo paziente.</p>
+        <Button as-child class="active:not-aria-[haspopup]:translate-y-0.5"><router-link to="/piani-alimentari/nuovo">Nuovo piano</router-link></Button>
+      </div>
       <div v-else class="flex flex-col items-center gap-2 p-16 text-center">
-        <p class="font-heading text-lg italic">Nessun piano trovato</p>
-        <p class="text-xs text-muted-foreground max-w-xs">Prova a modificare la ricerca o i filtri.</p>
-        <Button v-if="filtriAttivi" type="button" variant="outline" @click="pulisciFiltri">Pulisci filtri</Button>
-        <Button v-else as-child><router-link to="/piani-alimentari/nuovo">Nuovo piano</router-link></Button>
+        <p class="font-bold">Nessun risultato trovato</p>
+        <p class="text-xs text-muted-foreground max-w-xs">Prova a modificare o resettare i filtri applicati.</p>
+        <Button type="button" variant="outline" @click="pulisciFiltri">Pulisci filtri</Button>
       </div>
 
       <div v-if="paginaDati && !errore" class="flex items-center justify-between gap-3 border-t border-(--div) bg-(--soft) px-4.5 py-3">

@@ -1,5 +1,8 @@
 import type { Visita } from '@/api/pazienti'
 
+/** Numero massimo di visite disegnate nei grafici di andamento (le più recenti). */
+export const MAX_PUNTI_GRAFICO = 5
+
 export interface PuntoAndamento {
   data: string
   valore: number
@@ -34,6 +37,5 @@ export function prepareAndamento(visite: Visita[]): AndamentoPaziente {
     peso: costruisciAndamento(visite, (v) => v.pesoKg),
     bmi: costruisciAndamento(visite, (v) => v.bmi),
     percentualeGrassoCorporeo: costruisciAndamento(visite, (v) => v.plicometria?.percentualeGrassoCorporeo ?? null),
-    massaMagra: costruisciAndamento(visite, (v) => v.plicometria?.massaMagraKg ?? null),
-  }
+    massaMagra: costruisciAndamento(visite, (v) => v.plicometria?.massaMagraKg ?? null),  }
 }

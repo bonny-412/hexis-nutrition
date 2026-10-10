@@ -514,3 +514,32 @@ Sessione diretta su `master` a richieste puntuali di Andrea (dopo il commit `363
 - **Verifica**: backend 195/195, frontend 300/300, nessun test nuovo (li scrive Andrea), nessuna verifica manuale in browser. Test esistenti adattati dove il comportamento è cambiato intenzionalmente.
 - **Processo**: riscritture multi-riga via `node -e` nella shell sono fallite più volte in modo silenzioso o hanno mangiato i backtick — verificare sempre con `grep` il risultato; parte dei file usa CRLF, preservare il line ending.
 - Aggiornati `wiki/api-contracts.md`, `wiki/domande-aperte.md`, `wiki/stato.md`. In staging, nessun commit.
+
+## [2026-10-10] ingest | Modalità del piano alimentare modificabile finché è in bozza
+
+Decisione di Andrea: la modalità (Piano con pasti / Macros / Esempi intercambiabili) si può cambiare **solo su un piano nuovo o in bozza**; per i piani attivi, scaduti o terminati resta bloccata. Questo supera la regola precedente ("immutabile dopo la creazione") in [modello-dati](modello-dati.md) e [api-contracts](api-contracts.md), aggiornati.
+
+- **Backend**: `AggiornaPianoAlimentareRequest` ha un campo `modalita` opzionale; `PianoAlimentareService.aggiorna` lo accetta solo se `stato = BOZZA` (altrimenti `PianoAlimentareModalitaNonModificabileException`, 409), svuota la struttura della vecchia modalità (`svuotaStruttura`, estratta da `elimina`) e popola la nuova con il contenuto della richiesta. `PianoAlimentare.setModalita` aggiunto. Suite backend 195/195 eseguita, nessun test nuovo.
+- **Frontend** (`PianoAlimentareFormView.vue`): il selettore di modalità compare anche per le bozze già salvate, con la stessa conferma di perdita dati della creazione; la sezione della nuova modalità parte dal template se vuota (`preparaSezione`); `salva()` invia sempre `modalita`. `vue-tsc` pulito, nessuna verifica manuale in browser.
+- **Da provare a mano** (Andrea): cambio modalità su una bozza salvata (con e senza dati nella sezione), salvataggio e riapertura; selettore assente su un piano attivo.
+
+## [2026-10-10] ingest | Lista piani alimentari: filtri avanzati su data inizio/scadenza, colonna Inizio, esclusi i pazienti archiviati
+
+Richieste di Andrea sulla lista dei piani alimentari ([api-contracts](api-contracts.md) aggiornato).
+
+- **Filtri avanzati** (stesso schema della lista pazienti: sezione richiudibile con contatore "N attivi", "Pulisci filtri"): data inizio da/a e data scadenza da/a. Backend: `GET /piani-alimentari/ricerca` accetta `dataInizioDa`/`dataInizioA`/`dataFineDa`/`dataFineA` (ISO, estremi inclusivi, ciascuno opzionale; piani senza data di fine esclusi quando si filtra per data di fine). `CriteriRicercaPianiAlimentari` esteso, `PianoAlimentareSpecifications.conDataInizioTra`/`conDataFineTra`.
+- **Colonna "Inizio"** ordinabile (prima di "Scadenza") e date nel formato `31 dic 2026`.
+- **Pazienti archiviati**: la lista non mostra più i loro piani (`diPazientiNonArchiviati`, subquery correlata). Vale solo **senza `pazienteId`**: la tab piani della scheda paziente passa `pazienteId` e continua a mostrare i piani anche di un paziente archiviato.
+- **Verifica**: backend 195/195 eseguito, `vue-tsc` pulito, nessun test nuovo, nessuna verifica manuale in browser (riavviare il backend prima di provare).
+
+## [2026-10-10] handoff | Grafici Panoramica/Confronto, date digitabili, modalità del piano modificabile in bozza, filtri lista piani
+
+Sessione a richieste puntuali di Andrea, su `master` dopo `00f725b`. Dettaglio completo in [stato](stato.md#sessione-del-10-ottobre-2026--grafici-panoramicaconfronto-date-digitabili-modalità-del-piano-modificabile-in-bozza-filtri-lista-piani). **Nessun commit, nessun `git add`**: tutto non in staging.
+
+- **Scheda paziente**: grafici limitati alle ultime 5 visite; card unica "Massa magra e % grasso" (`ComposizioneChart.vue`, variazione % dalla prima visita mostrata, senza asse Y — la normalizzazione min-max faceva coincidere le linee); Confronto visite con barre più strette, colore A verde chiaro, tooltip; tab piani con "bozza più recente" e senza "Nuovo piano" ridondante; corretti i 3 errori `vue-tsc` preesistenti.
+- **Pagina piano**: modalità modificabile solo su piani nuovi/bozza (backend `PUT` con `modalita`, 409 altrimenti); `DatePicker` `digitabile` e date `GG mmm AAAA`; bordi neri delle card dei pasti (variabile `--div2` mai definita); card paziente con avatar; fix kcal dei giorni in modalità Macros.
+- **Lista piani**: colonna Inizio, stile tabella come i pazienti, filtri avanzati su data inizio/scadenza (backend `dataInizioDa/A`, `dataFineDa/A`), piani dei pazienti archiviati esclusi (solo senza `pazienteId`); vincolo "A non prima di Da" anche nella lista pazienti (`DatePicker` `min`/`max`).
+- **Verifica**: backend 195/195, `vue-tsc` 0 errori; **suite frontend completa non eseguita** (1 fallimento atteso in `PianiAlimentariListView.spec.ts`: frase dello stato vuoto cambiata). Nessun test nuovo (li scrive Andrea, che li riprende nella prossima sessione). Verifiche manuali di Andrea: confermato il salvataggio dopo il riavvio del backend.
+- **Incidente**: backend non riavviato dopo la modifica del `PUT` → il campo `modalita` veniva ignorato in silenzio e `pasti: null` svuotava i pasti di una bozza. Riavviare sempre il backend dopo modifiche a DTO/endpoint.
+- **Processo**: in PowerShell `R` è alias di `Invoke-History` (una funzione con quel nome non parte); Python non è installato (usare `node -e`); due test temporanei di riproduzione (backend e frontend) scritti e cancellati.
+- Aggiornati `wiki/stato.md`, `wiki/api-contracts.md`, `wiki/modello-dati.md`.

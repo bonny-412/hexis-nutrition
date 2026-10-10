@@ -3,12 +3,10 @@ import { computed } from 'vue'
 import type { Paziente, Visita } from '@/api/pazienti'
 import type { AndamentoPaziente } from '@/utils/andamento'
 import { ETICHETTE_CIRCONFERENZE, formattaNumero } from '@/utils/visita'
-import { calcolaEta, formattaDataItalianaEstesa, formattaDataItaliana, isoATimestamp } from '@/utils/data'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { ChartContainer, type ChartConfig } from '@/components/ui/chart'
-import { VisAxis, VisLine, VisScatter, VisXYContainer } from '@unovis/vue'
-import { ArrowDown, ArrowUp, User, Mail, Phone, Briefcase, Fingerprint, Cake, StickyNote } from '@lucide/vue'
+import { calcolaEta, formattaDataItalianaEstesa } from '@/utils/data'
+import { User, Mail, Phone, Briefcase, Fingerprint, Cake, StickyNote } from '@lucide/vue'
 import AndamentoChart from './AndamentoChart.vue'
+import ComposizioneChart from './ComposizioneChart.vue'
 
 const ETICHETTE_SESSO: Record<string, string> = {
   M: 'Maschio',
@@ -48,35 +46,6 @@ const circonferenzeUltimaVisita = computed(() => {
 
 const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) => c.valore !== null))
 
-interface PuntoComposizione {
-  timestamp: number
-  etichetta: string
-  grasso: number
-  magra: number
-}
-
-/** % grasso e massa magra derivano dalla stessa plicometria per visita: stesse date, stesso ordine. */
-const puntiComposizione = computed<PuntoComposizione[]>(() =>
-  props.andamento.percentualeGrassoCorporeo.punti.map((p, i) => ({
-    timestamp: isoATimestamp(p.data),
-    etichetta: formattaDataItaliana(p.data),
-    grasso: p.valore,
-    magra: props.andamento.massaMagra.punti[i].valore,
-  })),
-)
-
-const tickComposizione = computed<number[]>(() => puntiComposizione.value.map((p) => p.timestamp))
-
-function formattaTickComposizione(tick: number | Date): string {
-  const timestamp = tick instanceof Date ? tick.getTime() : tick
-  const punto = puntiComposizione.value.find((p) => p.timestamp === timestamp)
-  return punto ? punto.etichetta : formattaDataItaliana(timestamp)
-}
-
-const chartConfigComposizione: ChartConfig = {
-  grasso: { label: '% Grasso corporeo', color: 'var(--chart-3)' },
-  magra: { label: 'Massa magra', color: 'var(--chart-4)' },
-}
 </script>
 
 <template>
@@ -104,65 +73,7 @@ const chartConfigComposizione: ChartConfig = {
           <AndamentoChart titolo="Peso" unita="kg" :andamento="andamento.peso" colore="var(--chart-1)" :decimali="2" />
           <AndamentoChart titolo="BMI" unita="" :andamento="andamento.bmi" colore="var(--chart-2)" />
 
-          <Card>
-          <CardHeader>
-            <CardTitle class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Massa grassa e massa magra</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div v-if="puntiComposizione.length === 0" class="text-sm text-(--fg4)">Dati non disponibili</div>
-            <template v-else>
-              <div class="flex flex-wrap items-baseline gap-x-5 gap-y-1">
-                <div class="flex items-baseline gap-1.5">
-                  <span class="text-2xl font-semibold text-(--fg)">{{ formattaNumero(andamento.percentualeGrassoCorporeo.ultimo as number) }}%</span>
-                  <span class="text-xs text-(--fg3)">grasso</span>
-                  <span
-                    v-if="andamento.percentualeGrassoCorporeo.delta !== null"
-                    class="flex items-center gap-0.5 text-xs font-medium"
-                    :class="andamento.percentualeGrassoCorporeo.delta < 0 ? 'text-(--green)' : andamento.percentualeGrassoCorporeo.delta > 0 ? 'text-(--danger)' : 'text-(--fg3)'"
-                  >
-                    <ArrowDown v-if="andamento.percentualeGrassoCorporeo.delta < 0" :size="11" />
-                    <ArrowUp v-else-if="andamento.percentualeGrassoCorporeo.delta > 0" :size="11" />
-                    {{ formattaNumero(Math.abs(andamento.percentualeGrassoCorporeo.delta)) }} pt
-                  </span>
-                </div>
-                <div class="flex items-baseline gap-1.5">
-                  <span class="text-2xl font-semibold text-(--fg)">{{ formattaNumero(andamento.massaMagra.ultimo as number) }} kg</span>
-                  <span class="text-xs text-(--fg3)">magra</span>
-                  <span
-                    v-if="andamento.massaMagra.delta !== null"
-                    class="flex items-center gap-0.5 text-xs font-medium"
-                    :class="andamento.massaMagra.delta < 0 ? 'text-(--danger)' : andamento.massaMagra.delta > 0 ? 'text-(--green)' : 'text-(--fg3)'"
-                  >
-                    <ArrowDown v-if="andamento.massaMagra.delta < 0" :size="11" />
-                    <ArrowUp v-else-if="andamento.massaMagra.delta > 0" :size="11" />
-                    {{ formattaNumero(Math.abs(andamento.massaMagra.delta)) }} kg
-                  </span>
-                </div>
-              </div>
-
-              <div class="mt-2 flex items-center gap-4 text-xs text-(--fg3)">
-                <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full" style="background: var(--chart-3)" />% Grasso corporeo</span>
-                <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full" style="background: var(--chart-4)" />Massa magra (kg)</span>
-              </div>
-
-              <ChartContainer :config="chartConfigComposizione" class="mt-4 h-40 aspect-auto">
-                <VisXYContainer :data="puntiComposizione" :margin="{ left: 20, right: 20 }">
-                  <VisLine :x="(d: PuntoComposizione) => d.timestamp" :y="(d: PuntoComposizione) => d.grasso" color="var(--chart-3)" />
-                  <VisScatter :x="(d: PuntoComposizione) => d.timestamp" :y="(d: PuntoComposizione) => d.grasso" color="var(--chart-3)" :size="8" />
-                  <VisLine :x="(d: PuntoComposizione) => d.timestamp" :y="(d: PuntoComposizione) => d.magra" color="var(--chart-4)" />
-                  <VisScatter :x="(d: PuntoComposizione) => d.timestamp" :y="(d: PuntoComposizione) => d.magra" color="var(--chart-4)" :size="8" />
-                  <VisAxis
-                    type="x"
-                    :tick-values="tickComposizione"
-                    :tick-format="formattaTickComposizione"
-                    :grid-line="false"
-                    :tick-line="false"
-                  />
-                </VisXYContainer>
-              </ChartContainer>
-            </template>
-          </CardContent>
-        </Card>
+          <ComposizioneChart :grasso="andamento.percentualeGrassoCorporeo" :magra="andamento.massaMagra" />
       </div>
 
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

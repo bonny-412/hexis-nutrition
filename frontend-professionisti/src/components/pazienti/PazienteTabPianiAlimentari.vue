@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { avanzamentoPiano } from '@/utils/pianoAlimentare'
 import { formattaDataItalianaConMese } from '@/utils/data'
-import { Copy, Search, Utensils } from '@lucide/vue'
+import { Copy, Pencil } from '@lucide/vue'
 
 const props = defineProps<{
   pazienteId: string
@@ -31,6 +31,7 @@ const DIMENSIONE_PAGINA = 5
 // Un solo piano ATTIVO per paziente (lato backend): un piano oltre la data di fine arriva già
 // come SCADUTO, quindi finisce nello storico e non nella card.
 const pianoAttivo = ref<PianoAlimentareRigaLista | null>(null)
+const bozzaRecente = ref<PianoAlimentareRigaLista | null>(null)
 const pianiPrecedenti = ref<PaginaPianiAlimentari | null>(null)
 const pagina = ref(0)
 const caricamento = ref(true)
@@ -66,6 +67,11 @@ async function carica() {
     ])
     pianoAttivo.value = attivo.contenuto[0] ?? null
     pianiPrecedenti.value = precedenti
+    // Le bozze non compaiono nello storico: si mostra solo la più recente, e solo se manca un piano attivo.
+    // La lista non espone la data di creazione, quindi "più recente" = data di inizio più recente.
+    bozzaRecente.value = pianoAttivo.value
+      ? null
+      : ((await cerca({ pazienteId: props.pazienteId, stato: 'BOZZA', ordinaPer: 'dataInizio', direzione: 'desc', dimensione: 1 })).contenuto[0] ?? null)
   } catch {
     errore.value = true
   } finally {
@@ -140,7 +146,7 @@ async function onDuplica(piano: PianoAlimentareRigaLista) {
               <span>Duplica</span>
             </Button>
             <Button as-child>
-              <router-link :to="linkPiano(pianoAttivo)">Apri piano</router-link>
+              <router-link :to="linkPiano(pianoAttivo)"><Pencil :size="15" /> Apri piano</router-link>
             </Button>
           </div>
         </div>
@@ -159,6 +165,25 @@ async function onDuplica(piano: PianoAlimentareRigaLista) {
         </div>
       </template>
 
+      <div v-else-if="bozzaRecente" data-test="piano-bozza" class="flex flex-wrap items-center gap-3.5">
+        <div class="min-w-55 flex-1">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-(--fg3)">Nessun piano attivo · ultima bozza</span>
+            <Badge variant="secondary" class="bg-(--warn-bg) text-(--warn-fg)">Bozza</Badge>
+          </div>
+          <div class="font-heading mt-1 text-[21px] font-medium italic text-(--fg)">{{ bozzaRecente.nome }}</div>
+          <div class="mt-0.5 text-[12.5px] text-(--fg3)">
+            {{ periodo(bozzaRecente) }}<template v-if="bozzaRecente.obiettivoKcal != null"> · {{ target(bozzaRecente) }}/giorno</template>
+          </div>
+        </div>
+        <Button v-if="!archiviato" as-child>
+          <router-link :to="linkPiano(bozzaRecente)">
+            <Pencil :size="15" />
+            <span>Modifica</span>
+          </router-link>
+        </Button>
+      </div>
+
       <div v-else class="flex flex-wrap items-center gap-3.5">
         <div class="min-w-55 flex-1">
           <span class="text-[10px] font-bold uppercase tracking-widest text-(--fg3)">Piano attivo</span>
@@ -167,12 +192,6 @@ async function onDuplica(piano: PianoAlimentareRigaLista) {
             {{ totalePiani > 0 ? 'Apri un piano dallo storico per attivarlo, oppure creane uno nuovo.' : 'Questo paziente non ha ancora nessun piano alimentare.' }}
           </p>
         </div>
-        <Button v-if="!archiviato" as-child>
-          <router-link :to="`/piani-alimentari/nuovo?pazienteId=${pazienteId}`">
-            <Utensils :size="15" />
-            <span>Nuovo piano</span>
-          </router-link>
-        </Button>
       </div>
     </div>
 
@@ -196,7 +215,7 @@ async function onDuplica(piano: PianoAlimentareRigaLista) {
             <TableCell class="text-right tabular-nums text-(--fg2)">{{ target(piano) }}</TableCell>
             <TableCell class="text-right">
               <Button variant="neutral" size="icon-sm" as-child>
-                <router-link :to="linkPiano(piano)" aria-label="Apri piano" title="Apri piano"><Search :size="15" /></router-link>
+                <router-link :to="linkPiano(piano)" aria-label="Apri piano" title="Apri piano"><Pencil :size="15" /></router-link>
               </Button>
             </TableCell>
           </TableRow>

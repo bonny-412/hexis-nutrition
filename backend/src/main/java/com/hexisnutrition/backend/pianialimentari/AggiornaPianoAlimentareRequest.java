@@ -13,6 +13,8 @@ public record AggiornaPianoAlimentareRequest(
         BigDecimal obiettivoKcal,
         @Valid List<PastoRequest> pasti,
         @Valid List<GiornoMacroTargetRequest> giorniMacroTarget,
-        @Valid List<EsempioRequest> esempi
+        @Valid List<EsempioRequest> esempi,
+        /** Opzionale: se presente e diversa da quella attuale cambia la modalità, ammesso solo per piani in bozza. */
+        ModalitaPiano modalita
 ) {
 }

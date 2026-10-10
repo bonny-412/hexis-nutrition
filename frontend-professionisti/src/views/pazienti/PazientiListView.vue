@@ -358,11 +358,11 @@ const conteggioTesto = computed(() => {
         </div>
         <div class="flex flex-col gap-1.5">
           <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Data ultima visita da</Label>
-          <DatePicker id="data-ultima-visita-da" :model-value="dataUltimaVisitaDa" @update:model-value="onDataUltimaVisitaDaChange" />
+          <DatePicker id="data-ultima-visita-da" :model-value="dataUltimaVisitaDa" :max="dataUltimaVisitaA" @update:model-value="onDataUltimaVisitaDaChange" />
         </div>
         <div class="flex flex-col gap-1.5">
           <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Data ultima visita a</Label>
-          <DatePicker id="data-ultima-visita-a" :model-value="dataUltimaVisitaA" @update:model-value="onDataUltimaVisitaAChange" />
+          <DatePicker id="data-ultima-visita-a" :model-value="dataUltimaVisitaA" :min="dataUltimaVisitaDa" @update:model-value="onDataUltimaVisitaAChange" />
         </div>
         <div class="flex items-end pb-px">
           <button

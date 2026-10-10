@@ -20,6 +20,19 @@ public final class PianoAlimentareSpecifications {
         return (root, query, cb) -> cb.equal(root.get("pazienteId"), pazienteId);
     }
 
+    /** Esclude i piani di pazienti archiviati (nessuna relazione JPA: subquery correlata come in conRicerca). */
+    public static Specification<PianoAlimentare> diPazientiNonArchiviati() {
+        return (root, query, cb) -> {
+            Subquery<UUID> pazienteAttivo = query.subquery(UUID.class);
+            var pazienteRoot = pazienteAttivo.from(Paziente.class);
+            pazienteAttivo.select(pazienteRoot.get("id"))
+                    .where(cb.and(
+                            cb.equal(pazienteRoot.get("id"), root.get("pazienteId")),
+                            cb.isFalse(pazienteRoot.get("archiviato"))));
+            return cb.exists(pazienteAttivo);
+        };
+    }
+
     /** Match sul nome del piano o su nome/cognome del paziente collegato (nessuna relazione JPA: subquery correlata). */
     public static Specification<PianoAlimentare> conRicerca(String ricerca) {
         String pattern = "%" + ricerca.toLowerCase() + "%";
@@ -43,6 +56,31 @@ public final class PianoAlimentareSpecifications {
 
     public static Specification<PianoAlimentare> nonBozza() {
         return Specification.not(conStato(StatoPianoVisualizzato.BOZZA));
+    }
+
+    public static Specification<PianoAlimentare> conDataInizioTra(LocalDate da, LocalDate a) {
+        return conDataTra("dataInizio", da, a);
+    }
+
+    /** I piani senza data di fine (nullable) sono esclusi quando questo filtro è attivo. */
+    public static Specification<PianoAlimentare> conDataFineTra(LocalDate da, LocalDate a) {
+        return conDataTra("dataFine", da, a);
+    }
+
+    /** Estremi inclusivi; un estremo nullo significa nessun limite da quel lato. */
+    private static Specification<PianoAlimentare> conDataTra(String campo, LocalDate da, LocalDate a) {
+        return (root, query, cb) -> {
+            if (da != null && a != null) {
+                return cb.between(root.get(campo), da, a);
+            }
+            if (da != null) {
+                return cb.greaterThanOrEqualTo(root.get(campo), da);
+            }
+            if (a != null) {
+                return cb.lessThanOrEqualTo(root.get(campo), a);
+            }
+            return cb.conjunction();
+        };
     }
 
     public static Specification<PianoAlimentare> conStato(StatoPianoVisualizzato stato) {

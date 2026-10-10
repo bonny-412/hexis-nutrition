@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { ETICHETTE_CIRCONFERENZE, ETICHETTE_OBIETTIVO, categoriaBmi, formattaNumero } from '@/utils/visita'
 import { formattaDataItalianaConMese } from '@/utils/data'
-import { ChevronDown } from '@lucide/vue'
+import { ChevronDown, Pencil, Trash2 } from '@lucide/vue'
 import type { Visita } from '@/api/pazienti'
 
 const props = defineProps<{
@@ -222,17 +222,18 @@ const righe = computed<RigaStorico[]>(() =>
 
         <div v-if="idAperto === riga.visita.id" data-test="storico-dettaglio" class="border-t border-(--div) px-5 pb-5 pt-4">
           <div v-if="!archiviato" class="mb-4 flex justify-end gap-2">
-            <Button as-child variant="outline" size="sm">
-              <router-link :to="`/pazienti/${pazienteId}/visite/${riga.visita.id}/modifica`">Modifica visita</router-link>
+            <Button as-child variant="neutral" size="sm">
+              <router-link :to="`/pazienti/${pazienteId}/visite/${riga.visita.id}/modifica`"><Pencil :size="15" />Modifica visita</router-link>
             </Button>
             <Button
               type="button"
-              variant="destructive-outline"
+              variant="destructive-neutral"
               size="sm"
               data-test="elimina-visita"
               class="text-(--danger)"
               @click="chiediConferma(riga.visita)"
             >
+              <Trash2 :size="15" />
               Elimina visita
             </Button>
           </div>
@@ -244,7 +245,7 @@ const righe = computed<RigaStorico[]>(() =>
                 <div class="flex items-center justify-between"><dt class="text-(--fg2)">Peso</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.pesoKg) }} kg</dd></div>
                 <div v-if="riga.visita.bmi !== null" class="flex items-center justify-between"><dt class="text-(--fg2)">BMI</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.bmi, 1) }}</dd></div>
               </dl>
-              <p v-if="riga.visita.note" class="mt-2 border-t border-(--div2) pt-2 text-xs leading-relaxed text-(--fg3)">{{ riga.visita.note }}</p>
+              <p v-if="riga.visita.note" class="mt-2 border-t border-(--div) pt-2 text-xs leading-relaxed text-(--fg3)">{{ riga.visita.note }}</p>
             </div>
 
             <div class="rounded-xl bg-(--soft) p-4">

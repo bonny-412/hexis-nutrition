@@ -117,6 +117,8 @@ export interface EsempioRequest {
 }
 
 export interface AggiornaPianoAlimentareRequest {
+  /** Cambia la modalità: ammesso solo per piani in bozza (409 altrimenti). */
+  modalita?: ModalitaPiano
   nome: string
   dataFine: string | null
   obiettivoKcal: number | null
@@ -135,6 +137,11 @@ export interface CriteriRicercaPianiAlimentari {
   pazienteId?: string
   escludiAttivo?: boolean
   escludiBozze?: boolean
+  /** Estremi inclusivi in formato ISO `AAAA-MM-GG`; i piani senza data di fine sono esclusi se si filtra per data di fine. */
+  dataInizioDa?: string
+  dataInizioA?: string
+  dataFineDa?: string
+  dataFineA?: string
 }
 
 export interface PianoAlimentareRigaLista {
@@ -191,6 +198,10 @@ export function cerca(criteri: CriteriRicercaPianiAlimentari = {}): Promise<Pagi
   if (criteri.pazienteId) parametri.set('pazienteId', criteri.pazienteId)
   if (criteri.escludiAttivo) parametri.set('escludiAttivo', 'true')
   if (criteri.escludiBozze) parametri.set('escludiBozze', 'true')
+  if (criteri.dataInizioDa) parametri.set('dataInizioDa', criteri.dataInizioDa)
+  if (criteri.dataInizioA) parametri.set('dataInizioA', criteri.dataInizioA)
+  if (criteri.dataFineDa) parametri.set('dataFineDa', criteri.dataFineDa)
+  if (criteri.dataFineA) parametri.set('dataFineA', criteri.dataFineA)
 
   const query = parametri.toString()
   return apiRequest<PaginaPianiAlimentari>(`/piani-alimentari/ricerca${query ? `?${query}` : ''}`)

@@ -126,7 +126,7 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
         :righe="righeCirconferenze"
         :etichetta-a="formattaDataItalianaConMese(visitaA!.dataVisita)"
         :etichetta-b="formattaDataItalianaConMese(visitaB!.dataVisita)"
-        colore="var(--chart-2)"
+        colore="var(--chart-1)"
         orientamento="orizzontale"
       />
     </div>

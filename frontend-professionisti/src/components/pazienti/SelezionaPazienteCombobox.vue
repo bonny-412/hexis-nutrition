@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverAnchor } from '@/components/ui/popover'
 import { X } from '@lucide/vue'
 
-const props = defineProps<{ modelValue: Paziente | null }>()
+defineProps<{ modelValue: Paziente | null }>()
 const emit = defineEmits<{ 'update:modelValue': [paziente: Paziente | null] }>()
 
 const testoRicerca = ref('')

@@ -189,6 +189,15 @@ public class PianoAlimentareService {
     @Transactional
     public PianoAlimentareResponse aggiorna(UUID professionistaId, UUID pianoId, AggiornaPianoAlimentareRequest request) {
         PianoAlimentare piano = pianoDiProprieta(professionistaId, pianoId);
+        if (request.modalita() != null && request.modalita() != piano.getModalita()) {
+            if (piano.getStato() != StatoPiano.BOZZA) {
+                throw new PianoAlimentareModalitaNonModificabileException();
+            }
+            // Solo la struttura della modalità attiva è persistita: quella lasciata va svuotata, poi sotto
+            // viene popolata la nuova con il contenuto della richiesta.
+            svuotaStruttura(pianoId, piano.getModalita());
+            piano.setModalita(request.modalita());
+        }
         piano.setNome(request.nome());
         piano.setDataFine(request.dataFine());
         piano.setObiettivoKcal(request.obiettivoKcal());
@@ -231,7 +240,7 @@ public class PianoAlimentareService {
                 .toList();
 
         return aggiorna(professionistaId, copia.id(),
-                new AggiornaPianoAlimentareRequest(nome, null, origine.obiettivoKcal(), pasti, giorniMacro, esempi));
+                new AggiornaPianoAlimentareRequest(nome, null, origine.obiettivoKcal(), pasti, giorniMacro, esempi, null));
     }
 
     private List<RigaAlimentoRequest> comeRichieste(List<RigaAlimentoResponse> righe) {
@@ -297,12 +306,16 @@ public class PianoAlimentareService {
         if (piano.getStato() != StatoPiano.BOZZA) {
             throw new PianoAlimentareNonEliminabileException();
         }
-        switch (piano.getModalita()) {
+        svuotaStruttura(pianoId, piano.getModalita());
+        pianoAlimentareRepository.delete(piano);
+    }
+
+    private void svuotaStruttura(UUID pianoId, ModalitaPiano modalita) {
+        switch (modalita) {
             case PASTI -> sostituisciPasti(pianoId, List.of());
             case MACRO -> sostituisciGiorniMacro(pianoId, List.of());
             case ESEMPI -> sostituisciEsempi(pianoId, List.of());
         }
-        pianoAlimentareRepository.delete(piano);
     }
 
     public org.springframework.data.domain.Page<PianoAlimentare> cerca(UUID professionistaId,
@@ -317,12 +330,22 @@ public class PianoAlimentareService {
         }
         if (criteri.pazienteId() != null) {
             specifiche.add(PianoAlimentareSpecifications.delPaziente(criteri.pazienteId()));
+        } else {
+            // La lista generale non mostra i piani dei pazienti archiviati; la tab piani della scheda di un
+            // paziente (che passa pazienteId) li mostra anche se il paziente è archiviato.
+            specifiche.add(PianoAlimentareSpecifications.diPazientiNonArchiviati());
         }
         if (criteri.escludiAttivo()) {
             specifiche.add(PianoAlimentareSpecifications.nonAttivo());
         }
         if (criteri.escludiBozze()) {
             specifiche.add(PianoAlimentareSpecifications.nonBozza());
+        }
+        if (criteri.dataInizioDa() != null || criteri.dataInizioA() != null) {
+            specifiche.add(PianoAlimentareSpecifications.conDataInizioTra(criteri.dataInizioDa(), criteri.dataInizioA()));
+        }
+        if (criteri.dataFineDa() != null || criteri.dataFineA() != null) {
+            specifiche.add(PianoAlimentareSpecifications.conDataFineTra(criteri.dataFineDa(), criteri.dataFineA()));
         }
         return pianoAlimentareRepository.findAll(
                 org.springframework.data.jpa.domain.Specification.allOf(specifiche), pageable);

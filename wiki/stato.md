@@ -3,7 +3,7 @@ title: Stato del progetto
 tags: [stato]
 stato: stabile
 creato: 2026-08-08
-aggiornato: 2026-10-06
+aggiornato: 2026-10-10
 fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, sorgenti/2026-08-09-test-su-postgres-locale.md, sorgenti/2026-08-09-docker-solo-in-produzione.md, sorgenti/2026-08-30-hash-pulizia-invalidazione-token.md, ../docs/superpowers/specs/2026-08-31-nuovo-paziente-con-visita-design.md, ../docs/superpowers/specs/2026-09-01-plicometria-circonferenze-design.md, ../docs/superpowers/plans/2026-09-01-plicometria-circonferenze.md, log.md#2026-08-31-handoff--bug-fix-controlli-pazientenuovoview--ux-maiuscola-errori-live, log.md#2026-09-01-handoff--pagina-nuovo-paziente-eta-componente-visita-e-data-nascita-obbligatoria, log.md#2026-09-01-handoff--modulo-plicometria-e-redesign-circonferenze, log.md#2026-09-02-handoff--rifiniture-plicometria-fix-typescript-sulle-select-riorganizzazione-views, ../docs/superpowers/specs/2026-09-02-lista-pazienti-paginata-design.md, ../docs/superpowers/plans/2026-09-02-lista-pazienti-paginata.md, log.md#2026-09-02-handoff--lista-pazienti-paginata-redesign-ui-ricercafiltri-lato-server-archiviazione-paziente, log.md#2026-09-02-handoff--toast-di-notifica-globale-bug-fix-invito-rifiniture-lista-pazienti, ../docs/superpowers/specs/2026-09-02-dettaglio-paziente-andamento-design.md, ../docs/superpowers/plans/2026-09-02-dettaglio-paziente-andamento.md, log.md#2026-09-02-handoff--sezione-andamento-e-redesign-completo-della-pagina-di-dettaglio-paziente, log.md#2026-09-04-handoff--rifiniture-dettagliolista-paziente-elimina-visita-filtri-lato-server-ridisegnati, ../docs/superpowers/specs/2026-09-08-command-palette-design.md, ../docs/superpowers/plans/2026-09-08-command-palette.md, log.md#2026-09-08-handoff--categorie-bmi-oms-command-palette-globale-%E2%8C%98k-gestione-ui-pazienti-archiviati, ../docs/superpowers/specs/2026-09-12-piano-alimentare-design.md, ../docs/superpowers/plans/2026-09-12-piano-alimentare.md]
 ---
 
@@ -18,6 +18,8 @@ Sessione del 1° settembre 2026 (parti 3-4): aggiunto il **modulo Plicometria** 
 Sessione del 5 settembre 2026: avviato il sotto-progetto **"Piano alimentare"**, primo pezzo — catalogo **Alimenti** (BDA-IEO + custom per professionista), backend e UI in `frontend-professionisti` completi. Vedi sessione dedicata più sotto.
 
 Sessione del 6 ottobre 2026: scheda paziente — tab **Piani alimentari** (card piano attivo, Duplica, storico paginato) e **Storico visite** (5 per volta, "Carica altre visite"), conteggio "pazienti attivi" = non archiviati. In staging, nessun test nuovo (li scrive Andrea). Vedi sessione dedicata più sotto.
+
+Sessione del 10 ottobre 2026: grafici Panoramica (ultime 5 visite, card unica massa magra/% grasso) e Confronto visite (colori, tooltip), date digitabili e `min`/`max` nel `DatePicker`, **modalità del piano modificabile solo per piani nuovi o in bozza**, bozza più recente nella tab piani, lista piani con colonna Inizio, filtri avanzati su data inizio/scadenza e senza pazienti archiviati. Non committato. Vedi sessione dedicata più sotto.
 
 Il progetto vive in **un unico repo git**, `bonny-412/hexis-nutrition`, con la radice in `progetti/hexis-nutrition/`.
 
@@ -414,9 +416,54 @@ Test **esistenti adattati** (non nuovi): `DashboardView.spec.ts` (mock di `conte
 
 Aggiornati `wiki/api-contracts.md` (conteggio-attivi, duplica, storico, nuovi campi/filtri ricerca piani) e `wiki/domande-aperte.md` (voce spostata in "Risolte"). Lavoro **in staging, nessun commit** — tocca ad Andrea.
 
+## Sessione del 10 ottobre 2026 — grafici Panoramica/Confronto, date digitabili, modalità del piano modificabile in bozza, filtri lista piani
+
+Sessione a richieste puntuali di Andrea una alla volta (nessun piano formale), su `master` dopo `00f725b`. **Nessun commit, nessun `git add`**: tutto è modifica non in staging. Dettaglio in [log](log.md#2026-10-10-handoff--grafici-panoramicaconfronto-date-digitabili-modalità-del-piano-modificabile-in-bozza-filtri-lista-piani).
+
+**Scheda paziente — Panoramica e Confronto visite**
+- Grafici **Peso/BMI** (`AndamentoChart.vue`): solo le **ultime 5 visite** (`MAX_PUNTI_GRAFICO` in `utils/andamento.ts`; `ultimo`/`delta` restano calcolati su tutto lo storico) e etichetta "Ultime N visite". La card **Massa grassa/magra** è stata sostituita da `ComposizioneChart.vue` ("Massa magra e % grasso"): **un solo grafico a due linee, senza valori sull'asse Y**, linee dritte (`CurveType.Linear`). Ogni serie è la **variazione % rispetto alla prima visita mostrata**: provate prima le barre impilate, i due mini-grafici, il doppio asse e la normalizzazione min-max — quest'ultima faceva **coincidere le due linee** con poche visite (la verde spariva sotto l'arancione). I valori reali stanno nel riepilogo sopra il grafico. Limite noto: la massa magra, variando poco in %, risulta quasi piatta. Peso/BMI hanno ancora la curva morbida di default.
+- **Confronto visite** (`ConfrontoBarChart.vue`): barre più strette su schermi larghi (`LARGHEZZA_MAX_GRUPPO = 80`), colore della visita A = `--chart-2` (verde chiaro, prima grigio), B = `--chart-1`, per entrambi i grafici; spazio tra le due barre nelle Circonferenze (`bar-padding` 0,2, righe da 40 px); **tooltip** al passaggio sulla coppia di barre con valore di A e B (HTML con stile inline, perché `ChartContainer` rende i tooltip Unovis senza sfondo). **Attenzione tema scuro**: lì `--green` e `--chart-2` valgono entrambi `#7BC299`, A e B possono risultare quasi uguali.
+- Corretti i 3 errori `vue-tsc` **preesistenti** (`PlicaInput.vue`, `SelezionaPazienteCombobox.vue`, `ui/chart/ChartLegendContent.vue`): ora `vue-tsc` è pulito.
+- Tab **Piani alimentari**: tolto "Nuovo piano" dal riquadro senza piano attivo (c'è già in alto); se non c'è un piano attivo ma c'è una **bozza**, la card mostra la **bozza più recente** con "Modifica" (nascosto per i pazienti archiviati). "Più recente" = **data di inizio** più recente: la lista non espone la data di creazione.
+
+**Pagina piano alimentare (`PianoAlimentareFormView.vue`)**
+- **Modalità cambiabile solo su piani nuovi o in bozza** (decisione di Andrea, supera "immutabile dopo la creazione"): backend `PUT /piani-alimentari/{id}` accetta `modalita` opzionale, **409** se il piano non è `BOZZA` (`PianoAlimentareModalitaNonModificabileException`), svuota la struttura della vecchia modalità (`svuotaStruttura`, estratta da `elimina`) e popola la nuova. Frontend: selettore visibile anche per le bozze salvate, stessa conferma di perdita dati, la sezione nuova parte dal template (`preparaSezione`); `salva()` invia sempre `modalita`. Il tipo di piano compare nel sottotitolo **solo quando non è modificabile**.
+- **Date**: `DatePicker` ha una modalità opt-in **`digitabile`** (campo `gg/mm/aaaa` con barre automatiche; a riposo mostra "14 set 2026"; il calendario resta dall'icona) usata solo per data di partenza e fine piano; hover/stato aperto del campo non cambia più sfondo (prima, con `hover:bg-transparent`, trasparivano il menta del riquadro). Tutte le date visibili (sottotitolo ultima visita, data di partenza a piano salvato, lista piani) nel formato `GG mmm AAAA` (`formattaDataItalianaConMese`).
+- **Bug dei bordi neri nelle card dei pasti**: usavano la variabile **`--div2`, mai definita** (fallback `currentColor`); sostituita con `--div` (anche in `PazienteTabStoricoVisite.vue`).
+- **Nome del paziente**: card con avatar a iniziali sopra il titolo, link alla scheda paziente (senza ombra).
+- **Bug modalità Macros**: la colonna dei giorni a sinistra mostrava "—" perché sommava le kcal dei pasti; ora legge il target kcal del giorno (`kcalTargetGiorno`).
+
+**Lista Piani alimentari**
+- Colonna **Inizio** ordinabile (backend già supportava `dataInizio`), date `GG mmm AAAA`, **stile della tabella allineato a quella dei pazienti** (celle a due righe: nome del piano + tipo; trattino grigio per i vuoti; stato vuoto a due casi "Nessun piano presente" / "Nessun risultato trovato").
+- **Filtri avanzati** come nella lista pazienti (sezione richiudibile, contatore, "Pulisci filtri"): data inizio da/a e scadenza da/a. Backend: `GET /piani-alimentari/ricerca` accetta `dataInizioDa/A`, `dataFineDa/A` (ISO, estremi inclusivi, ciascuno opzionale; piani senza `dataFine` esclusi se si filtra per fine). **Senza `pazienteId` la ricerca non restituisce più i piani di pazienti archiviati** (con `pazienteId` sì: la tab della scheda di un archiviato continua a funzionare).
+- **Bug "A prima di Da"** nei filtri di lista pazienti e piani: `DatePicker` ha ora le prop `min`/`max` (calendario con giorni disabilitati) e i campi Da/A si limitano a vicenda. Nessun controllo lato backend: con `Da > A` la ricerca risponde con zero risultati.
+
+**Incidente da ricordare**: dopo la modifica del `PUT` il salvataggio "riuscito" non salvava i macro perché il **backend in esecuzione non era stato riavviato** — un backend vecchio **ignora il campo `modalita` senza errore** e applica `pasti: null`, **svuotando i pasti** della bozza. Dopo il riavvio tutto ok (confermato da Andrea). Riavviare sempre il backend dopo modifiche a DTO/endpoint.
+
+**Verifica**: backend `mvn test` → **195/195 verdi** (ultima esecuzione dopo l'esclusione dei pazienti archiviati); `vue-tsc --noEmit` **0 errori**. Frontend: **suite completa NON eseguita**; eseguiti solo `DatePicker`, `PazientiListView` e `PianiAlimentariListView` → **1 test fallisce, atteso**: in `PianiAlimentariListView.spec.ts` "mostra lo stato vuoto quando non ci sono risultati" cerca ancora "Nessun piano trovato" (ora "Nessun piano presente" / "Nessun risultato trovato"). **Verifiche manuali in browser**: le fa Andrea (ha confermato il salvataggio dopo il riavvio); il resto non è stato provato dall'agente. **Nessun test nuovo scritto** (li scrive Andrea). Due test temporanei di riproduzione (uno backend, uno frontend) sono stati scritti e **cancellati**.
+
+Aggiornati `wiki/api-contracts.md` (PUT con `modalita`, filtri data e archiviati su `/ricerca`) e `wiki/modello-dati.md` (modalità modificabile in bozza).
+
+**Da decidere / non fatto**
+- Lista piani: nome del paziente come **link alla scheda** (la riga non ha `pazienteId`: andrebbe aggiunto al backend); ordinamento per paziente/stato (il backend ordina solo per nome/inizio/scadenza).
+- Backend: rispondere **400 quando `Da > A`** nei filtri data? Frontend: avvisare se la `modalita` ricevuta dopo il salvataggio **non coincide** con quella inviata (caso backend vecchio)?
+- Pagina piano senza guardia sulle **modifiche non salvate** (uscire dal link paziente o "indietro" le perde).
+- Etichette del tipo di piano non uniformi: "Macros" (pagina piano, lista) vs "Solo target macro" (tab scheda paziente).
+- `inizialiPaziente` è **copiata in 4 file** (pagina piano, lista piani, lista pazienti, command palette): candidata a una utility condivisa.
+- Un ADR per "modalità modificabile in bozza" non è stato scritto (solo log + wiki dati/API).
+
 ## Prossimo passo consigliato
 
-**Aggiornato il 6 ottobre 2026, a fine sessione**: il lavoro del 12-14 settembre è **già committato** (`36361b5`); in staging c'è solo il lavoro del 6 ottobre (vedi sopra). Ordine consigliato per la prossima sessione:
+**Aggiornato il 10 ottobre 2026, a fine sessione** (prevale sulle indicazioni sotto per le prime mosse): il lavoro del 6 ottobre è già in `master`; quello del 10 ottobre è **non committato e non in staging** (`git status` per l'elenco). Andrea riprende **la scrittura dei test** nella prossima sessione. In ordine:
+
+1. **Prima di tutto**: riavviare il backend (nuovi parametri e `modalita` nel `PUT`), poi lanciare la **suite frontend intera** (`npx vitest run` da `frontend-professionisti/`): è l'unica cosa mai eseguita per intero oggi. Atteso: fallisce `PianiAlimentariListView.spec.ts` → "mostra lo stato vuoto…" (frase cambiata); possibili altri su `PazienteTabPanoramica.spec.ts`, `andamento.spec.ts`, `PianoAlimentareFormView.spec.ts` (sottotitolo senza il nome, selettore modalità, skeleton 3, card composizione), `PazienteTabPianiAlimentari.spec.ts` (niente "Nuovo piano" nel riquadro vuoto, bozza più recente), `DatePicker.spec.ts`.
+2. **Test da scrivere** (li fa Andrea; non scriverli di default):
+   - **Backend `PianoAlimentareControllerTest`**: `PUT` con `modalita` diversa su una **bozza** (PASTI→MACRO, MACRO→ESEMPI, ESEMPI→PASTI: struttura vecchia svuotata, nuova popolata, `GET` successivo coerente — i valori tornano come `2200.0`, non `2200`) e **409** su piano `ATTIVO`/`TERMINATO`; `GET /piani-alimentari/ricerca` con `dataInizioDa/A` e `dataFineDa/A` (estremi inclusivi, un solo estremo, piani senza `dataFine` esclusi) e con **paziente archiviato** (escluso senza `pazienteId`, incluso con `pazienteId`); `PianoAlimentareSpecificationsTest` per `conDataInizioTra`/`conDataFineTra`/`diPazientiNonArchiviati`.
+   - **Frontend**: `DatePicker` (`digitabile`: barre automatiche, data inesistente come 31/02 → `''`, formato "14 set 2026" a riposo, `min`/`max` anche sul testo scritto); `ComposizioneChart.vue` e `AndamentoChart.vue` (limite a 5 punti, etichetta "Ultime N visite"/"Ultima visita"); `ConfrontoBarChart.vue` (`contenutoTooltip` con escape HTML); `PianoAlimentareFormView` (selettore modalità solo per nuovo/bozza, `preparaSezione`, `kcalTargetGiorno` in Macros, sottotitolo con/senza tipo); `PianiAlimentariListView` (filtri avanzati, colonna Inizio, due stati vuoti); `api/pianiAlimentari.spec.ts` (`cerca` con i 4 filtri data).
+3. **Verificare a mano** (mai fatto in browser per queste voci): cambio modalità su una bozza salvata con e senza dati; selettore assente su piano attivo; date digitabili in tema chiaro e scuro; **colori A/B del Confronto in tema scuro**; card massa magra/% grasso con 1, 2 e 5 visite e con visite senza plicometria; tooltip del Confronto; filtri data e vincoli Da/A in entrambe le liste; lista piani senza pazienti archiviati e tab piani di un archiviato; bozza più recente nella tab.
+4. Da decidere: elenco "Da decidere / non fatto" nella sessione del 10 ottobre.
+
+**Precedente — aggiornato il 6 ottobre 2026, a fine sessione**: il lavoro del 12-14 settembre è **già committato** (`36361b5`); in staging c'è solo il lavoro del 6 ottobre (vedi sopra). Ordine consigliato per la prossima sessione:
 
 1. Apri Claude Code su `progetti/hexis-nutrition/` (non sulla radice del workspace, non dentro una singola sottocartella da sola). `git diff --cached --stat` prima di committare.
 2. **Scrivere i test** (li fa Andrea, preferenza esplicita — non scriverli di default). Cosa non è coperto, in ordine di valore:

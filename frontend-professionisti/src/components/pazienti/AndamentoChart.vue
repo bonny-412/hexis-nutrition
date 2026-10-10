@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { ChartContainer, type ChartConfig } from '@/components/ui/chart'
 import { VisAxis, VisLine, VisScatter, VisXYContainer } from '@unovis/vue'
 import { ArrowDown, ArrowUp } from '@lucide/vue'
-import type { Andamento } from '@/utils/andamento'
+import { MAX_PUNTI_GRAFICO, type Andamento } from '@/utils/andamento'
 import { formattaDataItaliana, isoATimestamp } from '@/utils/data'
 
 const props = withDefaults(
@@ -26,13 +26,19 @@ interface PuntoGrafico {
   valore: number
 }
 
+/** Solo le ultime visite: `ultimo` e `delta` restano calcolati sull'intero storico. */
 const datiGrafico = computed<PuntoGrafico[]>(() =>
-  props.andamento.punti.map((p) => ({
+  props.andamento.punti.slice(-MAX_PUNTI_GRAFICO).map((p) => ({
     timestamp: isoATimestamp(p.data),
     etichetta: formattaDataItaliana(p.data),
     valore: p.valore,
   })),
 )
+
+const etichettaIntervallo = computed(() => {
+  const n = datiGrafico.value.length
+  return n === 1 ? 'Ultima visita' : `Ultime ${n} visite`
+})
 
 /** Un tick per ogni visita: l'asse mostra le date reali, non una griglia arbitraria. */
 const tickDate = computed<number[]>(() => datiGrafico.value.map((p) => p.timestamp))
@@ -55,7 +61,12 @@ function formatta(valore: number): string {
 <template>
   <Card>
     <CardHeader>
-      <CardTitle class="text-xs font-bold uppercase tracking-wide text-(--fg3)">{{ titolo }}</CardTitle>
+      <CardTitle class="flex items-baseline justify-between gap-2 text-xs font-bold uppercase tracking-wide text-(--fg3)">
+        {{ titolo }}
+        <span v-if="andamento.punti.length > 0" class="text-[10px] font-medium normal-case tracking-normal text-(--fg4)">
+          {{ etichettaIntervallo }}
+        </span>
+      </CardTitle>
     </CardHeader>
     <CardContent>
       <div v-if="andamento.punti.length === 0" class="text-sm text-(--fg4)">Nessun dato disponibile</div>

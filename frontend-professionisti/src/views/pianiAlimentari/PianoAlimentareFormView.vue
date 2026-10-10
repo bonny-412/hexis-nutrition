@@ -30,7 +30,7 @@ import {
   filtraDecimaleItaliano, numeroItalianoOpzionale, bloccaTastoNonNumerico,
   erroreDataInizioPiano, erroreDataFinePiano, erroreNumeroDecimaleObbligatorio,
 } from '@/utils/validators'
-import { formattaDataItalianaEstesa } from '@/utils/data'
+import { formattaDataItalianaConMese } from '@/utils/data'
 import { ArrowLeft, MoreHorizontal, Trash2, Pencil, X, Save, Printer, CircleCheck } from '@lucide/vue'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 
@@ -160,7 +160,19 @@ function onObiettivoKcalInput(valore: string | number) {
 
 // Un paziente scelto (o un piano già caricato) basta per mostrare il builder.
 const pronto = computed(() => piano.value !== null || pazienteSelezionato.value !== null)
-const modalitaAttiva = computed(() => piano.value?.modalita ?? modalitaScelta.value)
+// La modalità si può cambiare solo su un piano nuovo o in bozza (il backend risponde 409 altrimenti):
+// per ogni altro piano modalitaScelta resta quella caricata dal server (vedi applicaPiano).
+const modalitaAttiva = computed(() => modalitaScelta.value)
+const modalitaModificabile = computed(() => !piano.value || piano.value.stato === 'BOZZA')
+/** Iniziali di nome e cognome (prima e ultima parola), come negli avatar delle liste. */
+function inizialiPaziente(nomeCompleto: string): string {
+  const parti = nomeCompleto.trim().split(/\s+/)
+  const prima = parti[0]?.[0] ?? ''
+  const ultima = parti.length > 1 ? parti[parti.length - 1][0] : ''
+  return `${prima}${ultima}`.toUpperCase()
+}
+
+const idPazienteVisualizzato = computed(() => piano.value?.pazienteId ?? pazienteSelezionato.value?.id ?? null)
 const nomePazienteVisualizzato = computed(() => {
   if (piano.value) return piano.value.pazienteNomeCompleto
   if (pazienteSelezionato.value) return `${pazienteSelezionato.value.nome} ${pazienteSelezionato.value.cognome}`
@@ -235,8 +247,16 @@ watch(pazienteSelezionato, async (paziente) => {
 const sottotitoloVisita = computed(() => {
   const visita = ultimaVisitaSelezionato.value
   if (!visita) return null
-  return `Ultima visita: ${ETICHETTE_OBIETTIVO[visita.obiettivo]} del ${formattaDataItalianaEstesa(visita.dataVisita)}`
+  return `Ultima visita: ${ETICHETTE_OBIETTIVO[visita.obiettivo]} del ${formattaDataItalianaConMese(visita.dataVisita)}`
 })
+
+// Il tipo di piano si indica nel sottotitolo solo quando non è modificabile: con il selettore
+// visibile (piano nuovo o in bozza) sarebbe una ripetizione.
+const sottotitolo = computed(() =>
+  [sottotitoloVisita.value, modalitaModificabile.value ? null : ETICHETTA_MODALITA[modalitaAttiva.value]]
+    .filter(Boolean)
+    .join(' · '),
+)
 
 const suggerimentoObiettivo = computed(() => {
   if (piano.value) {
@@ -401,13 +421,22 @@ function sezioneValorizzata(modalita: ModalitaPiano): boolean {
   return esempiLocali.value.some((e) => e.righe.length > 0 || e.nota) || esempiLocali.value.length > CATEGORIE_ESEMPI.length
 }
 
+/** Un piano caricato dal server ha popolata solo la sezione della sua modalità: l'altra parte dal template. */
+function preparaSezione(modalita: ModalitaPiano) {
+  if (modalita === 'PASTI' && pastiLocali.value.length === 0) pastiLocali.value = pastiTemplate()
+  else if (modalita === 'MACRO' && giorniMacroLocali.value.length === 0) giorniMacroLocali.value = giorniMacroTemplate()
+  else if (modalita === 'ESEMPI' && esempiLocali.value.length === 0) esempiLocali.value = esempiTemplate()
+}
+
 function selezionaModalita(opzione: ModalitaPiano) {
+  if (!modalitaModificabile.value) return
   if (opzione === modalitaScelta.value) return
   if (sezioneValorizzata(modalitaScelta.value)) {
     modalitaTarget.value = opzione
     confermaCambioModalitaAperta.value = true
     return
   }
+  preparaSezione(opzione)
   modalitaScelta.value = opzione
 }
 
@@ -416,6 +445,7 @@ function confermaCambioModalita() {
     if (modalitaScelta.value === 'PASTI') pastiLocali.value = pastiTemplate()
     else if (modalitaScelta.value === 'MACRO') giorniMacroLocali.value = giorniMacroTemplate()
     else esempiLocali.value = esempiTemplate()
+    preparaSezione(modalitaTarget.value)
     modalitaScelta.value = modalitaTarget.value
   }
   modalitaTarget.value = null
@@ -455,6 +485,7 @@ function applicaEsempiDaRisultato(risultato: PianoAlimentare) {
 
 function applicaPiano(risultato: PianoAlimentare) {
   piano.value = risultato
+  modalitaScelta.value = risultato.modalita
   nome.value = risultato.nome
   obiettivoKcalInput.value = risultato.obiettivoKcal !== null ? String(risultato.obiettivoKcal).replace('.', ',') : ''
   dataFineInput.value = risultato.dataFine ?? ''
@@ -531,6 +562,13 @@ function kcalGiorno(giorno: GiornoSettimana) {
     pastiLocali.value.filter((p) => p.giornoSettimana === giorno)
       .reduce((somma, p) => somma + kcalPasto(p), 0),
   )
+}
+
+/** Modalità Macros: le kcal del giorno sono il target digitato, non la somma dei pasti (che qui non esistono). */
+function kcalTargetGiorno(giorno: GiornoSettimana) {
+  const target = giorniMacroLocali.value.find((g) => g.giornoSettimana === giorno)?.kcalTarget
+  const kcal = numeroItalianoOpzionale(target ?? '')
+  return kcal ? Math.round(kcal) : 0
 }
 
 const totaliGiornoSelezionato = computed(() => {
@@ -719,6 +757,7 @@ async function salva(): Promise<boolean> {
       router.replace(`/piani-alimentari/${id}`)
     }
     const aggiornato = await aggiorna(id, {
+      modalita: modalitaAttiva.value,
       nome: nome.value.trim(),
       dataFine: dataFineInput.value || null,
       obiettivoKcal: numeroItalianoOpzionale(obiettivoKcalInput.value) ?? null,
@@ -825,16 +864,27 @@ function stampaPdf() {
       <template v-else>
         <div class="flex flex-col lg:flex-row items-end lg:justify-between gap-4 print:hidden">
           <div>
+            <router-link
+              v-if="idPazienteVisualizzato"
+              :to="`/pazienti/${idPazienteVisualizzato}`"
+              data-test="link-paziente"
+              class="mb-3 inline-flex items-center gap-2.5 rounded-xl border border-(--bd) bg-(--surf) py-1.5 pl-1.5 pr-3.5 transition-colors hover:border-(--sage)"
+            >
+              <span class="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-(--mint) font-heading text-xs font-bold text-(--green)">
+                {{ inizialiPaziente(nomePazienteVisualizzato) }}
+              </span>
+              <span class="text-sm font-semibold text-(--fg)">{{ nomePazienteVisualizzato }}</span>
+            </router-link>
             <div class="flex items-center gap-2">
               <Input v-model="nome" class="font-heading! text-3xl! italic! text-(--fg)! border-0 p-0" />
               <Pencil :size="16" class="shrink-0 text-(--fg4)" />
             </div>
-            <p class="mt-1 text-sm text-(--fg3)">{{ nomePazienteVisualizzato }} · {{ sottotitoloVisita ?? ETICHETTA_MODALITA[modalitaAttiva] }}</p>
+            <p v-if="sottotitolo" class="mt-1 text-sm text-(--fg3)">{{ sottotitolo }}</p>
           </div>
           <div class="flex gap-2">
             <DropdownMenu v-if="piano">
               <DropdownMenuTrigger as-child>
-                <Button type="button" data-test="opzioni-piano" variant="outline" size="icon" aria-label="Altre opzioni" title="Altre opzioni">
+                <Button type="button" data-test="opzioni-piano" variant="neutral" size="icon" aria-label="Altre opzioni" title="Altre opzioni">
                   <MoreHorizontal :size="16" />
                 </Button>
               </DropdownMenuTrigger>
@@ -864,7 +914,7 @@ function stampaPdf() {
           </div>
         </div>
 
-        <div v-if="!piano" class="flex w-fit gap-2 rounded-xl border border-(--bd2) p-1 print:hidden">
+        <div v-if="modalitaModificabile" class="flex w-fit gap-2 rounded-xl border border-(--bd2) p-1 print:hidden">
           <button
             v-for="opzione in (['PASTI', 'MACRO', 'ESEMPI'] as ModalitaPiano[])"
             :key="opzione"
@@ -881,10 +931,10 @@ function stampaPdf() {
           <div class="flex flex-col gap-1">
             <span class="text-[10px] font-bold uppercase tracking-wide text-(--green)">Data di partenza*</span>
             <DatePicker
-              v-if="!piano" id="data-inizio" :model-value="dataInizioInput" @update:model-value="onDataInizioChange"
-              class="border-(--sage) dark:border-(--sage) bg-(--surf) dark:bg-(--surf) text-base font-semibold"
+              v-if="!piano" id="data-inizio" digitabile :model-value="dataInizioInput" @update:model-value="onDataInizioChange"
+              class="border-(--sage) dark:border-(--sage) bg-(--surf) dark:bg-(--surf) hover:bg-(--surf) dark:hover:bg-(--surf) aria-expanded:bg-(--surf) dark:aria-expanded:bg-(--surf) text-base font-semibold"
             />
-            <span v-else class="font-heading text-sm font-semibold text-(--fg)">{{ formattaDataItalianaEstesa(piano.dataInizio) }}</span>
+            <span v-else class="font-heading text-lg font-semibold text-(--fg)">{{ formattaDataItalianaConMese(piano.dataInizio) }}</span>
             <p v-if="errori.dataInizio" class="text-xs font-medium text-(--danger)">{{ errori.dataInizio }}</p>
           </div>
           <div class="hidden h-8 w-px bg-(--sage) sm:block" />
@@ -915,8 +965,8 @@ function stampaPdf() {
           <div class="flex flex-col gap-1">
             <span class="text-[10px] font-bold uppercase tracking-wide text-(--green)">Fine piano*</span>
             <DatePicker
-              id="data-fine" :model-value="dataFineInput" @update:model-value="onDataFineChange"
-              class="border-(--sage) dark:border-(--sage) bg-(--surf) dark:bg-(--surf) text-base font-semibold"
+              id="data-fine" digitabile :model-value="dataFineInput" @update:model-value="onDataFineChange"
+              class="border-(--sage) dark:border-(--sage) bg-(--surf) dark:bg-(--surf) hover:bg-(--surf) dark:hover:bg-(--surf) aria-expanded:bg-(--surf) dark:aria-expanded:bg-(--surf) text-base font-semibold"
             />
             <p v-if="errori.dataFine" class="text-xs font-medium text-(--danger)">{{ errori.dataFine }}</p>
           </div>
@@ -930,7 +980,7 @@ function stampaPdf() {
               class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf) shadow-xs"
             >
               <!-- Header della colonna categoria -->
-              <div class="flex items-center gap-2 border-b border-(--div2) bg-(--soft) px-5 py-4">
+              <div class="flex items-center gap-2 border-b border-(--div) bg-(--soft) px-5 py-4">
                 <span class="h-2.5 w-2.5 flex-none rounded-full" :style="{ background: categoria.colore }" />
                 <p class="font-heading text-base font-semibold text-(--fg)">{{ categoria.etichetta }}</p>
               </div>
@@ -945,7 +995,7 @@ function stampaPdf() {
                   class="rounded-xl border border-(--bd) bg-(--bg) p-4 transition-shadow hover:shadow-xs"
                 >
                   <!-- Header dell'esempio (Nome ed Eliminazione) -->
-                  <div class="mb-3 flex items-center justify-between gap-2 border-b border-(--div2)/50 pb-3">
+                  <div class="mb-3 flex items-center justify-between gap-2 border-b border-(--div)/50 pb-3">
                     <div class="flex min-w-0 flex-1 items-center gap-1.5">
                       <Input
                         v-model="esempio.nome"
@@ -1030,24 +1080,24 @@ function stampaPdf() {
         <!-- Dropdown Mobile -->
         <NativeSelect v-model="giornoSelezionato" class="w-full sm:hidden">
           <NativeSelectOption v-for="giorno in GIORNI" :key="giorno.chiave" :value="giorno.chiave">
-            {{ giorno.etichetta }} ({{ kcalGiorno(giorno.chiave) || '—' }} kcal)
+            {{ giorno.etichetta }} ({{ kcalTargetGiorno(giorno.chiave) || '—' }} kcal)
           </NativeSelectOption>
         </NativeSelect>
 
         <!-- Sidebar Giorni Desktop -->
-        <div class="hidden overflow-hidden rounded-xl border border-(--bd) bg-(--surf) sm:block divide-y divide-(--div2)">
+        <div class="hidden overflow-hidden rounded-xl border border-(--bd) bg-(--surf) sm:block divide-y divide-(--div)">
           <button
             v-for="giorno in GIORNI"
             :key="giorno.chiave"
             data-test="giorno-tab"
             class="flex w-full items-center justify-between px-4 py-3 text-left transition-all hover:bg-(--mint)/40"
-            :class="giornoSelezionato === giorno.chiave 
-              ? 'bg-(--mint) text-(--green) font-semibold border-l-4 border-(--green) pl-3' 
+            :class="giornoSelezionato === giorno.chiave
+              ? 'bg-(--mint) text-(--green) font-semibold border-l-4 border-(--green) pl-3'
               : 'text-(--fg2)'"
             @click="giornoSelezionato = giorno.chiave"
           >
             <span class="text-sm">{{ giorno.etichetta }}</span>
-            <span class="text-xs font-normal opacity-75">{{ kcalGiorno(giorno.chiave) || '—' }}</span>
+            <span class="text-xs font-normal opacity-75">{{ kcalTargetGiorno(giorno.chiave) || '—' }}</span>
           </button>
         </div>
 
@@ -1140,7 +1190,7 @@ function stampaPdf() {
           </NativeSelectOption>
         </NativeSelect>
 
-        <div class="hidden overflow-hidden rounded-xl border border-(--bd) bg-(--surf) sm:block divide-y divide-(--div2)">
+        <div class="hidden overflow-hidden rounded-xl border border-(--bd) bg-(--surf) sm:block divide-y divide-(--div)">
           <button
             v-for="giorno in GIORNI"
             :key="giorno.chiave"
@@ -1183,7 +1233,7 @@ function stampaPdf() {
             class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)"
           >
             <!-- Header pasto con angoli superiori protetti e bordo inferiore -->
-            <div class="flex items-center justify-between gap-3 border-b border-(--div2) bg-(--soft) px-4 py-3">
+            <div class="flex items-center justify-between gap-3 border-b border-(--div) bg-(--soft) px-4 py-3">
               <div class="flex min-w-0 flex-1 items-center gap-2">
                 <span class="h-2 w-2 flex-none rounded-full" :style="{ background: COLORE_TIPO_PASTO[pasto.tipo] }" />
                 <Input
@@ -1217,7 +1267,7 @@ function stampaPdf() {
             <div v-if="pasto.righe.length" class="overflow-x-auto">
               <table class="w-full min-w-185">
                 <thead>
-                  <tr class="border-b border-(--div2)/50 bg-(--surf)/50">
+                  <tr class="border-b border-(--div)/50 bg-(--surf)/50">
                     <th class="px-4 pb-1.5 pt-2 text-left text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Alimento</th>
                     <th class="w-20 px-2 pb-1.5 pt-2 text-right text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Qtà</th>
                     <th class="px-2 pb-1.5 pt-2 text-right text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Kcal</th>
@@ -1231,7 +1281,7 @@ function stampaPdf() {
                     <th class="w-8"></th>
                   </tr>
                 </thead>
-                <tbody class="divide-y divide-(--div2)">
+                <tbody class="divide-y divide-(--div)">
                   <tr v-for="riga in pasto.righe" :key="riga.clientId" class="transition-colors hover:bg-(--soft)/30">
                     <td class="p-2 pl-4 text-xs font-semibold text-(--fg)">{{ riga.nome }}</td>
                     <td class="p-2 text-right">
@@ -1271,7 +1321,7 @@ function stampaPdf() {
             </div>
 
             <!-- Note a piè di card -->
-            <div class="flex items-center gap-2 border-t border-(--div2) bg-(--soft)/40 px-4 py-2">
+            <div class="flex items-center gap-2 border-t border-(--div) bg-(--soft)/40 px-4 py-2">
               <span class="whitespace-nowrap text-[10px] font-medium uppercase tracking-wide text-(--fg4)">Nota:</span>
               <Textarea
                 :model-value="pasto.nota ?? ''"

@@ -66,9 +66,9 @@ function onMisura3Input(valore: string | number) {
   imposta(misura3.value, filtraDecimaleItaliano(String(valore)), (v) => { misura3.value = v })
 }
 
-function onTriplaChange(valore: boolean) {
-  tripla.value = valore
-  if (!valore) {
+function onTriplaChange(valore: boolean | 'indeterminate') {
+  tripla.value = valore === true
+  if (valore !== true) {
     misura1.value = ''
     misura2.value = ''
     misura3.value = ''
