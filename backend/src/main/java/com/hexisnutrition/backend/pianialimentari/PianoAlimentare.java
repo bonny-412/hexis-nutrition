@@ -7,6 +7,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 import java.math.BigDecimal;
@@ -85,12 +86,15 @@ public class PianoAlimentare {
         this.modalita = modalita;
     }
 
-    /** BOZZA/TERMINATO restano invariati; ATTIVO con dataFine passata diventa SCADUTO solo in lettura. */
+    /** TERMINATO e ATTIVO con dataFine passata (calcolato solo in lettura) diventano entrambi CONCLUSO. */
     public StatoPianoVisualizzato statoEffettivo() {
-        if (stato == StatoPiano.ATTIVO && dataFine != null && dataFine.isBefore(LocalDate.now())) {
-            return StatoPianoVisualizzato.SCADUTO;
-        }
-        return StatoPianoVisualizzato.valueOf(stato.name());
+        return switch (stato) {
+            case BOZZA -> StatoPianoVisualizzato.BOZZA;
+            case TERMINATO -> StatoPianoVisualizzato.CONCLUSO;
+            case ATTIVO -> dataFine != null && dataFine.isBefore(LocalDate.now())
+                    ? StatoPianoVisualizzato.CONCLUSO
+                    : StatoPianoVisualizzato.ATTIVO;
+        };
     }
 
     public UUID getId() {
@@ -199,5 +203,19 @@ public class PianoAlimentare {
 
     public Instant getCreatoIl() {
         return creatoIl;
+    }
+
+    public Instant getAggiornatoIl() {
+        return aggiornatoIl;
+    }
+
+    /** Segna il piano come modificato anche quando cambia solo la struttura (pasti, macro, esempi). */
+    public void segnaAggiornato() {
+        this.aggiornatoIl = Instant.now();
+    }
+
+    @PreUpdate
+    void alAggiornamento() {
+        segnaAggiornato();
     }
 }

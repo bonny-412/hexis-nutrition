@@ -23,15 +23,16 @@ import {
 import { dettaglio as dettaglioPaziente, visite, type Paziente, type Visita } from '@/api/pazienti'
 import { ETICHETTE_OBIETTIVO } from '@/utils/visita'
 import {
-  crea, dettaglio, aggiorna, attiva as attivaApi, elimina as eliminaApi, cerca as cercaPiani,
-  type PianoAlimentare, type ModalitaPiano, type GiornoSettimana, type TipoPasto,
+  crea, dettaglio, aggiorna, attiva as attivaApi, elimina as eliminaApi, cerca as cercaPiani, noteDelPiano,
+  type PianoAlimentare, type NotaPiano, type StatoPiano, type ModalitaPiano, type GiornoSettimana, type TipoPasto,
 } from '@/api/pianiAlimentari'
 import {
   filtraDecimaleItaliano, numeroItalianoOpzionale, bloccaTastoNonNumerico,
   erroreDataInizioPiano, erroreDataFinePiano, erroreNumeroDecimaleObbligatorio,
 } from '@/utils/validators'
 import { formattaDataItalianaConMese } from '@/utils/data'
-import { ArrowLeft, MoreHorizontal, Trash2, Pencil, X, Save, Printer, CircleCheck } from '@lucide/vue'
+import { ArrowLeft, MoreHorizontal, Trash2, Pencil, X, Save, Printer, CircleCheck, Copy, StickyNote } from '@lucide/vue'
+import PianoNoteSheet from '@/components/pianiAlimentari/PianoNoteSheet.vue'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 
 function oggiIso(): string {
@@ -104,9 +105,12 @@ const router = useRouter()
 
 const pianoIdRoute = route.params.id as string | undefined
 const pazienteIdQuery = route.query.pazienteId as string | undefined
+// Presente solo aprendo "Nuovo piano" da "Duplica": il contenuto di quel piano precompila la pagina,
+// ma il nuovo piano non esiste sul server finché non si preme "Salva".
+const duplicaDaQuery = route.query.duplicaDa as string | undefined
 const modalitaCreazione = computed(() => !pianoIdRoute)
 
-const caricamento = ref(!modalitaCreazione.value)
+const caricamento = ref(!modalitaCreazione.value || !!duplicaDaQuery)
 const erroreCaricamento = ref<string | null>(null)
 
 // --- Selezione paziente e modalità, prima ancora che il piano esista sul server:
@@ -164,6 +168,50 @@ const pronto = computed(() => piano.value !== null || pazienteSelezionato.value 
 // per ogni altro piano modalitaScelta resta quella caricata dal server (vedi applicaPiano).
 const modalitaAttiva = computed(() => modalitaScelta.value)
 const modalitaModificabile = computed(() => !piano.value || piano.value.stato === 'BOZZA')
+// Un piano non più in bozza (attivo, scaduto, terminato) è solo consultabile: nessun campo modificabile, niente "Salva".
+const solaLettura = computed(() => !modalitaModificabile.value)
+
+// Tre stati: "Concluso" raccoglie già lato API i piani scaduti (data di fine passata) e quelli terminati a mano.
+type StatoPagina = StatoPiano
+const statoPagina = computed<StatoPagina>(() => piano.value?.stato ?? 'BOZZA')
+const BADGE_STATO: Record<StatoPagina, { etichetta: string; classi: string }> = {
+  BOZZA: { etichetta: 'Bozza', classi: 'bg-(--warn-bg) text-(--warn-fg)' },
+  ATTIVO: { etichetta: 'Attivo', classi: 'bg-(--mint) text-(--green)' },
+  CONCLUSO: { etichetta: 'Concluso', classi: 'bg-(--hover) text-(--fg4)' },
+}
+
+const testoRiquadroSolaLettura = computed(() => {
+  if (statoPagina.value === 'ATTIVO') return 'I contenuti sono in sola lettura. Per gli aggiornamenti usa le note.'
+  const fine = piano.value?.dataFine
+  return `Piano concluso${fine ? ` il ${formattaDataItalianaConMese(fine)}` : ''}: contenuti e note sono consultabili in sola lettura. Per proseguire, duplicalo come nuovo piano.`
+})
+
+// Note di aggiornamento: si consultano su ogni piano non in bozza e si inseriscono solo con piano attivo.
+const note = ref<NotaPiano[]>([])
+const noteAperte = ref(false)
+async function caricaNote(pianoId: string) {
+  try {
+    note.value = await noteDelPiano(pianoId)
+  } catch {
+    note.value = []
+  }
+}
+// Si ricarica anche all'attivazione (la bozza non ha note, il piano appena attivato parte da zero).
+watch(
+  () => `${piano.value?.id}|${piano.value?.stato}`,
+  () => {
+    noteAperte.value = false
+    const corrente = piano.value
+    if (corrente && corrente.stato !== 'BOZZA') caricaNote(corrente.id)
+    else note.value = []
+  },
+)
+function onNotaAggiunta(nuova: NotaPiano) {
+  note.value = [...note.value, nuova].sort((a, b) => b.data.localeCompare(a.data) || b.createdAt.localeCompare(a.createdAt))
+}
+function onNotaEliminata(notaId: string) {
+  note.value = note.value.filter((n) => n.id !== notaId)
+}
 /** Iniziali di nome e cognome (prima e ultima parola), come negli avatar delle liste. */
 function inizialiPaziente(nomeCompleto: string): string {
   const parti = nomeCompleto.trim().split(/\s+/)
@@ -227,12 +275,15 @@ async function caricaUltimaVisita(pazienteId: string): Promise<Visita | null> {
     return null
   }
 }
+// Vero quando la pagina è precompilata da un piano duplicato: il nome arriva dalla copia e non va
+// sostituito da quello suggerito in base all'ultima visita.
+const nomeDaCopia = ref(false)
 watch(pazienteSelezionato, async (paziente) => {
   ultimaVisitaSelezionato.value = null
   if (!paziente || piano.value) return
   const ultimaVisita = await caricaUltimaVisita(paziente.id)
   ultimaVisitaSelezionato.value = ultimaVisita
-  if (!ultimaVisita) return
+  if (!ultimaVisita || nomeDaCopia.value) return
 
   const etichetta = ETICHETTE_OBIETTIVO[ultimaVisita.obiettivo]
   try {
@@ -485,6 +536,11 @@ function applicaEsempiDaRisultato(risultato: PianoAlimentare) {
 
 function applicaPiano(risultato: PianoAlimentare) {
   piano.value = risultato
+  applicaContenuto(risultato)
+}
+
+/** Riempie i campi locali dal piano dato, senza considerarlo il piano aperto (usato anche per le copie). */
+function applicaContenuto(risultato: PianoAlimentare) {
   modalitaScelta.value = risultato.modalita
   nome.value = risultato.nome
   obiettivoKcalInput.value = risultato.obiettivoKcal !== null ? String(risultato.obiettivoKcal).replace('.', ',') : ''
@@ -518,8 +574,49 @@ async function caricaPiano(id: string) {
   }
 }
 
+const SUFFISSO_COPIA = ' (copia)'
+const NOME_PIANO_MAX = 200 // stesso limite del backend
+const NOME_CON_FASE = /^(.*\bfase\s+)(\d+)\s*$/i
+
+/** "Ipertrofia · fase 2" → "Ipertrofia · fase 3"; senza "fase N" nel nome si aggiunge " (copia)". */
+function nomeDellaCopia(nomeOrigine: string): string {
+  const fase = NOME_CON_FASE.exec(nomeOrigine)
+  if (fase) return `${fase[1]}${Number(fase[2]) + 1}`.slice(0, NOME_PIANO_MAX)
+  return nomeOrigine.length + SUFFISSO_COPIA.length > NOME_PIANO_MAX
+    ? nomeOrigine.slice(0, NOME_PIANO_MAX - SUFFISSO_COPIA.length) + SUFFISSO_COPIA
+    : nomeOrigine + SUFFISSO_COPIA
+}
+
+/**
+ * Precompila la pagina come "Nuovo piano" con il contenuto di un piano esistente: stessa modalità, struttura
+ * e kcal, senza note, nome con la fase incrementata (vedi nomeDellaCopia), data di inizio oggi, nessuna data di fine.
+ * Nulla viene creato sul server.
+ */
+async function caricaCopia(idOrigine: string) {
+  caricamento.value = true
+  erroreCaricamento.value = null
+  try {
+    const origine = await dettaglio(idOrigine)
+    const paziente = await dettaglioPaziente(origine.pazienteId)
+    piano.value = null
+    errori.value = {}
+    nomeDaCopia.value = true
+    applicaContenuto(origine)
+    nome.value = nomeDellaCopia(origine.nome)
+    dataFineInput.value = ''
+    dataInizioInput.value = oggiIso()
+    pazienteSelezionato.value = paziente
+  } catch {
+    erroreCaricamento.value = 'Non è stato possibile caricare il piano da duplicare.'
+  } finally {
+    caricamento.value = false
+  }
+}
+
 onMounted(() => {
-  if (pianoIdRoute) {
+  if (duplicaDaQuery) {
+    caricaCopia(duplicaDaQuery)
+  } else if (pianoIdRoute) {
     caricaPiano(pianoIdRoute)
   } else if (pazienteIdQuery) {
     caricaPazienteQuery(pazienteIdQuery)
@@ -739,6 +836,7 @@ function validaCampi(): boolean {
 }
 
 async function salva(): Promise<boolean> {
+  if (solaLettura.value) return false
   if (!piano.value && !pazienteSelezionato.value) return false
   if (!validaCampi()) return false
   salvataggioInCorso.value = true
@@ -817,6 +915,15 @@ async function attivaPiano() {
   }
 }
 
+/** Apre "Nuovo piano" precompilato con la versione salvata di questo piano: le modifiche non salvate qui non passano alla copia. */
+async function duplicaPiano() {
+  if (!piano.value) return
+  const idOrigine = piano.value.id
+  await router.push(`/piani-alimentari/nuovo?duplicaDa=${idOrigine}${pazienteIdQuery ? `&pazienteId=${pazienteIdQuery}` : ''}`)
+  // Cambia solo la rotta, il componente è lo stesso e Vue lo riusa: la copia si carica a mano.
+  await caricaCopia(idOrigine)
+}
+
 const confermaEliminaAperta = ref(false)
 const eliminazioneInCorso = ref(false)
 async function confermaElimina() {
@@ -870,36 +977,62 @@ function stampaPdf() {
               data-test="link-paziente"
               class="mb-3 inline-flex items-center gap-2.5 rounded-xl border border-(--bd) bg-(--surf) py-1.5 pl-1.5 pr-3.5 transition-colors hover:border-(--sage)"
             >
-              <span class="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-(--mint) font-heading text-xs font-bold text-(--green)">
+              <span
+                data-test="avatar-paziente"
+                class="flex h-8 w-8 flex-none items-center justify-center rounded-full font-heading text-xs font-bold"
+                :class="BADGE_STATO[statoPagina].classi"
+              >
                 {{ inizialiPaziente(nomePazienteVisualizzato) }}
               </span>
               <span class="text-sm font-semibold text-(--fg)">{{ nomePazienteVisualizzato }}</span>
             </router-link>
-            <div class="flex items-center gap-2">
-              <Input v-model="nome" class="font-heading! text-3xl! italic! text-(--fg)! border-0 p-0" />
-              <Pencil :size="16" class="shrink-0 text-(--fg4)" />
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <div class="flex min-w-0 max-w-full items-center gap-2">
+                <Input v-model="nome" :readonly="solaLettura" class="w-auto max-w-full field-sizing-content font-heading! text-3xl! italic! text-(--fg)! border-0 p-0" />
+                <Pencil v-if="!solaLettura" :size="16" class="shrink-0 text-(--fg4)" />
+              </div>
+              <span
+                data-test="badge-stato" :data-stato="statoPagina"
+                class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide"
+                :class="BADGE_STATO[statoPagina].classi"
+              >
+                <span class="h-1.5 w-1.5 rounded-full bg-current" />
+                {{ BADGE_STATO[statoPagina].etichetta }}
+              </span>
             </div>
             <p v-if="sottotitolo" class="mt-1 text-sm text-(--fg3)">{{ sottotitolo }}</p>
           </div>
-          <div class="flex gap-2">
+          <div class="flex items-center gap-2">
+            <Button v-if="piano && statoPagina !== 'BOZZA'" type="button" variant="neutral" data-test="apri-note" @click="noteAperte = true">
+              <StickyNote :size="15" />
+              Note
+              <span data-test="contatore-note" class="rounded-full bg-(--hover) px-1.5 text-[11px] font-bold text-(--fg3)">{{ note.length }}</span>
+            </Button>
+            <Button v-if="!solaLettura" class="hover:bg-primary/80" :disabled="salvataggioInCorso || !nome.trim()" @click="salva">
+              <Save :size="16" /> {{ salvataggioInCorso ? 'Salvataggio…' : 'Salva' }}
+            </Button>
             <DropdownMenu v-if="piano">
               <DropdownMenuTrigger as-child>
                 <Button type="button" data-test="opzioni-piano" variant="neutral" size="icon" aria-label="Altre opzioni" title="Altre opzioni">
                   <MoreHorizontal :size="16" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" class="w-52">
-                <DropdownMenuItem class="cursor-pointer" @click="stampaPdf">
-                  <Printer />
-                  Stampa PDF
-                </DropdownMenuItem>
-                <DropdownMenuItem v-if="piano.stato === 'BOZZA'" data-test="attiva-piano" class="cursor-pointer" :disabled="attivazioneInCorso" @click="attivaPiano">
+              <DropdownMenuContent align="end" class="w-56">
+                <DropdownMenuItem v-if="statoPagina === 'BOZZA'" data-test="attiva-piano" class="cursor-pointer" :disabled="attivazioneInCorso" @click="attivaPiano">
                   <CircleCheck />
                   Attiva piano
                 </DropdownMenuItem>
-                <DropdownMenuSeparator v-if="piano.stato === 'BOZZA'" />
+                <DropdownMenuItem data-test="duplica-piano" class="cursor-pointer" @click="duplicaPiano">
+                  <Copy />
+                  Duplica come nuovo piano
+                </DropdownMenuItem>
+                <DropdownMenuItem data-test="stampa-pdf" class="cursor-pointer" @click="stampaPdf">
+                  <Printer />
+                  Stampa PDF
+                </DropdownMenuItem>
+                <DropdownMenuSeparator v-if="statoPagina === 'BOZZA'" />
                 <DropdownMenuItem
-                  v-if="piano.stato === 'BOZZA'" data-test="elimina-piano"
+                  v-if="statoPagina === 'BOZZA'" data-test="elimina-piano"
                   variant="destructive" class="cursor-pointer text-(--danger) focus:text-(--danger)"
                   @click="confermaEliminaAperta = true"
                 >
@@ -908,10 +1041,17 @@ function stampaPdf() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button :disabled="salvataggioInCorso || !nome.trim()" @click="salva" class="hover:bg-primary/80" :size="'default'">
-              <Save :size="16" /> {{ salvataggioInCorso ? 'Salvataggio…' : 'Salva' }}
-            </Button>
           </div>
+        </div>
+
+        <div
+          v-if="statoPagina !== 'BOZZA'" data-test="riquadro-sola-lettura"
+          class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-xl border border-(--bd) bg-(--surf) px-4 py-3 text-sm text-(--fg2) print:hidden"
+        >
+          <span>{{ testoRiquadroSolaLettura }}</span>
+          <button type="button" data-test="link-note" class="font-semibold text-(--green) hover:underline" @click="noteAperte = true">
+            {{ statoPagina === 'ATTIVO' ? 'Aggiungi nota' : 'Vedi note' }}
+          </button>
         </div>
 
         <div v-if="modalitaModificabile" class="flex w-fit gap-2 rounded-xl border border-(--bd2) p-1 print:hidden">
@@ -927,6 +1067,9 @@ function stampaPdf() {
           </button>
         </div>
 
+        <!-- In sola lettura i fieldset disabilitano i controlli che contengono (campi, date, pulsanti).
+             Restano fuori i selettori del giorno, che servono solo a navigare. -->
+        <fieldset :disabled="solaLettura" class="contents">
         <div class="flex flex-wrap items-start justify-start lg:justify-center gap-3 lg:gap-6 rounded-2xl border border-(--sage) bg-(--mint) p-4 print:hidden">
           <div class="flex flex-col gap-1">
             <span class="text-[10px] font-bold uppercase tracking-wide text-(--green)">Data di partenza*</span>
@@ -1001,11 +1144,12 @@ function stampaPdf() {
                         v-model="esempio.nome"
                         class="min-w-0 border-0 bg-transparent p-0 text-sm font-bold text-(--fg) focus-visible:ring-0"
                       />
-                      <Pencil :size="12" class="shrink-0 text-(--fg4)" />
+                      <Pencil v-if="!solaLettura" :size="12" class="shrink-0 text-(--fg4)" />
                     </div>
 
                     <!-- Tasto modifica / elimina esempio -->
                     <Button
+                      v-if="!solaLettura"
                       type="button"
                       variant="destructive-ghost"
                       size="icon-xs"
@@ -1033,6 +1177,7 @@ function stampaPdf() {
                         <span class="font-semibold text-(--fg3)">g</span>
                       </span>
                       <Button
+                        v-if="!solaLettura"
                         type="button"
                         variant="destructive-ghost"
                         size="icon-xs"
@@ -1046,6 +1191,7 @@ function stampaPdf() {
 
                   <!-- Aggiungi alimento all'esempio -->
                   <button
+                    v-if="!solaLettura"
                     class="text-xs font-semibold text-(--green) transition-colors hover:text-(--green)/80"
                     @click="apriAggiungiAlimentoEsempio(esempio.clientId)"
                   >
@@ -1065,6 +1211,7 @@ function stampaPdf() {
 
                 <!-- Pulsante crea nuovo esempio -->
                 <button
+                  v-if="!solaLettura"
                   :data-test="`nuovo-esempio-${categoria.tipo}`"
                   class="flex w-full items-center justify-center rounded-xl border border-dashed border-(--bd2) py-2.5 text-xs font-semibold text-(--fg3) transition-colors hover:border-(--green) hover:bg-(--mint)/30 hover:text-(--green)"
                   @click="aggiungiEsempio(categoria.tipo, categoria.etichetta)"
@@ -1075,6 +1222,8 @@ function stampaPdf() {
             </div>
           </div>
         </div>
+
+        </fieldset>
 
       <div v-if="modalitaAttiva === 'MACRO'" class="flex flex-col gap-4 sm:grid sm:grid-cols-[200px_1fr] sm:items-start">
         <!-- Dropdown Mobile -->
@@ -1102,12 +1251,14 @@ function stampaPdf() {
         </div>
 
         <!-- Pannello Form Target Macro -->
+        <fieldset :disabled="solaLettura" class="contents">
         <div v-if="macroDelGiornoSelezionato" class="rounded-2xl border border-(--bd) bg-(--surf) p-5 shadow-xs">
           <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h3 class="font-heading text-base font-semibold text-(--fg)">
               Target macro · {{ GIORNI.find(g => g.chiave === giornoSelezionato)?.etichetta }}
             </h3>
             <Button
+              v-if="!solaLettura"
               type="button"
               variant="ghost-primary"
               size="sm"
@@ -1181,6 +1332,7 @@ function stampaPdf() {
             />
           </label>
         </div>
+        </fieldset>
       </div>
 
       <div v-if="modalitaAttiva === 'PASTI'" class="flex flex-col gap-4 sm:grid sm:grid-cols-[180px_1fr] sm:items-start">
@@ -1206,6 +1358,7 @@ function stampaPdf() {
           </button>
         </div>
 
+        <fieldset :disabled="solaLettura" class="contents">
         <div class="flex flex-col gap-3">
           <div class="grid grid-cols-2 gap-2 sm:grid-cols-4" data-test="macro-card-giorno">
             <div v-for="m in macroCardsGiorno" :key="m.label" class="rounded-xl border border-(--bd) bg-(--surf) p-3">
@@ -1240,11 +1393,11 @@ function stampaPdf() {
                   v-model="pasto.nome"
                   class="min-w-0 border-0 bg-transparent p-0 font-heading text-sm! font-semibold text-(--fg) focus-visible:ring-0"
                 />
-                <Pencil :size="12" class="shrink-0 text-(--fg4)" />
+                <Pencil v-if="!solaLettura" :size="12" class="shrink-0 text-(--fg4)" />
               </div>
               <div class="flex items-center gap-3">
                 <span class="text-xs font-medium text-(--fg3)">{{ kcalPasto(pasto) }} kcal</span>
-                <DropdownMenu>
+                <DropdownMenu v-if="!solaLettura">
                   <DropdownMenuTrigger as-child>
                     <Button type="button" variant="ghost" size="icon-sm" aria-label="Opzioni pasto" title="Opzioni pasto">
                       <MoreHorizontal :size="15" />
@@ -1300,7 +1453,7 @@ function stampaPdf() {
                     <td class="p-2 text-right text-xs text-(--fg2)">{{ Math.round(macroRiga(riga).ferro) }}</td>
                     <td class="p-2 pr-4 text-right text-xs text-(--fg2)">{{ Math.round(macroRiga(riga).calcio) }}</td>
                     <td class="p-2 text-center">
-                      <Button variant="destructive-ghost" size="icon-xs" @click="rimuoviRiga(pasto.clientId, riga.clientId)">
+                      <Button v-if="!solaLettura" variant="destructive-ghost" size="icon-xs" @click="rimuoviRiga(pasto.clientId, riga.clientId)">
                         <X :size="12" />
                       </Button>
                     </td>
@@ -1310,7 +1463,7 @@ function stampaPdf() {
             </div>
 
             <!-- Aggiungi alimento -->
-            <div class="p-3">
+            <div v-if="!solaLettura" class="p-3">
               <button
                 data-test="apri-aggiungi-alimento"
                 class="rounded-lg border border-dashed border-(--bd2) px-3 py-1.5 text-xs font-medium text-(--fg3) transition-colors hover:border-(--green) hover:text-(--green)"
@@ -1334,6 +1487,7 @@ function stampaPdf() {
           </div>
 
           <button
+            v-if="!solaLettura"
             data-test="aggiungi-pasto"
             class="rounded-xl border border-dashed border-(--bd2) bg-(--surf) px-4 py-3 text-sm font-bold text-(--fg2) transition-colors hover:border-(--green) hover:text-(--green)"
             @click="aggiungiPasto"
@@ -1341,11 +1495,23 @@ function stampaPdf() {
             + Aggiungi pasto
           </button>
         </div>
+        </fieldset>
       </div>
       </template>
     </div>
 
     <AggiungiAlimentoDialog v-model:open="addModalAperto" @aggiunto="onAlimentoAggiunto" />
+
+    <PianoNoteSheet
+      v-if="piano && statoPagina !== 'BOZZA'"
+      v-model:open="noteAperte"
+      :piano-id="piano.id"
+      :nome-piano="piano.nome"
+      :note="note"
+      :modificabile="statoPagina === 'ATTIVO'"
+      @aggiunta="onNotaAggiunta"
+      @eliminata="onNotaEliminata"
+    />
 
     <AlertDialog v-model:open="confermaEliminaAperta">
       <AlertDialogContent>

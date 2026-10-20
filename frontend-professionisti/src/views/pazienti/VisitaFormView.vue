@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import AppShell from '@/components/AppShell.vue'
 import DatiVisitaForm from '@/components/pazienti/DatiVisitaForm.vue'
+import RiepilogoVisitaPrecedente from '@/components/pazienti/RiepilogoVisitaPrecedente.vue'
 import SelezionaPazienteCombobox from '@/components/pazienti/SelezionaPazienteCombobox.vue'
 import {
   dettaglio,
@@ -14,9 +15,11 @@ import {
   type Paziente,
   type Visita,
 } from '@/api/pazienti'
+import { cerca as cercaPiani, noteDelPiano } from '@/api/pianiAlimentari'
+import { pianiNellIntervallo, type PianoConNote } from '@/utils/pianoAlimentare'
 import { ApiError } from '@/api/client'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Save } from '@lucide/vue'
+import { ArrowLeft, History, Save } from '@lucide/vue'
 import { formattaDataItalianaConMese } from '@/utils/data'
 import { formattaNumero } from '@/utils/visita'
 
@@ -36,14 +39,59 @@ const inCorso = ref(false)
 
 const datiVisitaForm = ref<InstanceType<typeof DatiVisitaForm>>()
 
+// Storico visite del paziente, dalla più vecchia: serve a ricavare la visita precedente per il riepilogo.
+const visiteDelPaziente = ref<Visita[]>([])
+
 async function caricaUltimaVisita(pazienteId: string) {
   try {
     const lista = await caricaVisite(pazienteId)
+    visiteDelPaziente.value = lista
     ultimaVisita.value = lista.length > 0 ? lista[lista.length - 1] : null
   } catch {
+    visiteDelPaziente.value = []
     ultimaVisita.value = null
   }
 }
+
+// "Ultima visita" del riepilogo: l'ultima con data precedente a quella corrente. In modifica è la
+// visita prima di quella aperta (non la più recente in assoluto), in inserimento l'ultima registrata.
+const visitaPrecedente = computed<Visita | null>(() => {
+  const corrente = visitaEsistente.value
+  const candidate = corrente
+    ? visiteDelPaziente.value.filter((v) => v.id !== corrente.id && v.dataVisita < corrente.dataVisita)
+    : visiteDelPaziente.value
+  return candidate.length > 0 ? candidate[candidate.length - 1] : null
+})
+
+const riepilogoAperto = ref(false)
+const pianiRiepilogo = ref<PianoConNote[]>([])
+const noteInCaricamento = ref(false)
+
+// Visita e piano non sono collegati da un vincolo: il piano parte dopo una visita e dura fino alla successiva.
+// Il riepilogo mostra quindi le note dei piani in corso tra la visita precedente e questa (in modifica fino
+// alla data della visita aperta, in inserimento fino a oggi). Le bozze non hanno note e restano fuori.
+// Si carica quando il pannello è aperto (non a ogni apertura della pagina) e se cambia la visita di riferimento.
+let richiestaRiepilogo = 0
+async function caricaPianiEdNote() {
+  const richiesta = ++richiestaRiepilogo
+  pianiRiepilogo.value = []
+  const visita = visitaPrecedente.value
+  const pazienteId = paziente.value?.id
+  if (!riepilogoAperto.value || !visita || !pazienteId) return
+  noteInCaricamento.value = true
+  try {
+    const pagina = await cercaPiani({ pazienteId, escludiBozze: true, dimensione: 100 })
+    const piani = pianiNellIntervallo(pagina.contenuto, visita.dataVisita, visitaEsistente.value?.dataVisita ?? null)
+      .reverse() // dal più recente
+    const conNote = await Promise.all(piani.map(async (piano) => ({ piano, note: await noteDelPiano(piano.id) })))
+    if (richiesta === richiestaRiepilogo) pianiRiepilogo.value = conNote
+  } catch {
+    // Il riepilogo resta utilizzabile con i soli dati della visita.
+  } finally {
+    if (richiesta === richiestaRiepilogo) noteInCaricamento.value = false
+  }
+}
+watch([riepilogoAperto, visitaPrecedente], caricaPianiEdNote)
 
 async function caricaConPazienteNoto(pazienteId: string) {
   caricamento.value = true
@@ -66,6 +114,8 @@ async function caricaConPazienteNoto(pazienteId: string) {
 
 async function onPazienteCambiato(selezionato: Paziente | null) {
   ultimaVisita.value = null
+  visiteDelPaziente.value = []
+  riepilogoAperto.value = false
   if (!selezionato) {
     paziente.value = null
     return
@@ -147,7 +197,8 @@ async function onSubmit() {
 
 <template>
   <AppShell>
-    <div class="mb-6">
+    <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <div>
       <router-link
         :to="linkIndietro"
         data-test="link-indietro"
@@ -159,8 +210,25 @@ async function onSubmit() {
       </router-link>
       <h1 class="font-heading text-3xl italic text-(--fg)">{{ modalitaModifica ? 'Modifica visita' : 'Nuova visita' }}</h1>
       <p v-if="sottotitolo" class="mt-1 text-sm text-(--fg3)">{{ sottotitolo }}</p>
+      </div>
+
+      <!-- Senza visite precedenti (prima visita) non c'è niente da riepilogare: il pulsante non compare. -->
+      <Button
+        v-if="paziente && visitaPrecedente"
+        type="button"
+        variant="neutral"
+        data-test="apri-riepilogo"
+        :aria-pressed="riepilogoAperto"
+        :class="riepilogoAperto && 'border-(--green) bg-(--mint) text-(--green) hover:bg-(--mint)'"
+        @click="riepilogoAperto = !riepilogoAperto"
+      >
+        <History :size="15" />
+        Riepilogo precedente
+      </Button>
     </div>
 
+    <div class="flex items-start gap-6">
+    <div class="min-w-0 flex-1">
     <div
       v-if="erroreCaricamento"
       class="flex flex-col items-center justify-center rounded-2xl border border-(--bd) bg-(--surf) p-12 text-center shadow-sm"
@@ -202,5 +270,16 @@ async function onSubmit() {
         </div>
       </form>
     </template>
+    </div>
+
+    <RiepilogoVisitaPrecedente
+      v-if="riepilogoAperto && paziente && visitaPrecedente"
+      :visita="visitaPrecedente"
+      :stile-di-vita="paziente.stileDiVita"
+      :piani="pianiRiepilogo"
+      :note-in-caricamento="noteInCaricamento"
+      @chiudi="riepilogoAperto = false"
+    />
+    </div>
   </AppShell>
 </template>

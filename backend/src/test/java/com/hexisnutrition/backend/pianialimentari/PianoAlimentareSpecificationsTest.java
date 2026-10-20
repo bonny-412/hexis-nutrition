@@ -25,7 +25,7 @@ class PianoAlimentareSpecificationsTest extends AbstractIntegrationTest {
     private ProfessionistaRepository professionistaRepository;
 
     @Test
-    void conStatoScadutoTrovaSoloAttiviConDataFinePassata() {
+    void conStatoConclusoTrovaAttiviConDataFinePassata() {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof@test.it", "hash", "Anna", "Rossi"));
         Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Mario", "Bianchi",
@@ -46,7 +46,7 @@ class PianoAlimentareSpecificationsTest extends AbstractIntegrationTest {
         var risultato = pianoAlimentareRepository.findAll(
                 Specification.allOf(
                         PianoAlimentareSpecifications.delProfessionista(professionista.getId()),
-                        PianoAlimentareSpecifications.conStato(StatoPianoVisualizzato.SCADUTO)),
+                        PianoAlimentareSpecifications.conStato(StatoPianoVisualizzato.CONCLUSO)),
                 PageRequest.of(0, 10));
 
         assertThat(risultato.getContent()).extracting("nome").containsExactly("Scaduto");

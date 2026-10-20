@@ -294,7 +294,7 @@ class PianoAlimentareControllerTest extends AbstractIntegrationTest {
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/piani-alimentari/" + primoPianoId).header("Authorization", "Bearer " + token))
-                .andExpect(jsonPath("$.stato", is("TERMINATO")));
+                .andExpect(jsonPath("$.stato", is("CONCLUSO")));
         mockMvc.perform(get("/piani-alimentari/" + secondoPianoId).header("Authorization", "Bearer " + token))
                 .andExpect(jsonPath("$.stato", is("ATTIVO")));
     }

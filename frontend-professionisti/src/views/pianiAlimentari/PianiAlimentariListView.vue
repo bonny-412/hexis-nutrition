@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import AppShell from '@/components/AppShell.vue'
 import {
@@ -22,15 +23,13 @@ const CHIP_STATI: { valore: StatoPiano | 'TUTTI'; etichetta: string }[] = [
   { valore: 'TUTTI', etichetta: 'Tutti' },
   { valore: 'BOZZA', etichetta: 'Bozza' },
   { valore: 'ATTIVO', etichetta: 'Attivo' },
-  { valore: 'SCADUTO', etichetta: 'Scaduto' },
-  { valore: 'TERMINATO', etichetta: 'Terminato' },
+  { valore: 'CONCLUSO', etichetta: 'Concluso' },
 ]
 
 const ETICHETTE_STATO: Record<StatoPiano, string> = {
   BOZZA: 'Bozza',
   ATTIVO: 'Attivo',
-  SCADUTO: 'Scaduto',
-  TERMINATO: 'Terminato',
+  CONCLUSO: 'Concluso',
 }
 
 const ETICHETTE_MODALITA: Record<ModalitaPiano, string> = {
@@ -42,8 +41,7 @@ const ETICHETTE_MODALITA: Record<ModalitaPiano, string> = {
 const CLASSI_STATO: Record<StatoPiano, string> = {
   BOZZA: 'bg-(--hover) text-(--fg4)',
   ATTIVO: 'bg-(--mint) text-(--green)',
-  SCADUTO: 'bg-(--danger)/10 text-(--danger)',
-  TERMINATO: 'bg-(--warn-bg) text-(--warn-fg)',
+  CONCLUSO: 'bg-(--hover) text-(--fg4)',
 }
 
 // Stesso avatar a iniziali della lista pazienti (PazientiListView.vue), colorato però con
@@ -54,6 +52,8 @@ function inizialiPaziente(nomeCompleto: string): string {
   const ultima = parti.length > 1 ? parti[parti.length - 1][0] : ''
   return `${prima}${ultima}`.toUpperCase()
 }
+
+const router = useRouter()
 
 const ricercaInput = ref('')
 const ricercaEffettiva = ref('')
@@ -106,7 +106,8 @@ function criteriCorrenti(): CriteriRicercaPianiAlimentari {
     pagina: pagina.value,
     dimensione: 20,
     ordinaPer: ordinaPer.value,
-    direzione: direzione.value,
+    // Senza una colonna scelta decide il backend (piano modificato più di recente per primo).
+    direzione: ordinaPer.value ? direzione.value : undefined,
     ricerca: ricercaEffettiva.value.trim() || undefined,
     stato: statoFiltro.value === 'TUTTI' ? undefined : statoFiltro.value,
     dataInizioDa: dataInizioDa.value || undefined,
@@ -179,6 +180,11 @@ async function onAttiva(riga: PianoAlimentareRigaLista) {
   } catch {
     toast.error('Non è stato possibile attivare il piano.')
   }
+}
+
+// La copia non si crea qui: "Nuovo piano" si apre precompilato e il piano nasce con "Salva".
+function onDuplica(riga: PianoAlimentareRigaLista) {
+  router.push(`/piani-alimentari/nuovo?duplicaDa=${riga.id}`)
 }
 
 async function onElimina(riga: PianoAlimentareRigaLista) {
@@ -336,7 +342,7 @@ const conteggioTesto = computed(() => {
                   <span v-else class="text-(--fg4)">—</span>
                 </TableCell>
                 <TableCell class="text-right">
-                  <PianoAlimentareRigaAzioni :riga="riga" @attiva="onAttiva" @elimina="onElimina" />
+                  <PianoAlimentareRigaAzioni :riga="riga" @attiva="onAttiva" @duplica="onDuplica" @elimina="onElimina" />
                 </TableCell>
               </TableRow>
             </TableBody>

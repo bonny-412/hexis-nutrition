@@ -56,6 +56,7 @@ describe('PianoAlimentareFormView', () => {
     vi.mocked(api.dettaglio).mockResolvedValue(pianoVuoto as never)
     vi.mocked(api.crea).mockResolvedValue(pianoVuoto as never)
     vi.mocked(api.aggiorna).mockResolvedValue(pianoVuoto as never)
+    vi.mocked(api.noteDelPiano).mockResolvedValue([])
     // Ultima visita del paziente, caricata da caricaPiano per il sottotitolo (vedi
     // sottotitoloVisita): nessuna di default, i singoli test la impostano se serve.
     vi.mocked(apiPazienti.visite).mockResolvedValue([])

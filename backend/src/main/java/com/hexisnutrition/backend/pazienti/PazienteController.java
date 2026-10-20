@@ -59,7 +59,7 @@ public class PazienteController {
             @AuthenticationPrincipal UUID professionistaId,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int dimensione,
-            @RequestParam(defaultValue = "nome") CampoOrdinamentoPazienti ordinaPer,
+            @RequestParam(defaultValue = "cognome") CampoOrdinamentoPazienti ordinaPer,
             @RequestParam(defaultValue = "asc") DirezioneOrdinamento direzione,
             @RequestParam(required = false) String ricerca,
             @RequestParam(required = false) StatoAccountPaziente statoAccount,
@@ -70,7 +70,11 @@ public class PazienteController {
         int paginaEffettiva = Math.max(pagina, 0);
         int dimensioneEffettiva = Math.min(Math.max(dimensione, 1), 100);
         Sort.Direction direzioneSort = direzione == DirezioneOrdinamento.desc ? Sort.Direction.DESC : Sort.Direction.ASC;
-        Pageable pageable = PageRequest.of(paginaEffettiva, dimensioneEffettiva, Sort.by(direzioneSort, ordinaPer.name()));
+        // A parità di cognome decide il nome, nello stesso verso.
+        Sort ordinamento = ordinaPer == CampoOrdinamentoPazienti.cognome
+                ? Sort.by(direzioneSort, "cognome", "nome")
+                : Sort.by(direzioneSort, ordinaPer.name());
+        Pageable pageable = PageRequest.of(paginaEffettiva, dimensioneEffettiva, ordinamento);
         CriteriRicercaPazienti criteri = new CriteriRicercaPazienti(ricerca, statoAccount, obiettivo, dataUltimaVisitaDa, dataUltimaVisitaA, archiviato);
         Page<Paziente> pagina1 = pazienteService.cerca(professionistaId, criteri, pageable);
         List<UUID> idPagina = pagina1.getContent().stream().map(Paziente::getId).toList();

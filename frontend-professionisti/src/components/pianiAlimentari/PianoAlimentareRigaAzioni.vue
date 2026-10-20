@@ -18,7 +18,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { CircleCheck, FolderOpen, MoreHorizontal, Trash2 } from '@lucide/vue'
+import { CircleCheck, Copy, FolderOpen, MoreHorizontal, Trash2 } from '@lucide/vue'
 import DropdownMenuSeparator from '../ui/dropdown-menu/DropdownMenuSeparator.vue'
 
 const props = defineProps<{
@@ -27,6 +27,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   attiva: [riga: PianoAlimentareRigaLista]
+  duplica: [riga: PianoAlimentareRigaLista]
   elimina: [riga: PianoAlimentareRigaLista]
 }>()
 
@@ -46,7 +47,7 @@ function confermaElimina() {
       </router-link>
     </Button>
 
-    <DropdownMenu v-if="riga.stato === 'BOZZA'">
+    <DropdownMenu>
       <DropdownMenuTrigger as-child>
         <Button
           type="button" variant="ghost" size="icon" data-test="opzioni-piano"
@@ -56,13 +57,17 @@ function confermaElimina() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" class="w-52">
-        <DropdownMenuItem data-test="attiva-piano" class="cursor-pointer" @click="emit('attiva', riga)">
+        <DropdownMenuItem v-if="riga.stato === 'BOZZA'" data-test="attiva-piano" class="cursor-pointer" @click="emit('attiva', riga)">
           <CircleCheck />
           Attiva piano
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
+        <DropdownMenuItem data-test="duplica-piano" class="cursor-pointer" @click="emit('duplica', riga)">
+          <Copy />
+          Duplica
+        </DropdownMenuItem>
+        <DropdownMenuSeparator v-if="riga.stato === 'BOZZA'" />
         <DropdownMenuItem
-          data-test="elimina-piano"
+          v-if="riga.stato === 'BOZZA'" data-test="elimina-piano"
           variant="destructive" class="cursor-pointer text-(--danger) focus:text-(--danger)"
           @click="confermaEliminaAperta = true"
         >

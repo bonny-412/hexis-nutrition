@@ -87,14 +87,15 @@ public final class PianoAlimentareSpecifications {
         LocalDate oggi = LocalDate.now();
         return switch (stato) {
             case BOZZA -> (root, query, cb) -> cb.equal(root.get("stato"), StatoPiano.BOZZA);
-            case TERMINATO -> (root, query, cb) -> cb.equal(root.get("stato"), StatoPiano.TERMINATO);
             case ATTIVO -> (root, query, cb) -> cb.and(
                     cb.equal(root.get("stato"), StatoPiano.ATTIVO),
                     cb.or(cb.isNull(root.get("dataFine")), cb.greaterThanOrEqualTo(root.get("dataFine"), oggi)));
-            case SCADUTO -> (root, query, cb) -> cb.and(
-                    cb.equal(root.get("stato"), StatoPiano.ATTIVO),
-                    cb.isNotNull(root.get("dataFine")),
-                    cb.lessThan(root.get("dataFine"), oggi));
+            case CONCLUSO -> (root, query, cb) -> cb.or(
+                    cb.equal(root.get("stato"), StatoPiano.TERMINATO),
+                    cb.and(
+                            cb.equal(root.get("stato"), StatoPiano.ATTIVO),
+                            cb.isNotNull(root.get("dataFine")),
+                            cb.lessThan(root.get("dataFine"), oggi)));
         };
     }
 }

@@ -21,7 +21,7 @@ export interface Paziente {
   dataInizioObiettivo: string | null
   // Piano più di recente creazione del paziente, qualunque sia il suo stato (non solo l'attivo).
   pianoNome: string | null
-  pianoStato: 'BOZZA' | 'ATTIVO' | 'SCADUTO' | 'TERMINATO' | null
+  pianoStato: 'BOZZA' | 'ATTIVO' | 'CONCLUSO' | null
   pianoDataFine: string | null
 }
 

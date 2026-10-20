@@ -1,7 +1,8 @@
 import { apiRequest } from './client'
 
 export type ModalitaPiano = 'PASTI' | 'MACRO' | 'ESEMPI'
-export type StatoPiano = 'BOZZA' | 'ATTIVO' | 'SCADUTO' | 'TERMINATO'
+/** CONCLUSO = piano terminato a mano o con data di fine passata: per il professionista sono la stessa cosa. */
+export type StatoPiano = 'BOZZA' | 'ATTIVO' | 'CONCLUSO'
 export type FormulaBmr = 'KATCH_MCARDLE' | 'MIFFLIN_ST_JEOR'
 export type GiornoSettimana = 'LUNEDI' | 'MARTEDI' | 'MERCOLEDI' | 'GIOVEDI' | 'VENERDI' | 'SABATO' | 'DOMENICA'
 export type TipoPasto = 'COLAZIONE' | 'SPUNTINO_MATTINA' | 'PRANZO' | 'SPUNTINO_POMERIGGIO' | 'CENA' | 'ALTRO'
@@ -130,7 +131,7 @@ export interface AggiornaPianoAlimentareRequest {
 export interface CriteriRicercaPianiAlimentari {
   pagina?: number
   dimensione?: number
-  ordinaPer?: 'nome' | 'dataInizio' | 'dataFine'
+  ordinaPer?: 'nome' | 'dataInizio' | 'dataFine' | 'aggiornatoIl'
   direzione?: 'asc' | 'desc'
   ricerca?: string
   stato?: StatoPiano
@@ -179,8 +180,26 @@ export function attiva(id: string): Promise<void> {
   return apiRequest<void>(`/piani-alimentari/${id}/attiva`, { method: 'POST' })
 }
 
-export function duplica(id: string): Promise<PianoAlimentare> {
-  return apiRequest<PianoAlimentare>(`/piani-alimentari/${id}/duplica`, { method: 'POST' })
+export interface NotaPiano {
+  id: string
+  pianoId: string
+  /** Data scelta dal professionista, formato ISO `AAAA-MM-GG`. */
+  data: string
+  autore: string
+  testo: string
+  createdAt: string
+}
+
+export function noteDelPiano(pianoId: string): Promise<NotaPiano[]> {
+  return apiRequest<NotaPiano[]>(`/piani-alimentari/${pianoId}/note`)
+}
+
+export function aggiungiNota(pianoId: string, richiesta: { data: string; testo: string }): Promise<NotaPiano> {
+  return apiRequest<NotaPiano>(`/piani-alimentari/${pianoId}/note`, { method: 'POST', body: richiesta })
+}
+
+export function eliminaNota(pianoId: string, notaId: string): Promise<void> {
+  return apiRequest<void>(`/piani-alimentari/${pianoId}/note/${notaId}`, { method: 'DELETE' })
 }
 
 export function elimina(id: string): Promise<void> {

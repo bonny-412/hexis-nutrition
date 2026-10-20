@@ -49,8 +49,7 @@ const CLASSI_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
 const CLASSE_TESTO_STATO_PIANO: Record<NonNullable<Paziente['pianoStato']>, string> = {
   BOZZA: 'text-(--fg4)',
   ATTIVO: 'text-(--fg)',
-  SCADUTO: 'text-(--danger)',
-  TERMINATO: 'text-(--warn-fg)',
+  CONCLUSO: 'text-(--fg4)',
 }
 
 function giorniDaOggi(dataIso: string): number {
@@ -81,13 +80,14 @@ function notaUltimaVisita(dataIso: string): string | null {
 // wiki/modello-dati.md, sezione "Entità previste ma non ancora progettate").
 function notaPiano(paziente: Paziente): string {
   if (paziente.pianoStato === 'BOZZA') return 'bozza, non ancora attivato'
-  if (paziente.pianoStato === 'TERMINATO') return 'terminato'
-  if (!paziente.pianoDataFine) return paziente.pianoStato === 'ATTIVO' ? 'senza scadenza' : ''
+  if (!paziente.pianoDataFine) return paziente.pianoStato === 'ATTIVO' ? 'senza scadenza' : paziente.pianoStato === 'CONCLUSO' ? 'concluso' : ''
 
   const giorni = giorniDaOggi(paziente.pianoDataFine)
-  if (paziente.pianoStato === 'SCADUTO') {
+  if (paziente.pianoStato === 'CONCLUSO') {
+    // Terminato a mano con una data di fine ancora futura: niente "da N giorni".
+    if (giorni >= 0) return 'concluso'
     const assoluto = Math.abs(giorni)
-    return `scaduto da ${assoluto} giorn${assoluto === 1 ? 'o' : 'i'}`
+    return `concluso da ${assoluto} giorn${assoluto === 1 ? 'o' : 'i'}`
   }
   if (giorni === 0) return 'scade oggi'
   if (giorni === 1) return 'scade domani'
@@ -137,7 +137,8 @@ function criteriCorrenti(): CriteriRicercaPazienti {
     pagina: pagina.value,
     dimensione: 20,
     ordinaPer: ordinaPer.value,
-    direzione: direzione.value,
+    // Senza una colonna scelta decide il backend (cognome crescente).
+    direzione: ordinaPer.value ? direzione.value : undefined,
     ricerca: ricercaEffettiva.value.trim() || undefined,
     statoAccount: statoAccount.value === 'TUTTI' ? undefined : statoAccount.value,
     obiettivo: obiettivo.value === 'TUTTI' ? undefined : obiettivo.value,
@@ -405,9 +406,9 @@ const conteggioTesto = computed(() => {
             <TableHeader>
               <TableRow>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('nome')">
+                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('cognome')">
                     Paziente
-                    <component :is="iconaOrdinamento('nome')" :size="12" :class="ordinaPer === 'nome' ? 'text-(--fg)' : 'text-(--fg4)'" />
+                    <component :is="iconaOrdinamento('cognome')" :size="12" :class="ordinaPer === 'cognome' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
                 <TableHead class="uppercase tracking-wide text-(--fg4)">Obiettivo</TableHead>

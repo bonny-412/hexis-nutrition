@@ -543,3 +543,17 @@ Sessione a richieste puntuali di Andrea, su `master` dopo `00f725b`. Dettaglio c
 - **Incidente**: backend non riavviato dopo la modifica del `PUT` → il campo `modalita` veniva ignorato in silenzio e `pasti: null` svuotava i pasti di una bozza. Riavviare sempre il backend dopo modifiche a DTO/endpoint.
 - **Processo**: in PowerShell `R` è alias di `Invoke-History` (una funzione con quel nome non parte); Python non è installato (usare `node -e`); due test temporanei di riproduzione (backend e frontend) scritti e cancellati.
 - Aggiornati `wiki/stato.md`, `wiki/api-contracts.md`, `wiki/modello-dati.md`.
+
+## [2026-10-20] handoff | Ordinamenti di default, stati del piano, note di aggiornamento, riepilogo visita precedente
+
+Sessione a richieste puntuali di Andrea, su `master` dopo `3f30765`. Dettaglio completo in [stato](stato.md#sessione-del-20-ottobre-2026--ordinamenti-di-default-stati-del-piano-note-di-aggiornamento-riepilogo-visita-precedente). **Nessun commit, nessun `git add`**: tutto non in staging.
+
+- **Ordinamenti**: piani per ultima modifica (`aggiornato_il` ora aggiornato davvero), pazienti per cognome, alimenti invariati.
+- **Stati piano**: unificati in `BOZZA`/`ATTIVO`/`CONCLUSO` (scaduto e terminato sono la stessa cosa); DB invariato.
+- **Pagina piano**: sola lettura oltre la bozza (anche `PUT` → 409), badge e avatar colorati per stato, header riordinato, riquadro informativo; "Duplica" solo frontend (endpoint backend rimosso).
+- **Note di aggiornamento** (`piano_note`, V24): solo su piano attivo, leggibili su ogni piano non in bozza; autore salvato ma non mostrato; note sulla visita scartate.
+- **Riepilogo precedente** nella pagina visita: visita precedente + note dei piani in corso tra le due visite (regola per date, non per `visita_id`).
+- **Verifica**: backend 195/195, `vue-tsc` 0 errori, frontend 172/173 sui piani (fallimento noto) + 8 test dei grafici falliti non legati; **nulla provato in browser dall'agente**. Nessun test nuovo.
+- **Incidente**: disco `E:` momentaneamente non disponibile a metà sessione, due modifiche rifatte, nessun dato perso. Riavviare il backend (migrazione V24).
+- **Da riprendere con l'agenda**: stato dei pazienti, data di fine del nuovo piano = data della prossima visita.
+- Aggiornati `wiki/stato.md`, `wiki/api-contracts.md`, `wiki/modello-dati.md`.

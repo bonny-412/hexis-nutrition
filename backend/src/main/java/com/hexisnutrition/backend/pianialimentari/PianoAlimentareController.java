@@ -36,8 +36,8 @@ public class PianoAlimentareController {
             @AuthenticationPrincipal UUID professionistaId,
             @RequestParam(defaultValue = "0") int pagina,
             @RequestParam(defaultValue = "20") int dimensione,
-            @RequestParam(defaultValue = "nome") CampoOrdinamentoPianiAlimentari ordinaPer,
-            @RequestParam(defaultValue = "asc") DirezioneOrdinamento direzione,
+            @RequestParam(defaultValue = "aggiornatoIl") CampoOrdinamentoPianiAlimentari ordinaPer,
+            @RequestParam(defaultValue = "desc") DirezioneOrdinamento direzione,
             @RequestParam(required = false) String ricerca,
             @RequestParam(required = false) StatoPianoVisualizzato stato,
             @RequestParam(required = false) UUID pazienteId,
@@ -89,12 +89,6 @@ public class PianoAlimentareController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void attiva(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id) {
         pianoAlimentareService.attiva(professionistaId, id);
-    }
-
-    @PostMapping("/{id}/duplica")
-    @ResponseStatus(HttpStatus.CREATED)
-    public PianoAlimentareResponse duplica(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id) {
-        return pianoAlimentareService.duplica(professionistaId, id);
     }
 
     @DeleteMapping("/{id}")

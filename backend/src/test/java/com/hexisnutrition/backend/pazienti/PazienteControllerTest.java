@@ -777,7 +777,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.contenuto.length()").value(2))
                 .andExpect(jsonPath("$.contenuto[0].nome").value("Anna"))
-                .andExpect(jsonPath("$.contenuto[1].nome").value("Bruno"))
+                .andExpect(jsonPath("$.contenuto[1].nome").value("Carlo"))
                 .andExpect(jsonPath("$.totaleElementi").value(3))
                 .andExpect(jsonPath("$.totalePagine").value(2));
 
@@ -787,7 +787,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                         .header("Authorization", "Bearer " + tokenPer(professionista)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.contenuto.length()").value(1))
-                .andExpect(jsonPath("$.contenuto[0].nome").value("Carlo"))
+                .andExpect(jsonPath("$.contenuto[0].nome").value("Bruno"))
                 .andExpect(jsonPath("$.paginaCorrente").value(1));
 
         mockMvc.perform(get("/pazienti/ricerca")

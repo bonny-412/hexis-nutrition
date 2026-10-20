@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { toast } from 'vue-sonner'
 import {
-  cerca, duplica,
+  cerca,
   type ModalitaPiano, type PaginaPianiAlimentari, type PianoAlimentareRigaLista,
 } from '@/api/pianiAlimentari'
 import { Button } from '@/components/ui/button'
@@ -29,7 +28,7 @@ const router = useRouter()
 const DIMENSIONE_PAGINA = 5
 
 // Un solo piano ATTIVO per paziente (lato backend): un piano oltre la data di fine arriva già
-// come SCADUTO, quindi finisce nello storico e non nella card.
+// come CONCLUSO, quindi finisce nello storico e non nella card.
 const pianoAttivo = ref<PianoAlimentareRigaLista | null>(null)
 const bozzaRecente = ref<PianoAlimentareRigaLista | null>(null)
 const pianiPrecedenti = ref<PaginaPianiAlimentari | null>(null)
@@ -37,7 +36,6 @@ const pagina = ref(0)
 const caricamento = ref(true)
 const aggiornamentoInCorso = ref(false)
 const errore = ref(false)
-const duplicazioneInCorso = ref(false)
 
 const avanzamento = computed(() =>
   pianoAttivo.value ? avanzamentoPiano(pianoAttivo.value.dataInizio, pianoAttivo.value.dataFine) : null,
@@ -102,17 +100,9 @@ function linkPiano(piano: PianoAlimentareRigaLista): string {
   return `/piani-alimentari/${piano.id}?pazienteId=${props.pazienteId}`
 }
 
-async function onDuplica(piano: PianoAlimentareRigaLista) {
-  duplicazioneInCorso.value = true
-  try {
-    const copia = await duplica(piano.id)
-    toast.success('Piano duplicato come bozza.')
-    await router.push(`/piani-alimentari/${copia.id}?pazienteId=${props.pazienteId}`)
-  } catch {
-    toast.error('Non è stato possibile duplicare il piano.')
-  } finally {
-    duplicazioneInCorso.value = false
-  }
+// La copia non si crea qui: "Nuovo piano" si apre precompilato e il piano nasce con "Salva".
+function onDuplica(piano: PianoAlimentareRigaLista) {
+  router.push(`/piani-alimentari/nuovo?duplicaDa=${piano.id}&pazienteId=${props.pazienteId}`)
 }
 </script>
 
@@ -141,7 +131,7 @@ async function onDuplica(piano: PianoAlimentareRigaLista) {
             </div>
           </div>
           <div class="flex flex-wrap gap-2">
-            <Button v-if="!archiviato" variant="neutral" :disabled="duplicazioneInCorso" @click="onDuplica(pianoAttivo)">
+            <Button v-if="!archiviato" variant="neutral" @click="onDuplica(pianoAttivo)">
               <Copy :size="15" />
               <span>Duplica</span>
             </Button>

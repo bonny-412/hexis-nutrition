@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 @Service
 public class PianoAlimentareService {
 
-    private static final int NOME_PIANO_MAX = 200;
     private static final List<TipoPasto> PASTI_TEMPLATE = List.of(
             TipoPasto.COLAZIONE, TipoPasto.SPUNTINO_MATTINA, TipoPasto.PRANZO,
             TipoPasto.SPUNTINO_POMERIGGIO, TipoPasto.CENA);
@@ -189,10 +188,10 @@ public class PianoAlimentareService {
     @Transactional
     public PianoAlimentareResponse aggiorna(UUID professionistaId, UUID pianoId, AggiornaPianoAlimentareRequest request) {
         PianoAlimentare piano = pianoDiProprieta(professionistaId, pianoId);
+        if (piano.getStato() != StatoPiano.BOZZA) {
+            throw new PianoAlimentareNonModificabileException();
+        }
         if (request.modalita() != null && request.modalita() != piano.getModalita()) {
-            if (piano.getStato() != StatoPiano.BOZZA) {
-                throw new PianoAlimentareModalitaNonModificabileException();
-            }
             // Solo la struttura della modalità attiva è persistita: quella lasciata va svuotata, poi sotto
             // viene popolata la nuova con il contenuto della richiesta.
             svuotaStruttura(pianoId, piano.getModalita());
@@ -201,6 +200,7 @@ public class PianoAlimentareService {
         piano.setNome(request.nome());
         piano.setDataFine(request.dataFine());
         piano.setObiettivoKcal(request.obiettivoKcal());
+        piano.segnaAggiornato();
         pianoAlimentareRepository.save(piano);
 
         switch (piano.getModalita()) {
@@ -211,44 +211,6 @@ public class PianoAlimentareService {
         }
 
         return dettaglio(professionistaId, pianoId);
-    }
-
-    /**
-     * Copia un piano in una nuova bozza dello stesso paziente: stessa modalità, struttura e kcal, nome
-     * "{nome} (copia)", data di inizio oggi, nessuna data di fine. Il piano originale non viene toccato.
-     */
-    @Transactional
-    public PianoAlimentareResponse duplica(UUID professionistaId, UUID pianoId) {
-        PianoAlimentareResponse origine = dettaglio(professionistaId, pianoId);
-        String suffisso = " (copia)";
-        String nome = origine.nome().length() + suffisso.length() > NOME_PIANO_MAX
-                ? origine.nome().substring(0, NOME_PIANO_MAX - suffisso.length()) + suffisso
-                : origine.nome() + suffisso;
-
-        PianoAlimentareResponse copia = creaBozza(professionistaId,
-                new CreaPianoAlimentareRequest(origine.pazienteId(), nome, origine.modalita(), null));
-
-        List<PastoRequest> pasti = origine.pasti().stream()
-                .map(p -> new PastoRequest(p.giornoSettimana(), p.nome(), p.tipo(), p.nota(), comeRichieste(p.righe())))
-                .toList();
-        List<GiornoMacroTargetRequest> giorniMacro = origine.giorniMacroTarget().stream()
-                .map(g -> new GiornoMacroTargetRequest(g.giornoSettimana(), g.kcalTarget(), g.proteineTarget(),
-                        g.carboidratiTarget(), g.grassiTarget(), g.nota()))
-                .toList();
-        List<EsempioRequest> esempi = origine.esempi().stream()
-                .map(e -> new EsempioRequest(e.tipoPasto(), e.nome(), e.nota(), comeRichieste(e.righe())))
-                .toList();
-
-        return aggiorna(professionistaId, copia.id(),
-                new AggiornaPianoAlimentareRequest(nome, null, origine.obiettivoKcal(), pasti, giorniMacro, esempi, null));
-    }
-
-    private List<RigaAlimentoRequest> comeRichieste(List<RigaAlimentoResponse> righe) {
-        return righe.stream()
-                .map(r -> new RigaAlimentoRequest(r.alimentoId(), r.nome(), r.kcal100g(), r.proteine100g(),
-                        r.carboidrati100g(), r.grassi100g(), r.zuccheri100g(), r.fibre100g(), r.ferro100mg(),
-                        r.calcio100mg(), r.acqua100g(), r.grammi()))
-                .toList();
     }
 
     private void sostituisciPasti(UUID pianoId, List<PastoRequest> richieste) {

@@ -3,7 +3,7 @@ title: Stato del progetto
 tags: [stato]
 stato: stabile
 creato: 2026-08-08
-aggiornato: 2026-10-10
+aggiornato: 2026-10-20
 fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, sorgenti/2026-08-09-test-su-postgres-locale.md, sorgenti/2026-08-09-docker-solo-in-produzione.md, sorgenti/2026-08-30-hash-pulizia-invalidazione-token.md, ../docs/superpowers/specs/2026-08-31-nuovo-paziente-con-visita-design.md, ../docs/superpowers/specs/2026-09-01-plicometria-circonferenze-design.md, ../docs/superpowers/plans/2026-09-01-plicometria-circonferenze.md, log.md#2026-08-31-handoff--bug-fix-controlli-pazientenuovoview--ux-maiuscola-errori-live, log.md#2026-09-01-handoff--pagina-nuovo-paziente-eta-componente-visita-e-data-nascita-obbligatoria, log.md#2026-09-01-handoff--modulo-plicometria-e-redesign-circonferenze, log.md#2026-09-02-handoff--rifiniture-plicometria-fix-typescript-sulle-select-riorganizzazione-views, ../docs/superpowers/specs/2026-09-02-lista-pazienti-paginata-design.md, ../docs/superpowers/plans/2026-09-02-lista-pazienti-paginata.md, log.md#2026-09-02-handoff--lista-pazienti-paginata-redesign-ui-ricercafiltri-lato-server-archiviazione-paziente, log.md#2026-09-02-handoff--toast-di-notifica-globale-bug-fix-invito-rifiniture-lista-pazienti, ../docs/superpowers/specs/2026-09-02-dettaglio-paziente-andamento-design.md, ../docs/superpowers/plans/2026-09-02-dettaglio-paziente-andamento.md, log.md#2026-09-02-handoff--sezione-andamento-e-redesign-completo-della-pagina-di-dettaglio-paziente, log.md#2026-09-04-handoff--rifiniture-dettagliolista-paziente-elimina-visita-filtri-lato-server-ridisegnati, ../docs/superpowers/specs/2026-09-08-command-palette-design.md, ../docs/superpowers/plans/2026-09-08-command-palette.md, log.md#2026-09-08-handoff--categorie-bmi-oms-command-palette-globale-%E2%8C%98k-gestione-ui-pazienti-archiviati, ../docs/superpowers/specs/2026-09-12-piano-alimentare-design.md, ../docs/superpowers/plans/2026-09-12-piano-alimentare.md]
 ---
 
@@ -20,6 +20,8 @@ Sessione del 5 settembre 2026: avviato il sotto-progetto **"Piano alimentare"**,
 Sessione del 6 ottobre 2026: scheda paziente — tab **Piani alimentari** (card piano attivo, Duplica, storico paginato) e **Storico visite** (5 per volta, "Carica altre visite"), conteggio "pazienti attivi" = non archiviati. In staging, nessun test nuovo (li scrive Andrea). Vedi sessione dedicata più sotto.
 
 Sessione del 10 ottobre 2026: grafici Panoramica (ultime 5 visite, card unica massa magra/% grasso) e Confronto visite (colori, tooltip), date digitabili e `min`/`max` nel `DatePicker`, **modalità del piano modificabile solo per piani nuovi o in bozza**, bozza più recente nella tab piani, lista piani con colonna Inizio, filtri avanzati su data inizio/scadenza e senza pazienti archiviati. Non committato. Vedi sessione dedicata più sotto.
+
+Sessione del 20 ottobre 2026: ordinamenti di default (piani per ultima modifica, pazienti per cognome), **stati del piano unificati in Bozza/Attivo/Concluso**, pagina del piano in **sola lettura** oltre la bozza, **note di aggiornamento** sui piani attivi, "Duplica" che precompila "Nuovo piano" senza creare nulla, **riepilogo della visita precedente** nella pagina visita. Tutto non in staging, vedi la sessione dedicata più sotto.
 
 Il progetto vive in **un unico repo git**, `bonny-412/hexis-nutrition`, con la radice in `progetti/hexis-nutrition/`.
 
@@ -451,6 +453,38 @@ Aggiornati `wiki/api-contracts.md` (PUT con `modalita`, filtri data e archiviati
 - Etichette del tipo di piano non uniformi: "Macros" (pagina piano, lista) vs "Solo target macro" (tab scheda paziente).
 - `inizialiPaziente` è **copiata in 4 file** (pagina piano, lista piani, lista pazienti, command palette): candidata a una utility condivisa.
 - Un ADR per "modalità modificabile in bozza" non è stato scritto (solo log + wiki dati/API).
+
+## Sessione del 20 ottobre 2026 — ordinamenti di default, stati del piano, note di aggiornamento, riepilogo visita precedente
+
+Sessione a richieste puntuali di Andrea una alla volta, su `master` dopo `3f30765`. **Nessun commit, nessun `git add`**: tutto non in staging (nuovi: migrazione `V24`, entità/servizio/controller delle note, `PianoNoteSheet.vue`, `RiepilogoVisitaPrecedente.vue`; cancellata `PianoAlimentareModalitaNonModificabileException`, sostituita da `PianoAlimentareNonModificabileException`). Dettaglio in [log](log.md).
+
+**Ordinamenti di default**
+- **Piani**: `GET /piani-alimentari/ricerca` ordina di default per `aggiornatoIl` decrescente (nuovo valore di `ordinaPer`). `aggiornato_il` **non veniva mai aggiornato**: ora lo fa `@PreUpdate` più `segnaAggiornato()` nel `PUT` (anche se cambia solo la struttura di pasti/macro/esempi). I piani esistenti hanno come "ultima modifica" la data di creazione finché non vengono toccati. La lista non invia più `direzione` senza colonna scelta (altrimenti annullava il default).
+- **Pazienti**: default `cognome` asc, con `nome` come secondo criterio; l'intestazione "Paziente" ora ordina per `cognome`. **Alimenti**: invariati (nome A-Z), deciso di lasciarli così.
+
+**Stati del piano (unificati)** — decisione di Andrea: scaduto e terminato sono la stessa cosa. L'API espone **tre** stati, `BOZZA`/`ATTIVO`/`CONCLUSO` (`StatoPianoVisualizzato`); `CONCLUSO` = `TERMINATO` persistito **oppure** `ATTIVO` con `data_fine` passata. Nel DB restano `BOZZA`/`ATTIVO`/`TERMINATO`, nessuna migrazione. Il filtro `stato=CONCLUSO` seleziona entrambi; liste piani/pazienti e pagina del piano mostrano "Concluso" (grigio).
+
+**Pagina del piano**
+- **Sola lettura per ogni piano non in bozza** (attivo e concluso): campi disabilitati con `fieldset`, pulsanti di aggiunta/rimozione nascosti, niente "Salva". I selettori dei giorni restano usabili (stanno fuori dai `fieldset`). Backend: `PUT` su piano non in bozza → **409**. Sarebbe stato utile, ma **non fatto**, poter prolungare un piano attivo (data di fine) — valutare se serve.
+- **Header**: badge di stato accanto al nome (ambra/verde/grigio) e **avatar del paziente colorato come il badge**; "Salva" primary; menu "⋯" con "Attiva piano" (solo bozza, prima voce), "Duplica come nuovo piano", "Stampa PDF", "Elimina" (solo bozza); pulsante **"Note"** con contatore sui piani non in bozza; riquadro informativo "sola lettura" con link "Aggiungi nota"/"Vedi note".
+- **Duplica** (lista, pagina, scheda paziente): **non crea nulla sul server**. Apre `/piani-alimentari/nuovo?duplicaDa={id}` precompilato (modalità, struttura, kcal, senza note, nome con la **fase incrementata** — "Ipertrofia · fase 2" → "fase 3", altrimenti "(copia)" —, data inizio oggi, nessuna data di fine); il piano nasce al "Salva". Copia la versione **salvata** del piano, non le modifiche in pagina. **Endpoint `POST /piani-alimentari/{id}/duplica` rimosso.**
+
+**Note di aggiornamento del piano** (`piano_note`, V24): si **aggiungono ed eliminano solo con piano `ATTIVO` effettivo**, si **leggono su ogni piano non in bozza**, non si modificano. Endpoint `GET/POST /piani-alimentari/{id}/note` e `DELETE …/note/{notaId}` (409 se il piano non è attivo). Pannello laterale `PianoNoteSheet.vue` (focus sul testo all'apertura). Il **peso scritto in una nota resta solo testo**, non entra nei grafici. **L'autore non è mostrato** (il paziente ha un solo professionista) ma il backend lo salva e lo restituisce. **Note sulla visita: scartate** (decisione di Andrea).
+
+**Riepilogo precedente** (pagina visita, `RiepilogoVisitaPrecedente.vue`): pannello in sola lettura affiancato al modulo da 1024px in su, overlay con velo scuro e chiusura al clic fuori sotto i 1024px. Mostra la visita precedente (in modifica: quella prima della visita aperta) a blocchi senza dati nascosti — Generali (peso, BMI con categoria, livello di attività **del paziente, non della visita**), Composizione corporea **da plicometria** (la **BIA non esiste ancora nei dati**: Andrea dice arriverà a breve, il blocco andrà aggiunto con acqua corporea e metabolismo basale), pliche e circonferenze rilevate — poi le note della visita e le **note dei piani**. **Visita e piano non sono collegati da un vincolo, solo dal tempo** (il piano parte dopo la visita A e dura fino alla B): `pianiNellIntervallo` (`utils/pianoAlimentare.ts`) prende i piani non in bozza che si sovrappongono all'intervallo tra visita precedente e visita corrente; un piano finisce alla sua `dataFine` o, se prima, quando inizia il piano successivo (un terminato a mano non ha data di fine propria). `visita_id` dei piani **non è usato** dal riepilogo.
+
+**Verifica**: backend `mvn test` → **195/195 verdi** (ultima esecuzione dopo la rimozione del filtro `visitaId` dalla ricerca). `vue-tsc --noEmit` **0 errori**. Frontend: viste/utility/API/componenti dei piani **172/173**; l'unico fallimento è il **già noto** "mostra lo stato vuoto" di `PianiAlimentariListView.spec.ts` (cerca "Nessun piano trovato"). Nei componenti paziente **8 test falliscono e non riguardano questa sessione**: `ConfrontoBarChart.spec.ts` (6, il mock di `@unovis/vue` non definisce `VisTooltip`) e `PazienteTabPanoramica.spec.ts` (2, testi dei grafici cambiati il 10 ottobre). **Non provato in browser dall'agente**: lo fa Andrea. **Nessun test nuovo scritto**; adattati solo test esistenti e il mock `noteDelPiano` in `PianoAlimentareFormView.spec.ts`. Ho dovuto toccare `AbstractIntegrationTest` (aggiunta `piano_note` al `TRUNCATE`).
+
+**Incidente da ricordare**: a metà sessione il disco `E:` è risultato per un attimo non disponibile (probabilmente scollegato); due modifiche in corso non erano state applicate e sono state rifatte al ritorno del disco. Nessun dato perso. **Riavviare il backend** dopo queste modifiche (nuova migrazione V24, DTO ed endpoint cambiati).
+
+Aggiornati `wiki/api-contracts.md` e `wiki/modello-dati.md`.
+
+**Da decidere / non fatto**
+- **Con l'agenda** (da riprendere insieme): lo **stato dei pazienti** (In target / Revisione piano / A rischio, senza aderenza né feedback del paziente, vedi memoria) e la **data di fine del nuovo piano precompilata con la data della prossima visita**.
+- Prolungare la data di fine di un piano attivo (oggi è tutto in sola lettura).
+- Il fallimento noto in `PianiAlimentariListView.spec.ts` e gli 8 test dei grafici da sistemare (li scrive Andrea).
+- `pianiNellIntervallo` è una funzione pura senza test.
+- ADR non scritti: stati del piano unificati, "Duplica" solo frontend, regola piano↔visita per date.
 
 ## Prossimo passo consigliato
 

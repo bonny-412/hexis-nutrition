@@ -182,15 +182,15 @@ describe('PazientiListView', () => {
     const headerPaziente = wrapper.findAll('th button').find((b) => b.text().includes('Paziente'))
     await headerPaziente?.trigger('click')
     await flushPromises()
-    expect(pazientiApi.cerca).toHaveBeenLastCalledWith(expect.objectContaining({ ordinaPer: 'nome', direzione: 'asc' }))
+    expect(pazientiApi.cerca).toHaveBeenLastCalledWith(expect.objectContaining({ ordinaPer: 'cognome', direzione: 'asc' }))
 
     await headerPaziente?.trigger('click')
     await flushPromises()
-    expect(pazientiApi.cerca).toHaveBeenLastCalledWith(expect.objectContaining({ ordinaPer: 'nome', direzione: 'desc' }))
+    expect(pazientiApi.cerca).toHaveBeenLastCalledWith(expect.objectContaining({ ordinaPer: 'cognome', direzione: 'desc' }))
 
     await headerPaziente?.trigger('click')
     await flushPromises()
-    expect(pazientiApi.cerca).toHaveBeenLastCalledWith(expect.objectContaining({ ordinaPer: undefined, direzione: 'asc' }))
+    expect(pazientiApi.cerca).toHaveBeenLastCalledWith(expect.objectContaining({ ordinaPer: undefined, direzione: undefined }))
   })
 
   it('mostra lo stato vuoto "primo paziente" se non ci sono pazienti e nessun filtro attivo', async () => {
