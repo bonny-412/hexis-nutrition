@@ -557,3 +557,15 @@ Sessione a richieste puntuali di Andrea, su `master` dopo `3f30765`. Dettaglio c
 - **Incidente**: disco `E:` momentaneamente non disponibile a metà sessione, due modifiche rifatte, nessun dato perso. Riavviare il backend (migrazione V24).
 - **Da riprendere con l'agenda**: stato dei pazienti, data di fine del nuovo piano = data della prossima visita.
 - Aggiornati `wiki/stato.md`, `wiki/api-contracts.md`, `wiki/modello-dati.md`.
+
+## [2026-10-22] handoff | Anagrafica paziente, circonferenze con parte dominante, colori degli stati
+
+Sessione a richieste puntuali di Andrea, su `master` dopo `f6df1d7`. Dettaglio completo in [stato](stato.md#sessione-del-22-ottobre-2026--anagrafica-paziente-circonferenze-e-parte-dominante-colori-degli-stati).
+
+- **Paziente**: nuovi `medicoRiferimento` (V25), `cellulare` (V26), `trattamenti` (V27); `telefono` = fisso; `note` mostrato come "Storia paziente" (2000 caratteri solo client).
+- **Visita**: rimossi collo, avambraccio, caviglia, protocollo vita (**V28 elimina colonne e dati**); circonferenze riordinate con **parte dominante** e misure facoltative sulla parte dominante (V29); le 4 colonne esistenti = parte non dominante.
+- **Lista pazienti**: colonne "Ultima visita" / "Prossima visita" (sempre "â") e filtro "Prossima visita" disattivato in attesa dell'agenda; badge/avatar account rosso/giallo/verde.
+- **Piani alimentari**: badge/avatar Bozza giallo, Attivo verde, Concluso rosso. Rimosso "Aderenza piano".
+- **Verifica**: backend 194/194, `vue-tsc` 0 errori, frontend: solo fallimenti noti nelle ultime esecuzioni, ma **suite intera non rieseguita a fine sessione**; **nulla provato in browser dall'agente**. Nessun test nuovo.
+- **Aperto**: riavvio backend (V28 cancella dati), verifiche manuali, 4 decisioni lasciate ad Andrea (parte dominante obbligatoria? archiviati vs "Mai invitato"? colore nome piano in lista pazienti? regola 10 cifre telefono fisso).
+- Aggiornati `wiki/stato.md`, `wiki/modello-dati.md`, `wiki/api-contracts.md`.

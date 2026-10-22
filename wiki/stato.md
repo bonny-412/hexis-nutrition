@@ -3,7 +3,7 @@ title: Stato del progetto
 tags: [stato]
 stato: stabile
 creato: 2026-08-08
-aggiornato: 2026-10-20
+aggiornato: 2026-10-22
 fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, sorgenti/2026-08-09-test-su-postgres-locale.md, sorgenti/2026-08-09-docker-solo-in-produzione.md, sorgenti/2026-08-30-hash-pulizia-invalidazione-token.md, ../docs/superpowers/specs/2026-08-31-nuovo-paziente-con-visita-design.md, ../docs/superpowers/specs/2026-09-01-plicometria-circonferenze-design.md, ../docs/superpowers/plans/2026-09-01-plicometria-circonferenze.md, log.md#2026-08-31-handoff--bug-fix-controlli-pazientenuovoview--ux-maiuscola-errori-live, log.md#2026-09-01-handoff--pagina-nuovo-paziente-eta-componente-visita-e-data-nascita-obbligatoria, log.md#2026-09-01-handoff--modulo-plicometria-e-redesign-circonferenze, log.md#2026-09-02-handoff--rifiniture-plicometria-fix-typescript-sulle-select-riorganizzazione-views, ../docs/superpowers/specs/2026-09-02-lista-pazienti-paginata-design.md, ../docs/superpowers/plans/2026-09-02-lista-pazienti-paginata.md, log.md#2026-09-02-handoff--lista-pazienti-paginata-redesign-ui-ricercafiltri-lato-server-archiviazione-paziente, log.md#2026-09-02-handoff--toast-di-notifica-globale-bug-fix-invito-rifiniture-lista-pazienti, ../docs/superpowers/specs/2026-09-02-dettaglio-paziente-andamento-design.md, ../docs/superpowers/plans/2026-09-02-dettaglio-paziente-andamento.md, log.md#2026-09-02-handoff--sezione-andamento-e-redesign-completo-della-pagina-di-dettaglio-paziente, log.md#2026-09-04-handoff--rifiniture-dettagliolista-paziente-elimina-visita-filtri-lato-server-ridisegnati, ../docs/superpowers/specs/2026-09-08-command-palette-design.md, ../docs/superpowers/plans/2026-09-08-command-palette.md, log.md#2026-09-08-handoff--categorie-bmi-oms-command-palette-globale-%E2%8C%98k-gestione-ui-pazienti-archiviati, ../docs/superpowers/specs/2026-09-12-piano-alimentare-design.md, ../docs/superpowers/plans/2026-09-12-piano-alimentare.md]
 ---
 
@@ -22,6 +22,8 @@ Sessione del 6 ottobre 2026: scheda paziente — tab **Piani alimentari** (card 
 Sessione del 10 ottobre 2026: grafici Panoramica (ultime 5 visite, card unica massa magra/% grasso) e Confronto visite (colori, tooltip), date digitabili e `min`/`max` nel `DatePicker`, **modalità del piano modificabile solo per piani nuovi o in bozza**, bozza più recente nella tab piani, lista piani con colonna Inizio, filtri avanzati su data inizio/scadenza e senza pazienti archiviati. Non committato. Vedi sessione dedicata più sotto.
 
 Sessione del 20 ottobre 2026: ordinamenti di default (piani per ultima modifica, pazienti per cognome), **stati del piano unificati in Bozza/Attivo/Concluso**, pagina del piano in **sola lettura** oltre la bozza, **note di aggiornamento** sui piani attivi, "Duplica" che precompila "Nuovo piano" senza creare nulla, **riepilogo della visita precedente** nella pagina visita. Tutto non in staging, vedi la sessione dedicata più sotto.
+
+Sessione del 22 ottobre 2026: anagrafica paziente (medico di riferimento, cellulare, trattamenti, "Storia paziente"), visita senza collo/avambraccio/caviglia/protocollo vita e con **parte dominante** (migrazioni V25-V29), lista pazienti con colonna "Prossima visita" predisposta, colori degli stati account/piano, rimosso "Aderenza piano". **Riavviare il backend: V28 cancella dati.** Vedi sessione dedicata piÃ¹ sotto.
 
 Il progetto vive in **un unico repo git**, `bonny-412/hexis-nutrition`, con la radice in `progetti/hexis-nutrition/`.
 
@@ -486,7 +488,45 @@ Aggiornati `wiki/api-contracts.md` e `wiki/modello-dati.md`.
 - `pianiNellIntervallo` è una funzione pura senza test.
 - ADR non scritti: stati del piano unificati, "Duplica" solo frontend, regola piano↔visita per date.
 
+## Sessione del 22 ottobre 2026 — anagrafica paziente, circonferenze e parte dominante, colori degli stati
+
+Sessione a richieste puntuali di Andrea, su `master` dopo `f6df1d7`. **Nessun commit** (regola di progetto); l'unico elemento in staging è la cancellazione di `ProtocolloVita.java` (`git rm --cached`), tutto il resto è non in staging. **Nulla provato in browser dall'agente.** Nessun test nuovo scritto (li fa Andrea), solo fixture e asserzioni adattate ai campi cambiati.
+
+**Anagrafica paziente** (backend + `ModificaPazienteDialog.vue` + `PazienteNuovoView.vue` + `PazienteTabPanoramica.vue`)
+- Nuovi campi opzionali: `medicoRiferimento` (testo, V25), `cellulare` (10 cifre come il telefono, `erroreCellulare`, V26), `trattamenti` ("Trattamenti/Terapie", `TEXT`, textarea max 2000 caratteri solo client, V27).
+- `telefono` ora significa **telefono fisso di casa** (placeholder "Es. 0212345678"); il cellulare ha il placeholder del vecchio telefono.
+- `note` del paziente si chiama in UI **"Storia paziente"** (stesso campo `note` in API/DB, nessuna migrazione), limite alzato da 500 a **2000** caratteri solo client. Le note della visita restano a 500.
+- Il costruttore di `Paziente` non è cambiato: i nuovi campi si impostano con i setter in `PazienteService` (evita di toccare ~20 chiamate nei test).
+
+**Visita**
+- **Rimossi** Protocollo vita, circonferenza collo, avambraccio, caviglia. **V28 elimina le 4 colonne e i loro dati** (irreversibile al riavvio); enum `ProtocolloVita` cancellato; costruttore di `Visita` da 18 a 14 argomenti, chiamate nei test adattate.
+- **Circonferenze riordinate** (`DatiVisitaForm.vue`): prima le singole (vita, fianchi, addome, torace); poi **Parte dominante** (`DESTRA`/`SINISTRA`, facoltativa, precompilata dall'ultima visita o dalla visita in modifica, altrimenti vuota); poi la **parte non dominante** (braccio rilassato, braccio contratto, coscia, polpaccio); casella "Aggiungi anche le circonferenze della parte dominante" che mostra le stesse 4 misure per la parte dominante.
+- **V29**: `parte_dominante` + 4 colonne `circonferenza_*_dominante_cm`. **Assunzione**: le 4 colonne già esistenti (braccio rilassato/contratto, coscia, polpaccio) da ora significano "parte non dominante" — per le visite vecchie non si sa di che lato fossero. Il MAMC continua a usare il braccio rilassato (non dominante). Etichette in `ETICHETTE_CIRCONFERENZE` con "(non dominante)"/"(dominante)"; nello storico/confronto/panoramica le righe dominanti non misurate mostrano "—".
+
+**Lista pazienti**
+- "Ultima/prossima visita" diviso in **"Ultima visita"** (come prima, ordinabile) e **"Prossima visita"** (sempre "—": una data di prossima visita non esiste ancora). Nei filtri avanzati c'è la select "Prossima visita" (Tutte / 1 settimana / 2 / 3 / 1 mese) **disattivata**, "Disponibile con l'agenda", non inviata al backend. Scelta di Andrea: "solo struttura, dati con l'agenda".
+- Badge stato account: **Mai invitato rosso, Invitato giallo, Attivo verde**, avatar dello stesso colore (lista e dettaglio; nel dettaglio il badge ora c'è anche per "Mai invitato"). Gli archiviati mantengono l'avatar rosso, quindi oggi sono indistinguibili da "Mai invitato".
+
+**Piani alimentari**: badge e avatar **Bozza giallo, Attivo verde, Concluso rosso** (lista piani e pagina del piano). Il colore del testo del nome piano nella lista pazienti (`CLASSE_TESTO_STATO_PIANO`) non è stato toccato.
+
+**Dettaglio paziente**: rimosso il riquadro "Aderenza piano" (griglia statistiche da 5 a 4 colonne) e "aderenza al piano" dal suggerimento del campo Note della visita.
+
+**Wiki aggiornata**: `modello-dati.md` (Paziente V25-V27, Visita V28-V29), `api-contracts.md` (parte dominante, campi dominante).
+
+**Verifica**: backend **194/194** (era 195: eliminato il test "protocollo vita di default OMS"); `vue-tsc` 0 errori. Ultima suite frontend **intera** (dopo la parte dominante): 290/300, cioè i 9 fallimenti noti + 1 in `DatiVisitaForm.spec.ts` poi corretto (7/7). Dopo di essa (lista pazienti, colori, aderenza, piani) rieseguiti **solo i test delle viste toccate**, tutti verdi tranne il fallimento noto sui piani: **la suite intera non è stata rieseguita a fine sessione**.
+
+**Da fare / aperto**
+- **Riavviare il backend**: applica V25-V29. **V28 cancella i dati** di collo/avambraccio/caviglia/protocollo vita; per tenerli, rimuovere `V28__…sql` prima del riavvio (il codice funziona anche con le colonne in più).
+- **Verifiche manuali in browser** (mai fatte): form nuovo paziente e modifica (campi nuovi, contatori 2000), form visita (ordine circonferenze, parte dominante precompilata, casella dominante, salvataggio e riapertura), lista pazienti (colonne, select disattivata, colori), colori badge/avatar dei piani, tema scuro.
+- **Decisioni lasciate ad Andrea**: parte dominante obbligatoria se si compila una misura? Distinguere gli archiviati dai "Mai invitato"? Allineare il colore del nome piano nella lista pazienti? La regola dei 10 caratteri del telefono fisso (alcuni fissi italiani sono più corti)?
+- **Con l'agenda**: data di prossima visita (colonna e filtro già predisposti), stato dei pazienti, data di fine del nuovo piano = prossima visita.
+- Test da scrivere (Andrea): campi anagrafici nuovi lato backend (persistenza/lettura `medicoRiferimento`, `cellulare`, `trattamenti`), parte dominante e misure dominanti nel `POST/PUT` visita, `erroreCellulare`, blocco dominante di `DatiVisitaForm`.
+- Fallimenti noti non legati: 8 test di `ConfrontoBarChart`/`PazienteTabPanoramica` (mock `@unovis/vue` senza `VisTooltip`), 1 in `PianiAlimentariListView.spec.ts`.
+
 ## Prossimo passo consigliato
+
+**Aggiornato il 22 ottobre 2026, a fine sessione** (prevale sulle indicazioni sotto): lavoro **non committato** (`git status` per l'elenco). Prima mossa: riavviare il backend (V25-V29; V28 cancella dati, vedi sessione del 22 ottobre), poi la suite frontend intera e le verifiche manuali elencate nella sessione. Poi, con l'agenda: prossima visita (colonna e filtro giÃ  pronti), stato pazienti, data di fine piano.
+
 
 **Aggiornato il 10 ottobre 2026, a fine sessione** (prevale sulle indicazioni sotto per le prime mosse): il lavoro del 6 ottobre è già in `master`; quello del 10 ottobre è **non committato e non in staging** (`git status` per l'elenco). Andrea riprende **la scrittura dei test** nella prossima sessione. In ordine:
 
