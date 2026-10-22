@@ -41,7 +41,7 @@ const ETICHETTE_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
 }
 
 const CLASSI_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
-  MAI_INVITATO: 'bg-(--hover) text-(--fg4)',
+  MAI_INVITATO: 'bg-(--danger)/10 text-(--danger)',
   INVITATO: 'bg-(--warn-bg) text-(--warn-fg)',
   ATTIVO: 'bg-(--mint) text-(--green)',
 }
@@ -100,6 +100,9 @@ const statoAccount = ref<'TUTTI' | Paziente['statoAccount']>('TUTTI')
 const obiettivo = ref<'TUTTI' | NonNullable<Paziente['obiettivoUltimaVisita']>>('TUTTI')
 const dataUltimaVisitaDa = ref('')
 const dataUltimaVisitaA = ref('')
+// Struttura pronta per l'agenda: non esiste ancora una data di prossima visita, quindi il filtro resta
+// disattivato e non entra nei criteri di ricerca inviati al backend.
+const prossimaVisitaEntro = ref('TUTTE')
 const mostraArchiviati = ref(false)
 const filtriAvanzatiAperti = ref(false)
 const pagina = ref(0)
@@ -365,6 +368,20 @@ const conteggioTesto = computed(() => {
           <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Data ultima visita a</Label>
           <DatePicker id="data-ultima-visita-a" :model-value="dataUltimaVisitaA" :min="dataUltimaVisitaDa" @update:model-value="onDataUltimaVisitaAChange" />
         </div>
+        <div class="flex flex-col gap-1.5">
+          <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Prossima visita</Label>
+          <Select v-model="prossimaVisitaEntro" disabled>
+            <SelectTrigger id="filtro-prossima-visita" class="w-full" title="Disponibile con l'agenda"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="TUTTE">Tutte</SelectItem>
+              <SelectItem value="1_SETTIMANA">Entro 1 settimana</SelectItem>
+              <SelectItem value="2_SETTIMANE">Entro 2 settimane</SelectItem>
+              <SelectItem value="3_SETTIMANE">Entro 3 settimane</SelectItem>
+              <SelectItem value="1_MESE">Entro 1 mese</SelectItem>
+            </SelectContent>
+          </Select>
+          <p class="text-[10px] text-(--fg4)">Disponibile con l'agenda</p>
+        </div>
         <div class="flex items-end pb-px">
           <button
             id="filtro-mostra-archiviati"
@@ -414,10 +431,11 @@ const conteggioTesto = computed(() => {
                 <TableHead class="uppercase tracking-wide text-(--fg4)">Obiettivo</TableHead>
                 <TableHead>
                   <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('dataUltimaVisita')">
-                    Ultima/prossima visita
+                    Ultima visita
                     <component :is="iconaOrdinamento('dataUltimaVisita')" :size="12" :class="ordinaPer === 'dataUltimaVisita' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
+                <TableHead class="uppercase tracking-wide text-(--fg4)">Prossima visita</TableHead>
                 <TableHead>
                   <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('piano')">
                     Piano alimentare
@@ -466,6 +484,9 @@ const conteggioTesto = computed(() => {
                     </div>
                   </template>
                   <span v-else class="text-(--fg4)">—</span>
+                </TableCell>
+                <TableCell>
+                  <span class="text-(--fg4)">—</span>
                 </TableCell>
                 <TableCell>
                   <template v-if="paziente.pianoNome">

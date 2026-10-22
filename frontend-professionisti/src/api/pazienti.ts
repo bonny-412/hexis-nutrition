@@ -7,11 +7,14 @@ export interface Paziente {
   codiceFiscale: string
   email: string
   telefono: string | null
+  cellulare: string | null
   dataNascita: string | null
   sesso: string
   lavoro: string | null
+  medicoRiferimento: string | null
   stileDiVita: 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO' | 'ESTREMAMENTE_ATTIVO' | null
   note: string | null
+  trattamenti: string | null
   statoAccount: 'MAI_INVITATO' | 'INVITATO' | 'ATTIVO'
   archiviato: boolean
   obiettivoUltimaVisita: 'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'PREPARAZIONE_SPORTIVA' | 'EDUCATIVO' | 'PATOLOGIA_CLINICA' | 'GRAVIDANZA_ALLATTAMENTO' | null
@@ -53,11 +56,12 @@ export interface Circonferenze {
   braccioRilassatoCm: number | null
   cosciaCm: number | null
   polpaccioCm: number | null
-  colloCm: number | null
   toraceCm: number | null
   braccioContrattoCm: number | null
-  avambraccioCm: number | null
-  cavigliaCm: number | null
+  braccioRilassatoDominanteCm: number | null
+  braccioContrattoDominanteCm: number | null
+  cosciaDominanteCm: number | null
+  polpaccioDominanteCm: number | null
 }
 
 export interface Plicometria {
@@ -89,7 +93,7 @@ export interface Visita {
   whtr: number | null
   mamcCm: number | null
   circonferenze: Circonferenze
-  protocolloVita: 'OMS' | 'OMBELICALE' | 'ALTRO'
+  parteDominante: 'DESTRA' | 'SINISTRA' | null
   note: string | null
   obiettivo: 'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'PREPARAZIONE_SPORTIVA' | 'EDUCATIVO' | 'PATOLOGIA_CLINICA' | 'GRAVIDANZA_ALLATTAMENTO'
   plicometria: Plicometria | null
@@ -119,12 +123,13 @@ export interface CreaVisitaRequest {
   circonferenzaBraccioRilassatoCm?: number
   circonferenzaCosciaCm?: number
   circonferenzaPolpaccioCm?: number
-  circonferenzaColloCm?: number
   circonferenzaToraceCm?: number
   circonferenzaBraccioContrattoCm?: number
-  circonferenzaAvambraccioCm?: number
-  circonferenzaCavigliaCm?: number
-  protocolloVita?: 'OMS' | 'OMBELICALE' | 'ALTRO'
+  parteDominante?: 'DESTRA' | 'SINISTRA'
+  circonferenzaBraccioRilassatoDominanteCm?: number
+  circonferenzaBraccioContrattoDominanteCm?: number
+  circonferenzaCosciaDominanteCm?: number
+  circonferenzaPolpaccioDominanteCm?: number
   note?: string
   obiettivo?: 'DIMAGRIMENTO' | 'AUMENTO_PESO' | 'IPERTROFIA' | 'RICOMPOSIZIONE' | 'MANTENIMENTO' | 'PREPARAZIONE_SPORTIVA' | 'EDUCATIVO' | 'PATOLOGIA_CLINICA' | 'GRAVIDANZA_ALLATTAMENTO'
   plicometria?: CreaPlicometriaRequest
@@ -136,11 +141,14 @@ export interface CreaPazienteRequest {
   codiceFiscale: string
   email: string
   telefono?: string
+  cellulare?: string
   dataNascita: string
   sesso: 'M' | 'F' | 'ALTRO'
   lavoro?: string
+  medicoRiferimento?: string
   stileDiVita?: 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO' | 'ESTREMAMENTE_ATTIVO'
   note?: string
+  trattamenti?: string
   visita: CreaVisitaRequest
 }
 
@@ -150,11 +158,14 @@ export interface AggiornaPazienteRequest {
   codiceFiscale: string
   email: string
   telefono?: string
+  cellulare?: string
   dataNascita: string
   sesso: 'M' | 'F' | 'ALTRO'
   lavoro?: string
+  medicoRiferimento?: string
   stileDiVita?: 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO' | 'ESTREMAMENTE_ATTIVO'
   note?: string
+  trattamenti?: string
 }
 
 export function lista(): Promise<Paziente[]> {

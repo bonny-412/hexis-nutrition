@@ -6,7 +6,7 @@ vi.mock('./client', () => ({ apiRequest: vi.fn() }))
 
 const pazienteEsempio = {
   id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-  telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, statoAccount: 'MAI_INVITATO',
+  telefono: null, dataNascita: null, sesso: 'M', lavoro: null, cellulare: null, medicoRiferimento: null, trattamenti: null, stileDiVita: null, statoAccount: 'MAI_INVITATO',
   archiviato: false,
 }
 
@@ -100,7 +100,7 @@ describe('api/pazienti', () => {
         id: 'v1', dataVisita: '2026-06-01', altezzaCm: 178, pesoKg: 80, bmi: 25.2, whr: null, whtr: null, mamcCm: null,
         circonferenze: {
           vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
-          polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
+          polpaccioCm: null, toraceCm: null, braccioContrattoCm: null, braccioRilassatoDominanteCm: null, braccioContrattoDominanteCm: null, cosciaDominanteCm: null, polpaccioDominanteCm: null,
         },
         plicometria: null,
       },
@@ -118,7 +118,7 @@ describe('api/pazienti', () => {
       id: 'v1', dataVisita: '2026-06-01', altezzaCm: 178, pesoKg: 80, bmi: 25.2, whr: null, whtr: null, mamcCm: null,
       circonferenze: {
         vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
-        polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
+        polpaccioCm: null, toraceCm: null, braccioContrattoCm: null, braccioRilassatoDominanteCm: null, braccioContrattoDominanteCm: null, cosciaDominanteCm: null, polpaccioDominanteCm: null,
       },
       note: null, obiettivo: 'MANTENIMENTO', plicometria: null,
     }
@@ -135,7 +135,7 @@ describe('api/pazienti', () => {
       id: 'v1', dataVisita: '2026-06-01', altezzaCm: 178, pesoKg: 80, bmi: 25.2, whr: null, whtr: null, mamcCm: null,
       circonferenze: {
         vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
-        polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
+        polpaccioCm: null, toraceCm: null, braccioContrattoCm: null, braccioRilassatoDominanteCm: null, braccioContrattoDominanteCm: null, cosciaDominanteCm: null, polpaccioDominanteCm: null,
       },
       note: null, obiettivo: 'MANTENIMENTO', plicometria: null,
     }
@@ -152,7 +152,7 @@ describe('api/pazienti', () => {
       id: 'v1', dataVisita: '2026-06-01', altezzaCm: 180, pesoKg: 82, bmi: 25.3, whr: null, whtr: null, mamcCm: null,
       circonferenze: {
         vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
-        polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
+        polpaccioCm: null, toraceCm: null, braccioContrattoCm: null, braccioRilassatoDominanteCm: null, braccioContrattoDominanteCm: null, cosciaDominanteCm: null, polpaccioDominanteCm: null,
       },
       note: null, obiettivo: 'MANTENIMENTO', plicometria: null,
     }

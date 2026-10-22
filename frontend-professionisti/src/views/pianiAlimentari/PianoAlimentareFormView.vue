@@ -177,7 +177,7 @@ const statoPagina = computed<StatoPagina>(() => piano.value?.stato ?? 'BOZZA')
 const BADGE_STATO: Record<StatoPagina, { etichetta: string; classi: string }> = {
   BOZZA: { etichetta: 'Bozza', classi: 'bg-(--warn-bg) text-(--warn-fg)' },
   ATTIVO: { etichetta: 'Attivo', classi: 'bg-(--mint) text-(--green)' },
-  CONCLUSO: { etichetta: 'Concluso', classi: 'bg-(--hover) text-(--fg4)' },
+  CONCLUSO: { etichetta: 'Concluso', classi: 'bg-(--danger)/10 text-(--danger)' },
 }
 
 const testoRiquadroSolaLettura = computed(() => {

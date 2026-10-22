@@ -37,7 +37,7 @@ function creaRouter() {
 function pazienteEsempio(overrides: Partial<Paziente> = {}): Paziente {
   return {
     id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-    telefono: null, dataNascita: '1990-01-01', sesso: 'M', lavoro: null, stileDiVita: null, note: null,
+    telefono: null, dataNascita: '1990-01-01', sesso: 'M', lavoro: null, cellulare: null, medicoRiferimento: null, trattamenti: null, stileDiVita: null, note: null,
     statoAccount: 'MAI_INVITATO', archiviato: false,
     obiettivoUltimaVisita: null, dataUltimaVisita: null,
     pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null,
@@ -50,9 +50,9 @@ function visitaEsempio(overrides: Partial<Visita> = {}): Visita {
     id: 'v1', dataVisita: '2026-06-01', altezzaCm: 178, pesoKg: 80, bmi: 25.2, whr: null, whtr: null, mamcCm: null,
     circonferenze: {
       vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
-      polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
+      polpaccioCm: null, toraceCm: null, braccioContrattoCm: null, braccioRilassatoDominanteCm: null, braccioContrattoDominanteCm: null, cosciaDominanteCm: null, polpaccioDominanteCm: null,
     },
-    protocolloVita: 'OMS',
+    parteDominante: null,
     note: null,
     obiettivo: 'MANTENIMENTO',
     plicometria: null,

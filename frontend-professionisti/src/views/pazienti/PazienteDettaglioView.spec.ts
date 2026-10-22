@@ -46,9 +46,9 @@ function visita(overrides: Partial<Visita> = {}): Visita {
     mamcCm: null,
     circonferenze: {
       vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
-      polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
+      polpaccioCm: null, toraceCm: null, braccioContrattoCm: null, braccioRilassatoDominanteCm: null, braccioContrattoDominanteCm: null, cosciaDominanteCm: null, polpaccioDominanteCm: null,
     },
-    protocolloVita: 'OMS',
+    parteDominante: null,
     note: null,
     obiettivo: 'MANTENIMENTO',
     plicometria: null,
@@ -59,7 +59,7 @@ function visita(overrides: Partial<Visita> = {}): Visita {
 async function montaConPaziente(pazienteOverrides: Partial<pazientiApi.Paziente> = {}) {
   vi.mocked(pazientiApi.dettaglio).mockResolvedValue({
     id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-    telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+    telefono: null, dataNascita: null, sesso: 'M', lavoro: null, cellulare: null, medicoRiferimento: null, trattamenti: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     obiettivoUltimaVisita: null, dataUltimaVisita: null,
     pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null,
     ...pazienteOverrides,
@@ -89,7 +89,7 @@ describe('PazienteDettaglioView', () => {
 
   it('mostra i campi anagrafici aggiuntivi (telefono, età, sesso, lavoro) quando presenti', async () => {
     const wrapper = await montaConPaziente({
-      telefono: '3331234567', dataNascita: '1990-05-20', sesso: 'M', lavoro: 'Impiegato', stileDiVita: 'ATTIVO',
+      telefono: '3331234567', dataNascita: '1990-05-20', sesso: 'M', lavoro: 'Impiegato', cellulare: null, medicoRiferimento: null, trattamenti: null, stileDiVita: 'ATTIVO',
     })
 
     expect(wrapper.text()).toContain('3331234567')
@@ -185,8 +185,6 @@ describe('PazienteDettaglioView', () => {
       expect(wrapper.text()).toContain('18,20%')
       expect(wrapper.text()).toContain('Massa magra')
       expect(wrapper.text()).toContain('63,40 kg')
-      expect(wrapper.text()).toContain('Aderenza piano')
-      expect(wrapper.text()).toContain('Presto disponibile')
     })
 
     it('mostra l\'obiettivo dell\'ultima visita e la data della prima visita nel sottotitolo', async () => {

@@ -256,6 +256,7 @@ async function onSubmit() {
             :dati-iniziali="visitaEsistente"
             :altezza-suggerita-cm="ultimaVisita?.altezzaCm"
             :obiettivo-suggerito="ultimaVisita?.obiettivo"
+            :parte-dominante-suggerita="ultimaVisita?.parteDominante"
           />
         </div>
 

@@ -34,9 +34,9 @@ function visita(overrides: Partial<Visita> = {}): Visita {
     mamcCm: null,
     circonferenze: {
       vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
-      polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
+      polpaccioCm: null, toraceCm: null, braccioContrattoCm: null, braccioRilassatoDominanteCm: null, braccioContrattoDominanteCm: null, cosciaDominanteCm: null, polpaccioDominanteCm: null,
     },
-    protocolloVita: 'OMS',
+    parteDominante: null,
     note: null,
     obiettivo: 'MANTENIMENTO',
     plicometria: null,
@@ -105,6 +105,7 @@ describe('PazienteTabStoricoVisite', () => {
     const wrapper = await monta([
       riga(visita({
         id: 'v1',
+        parteDominante: null,
         note: 'Prima visita, nessuna allergia nota.',
         plicometria: {
           protocollo: 'JACKSON_POLLOCK_3', etniaAtleta: null,
@@ -114,7 +115,7 @@ describe('PazienteTabStoricoVisite', () => {
         },
         circonferenze: {
           vitaCm: 84, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
-          polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
+          polpaccioCm: null, toraceCm: null, braccioContrattoCm: null, braccioRilassatoDominanteCm: null, braccioContrattoDominanteCm: null, cosciaDominanteCm: null, polpaccioDominanteCm: null,
         },
       }), 0),
     ])

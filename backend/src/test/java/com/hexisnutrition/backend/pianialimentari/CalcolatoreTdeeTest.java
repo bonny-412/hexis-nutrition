@@ -25,11 +25,11 @@ class CalcolatoreTdeeTest {
     }
 
     private Visita visita(LocalDate dataVisita, BigDecimal pesoKg, Integer altezzaCm, ObiettivoVisita obiettivo) {
-        // 18 parametri posizionali: pazienteId, dataVisita, altezzaCm, pesoKg, le 11 circonferenze (null,
-        // non servono per il calcolo TDEE), protocolloVita (null → default OMS), note (null), obiettivo.
+        // 15 parametri posizionali: pazienteId, dataVisita, altezzaCm, pesoKg, le 8 circonferenze (null,
+        // non servono per il calcolo TDEE), note (null), obiettivo.
         return new Visita(UUID.randomUUID(), dataVisita, altezzaCm, pesoKg,
-                null, null, null, null, null, null, null, null, null, null, null,
-                null, null, obiettivo);
+                null, null, null, null, null, null, null, null,
+                null, obiettivo);
     }
 
     @Test

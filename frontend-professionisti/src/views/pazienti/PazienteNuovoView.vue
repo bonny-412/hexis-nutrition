@@ -41,6 +41,7 @@ import {
   erroreCognome,
   erroreEmail,
   erroreTelefono,
+  erroreCellulare,
   erroreDataNascita,
   erroreSesso,
   erroreCodiceFiscale,
@@ -54,10 +55,13 @@ const codiceFiscale = ref('')
 const sesso = ref('')
 const email = ref('')
 const telefono = ref('')
+const cellulare = ref('')
 const dataNascita = ref('')
 const lavoro = ref('')
+const medicoRiferimento = ref('')
 const stileDiVita = ref<'' | 'SEDENTARIO' | 'POCO_ATTIVO' | 'ATTIVO' | 'MOLTO_ATTIVO' | 'ESTREMAMENTE_ATTIVO'>('')
 const note = ref('')
+const trattamenti = ref('')
 
 const eta = computed(() => calcolaEta(dataNascita.value))
 
@@ -105,7 +109,9 @@ const onCognomeInput = conFiltro(cognome, filtraNome, 'cognome', erroreCognome)
 const onCodiceFiscaleInput = conFiltro(codiceFiscale, filtraCodiceFiscale, 'codiceFiscale', erroreCodiceFiscale)
 const onEmailInput = conFiltro(email, filtraEmail, 'email', erroreEmail)
 const onTelefonoInput = conFiltro(telefono, (v) => filtraSoloCifre(v, 10), 'telefono', erroreTelefono)
+const onCellulareInput = conFiltro(cellulare, (v) => filtraSoloCifre(v, 10), 'cellulare', erroreCellulare)
 const onLavoroInput = conFiltro(lavoro, capitalizzaPrimaLettera)
+const onMedicoRiferimentoInput = conFiltro(medicoRiferimento, capitalizzaPrimaLettera)
 
 function onDataNascitaChange(valore: string) {
   dataNascita.value = valore
@@ -130,10 +136,13 @@ function formValorizzata(): boolean {
     sesso.value !== '' ||
     email.value !== '' ||
     telefono.value !== '' ||
+    cellulare.value !== '' ||
     dataNascita.value !== '' ||
     lavoro.value !== '' ||
+    medicoRiferimento.value !== '' ||
     stileDiVita.value !== '' ||
     note.value !== '' ||
+    trattamenti.value !== '' ||
     (datiVisitaForm.value?.valorizzato() ?? false)
   )
 }
@@ -172,6 +181,7 @@ function validaCampi(): boolean {
   assegna('codiceFiscale', erroreCodiceFiscale(codiceFiscale.value))
   assegna('email', erroreEmail(email.value))
   assegna('telefono', erroreTelefono(telefono.value))
+  assegna('cellulare', erroreCellulare(cellulare.value))
   assegna('dataNascita', erroreDataNascita(dataNascita.value))
   assegna('sesso', erroreSesso(sesso.value))
 
@@ -193,11 +203,14 @@ async function onSubmit() {
       codiceFiscale: codiceFiscale.value,
       email: email.value,
       telefono: telefono.value || undefined,
+      cellulare: cellulare.value || undefined,
       dataNascita: dataNascita.value,
       sesso: sesso.value as 'M' | 'F' | 'ALTRO',
       lavoro: lavoro.value || undefined,
+      medicoRiferimento: medicoRiferimento.value || undefined,
       stileDiVita: stileDiVita.value || undefined,
       note: note.value || undefined,
+      trattamenti: trattamenti.value || undefined,
       visita: datiVisitaForm.value!.ottieniDati(),
     })
     toast.success('Paziente creato con successo.')
@@ -285,13 +298,24 @@ async function onSubmit() {
 
           <div class="flex flex-col gap-1.5">
             <Label for="telefono" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Telefono</Label>
-            <Input id="telefono" :model-value="telefono" @update:model-value="onTelefonoInput" type="text" inputmode="numeric" :aria-invalid="!!errori.telefono" placeholder="Es. 3325676543" />
+            <Input id="telefono" :model-value="telefono" @update:model-value="onTelefonoInput" type="text" inputmode="numeric" :aria-invalid="!!errori.telefono" placeholder="Es. 0212345678" />
             <p v-if="errori.telefono" class="text-xs font-medium text-(--danger)">{{ errori.telefono }}</p>
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <Label for="cellulare" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Cellulare</Label>
+            <Input id="cellulare" :model-value="cellulare" @update:model-value="onCellulareInput" type="text" inputmode="numeric" :aria-invalid="!!errori.cellulare" placeholder="Es. 3325676543" />
+            <p v-if="errori.cellulare" class="text-xs font-medium text-(--danger)">{{ errori.cellulare }}</p>
           </div>
 
           <div class="flex flex-col gap-1.5">
             <Label for="lavoro" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Lavoro</Label>
             <Input id="lavoro" :model-value="lavoro" @update:model-value="onLavoroInput" type="text" placeholder="Es. Impiegato" />
+          </div>
+
+          <div class="flex flex-col gap-1.5">
+            <Label for="medico-riferimento" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Medico di riferimento</Label>
+            <Input id="medico-riferimento" :model-value="medicoRiferimento" @update:model-value="onMedicoRiferimentoInput" type="text" placeholder="Es. Dott. Mario Bianchi" />
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -313,9 +337,15 @@ async function onSubmit() {
         </div>
 
         <div class="mt-5 flex flex-col gap-1.5">
-          <Label for="note" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Note</Label>
-          <Textarea id="note" v-model="note" maxlength="500" placeholder="Allergie, patologie, indicazioni utili…" />
-          <p class="text-right text-xs text-(--fg3)">{{ note.length }}/500</p>
+          <Label for="note" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Storia paziente</Label>
+          <Textarea id="note" v-model="note" maxlength="2000" placeholder="Es. vive da solo, fuma, beve, è autonomo, allergie, patologie…" />
+          <p class="text-right text-xs text-(--fg3)">{{ note.length }}/2000</p>
+        </div>
+
+        <div class="mt-5 flex flex-col gap-1.5">
+          <Label for="trattamenti" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Trattamenti/Terapie</Label>
+          <Textarea id="trattamenti" v-model="trattamenti" maxlength="2000" placeholder="Es. terapie farmacologiche in corso, integratori, trattamenti…" />
+          <p class="text-right text-xs text-(--fg3)">{{ trattamenti.length }}/2000</p>
         </div>
       </div>
 

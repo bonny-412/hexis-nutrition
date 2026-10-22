@@ -108,6 +108,11 @@ export function erroreTelefono(valore: string): string | undefined {
     return undefined
 }
 
+export function erroreCellulare(valore: string): string | undefined {
+    if (valore && !REGEX_TELEFONO.test(valore)) return 'Il cellulare deve contenere 10 cifre numeriche.'
+    return undefined
+}
+
 export function erroreDataNascita(valore: string): string | undefined {
     if (!valore.trim()) return 'La data di nascita è obbligatoria.'
     return undefined

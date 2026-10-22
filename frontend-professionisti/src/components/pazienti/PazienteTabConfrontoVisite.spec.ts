@@ -24,7 +24,7 @@ function plicometriaEsempio(overrides: Partial<NonNullable<Visita['plicometria']
 function circonferenzeEsempio(overrides: Partial<Visita['circonferenze']> = {}): Visita['circonferenze'] {
   return {
     vitaCm: 84, fianchiCm: 98, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
-    polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
+    polpaccioCm: null, toraceCm: null, braccioContrattoCm: null, braccioRilassatoDominanteCm: null, braccioContrattoDominanteCm: null, cosciaDominanteCm: null, polpaccioDominanteCm: null,
     ...overrides,
   }
 }
@@ -41,9 +41,9 @@ function visita(overrides: Partial<Visita> = {}): Visita {
     mamcCm: null,
     circonferenze: {
       vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
-      polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
+      polpaccioCm: null, toraceCm: null, braccioContrattoCm: null, braccioRilassatoDominanteCm: null, braccioContrattoDominanteCm: null, cosciaDominanteCm: null, polpaccioDominanteCm: null,
     },
-    protocolloVita: 'OMS',
+    parteDominante: null,
     note: null,
     obiettivo: 'MANTENIMENTO',
     plicometria: null,

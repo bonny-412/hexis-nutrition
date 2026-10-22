@@ -14,7 +14,7 @@ public record VisitaResponse(
         BigDecimal whtr,
         BigDecimal mamcCm,
         Circonferenze circonferenze,
-        String protocolloVita,
+        String parteDominante,
         String note,
         String obiettivo,
         PlicometriaResponse plicometria
@@ -30,7 +30,7 @@ public record VisitaResponse(
                 visita.getWhtr(),
                 visita.getMamcCm(),
                 Circonferenze.da(visita),
-                visita.getProtocolloVita().name(),
+                visita.getParteDominante() != null ? visita.getParteDominante().name() : null,
                 visita.getNote(),
                 visita.getObiettivo().name(),
                 plicometria != null ? PlicometriaResponse.da(plicometria) : null);
@@ -43,11 +43,12 @@ public record VisitaResponse(
             BigDecimal braccioRilassatoCm,
             BigDecimal cosciaCm,
             BigDecimal polpaccioCm,
-            BigDecimal colloCm,
             BigDecimal toraceCm,
             BigDecimal braccioContrattoCm,
-            BigDecimal avambraccioCm,
-            BigDecimal cavigliaCm
+            BigDecimal braccioRilassatoDominanteCm,
+            BigDecimal braccioContrattoDominanteCm,
+            BigDecimal cosciaDominanteCm,
+            BigDecimal polpaccioDominanteCm
     ) {
         public static Circonferenze da(Visita visita) {
             return new Circonferenze(
@@ -57,11 +58,12 @@ public record VisitaResponse(
                     visita.getCirconferenzaBraccioRilassatoCm(),
                     visita.getCirconferenzaCosciaCm(),
                     visita.getCirconferenzaPolpaccioCm(),
-                    visita.getCirconferenzaColloCm(),
                     visita.getCirconferenzaToraceCm(),
                     visita.getCirconferenzaBraccioContrattoCm(),
-                    visita.getCirconferenzaAvambraccioCm(),
-                    visita.getCirconferenzaCavigliaCm());
+                    visita.getCirconferenzaBraccioRilassatoDominanteCm(),
+                    visita.getCirconferenzaBraccioContrattoDominanteCm(),
+                    visita.getCirconferenzaCosciaDominanteCm(),
+                    visita.getCirconferenzaPolpaccioDominanteCm());
         }
     }
 

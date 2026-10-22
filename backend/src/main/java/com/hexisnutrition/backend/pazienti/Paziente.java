@@ -38,6 +38,8 @@ public class Paziente {
 
     private String telefono;
 
+    private String cellulare;
+
     @Column(name = "data_nascita", nullable = false)
     private LocalDate dataNascita;
 
@@ -47,12 +49,18 @@ public class Paziente {
 
     private String lavoro;
 
+    @Column(name = "medico_riferimento")
+    private String medicoRiferimento;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "stile_di_vita")
     private StileDiVita stileDiVita;
 
     @Column(columnDefinition = "TEXT")
     private String note;
+
+    @Column(columnDefinition = "TEXT")
+    private String trattamenti;
 
     @Column(name = "password_hash")
     private String passwordHash;
@@ -158,6 +166,22 @@ public class Paziente {
         this.lavoro = lavoro;
     }
 
+    public String getCellulare() {
+        return cellulare;
+    }
+
+    public void setCellulare(String cellulare) {
+        this.cellulare = cellulare;
+    }
+
+    public String getMedicoRiferimento() {
+        return medicoRiferimento;
+    }
+
+    public void setMedicoRiferimento(String medicoRiferimento) {
+        this.medicoRiferimento = medicoRiferimento;
+    }
+
     public StileDiVita getStileDiVita() {
         return stileDiVita;
     }
@@ -172,6 +196,14 @@ public class Paziente {
 
     public void setNote(String note) {
         this.note = note;
+    }
+
+    public String getTrattamenti() {
+        return trattamenti;
+    }
+
+    public void setTrattamenti(String trattamenti) {
+        this.trattamenti = trattamenti;
     }
 
     public String getPasswordHash() {

@@ -39,9 +39,9 @@ const ETICHETTE_MODALITA: Record<ModalitaPiano, string> = {
 }
 
 const CLASSI_STATO: Record<StatoPiano, string> = {
-  BOZZA: 'bg-(--hover) text-(--fg4)',
+  BOZZA: 'bg-(--warn-bg) text-(--warn-fg)',
   ATTIVO: 'bg-(--mint) text-(--green)',
-  CONCLUSO: 'bg-(--hover) text-(--fg4)',
+  CONCLUSO: 'bg-(--danger)/10 text-(--danger)',
 }
 
 // Stesso avatar a iniziali della lista pazienti (PazientiListView.vue), colorato però con

@@ -4,7 +4,7 @@ import type { Paziente, Visita } from '@/api/pazienti'
 import type { AndamentoPaziente } from '@/utils/andamento'
 import { ETICHETTE_CIRCONFERENZE, formattaNumero } from '@/utils/visita'
 import { calcolaEta, formattaDataItalianaEstesa } from '@/utils/data'
-import { User, Mail, Phone, Briefcase, Fingerprint, Cake, StickyNote } from '@lucide/vue'
+import { User, Mail, Phone, Smartphone, Briefcase, Stethoscope, Fingerprint, Cake, StickyNote, Pill } from '@lucide/vue'
 import AndamentoChart from './AndamentoChart.vue'
 import ComposizioneChart from './ComposizioneChart.vue'
 
@@ -193,6 +193,23 @@ const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) 
         </div>
 
         <div class="flex items-center gap-3">
+          <Smartphone :size="15" class="shrink-0 text-(--fg4)" />
+          <div class="min-w-0 flex-1">
+            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Cellulare</dt>
+            <dd>
+              <a
+                v-if="paziente.cellulare"
+                :href="`tel:${paziente.cellulare}`"
+                class="font-medium text-(--fg) underline-offset-4 hover:text-(--green) hover:underline"
+              >
+                {{ paziente.cellulare }}
+              </a>
+              <span v-else class="font-medium text-(--fg3)">—</span>
+            </dd>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
           <Briefcase :size="15" class="shrink-0 text-(--fg4)" />
           <div class="min-w-0 flex-1">
             <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Occupazione</dt>
@@ -202,12 +219,29 @@ const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) 
             </dd>
           </div>
         </div>
+
+        <div class="flex items-center gap-3">
+          <Stethoscope :size="15" class="shrink-0 text-(--fg4)" />
+          <div class="min-w-0 flex-1">
+            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Medico di riferimento</dt>
+            <dd class="font-medium text-(--fg)">
+              {{ paziente.medicoRiferimento ?? '—' }}
+            </dd>
+          </div>
+        </div>
       </dl>
 
       <div class="mt-5 flex gap-2.5 rounded-xl bg-(--soft) border-l-2 border-(--sage) p-3.5">
         <StickyNote :size="15" class="mt-0.5 shrink-0 text-(--fg4)" />
         <p class="text-sm" :class="paziente.note ? 'text-(--fg2)' : 'italic text-(--fg4)'">
-          {{ paziente.note || 'Nessuna nota per questo paziente.' }}
+          {{ paziente.note || 'Nessuna storia inserita per questo paziente.' }}
+        </p>
+      </div>
+
+      <div class="mt-3 flex gap-2.5 rounded-xl bg-(--soft) border-l-2 border-(--sage) p-3.5">
+        <Pill :size="15" class="mt-0.5 shrink-0 text-(--fg4)" />
+        <p class="text-sm" :class="paziente.trattamenti ? 'text-(--fg2)' : 'italic text-(--fg4)'">
+          {{ paziente.trattamenti || 'Nessun trattamento o terapia inserito per questo paziente.' }}
         </p>
       </div>
     </aside>

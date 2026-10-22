@@ -1,0 +1,1 @@
+ALTER TABLE pazienti ADD COLUMN cellulare VARCHAR(30);

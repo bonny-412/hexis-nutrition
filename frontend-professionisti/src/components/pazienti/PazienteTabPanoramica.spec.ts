@@ -7,7 +7,7 @@ import type { Paziente, Visita } from '@/api/pazienti'
 function pazienteEsempio(overrides: Partial<Paziente> = {}): Paziente {
   return {
     id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-    telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null,
+    telefono: null, dataNascita: null, sesso: 'M', lavoro: null, cellulare: null, medicoRiferimento: null, trattamenti: null, stileDiVita: null, note: null,
     statoAccount: 'MAI_INVITATO', archiviato: false,
     obiettivoUltimaVisita: null, dataUltimaVisita: null,
     pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null,
@@ -27,9 +27,9 @@ function visita(overrides: Partial<Visita> = {}): Visita {
     mamcCm: null,
     circonferenze: {
       vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
-      polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
+      polpaccioCm: null, toraceCm: null, braccioContrattoCm: null, braccioRilassatoDominanteCm: null, braccioContrattoDominanteCm: null, cosciaDominanteCm: null, polpaccioDominanteCm: null,
     },
-    protocolloVita: 'OMS',
+    parteDominante: null,
     note: null,
     obiettivo: 'MANTENIMENTO',
     plicometria: null,
@@ -117,7 +117,7 @@ describe('PazienteTabPanoramica', () => {
 
   it('mostra la nota del paziente, o un messaggio di assenza', () => {
     const senzaNota = monta([visita()], { paziente: pazienteEsempio({ note: null }) })
-    expect(senzaNota.text()).toContain('Nessuna nota per questo paziente.')
+    expect(senzaNota.text()).toContain('Nessuna storia inserita per questo paziente.')
 
     const conNota = monta([visita()], { paziente: pazienteEsempio({ note: 'Lieve intolleranza al lattosio.' }) })
     expect(conNota.text()).toContain('Lieve intolleranza al lattosio.')
@@ -157,7 +157,7 @@ describe('PazienteTabPanoramica', () => {
       visita({
         circonferenze: {
           vitaCm: 84, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
-          polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
+          polpaccioCm: null, toraceCm: null, braccioContrattoCm: null, braccioRilassatoDominanteCm: null, braccioContrattoDominanteCm: null, cosciaDominanteCm: null, polpaccioDominanteCm: null,
         },
       }),
     ])

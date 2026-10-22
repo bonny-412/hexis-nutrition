@@ -27,7 +27,7 @@ describe('DatiVisitaForm', () => {
     expect(wrapper.text()).toContain('Il peso è obbligatorio.')
   })
 
-  it('ottieniDati() restituisce il payload della visita con la data di oggi e nessun protocollo vita selezionato', async () => {
+  it('ottieniDati() restituisce il payload della visita con la data di oggi', async () => {
     const wrapper = mount(DatiVisitaForm, { props: { sesso: 'M' } })
 
     await wrapper.find('#altezza').setValue('178')
@@ -44,12 +44,8 @@ describe('DatiVisitaForm', () => {
       circonferenzaBraccioRilassatoCm: undefined,
       circonferenzaCosciaCm: undefined,
       circonferenzaPolpaccioCm: undefined,
-      circonferenzaColloCm: undefined,
       circonferenzaToraceCm: undefined,
       circonferenzaBraccioContrattoCm: undefined,
-      circonferenzaAvambraccioCm: undefined,
-      circonferenzaCavigliaCm: undefined,
-      protocolloVita: undefined,
       note: undefined,
       obiettivo: 'MANTENIMENTO',
       plicometria: undefined,
@@ -67,11 +63,11 @@ describe('DatiVisitaForm', () => {
     await wrapper.vm.$nextTick()
 
     await wrapper.find('#circonferenza-vita').setValue('90,10')
-    await wrapper.find('#circonferenza-caviglia').setValue('22,90')
+    await wrapper.find('#circonferenza-torace').setValue('97,80')
 
     const dati = esposti(wrapper).ottieniDati()
     expect(dati.circonferenzaVitaCm).toBe(90.1)
-    expect(dati.circonferenzaCavigliaCm).toBe(22.9)
+    expect(dati.circonferenzaToraceCm).toBe(97.8)
   })
 
   it('mostra un errore di formato per una circonferenza non valida', async () => {
@@ -97,9 +93,9 @@ describe('DatiVisitaForm', () => {
           bmi: 26.05, whr: null, whtr: null, mamcCm: null,
           circonferenze: {
             vitaCm: 90.1, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
-            polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
+            polpaccioCm: null, toraceCm: null, braccioContrattoCm: null, braccioRilassatoDominanteCm: null, braccioContrattoDominanteCm: null, cosciaDominanteCm: null, polpaccioDominanteCm: null,
           },
-          protocolloVita: 'OMBELICALE',
+          parteDominante: null,
           note: 'Nota precedente',
           obiettivo: 'DIMAGRIMENTO',
           plicometria: null,
@@ -112,7 +108,6 @@ describe('DatiVisitaForm', () => {
       altezzaCm: 178,
       pesoKg: 82.5,
       circonferenzaVitaCm: 90.1,
-      protocolloVita: 'OMBELICALE',
       note: 'Nota precedente',
       obiettivo: 'DIMAGRIMENTO',
     })
@@ -140,9 +135,9 @@ describe('DatiVisitaForm', () => {
           bmi: 26.05, whr: null, whtr: null, mamcCm: null,
           circonferenze: {
             vitaCm: null, fianchiCm: null, addomeCm: null, braccioRilassatoCm: null, cosciaCm: null,
-            polpaccioCm: null, colloCm: null, toraceCm: null, braccioContrattoCm: null, avambraccioCm: null, cavigliaCm: null,
+            polpaccioCm: null, toraceCm: null, braccioContrattoCm: null, braccioRilassatoDominanteCm: null, braccioContrattoDominanteCm: null, cosciaDominanteCm: null, polpaccioDominanteCm: null,
           },
-          protocolloVita: 'OMS',
+          parteDominante: null,
           note: null,
           obiettivo: 'DIMAGRIMENTO',
           plicometria: null,

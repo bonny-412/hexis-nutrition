@@ -128,7 +128,6 @@ class PazienteVisiteControllerTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/pazienti/" + paziente.getId() + "/visite/" + visitaId)
                         .header("Authorization", "Bearer " + tokenPer(professionista)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.protocolloVita").value("OMS"))
                 .andExpect(jsonPath("$.plicometria.protocollo").value("JACKSON_POLLOCK_3"))
                 .andExpect(jsonPath("$.plicometria.plicaPettoraleMm").value(10.00))
                 .andExpect(jsonPath("$.plicometria.plicaAddominaleMm").value(10.00))
@@ -151,7 +150,7 @@ class PazienteVisiteControllerTest extends AbstractIntegrationTest {
         Paziente pazienteA = creaPaziente(professionista, "paz-dettaglio-altro-a@example.com");
         Paziente pazienteB = creaPaziente(professionista, "paz-dettaglio-altro-b@example.com");
         Visita visitaDiB = new Visita(pazienteB.getId(), LocalDate.of(2026, 1, 1), 170, new java.math.BigDecimal("70.0"),
-                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
+                null, null, null, null, null, null, null, null, null, null);
         visitaRepository.save(visitaDiB);
 
         mockMvc.perform(get("/pazienti/" + pazienteA.getId() + "/visite/" + visitaDiB.getId())
@@ -164,7 +163,7 @@ class PazienteVisiteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = creaProfessionista("prof-aggiorna-visita@example.com");
         Paziente paziente = creaPaziente(professionista, "paz-aggiorna-visita@example.com");
         Visita visita = new Visita(paziente.getId(), LocalDate.of(2026, 1, 1), 178, new java.math.BigDecimal("80.0"),
-                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
+                null, null, null, null, null, null, null, null, null, null);
         VisitaCalcoli.applica(visita);
         visitaRepository.save(visita);
 
@@ -191,7 +190,7 @@ class PazienteVisiteControllerTest extends AbstractIntegrationTest {
         Paziente paziente = creaPaziente(professionista, "paz-aggiorna-whr@example.com");
         Visita visita = new Visita(paziente.getId(), LocalDate.of(2026, 1, 1), 180, new java.math.BigDecimal("80.0"),
                 new java.math.BigDecimal("95.0"), new java.math.BigDecimal("100.0"),
-                null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
+                null, null, null, null, null, null, null, null);
         VisitaCalcoli.applica(visita);
         visitaRepository.save(visita);
         assertThat(visita.getWhr()).isNotNull();
@@ -273,7 +272,7 @@ class PazienteVisiteControllerTest extends AbstractIntegrationTest {
         Professionista professionistaB = creaProfessionista("prof-aggiorna-visita-b@example.com");
         Paziente pazienteDiB = creaPaziente(professionistaB, "paz-aggiorna-visita-b@example.com");
         Visita visitaDiB = new Visita(pazienteDiB.getId(), LocalDate.of(2026, 1, 1), 170, new java.math.BigDecimal("70.0"),
-                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
+                null, null, null, null, null, null, null, null, null, null);
         visitaRepository.save(visitaDiB);
 
         mockMvc.perform(put("/pazienti/" + pazienteDiB.getId() + "/visite/" + visitaDiB.getId())
@@ -288,7 +287,7 @@ class PazienteVisiteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = creaProfessionista("prof-elimina-visita@example.com");
         Paziente paziente = creaPaziente(professionista, "paz-elimina-visita@example.com");
         Visita visita = new Visita(paziente.getId(), LocalDate.of(2026, 1, 1), 178, new java.math.BigDecimal("80.0"),
-                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
+                null, null, null, null, null, null, null, null, null, null);
         visitaRepository.save(visita);
 
         mockMvc.perform(delete("/pazienti/" + paziente.getId() + "/visite/" + visita.getId())
@@ -338,7 +337,7 @@ class PazienteVisiteControllerTest extends AbstractIntegrationTest {
         Paziente pazienteA = creaPaziente(professionista, "paz-elimina-altro-a@example.com");
         Paziente pazienteB = creaPaziente(professionista, "paz-elimina-altro-b@example.com");
         Visita visitaDiB = new Visita(pazienteB.getId(), LocalDate.of(2026, 1, 1), 170, new java.math.BigDecimal("70.0"),
-                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
+                null, null, null, null, null, null, null, null, null, null);
         visitaRepository.save(visitaDiB);
 
         mockMvc.perform(delete("/pazienti/" + pazienteA.getId() + "/visite/" + visitaDiB.getId())
@@ -354,7 +353,7 @@ class PazienteVisiteControllerTest extends AbstractIntegrationTest {
         Professionista professionistaB = creaProfessionista("prof-elimina-visita-b@example.com");
         Paziente pazienteDiB = creaPaziente(professionistaB, "paz-elimina-visita-b@example.com");
         Visita visitaDiB = new Visita(pazienteDiB.getId(), LocalDate.of(2026, 1, 1), 170, new java.math.BigDecimal("70.0"),
-                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
+                null, null, null, null, null, null, null, null, null, null);
         visitaRepository.save(visitaDiB);
 
         mockMvc.perform(delete("/pazienti/" + pazienteDiB.getId() + "/visite/" + visitaDiB.getId())
@@ -369,7 +368,7 @@ class PazienteVisiteControllerTest extends AbstractIntegrationTest {
         Professionista professionista = creaProfessionista("prof-elimina-401@example.com");
         Paziente paziente = creaPaziente(professionista, "paz-elimina-401@example.com");
         Visita visita = new Visita(paziente.getId(), LocalDate.of(2026, 1, 1), 178, new java.math.BigDecimal("80.0"),
-                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
+                null, null, null, null, null, null, null, null, null, null);
         visitaRepository.save(visita);
 
         mockMvc.perform(delete("/pazienti/" + paziente.getId() + "/visite/" + visita.getId()))

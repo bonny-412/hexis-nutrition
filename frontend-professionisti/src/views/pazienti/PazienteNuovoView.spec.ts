@@ -70,7 +70,7 @@ describe('PazienteNuovoView', () => {
   it('crea il paziente con i dati anagrafici e della visita, poi naviga al suo dettaglio', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '42', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, cellulare: null, medicoRiferimento: null, trattamenti: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
       obiettivoUltimaVisita: null, dataUltimaVisita: null,
       pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null,
     })
@@ -97,8 +97,7 @@ describe('PazienteNuovoView', () => {
         dataVisita: oggiIso(), altezzaCm: 178, pesoKg: 82.5,
         circonferenzaVitaCm: undefined, circonferenzaFianchiCm: undefined, circonferenzaAddomeCm: undefined,
         circonferenzaBraccioRilassatoCm: undefined, circonferenzaCosciaCm: undefined, circonferenzaPolpaccioCm: undefined,
-        circonferenzaColloCm: undefined, circonferenzaToraceCm: undefined, circonferenzaBraccioContrattoCm: undefined,
-        circonferenzaAvambraccioCm: undefined, circonferenzaCavigliaCm: undefined, protocolloVita: undefined,
+        circonferenzaToraceCm: undefined, circonferenzaBraccioContrattoCm: undefined,
         note: undefined, obiettivo: 'MANTENIMENTO', plicometria: undefined,
       },
     })
@@ -109,7 +108,7 @@ describe('PazienteNuovoView', () => {
   it('invia tutte le circonferenze della visita con i valori corretti nei rispettivi campi', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '43', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, cellulare: null, medicoRiferimento: null, trattamenti: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
       obiettivoUltimaVisita: null, dataUltimaVisita: null,
       pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null,
     })
@@ -137,11 +136,8 @@ describe('PazienteNuovoView', () => {
     await wrapper.find('#circonferenza-braccio-rilassato').setValue('93,4')
     await wrapper.find('#circonferenza-coscia').setValue('94,5')
     await wrapper.find('#circonferenza-polpaccio').setValue('95,6')
-    await wrapper.find('#circonferenza-collo').setValue('96,7')
     await wrapper.find('#circonferenza-torace').setValue('97,8')
     await wrapper.find('#circonferenza-braccio-contratto').setValue('98,9')
-    await wrapper.find('#circonferenza-avambraccio').setValue('99,0')
-    await wrapper.find('#circonferenza-caviglia').setValue('100,1')
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
@@ -152,8 +148,7 @@ describe('PazienteNuovoView', () => {
         dataVisita: oggiIso(), altezzaCm: 178, pesoKg: 82.5,
         circonferenzaVitaCm: 90.1, circonferenzaFianchiCm: 91.2, circonferenzaAddomeCm: 92.3,
         circonferenzaBraccioRilassatoCm: 93.4, circonferenzaCosciaCm: 94.5, circonferenzaPolpaccioCm: 95.6,
-        circonferenzaColloCm: 96.7, circonferenzaToraceCm: 97.8, circonferenzaBraccioContrattoCm: 98.9,
-        circonferenzaAvambraccioCm: 99.0, circonferenzaCavigliaCm: 100.1, protocolloVita: undefined,
+        circonferenzaToraceCm: 97.8, circonferenzaBraccioContrattoCm: 98.9,
         note: undefined, obiettivo: 'MANTENIMENTO', plicometria: undefined,
       },
     })
@@ -361,7 +356,7 @@ describe('PazienteNuovoView', () => {
   it('include la plicometria nel payload quando protocollo e pliche sono compilati', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '44', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, cellulare: null, medicoRiferimento: null, trattamenti: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
       obiettivoUltimaVisita: null, dataUltimaVisita: null,
       pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null,
     })
@@ -405,7 +400,7 @@ describe('PazienteNuovoView', () => {
   it('permette di riportare il tipo lavoro allo stato non selezionato', async () => {
     vi.mocked(pazientiApi.crea).mockResolvedValue({
       id: '45', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
-      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
+      telefono: null, dataNascita: null, sesso: 'M', lavoro: null, cellulare: null, medicoRiferimento: null, trattamenti: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
       obiettivoUltimaVisita: null, dataUltimaVisita: null,
       pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null,
     })

@@ -159,9 +159,8 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                                  "circonferenzaVitaCm":90.1,"circonferenzaFianchiCm":91.2,
                                  "circonferenzaAddomeCm":92.3,"circonferenzaBraccioRilassatoCm":93.4,
                                  "circonferenzaCosciaCm":94.5,"circonferenzaPolpaccioCm":95.6,
-                                 "circonferenzaColloCm":96.7,"circonferenzaToraceCm":97.8,
-                                 "circonferenzaBraccioContrattoCm":98.9,"circonferenzaAvambraccioCm":99.0,
-                                 "circonferenzaCavigliaCm":100.1,"protocolloVita":"OMBELICALE"}}
+                                 "circonferenzaToraceCm":97.8,
+                                 "circonferenzaBraccioContrattoCm":98.9}}
                                 """))
                 .andExpect(status().isCreated());
 
@@ -176,31 +175,8 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         assertThat(visita.getCirconferenzaBraccioRilassatoCm()).isEqualByComparingTo("93.4");
         assertThat(visita.getCirconferenzaCosciaCm()).isEqualByComparingTo("94.5");
         assertThat(visita.getCirconferenzaPolpaccioCm()).isEqualByComparingTo("95.6");
-        assertThat(visita.getCirconferenzaColloCm()).isEqualByComparingTo("96.7");
         assertThat(visita.getCirconferenzaToraceCm()).isEqualByComparingTo("97.8");
         assertThat(visita.getCirconferenzaBraccioContrattoCm()).isEqualByComparingTo("98.9");
-        assertThat(visita.getCirconferenzaAvambraccioCm()).isEqualByComparingTo("99.0");
-        assertThat(visita.getCirconferenzaCavigliaCm()).isEqualByComparingTo("100.1");
-        assertThat(visita.getProtocolloVita()).isEqualTo(ProtocolloVita.OMBELICALE);
-    }
-
-    @Test
-    void creaPazienteSenzaProtocolloVitaUsaOmsPerDefault() throws Exception {
-        Professionista professionista = professionistaRepository.save(
-                new Professionista("prof-protocollo-default@example.com", "hash", "Anna", "Bianchi"));
-
-        mockMvc.perform(post("/pazienti")
-                        .header("Authorization", "Bearer " + tokenPer(professionista))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"nome":"Luca","cognome":"Verdi","codiceFiscale":"RSSMRA80A01H501U","email":"luca-protocollo-default@example.com",
-                                 "dataNascita":"1990-05-20","sesso":"M",
-                                 "visita":{"altezzaCm":178,"pesoKg":82.5}}
-                                """))
-                .andExpect(status().isCreated());
-
-        List<Visita> visite = visitaRepository.findAll();
-        assertThat(visite.get(0).getProtocolloVita()).isEqualTo(ProtocolloVita.OMS);
     }
 
     @Test
@@ -463,7 +439,7 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                 "RSSMRA80A01H501U", "luca-aggiorna-visita@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M,
                 null, null, null));
         Visita visita = new Visita(paziente.getId(), LocalDate.of(2026, 1, 1), 178, new BigDecimal("80.0"),
-                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
+                null, null, null, null, null, null, null, null, null, null);
         visitaRepository.save(visita);
 
         mockMvc.perform(put("/pazienti/" + paziente.getId())
@@ -739,15 +715,13 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         match.setStatoAccount(StatoAccountPaziente.ATTIVO);
         pazienteRepository.save(match);
         visitaRepository.save(new Visita(match.getId(), LocalDate.of(2026, 6, 1), 178, new java.math.BigDecimal("75.0"),
-                null, null, null, null, null, null, null, null, null, null, null,
-                ProtocolloVita.OMS, null, ObiettivoVisita.IPERTROFIA));
+                null, null, null, null, null, null, null, null, null, ObiettivoVisita.IPERTROFIA));
         Paziente altro = new Paziente(professionista.getId(), "Marco", "Bianchi",
                 "BNCMRC70A01H501U", "marco-vecchio-ricerca4@example.com", null, LocalDate.of(1970, 1, 1), Sesso.M, null, null, null);
         altro.setStatoAccount(StatoAccountPaziente.ATTIVO);
         pazienteRepository.save(altro);
         visitaRepository.save(new Visita(altro.getId(), LocalDate.of(2025, 1, 1), 178, new java.math.BigDecimal("75.0"),
-                null, null, null, null, null, null, null, null, null, null, null,
-                ProtocolloVita.OMS, null, ObiettivoVisita.IPERTROFIA));
+                null, null, null, null, null, null, null, null, null, ObiettivoVisita.IPERTROFIA));
 
         mockMvc.perform(get("/pazienti/ricerca")
                         .param("statoAccount", "ATTIVO")
@@ -815,11 +789,9 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                 "VRDGLI85A41H501U", "giulia-ricerca6@example.com", null, LocalDate.of(1985, 3, 10), Sesso.F, null, null, null));
 
         visitaRepository.save(new Visita(conVisite.getId(), LocalDate.of(2026, 1, 12), 178, BigDecimal.valueOf(84.5),
-                null, null, null, null, null, null, null, null, null, null, null,
-                ProtocolloVita.OMS, null, ObiettivoVisita.DIMAGRIMENTO));
+                null, null, null, null, null, null, null, null, null, ObiettivoVisita.DIMAGRIMENTO));
         visitaRepository.save(new Visita(conVisite.getId(), LocalDate.of(2026, 6, 1), 178, BigDecimal.valueOf(80.9),
-                null, null, null, null, null, null, null, null, null, null, null,
-                ProtocolloVita.OMS, null, ObiettivoVisita.IPERTROFIA));
+                null, null, null, null, null, null, null, null, null, ObiettivoVisita.IPERTROFIA));
 
         mockMvc.perform(get("/pazienti/ricerca")
                         .param("ordinaPer", "nome")
@@ -1127,10 +1099,10 @@ class PazienteControllerTest extends AbstractIntegrationTest {
                 "RSSMRA80A01H501U", "luca-visite-ordine@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
 
         Visita piuRecente = new Visita(paziente.getId(), LocalDate.of(2026, 8, 1), 178, new BigDecimal("77.5"),
-                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
+                null, null, null, null, null, null, null, null, null, null);
         piuRecente.setBmi(new BigDecimal("24.4"));
         Visita piuVecchia = new Visita(paziente.getId(), LocalDate.of(2026, 6, 1), 178, new BigDecimal("80.0"),
-                null, null, null, null, null, null, null, null, null, null, null, ProtocolloVita.OMS, null, null);
+                null, null, null, null, null, null, null, null, null, null);
         piuVecchia.setBmi(new BigDecimal("25.2"));
         visitaRepository.save(piuRecente);
         visitaRepository.save(piuVecchia);

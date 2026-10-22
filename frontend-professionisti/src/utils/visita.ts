@@ -17,14 +17,15 @@ export const ETICHETTE_CIRCONFERENZE: Record<keyof Visita['circonferenze'], stri
   vitaCm: 'Vita',
   fianchiCm: 'Fianchi',
   addomeCm: 'Addome',
-  braccioRilassatoCm: 'Braccio rilassato',
-  braccioContrattoCm: 'Braccio contratto',
-  cosciaCm: 'Coscia',
-  polpaccioCm: 'Polpaccio',
-  colloCm: 'Collo',
   toraceCm: 'Torace',
-  avambraccioCm: 'Avambraccio',
-  cavigliaCm: 'Caviglia',
+  braccioRilassatoCm: 'Braccio rilassato (non dominante)',
+  braccioContrattoCm: 'Braccio contratto (non dominante)',
+  cosciaCm: 'Coscia (non dominante)',
+  polpaccioCm: 'Polpaccio (non dominante)',
+  braccioRilassatoDominanteCm: 'Braccio rilassato (dominante)',
+  braccioContrattoDominanteCm: 'Braccio contratto (dominante)',
+  cosciaDominanteCm: 'Coscia (dominante)',
+  polpaccioDominanteCm: 'Polpaccio (dominante)',
 }
 
 export interface FasciaBmi {

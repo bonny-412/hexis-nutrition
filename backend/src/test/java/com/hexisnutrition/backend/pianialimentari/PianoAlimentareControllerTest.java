@@ -55,7 +55,7 @@ class PianoAlimentareControllerTest extends AbstractIntegrationTest {
                 "BNCMRA80A01H501U", "mario@test.it", "333", LocalDate.of(1990, 1, 1), Sesso.M,
                 null, StileDiVita.ATTIVO, null));
         visitaRepository.save(new Visita(paziente.getId(), LocalDate.now(), 178, BigDecimal.valueOf(78),
-                null, null, null, null, null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null,
                 ObiettivoVisita.IPERTROFIA));
     }
 

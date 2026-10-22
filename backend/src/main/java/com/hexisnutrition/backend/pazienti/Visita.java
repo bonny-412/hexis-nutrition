@@ -52,24 +52,27 @@ public class Visita {
     @Column(name = "circonferenza_polpaccio_cm")
     private BigDecimal circonferenzaPolpaccioCm;
 
-    @Column(name = "circonferenza_collo_cm")
-    private BigDecimal circonferenzaColloCm;
-
     @Column(name = "circonferenza_torace_cm")
     private BigDecimal circonferenzaToraceCm;
 
     @Column(name = "circonferenza_braccio_contratto_cm")
     private BigDecimal circonferenzaBraccioContrattoCm;
 
-    @Column(name = "circonferenza_avambraccio_cm")
-    private BigDecimal circonferenzaAvambraccioCm;
-
-    @Column(name = "circonferenza_caviglia_cm")
-    private BigDecimal circonferenzaCavigliaCm;
-
     @Enumerated(EnumType.STRING)
-    @Column(name = "protocollo_vita", nullable = false)
-    private ProtocolloVita protocolloVita = ProtocolloVita.OMS;
+    @Column(name = "parte_dominante")
+    private ParteDominante parteDominante;
+
+    @Column(name = "circonferenza_braccio_rilassato_dominante_cm")
+    private BigDecimal circonferenzaBraccioRilassatoDominanteCm;
+
+    @Column(name = "circonferenza_braccio_contratto_dominante_cm")
+    private BigDecimal circonferenzaBraccioContrattoDominanteCm;
+
+    @Column(name = "circonferenza_coscia_dominante_cm")
+    private BigDecimal circonferenzaCosciaDominanteCm;
+
+    @Column(name = "circonferenza_polpaccio_dominante_cm")
+    private BigDecimal circonferenzaPolpaccioDominanteCm;
 
     @Column(columnDefinition = "TEXT")
     private String note;
@@ -100,9 +103,8 @@ public class Visita {
                   BigDecimal circonferenzaVitaCm, BigDecimal circonferenzaFianchiCm,
                   BigDecimal circonferenzaAddomeCm, BigDecimal circonferenzaBraccioRilassatoCm,
                   BigDecimal circonferenzaCosciaCm, BigDecimal circonferenzaPolpaccioCm,
-                  BigDecimal circonferenzaColloCm, BigDecimal circonferenzaToraceCm,
-                  BigDecimal circonferenzaBraccioContrattoCm, BigDecimal circonferenzaAvambraccioCm,
-                  BigDecimal circonferenzaCavigliaCm, ProtocolloVita protocolloVita,
+                  BigDecimal circonferenzaToraceCm,
+                  BigDecimal circonferenzaBraccioContrattoCm,
                   String note, ObiettivoVisita obiettivo) {
         this.pazienteId = pazienteId;
         if (dataVisita != null) {
@@ -116,14 +118,8 @@ public class Visita {
         this.circonferenzaBraccioRilassatoCm = circonferenzaBraccioRilassatoCm;
         this.circonferenzaCosciaCm = circonferenzaCosciaCm;
         this.circonferenzaPolpaccioCm = circonferenzaPolpaccioCm;
-        this.circonferenzaColloCm = circonferenzaColloCm;
         this.circonferenzaToraceCm = circonferenzaToraceCm;
         this.circonferenzaBraccioContrattoCm = circonferenzaBraccioContrattoCm;
-        this.circonferenzaAvambraccioCm = circonferenzaAvambraccioCm;
-        this.circonferenzaCavigliaCm = circonferenzaCavigliaCm;
-        if (protocolloVita != null) {
-            this.protocolloVita = protocolloVita;
-        }
         this.note = note;
         if (obiettivo != null) {
             this.obiettivo = obiettivo;
@@ -210,14 +206,6 @@ public class Visita {
         this.circonferenzaPolpaccioCm = circonferenzaPolpaccioCm;
     }
 
-    public BigDecimal getCirconferenzaColloCm() {
-        return circonferenzaColloCm;
-    }
-
-    public void setCirconferenzaColloCm(BigDecimal circonferenzaColloCm) {
-        this.circonferenzaColloCm = circonferenzaColloCm;
-    }
-
     public BigDecimal getCirconferenzaToraceCm() {
         return circonferenzaToraceCm;
     }
@@ -232,30 +220,6 @@ public class Visita {
 
     public void setCirconferenzaBraccioContrattoCm(BigDecimal circonferenzaBraccioContrattoCm) {
         this.circonferenzaBraccioContrattoCm = circonferenzaBraccioContrattoCm;
-    }
-
-    public BigDecimal getCirconferenzaAvambraccioCm() {
-        return circonferenzaAvambraccioCm;
-    }
-
-    public void setCirconferenzaAvambraccioCm(BigDecimal circonferenzaAvambraccioCm) {
-        this.circonferenzaAvambraccioCm = circonferenzaAvambraccioCm;
-    }
-
-    public BigDecimal getCirconferenzaCavigliaCm() {
-        return circonferenzaCavigliaCm;
-    }
-
-    public void setCirconferenzaCavigliaCm(BigDecimal circonferenzaCavigliaCm) {
-        this.circonferenzaCavigliaCm = circonferenzaCavigliaCm;
-    }
-
-    public ProtocolloVita getProtocolloVita() {
-        return protocolloVita;
-    }
-
-    public void setProtocolloVita(ProtocolloVita protocolloVita) {
-        this.protocolloVita = protocolloVita != null ? protocolloVita : ProtocolloVita.OMS;
     }
 
     public String getNote() {
@@ -280,6 +244,46 @@ public class Visita {
 
     public void setBmi(BigDecimal bmi) {
         this.bmi = bmi;
+    }
+
+    public ParteDominante getParteDominante() {
+        return parteDominante;
+    }
+
+    public void setParteDominante(ParteDominante parteDominante) {
+        this.parteDominante = parteDominante;
+    }
+
+    public BigDecimal getCirconferenzaBraccioRilassatoDominanteCm() {
+        return circonferenzaBraccioRilassatoDominanteCm;
+    }
+
+    public void setCirconferenzaBraccioRilassatoDominanteCm(BigDecimal circonferenzaBraccioRilassatoDominanteCm) {
+        this.circonferenzaBraccioRilassatoDominanteCm = circonferenzaBraccioRilassatoDominanteCm;
+    }
+
+    public BigDecimal getCirconferenzaBraccioContrattoDominanteCm() {
+        return circonferenzaBraccioContrattoDominanteCm;
+    }
+
+    public void setCirconferenzaBraccioContrattoDominanteCm(BigDecimal circonferenzaBraccioContrattoDominanteCm) {
+        this.circonferenzaBraccioContrattoDominanteCm = circonferenzaBraccioContrattoDominanteCm;
+    }
+
+    public BigDecimal getCirconferenzaCosciaDominanteCm() {
+        return circonferenzaCosciaDominanteCm;
+    }
+
+    public void setCirconferenzaCosciaDominanteCm(BigDecimal circonferenzaCosciaDominanteCm) {
+        this.circonferenzaCosciaDominanteCm = circonferenzaCosciaDominanteCm;
+    }
+
+    public BigDecimal getCirconferenzaPolpaccioDominanteCm() {
+        return circonferenzaPolpaccioDominanteCm;
+    }
+
+    public void setCirconferenzaPolpaccioDominanteCm(BigDecimal circonferenzaPolpaccioDominanteCm) {
+        this.circonferenzaPolpaccioDominanteCm = circonferenzaPolpaccioDominanteCm;
     }
 
     public BigDecimal getWhr() {

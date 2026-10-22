@@ -3,6 +3,7 @@ import { computed, nextTick, ref, type Ref } from 'vue'
 import type { AcceptableValue } from 'reka-ui'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Accordion,
@@ -38,6 +39,7 @@ const props = defineProps<{
   datiIniziali?: Visita | null
   altezzaSuggeritaCm?: number | null
   obiettivoSuggerito?: Visita['obiettivo'] | null
+  parteDominanteSuggerita?: Visita['parteDominante']
 }>()
 
 function valoreIniziale(valore: number | null | undefined): string {
@@ -60,12 +62,26 @@ const circonferenzaAddome = ref(valoreIniziale(props.datiIniziali?.circonferenze
 const circonferenzaBraccioRilassato = ref(valoreIniziale(props.datiIniziali?.circonferenze.braccioRilassatoCm))
 const circonferenzaCoscia = ref(valoreIniziale(props.datiIniziali?.circonferenze.cosciaCm))
 const circonferenzaPolpaccio = ref(valoreIniziale(props.datiIniziali?.circonferenze.polpaccioCm))
-const circonferenzaCollo = ref(valoreIniziale(props.datiIniziali?.circonferenze.colloCm))
 const circonferenzaTorace = ref(valoreIniziale(props.datiIniziali?.circonferenze.toraceCm))
 const circonferenzaBraccioContratto = ref(valoreIniziale(props.datiIniziali?.circonferenze.braccioContrattoCm))
-const circonferenzaAvambraccio = ref(valoreIniziale(props.datiIniziali?.circonferenze.avambraccioCm))
-const circonferenzaCaviglia = ref(valoreIniziale(props.datiIniziali?.circonferenze.cavigliaCm))
-const protocolloVita = ref<'' | 'OMS' | 'OMBELICALE' | 'ALTRO'>(props.datiIniziali?.protocolloVita ?? '')
+const circonferenzaBraccioRilassatoDominante = ref(valoreIniziale(props.datiIniziali?.circonferenze.braccioRilassatoDominanteCm))
+const circonferenzaBraccioContrattoDominante = ref(valoreIniziale(props.datiIniziali?.circonferenze.braccioContrattoDominanteCm))
+const circonferenzaCosciaDominante = ref(valoreIniziale(props.datiIniziali?.circonferenze.cosciaDominanteCm))
+const circonferenzaPolpaccioDominante = ref(valoreIniziale(props.datiIniziali?.circonferenze.polpaccioDominanteCm))
+
+// La parte dominante si precompila dall'ultima visita (o dalla visita in modifica); altrimenti resta vuota.
+const parteDominanteIniziale: '' | 'DESTRA' | 'SINISTRA' =
+  (props.datiIniziali ? props.datiIniziali.parteDominante : props.parteDominanteSuggerita) ?? ''
+const parteDominante = ref<'' | 'DESTRA' | 'SINISTRA'>(parteDominanteIniziale)
+// Le misure sulla parte dominante sono facoltative: il blocco compare solo se il professionista lo chiede.
+const conParteDominante = ref(
+  [
+    circonferenzaBraccioRilassatoDominante.value,
+    circonferenzaBraccioContrattoDominante.value,
+    circonferenzaCosciaDominante.value,
+    circonferenzaPolpaccioDominante.value,
+  ].some((v) => v !== ''),
+)
 const note = ref(props.datiIniziali?.note ?? '')
 const obiettivo = ref<Visita['obiettivo']>(
   props.datiIniziali?.obiettivo ?? props.obiettivoSuggerito ?? 'MANTENIMENTO',
@@ -73,8 +89,18 @@ const obiettivo = ref<Visita['obiettivo']>(
 
 const VALORE_SELEZIONA = '__seleziona__'
 
-function onProtocolloVitaChange(valore: AcceptableValue) {
-  protocolloVita.value = valore === VALORE_SELEZIONA ? '' : (valore as typeof protocolloVita.value)
+function onParteDominanteChange(valore: AcceptableValue) {
+  parteDominante.value = valore === VALORE_SELEZIONA ? '' : (valore as 'DESTRA' | 'SINISTRA')
+}
+
+function onConParteDominanteChange(valore: boolean | 'indeterminate') {
+  conParteDominante.value = valore === true
+  if (valore !== true) {
+    circonferenzaBraccioRilassatoDominante.value = ''
+    circonferenzaBraccioContrattoDominante.value = ''
+    circonferenzaCosciaDominante.value = ''
+    circonferenzaPolpaccioDominante.value = ''
+  }
 }
 
 function onObiettivoChange(valore: AcceptableValue) {
@@ -144,11 +170,12 @@ const onCirconferenzaAddomeInput = creaHandlerCirconferenza(circonferenzaAddome,
 const onCirconferenzaBraccioRilassatoInput = creaHandlerCirconferenza(circonferenzaBraccioRilassato, 'circonferenzaBraccioRilassato')
 const onCirconferenzaCosciaInput = creaHandlerCirconferenza(circonferenzaCoscia, 'circonferenzaCoscia')
 const onCirconferenzaPolpaccioInput = creaHandlerCirconferenza(circonferenzaPolpaccio, 'circonferenzaPolpaccio')
-const onCirconferenzaColloInput = creaHandlerCirconferenza(circonferenzaCollo, 'circonferenzaCollo')
 const onCirconferenzaToraceInput = creaHandlerCirconferenza(circonferenzaTorace, 'circonferenzaTorace')
 const onCirconferenzaBraccioContrattoInput = creaHandlerCirconferenza(circonferenzaBraccioContratto, 'circonferenzaBraccioContratto')
-const onCirconferenzaAvambraccioInput = creaHandlerCirconferenza(circonferenzaAvambraccio, 'circonferenzaAvambraccio')
-const onCirconferenzaCavigliaInput = creaHandlerCirconferenza(circonferenzaCaviglia, 'circonferenzaCaviglia')
+const onCirconferenzaBraccioRilassatoDominanteInput = creaHandlerCirconferenza(circonferenzaBraccioRilassatoDominante, 'circonferenzaBraccioRilassatoDominante')
+const onCirconferenzaBraccioContrattoDominanteInput = creaHandlerCirconferenza(circonferenzaBraccioContrattoDominante, 'circonferenzaBraccioContrattoDominante')
+const onCirconferenzaCosciaDominanteInput = creaHandlerCirconferenza(circonferenzaCosciaDominante, 'circonferenzaCosciaDominante')
+const onCirconferenzaPolpaccioDominanteInput = creaHandlerCirconferenza(circonferenzaPolpaccioDominante, 'circonferenzaPolpaccioDominante')
 
 // --- VALIDAZIONE ---
 function valida(): boolean {
@@ -168,11 +195,12 @@ function valida(): boolean {
     ['circonferenzaBraccioRilassato', circonferenzaBraccioRilassato.value],
     ['circonferenzaCoscia', circonferenzaCoscia.value],
     ['circonferenzaPolpaccio', circonferenzaPolpaccio.value],
-    ['circonferenzaCollo', circonferenzaCollo.value],
     ['circonferenzaTorace', circonferenzaTorace.value],
     ['circonferenzaBraccioContratto', circonferenzaBraccioContratto.value],
-    ['circonferenzaAvambraccio', circonferenzaAvambraccio.value],
-    ['circonferenzaCaviglia', circonferenzaCaviglia.value],
+    ['circonferenzaBraccioRilassatoDominante', circonferenzaBraccioRilassatoDominante.value],
+    ['circonferenzaBraccioContrattoDominante', circonferenzaBraccioContrattoDominante.value],
+    ['circonferenzaCosciaDominante', circonferenzaCosciaDominante.value],
+    ['circonferenzaPolpaccioDominante', circonferenzaPolpaccioDominante.value],
   ]
   for (const [chiave, valore] of circonferenze) {
     assegna(chiave, erroreCirconferenza(valore))
@@ -203,12 +231,13 @@ function ottieniDati(): CreaVisitaRequest {
     circonferenzaBraccioRilassatoCm: numeroItalianoOpzionale(circonferenzaBraccioRilassato.value),
     circonferenzaCosciaCm: numeroItalianoOpzionale(circonferenzaCoscia.value),
     circonferenzaPolpaccioCm: numeroItalianoOpzionale(circonferenzaPolpaccio.value),
-    circonferenzaColloCm: numeroItalianoOpzionale(circonferenzaCollo.value),
     circonferenzaToraceCm: numeroItalianoOpzionale(circonferenzaTorace.value),
     circonferenzaBraccioContrattoCm: numeroItalianoOpzionale(circonferenzaBraccioContratto.value),
-    circonferenzaAvambraccioCm: numeroItalianoOpzionale(circonferenzaAvambraccio.value),
-    circonferenzaCavigliaCm: numeroItalianoOpzionale(circonferenzaCaviglia.value),
-    protocolloVita: protocolloVita.value || undefined,
+    parteDominante: parteDominante.value || undefined,
+    circonferenzaBraccioRilassatoDominanteCm: numeroItalianoOpzionale(circonferenzaBraccioRilassatoDominante.value),
+    circonferenzaBraccioContrattoDominanteCm: numeroItalianoOpzionale(circonferenzaBraccioContrattoDominante.value),
+    circonferenzaCosciaDominanteCm: numeroItalianoOpzionale(circonferenzaCosciaDominante.value),
+    circonferenzaPolpaccioDominanteCm: numeroItalianoOpzionale(circonferenzaPolpaccioDominante.value),
     note: note.value || undefined,
     obiettivo: obiettivo.value,
     plicometria: plicometriaForm.value?.ottieniDati(),
@@ -226,12 +255,13 @@ function valorizzato(): boolean {
     circonferenzaBraccioRilassato.value !== '' ||
     circonferenzaCoscia.value !== '' ||
     circonferenzaPolpaccio.value !== '' ||
-    circonferenzaCollo.value !== '' ||
     circonferenzaTorace.value !== '' ||
     circonferenzaBraccioContratto.value !== '' ||
-    circonferenzaAvambraccio.value !== '' ||
-    circonferenzaCaviglia.value !== '' ||
-    protocolloVita.value !== '' ||
+    parteDominante.value !== parteDominanteIniziale ||
+    circonferenzaBraccioRilassatoDominante.value !== '' ||
+    circonferenzaBraccioContrattoDominante.value !== '' ||
+    circonferenzaCosciaDominante.value !== '' ||
+    circonferenzaPolpaccioDominante.value !== '' ||
     note.value !== '' ||
     obiettivo.value !== 'MANTENIMENTO' ||
     (plicometriaForm.value?.valorizzato() ?? false)
@@ -302,7 +332,7 @@ defineExpose({
 
     <div class="mt-5 flex flex-col gap-1.5">
       <Label for="note-visita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Note</Label>
-      <Textarea id="note-visita" v-model="note" maxlength="500" placeholder="Note operative, aderenza al piano, piccoli obiettivi fino alla prossima visita..." />
+      <Textarea id="note-visita" v-model="note" maxlength="500" placeholder="Note operative, piccoli obiettivi fino alla prossima visita..." />
       <p class="text-right text-xs text-(--fg3)">{{ note.length }}/500</p>
     </div>
 
@@ -358,21 +388,6 @@ defineExpose({
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="protocollo-vita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Protocollo vita</Label>
-              <Select :model-value="protocolloVita || VALORE_SELEZIONA" @update:model-value="onProtocolloVitaChange">
-                <SelectTrigger id="protocollo-vita" class="w-full">
-                  <SelectValue placeholder="Seleziona" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem :value="VALORE_SELEZIONA">Seleziona</SelectItem>
-                  <SelectItem value="OMS">OMS</SelectItem>
-                  <SelectItem value="OMBELICALE">Ombelicale</SelectItem>
-                  <SelectItem value="ALTRO">Altro</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div class="flex flex-col gap-1.5">
               <Label for="circonferenza-fianchi" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza fianchi</Label>
               <Input id="circonferenza-fianchi" :model-value="circonferenzaFianchi" @update:model-value="onCirconferenzaFianchiInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaFianchi" />
               <p v-if="errori.circonferenzaFianchi" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaFianchi }}</p>
@@ -385,9 +400,37 @@ defineExpose({
             </div>
 
             <div class="flex flex-col gap-1.5">
+              <Label for="circonferenza-torace" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza torace</Label>
+              <Input id="circonferenza-torace" :model-value="circonferenzaTorace" @update:model-value="onCirconferenzaToraceInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaTorace" />
+              <p v-if="errori.circonferenzaTorace" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaTorace }}</p>
+            </div>
+
+            <div class="flex flex-col gap-1.5 sm:col-span-2">
+              <Label for="parte-dominante" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Parte dominante</Label>
+              <Select :model-value="parteDominante || VALORE_SELEZIONA" @update:model-value="onParteDominanteChange">
+                <SelectTrigger id="parte-dominante" class="w-full sm:w-1/2">
+                  <SelectValue placeholder="Seleziona" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="VALORE_SELEZIONA">Seleziona</SelectItem>
+                  <SelectItem value="DESTRA">Destra</SelectItem>
+                  <SelectItem value="SINISTRA">Sinistra</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <h3 class="text-sm font-bold text-(--fg) sm:col-span-2">Parte non dominante</h3>
+
+            <div class="flex flex-col gap-1.5">
               <Label for="circonferenza-braccio-rilassato" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Braccio rilassato</Label>
               <Input id="circonferenza-braccio-rilassato" :model-value="circonferenzaBraccioRilassato" @update:model-value="onCirconferenzaBraccioRilassatoInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaBraccioRilassato" />
               <p v-if="errori.circonferenzaBraccioRilassato" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaBraccioRilassato }}</p>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <Label for="circonferenza-braccio-contratto" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Braccio contratto</Label>
+              <Input id="circonferenza-braccio-contratto" :model-value="circonferenzaBraccioContratto" @update:model-value="onCirconferenzaBraccioContrattoInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaBraccioContratto" />
+              <p v-if="errori.circonferenzaBraccioContratto" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaBraccioContratto }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
@@ -402,35 +445,38 @@ defineExpose({
               <p v-if="errori.circonferenzaPolpaccio" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaPolpaccio }}</p>
             </div>
 
-            <div class="flex flex-col gap-1.5">
-              <Label for="circonferenza-collo" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza collo</Label>
-              <Input id="circonferenza-collo" :model-value="circonferenzaCollo" @update:model-value="onCirconferenzaColloInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaCollo" />
-              <p v-if="errori.circonferenzaCollo" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaCollo }}</p>
-            </div>
+            <label class="flex items-center gap-2 text-sm text-(--fg2) sm:col-span-2">
+              <Checkbox id="con-parte-dominante" :model-value="conParteDominante" @update:model-value="onConParteDominanteChange" />
+              Aggiungi anche le circonferenze della parte dominante
+            </label>
 
-            <div class="flex flex-col gap-1.5">
-              <Label for="circonferenza-torace" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza torace</Label>
-              <Input id="circonferenza-torace" :model-value="circonferenzaTorace" @update:model-value="onCirconferenzaToraceInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaTorace" />
-              <p v-if="errori.circonferenzaTorace" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaTorace }}</p>
-            </div>
+            <template v-if="conParteDominante">
+              <h3 class="text-sm font-bold text-(--fg) sm:col-span-2">Parte dominante</h3>
 
-            <div class="flex flex-col gap-1.5">
-              <Label for="circonferenza-braccio-contratto" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Braccio contratto</Label>
-              <Input id="circonferenza-braccio-contratto" :model-value="circonferenzaBraccioContratto" @update:model-value="onCirconferenzaBraccioContrattoInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaBraccioContratto" />
-              <p v-if="errori.circonferenzaBraccioContratto" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaBraccioContratto }}</p>
-            </div>
+              <div class="flex flex-col gap-1.5">
+                <Label for="circonferenza-braccio-rilassato-dominante" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Braccio rilassato</Label>
+                <Input id="circonferenza-braccio-rilassato-dominante" :model-value="circonferenzaBraccioRilassatoDominante" @update:model-value="onCirconferenzaBraccioRilassatoDominanteInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaBraccioRilassatoDominante" />
+                <p v-if="errori.circonferenzaBraccioRilassatoDominante" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaBraccioRilassatoDominante }}</p>
+              </div>
 
-            <div class="flex flex-col gap-1.5">
-              <Label for="circonferenza-avambraccio" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza avambraccio</Label>
-              <Input id="circonferenza-avambraccio" :model-value="circonferenzaAvambraccio" @update:model-value="onCirconferenzaAvambraccioInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaAvambraccio" />
-              <p v-if="errori.circonferenzaAvambraccio" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaAvambraccio }}</p>
-            </div>
+              <div class="flex flex-col gap-1.5">
+                <Label for="circonferenza-braccio-contratto-dominante" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Braccio contratto</Label>
+                <Input id="circonferenza-braccio-contratto-dominante" :model-value="circonferenzaBraccioContrattoDominante" @update:model-value="onCirconferenzaBraccioContrattoDominanteInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaBraccioContrattoDominante" />
+                <p v-if="errori.circonferenzaBraccioContrattoDominante" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaBraccioContrattoDominante }}</p>
+              </div>
 
-            <div class="flex flex-col gap-1.5">
-              <Label for="circonferenza-caviglia" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza caviglia</Label>
-              <Input id="circonferenza-caviglia" :model-value="circonferenzaCaviglia" @update:model-value="onCirconferenzaCavigliaInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaCaviglia" />
-              <p v-if="errori.circonferenzaCaviglia" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaCaviglia }}</p>
-            </div>
+              <div class="flex flex-col gap-1.5">
+                <Label for="circonferenza-coscia-dominante" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza coscia</Label>
+                <Input id="circonferenza-coscia-dominante" :model-value="circonferenzaCosciaDominante" @update:model-value="onCirconferenzaCosciaDominanteInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaCosciaDominante" />
+                <p v-if="errori.circonferenzaCosciaDominante" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaCosciaDominante }}</p>
+              </div>
+
+              <div class="flex flex-col gap-1.5">
+                <Label for="circonferenza-polpaccio-dominante" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza polpaccio</Label>
+                <Input id="circonferenza-polpaccio-dominante" :model-value="circonferenzaPolpaccioDominante" @update:model-value="onCirconferenzaPolpaccioDominanteInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaPolpaccioDominante" />
+                <p v-if="errori.circonferenzaPolpaccioDominante" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaPolpaccioDominante }}</p>
+              </div>
+            </template>
           </div>
         </AccordionContent>
       </AccordionItem>

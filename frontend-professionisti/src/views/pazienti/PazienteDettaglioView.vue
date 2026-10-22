@@ -51,7 +51,7 @@ const ETICHETTE_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
 }
 
 const CLASSI_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
-  MAI_INVITATO: 'bg-(--hover) text-(--fg4) border border-(--fg4)/20',
+  MAI_INVITATO: 'bg-(--danger)/10 text-(--danger) border border-(--danger)',
   INVITATO: 'bg-(--warn-bg) text-(--warn-fg) border border-(--warn-fg)',
   ATTIVO: 'bg-(--mint) text-(--green) border border-(--green)',
 }
@@ -207,7 +207,7 @@ onMounted(() => {
           <div>
             <div class="flex flex-wrap items-center gap-2.5">
               <h1 class="font-heading text-2xl italic text-(--fg)">{{ paziente.nome }} {{ paziente.cognome }}</h1>
-              <Badge v-if="paziente.statoAccount !== 'MAI_INVITATO'" :class="CLASSI_STATO_ACCOUNT[paziente.statoAccount]">
+              <Badge :class="CLASSI_STATO_ACCOUNT[paziente.statoAccount]">
                 {{ ETICHETTE_STATO_ACCOUNT[paziente.statoAccount] }}
               </Badge>
               <Button
@@ -279,7 +279,7 @@ onMounted(() => {
       <p v-if="erroreVisite" class="text-xs font-medium text-(--danger)">
         Non è stato possibile caricare i dati clinici del paziente.
       </p>
-      <div v-else class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div v-else class="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4 shadow-sm">
           <div class="flex items-center gap-1.5">
             <Scale :size="14" class="text-primary" />
@@ -366,11 +366,6 @@ onMounted(() => {
               {{ formattaNumero(Math.abs(andamento.massaMagra.delta)) }} kg vs prec.
             </p>
           </template>
-        </div>
-
-        <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4 opacity-50 shadow-sm">
-          <p class="text-xs font-bold uppercase tracking-wide text-(--fg4)">Aderenza piano</p>
-          <p class="mt-1 text-sm italic text-(--fg4)">Presto disponibile</p>
         </div>
       </div>
 

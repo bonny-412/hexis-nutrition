@@ -83,15 +83,18 @@ public class PazienteService {
         Paziente paziente = new Paziente(professionistaId, request.nome(), request.cognome(), request.codiceFiscale(), request.email(),
                 request.telefono(), request.dataNascita(), request.sesso(), request.lavoro(), request.stileDiVita(),
                 request.note());
+        paziente.setCellulare(request.cellulare());
+        paziente.setMedicoRiferimento(request.medicoRiferimento());
+        paziente.setTrattamenti(request.trattamenti());
         pazienteRepository.save(paziente);
 
         VisitaRequest v = request.visita();
         Visita visita = new Visita(paziente.getId(), v.dataVisita(), v.altezzaCm(), v.pesoKg(),
                 v.circonferenzaVitaCm(), v.circonferenzaFianchiCm(), v.circonferenzaAddomeCm(),
                 v.circonferenzaBraccioRilassatoCm(), v.circonferenzaCosciaCm(), v.circonferenzaPolpaccioCm(),
-                v.circonferenzaColloCm(), v.circonferenzaToraceCm(), v.circonferenzaBraccioContrattoCm(),
-                v.circonferenzaAvambraccioCm(), v.circonferenzaCavigliaCm(), v.protocolloVita(),
+                v.circonferenzaToraceCm(), v.circonferenzaBraccioContrattoCm(),
                 v.note(), v.obiettivo());
+        applicaParteDominante(visita, v);
         VisitaCalcoli.applica(visita);
         visitaRepository.save(visita);
         plicometriaService.elabora(paziente, visita, v.plicometria());
@@ -110,6 +113,9 @@ public class PazienteService {
         paziente.setDataNascita(request.dataNascita());
         paziente.setSesso(request.sesso());
         paziente.setLavoro(request.lavoro());
+        paziente.setCellulare(request.cellulare());
+        paziente.setMedicoRiferimento(request.medicoRiferimento());
+        paziente.setTrattamenti(request.trattamenti());
         paziente.setStileDiVita(request.stileDiVita());
         paziente.setNote(request.note());
         return pazienteRepository.save(paziente);
@@ -305,6 +311,14 @@ public class PazienteService {
         return VisitaResponse.da(visita, plicometriaRepository.findByVisitaId(visita.getId()).orElse(null));
     }
 
+    private static void applicaParteDominante(Visita visita, VisitaRequest richiesta) {
+        visita.setParteDominante(richiesta.parteDominante());
+        visita.setCirconferenzaBraccioRilassatoDominanteCm(richiesta.circonferenzaBraccioRilassatoDominanteCm());
+        visita.setCirconferenzaBraccioContrattoDominanteCm(richiesta.circonferenzaBraccioContrattoDominanteCm());
+        visita.setCirconferenzaCosciaDominanteCm(richiesta.circonferenzaCosciaDominanteCm());
+        visita.setCirconferenzaPolpaccioDominanteCm(richiesta.circonferenzaPolpaccioDominanteCm());
+    }
+
     @Transactional
     public VisitaResponse creaVisita(UUID professionistaId, UUID pazienteId, VisitaRequest request) {
         Paziente paziente = dettaglio(professionistaId, pazienteId);
@@ -312,9 +326,9 @@ public class PazienteService {
         Visita visita = new Visita(paziente.getId(), request.dataVisita(), request.altezzaCm(), request.pesoKg(),
                 request.circonferenzaVitaCm(), request.circonferenzaFianchiCm(), request.circonferenzaAddomeCm(),
                 request.circonferenzaBraccioRilassatoCm(), request.circonferenzaCosciaCm(), request.circonferenzaPolpaccioCm(),
-                request.circonferenzaColloCm(), request.circonferenzaToraceCm(), request.circonferenzaBraccioContrattoCm(),
-                request.circonferenzaAvambraccioCm(), request.circonferenzaCavigliaCm(), request.protocolloVita(),
+                request.circonferenzaToraceCm(), request.circonferenzaBraccioContrattoCm(),
                 request.note(), request.obiettivo());
+        applicaParteDominante(visita, request);
         VisitaCalcoli.applica(visita);
         visitaRepository.save(visita);
         plicometriaService.elabora(paziente, visita, request.plicometria());
@@ -337,14 +351,11 @@ public class PazienteService {
         visita.setCirconferenzaBraccioRilassatoCm(request.circonferenzaBraccioRilassatoCm());
         visita.setCirconferenzaCosciaCm(request.circonferenzaCosciaCm());
         visita.setCirconferenzaPolpaccioCm(request.circonferenzaPolpaccioCm());
-        visita.setCirconferenzaColloCm(request.circonferenzaColloCm());
         visita.setCirconferenzaToraceCm(request.circonferenzaToraceCm());
         visita.setCirconferenzaBraccioContrattoCm(request.circonferenzaBraccioContrattoCm());
-        visita.setCirconferenzaAvambraccioCm(request.circonferenzaAvambraccioCm());
-        visita.setCirconferenzaCavigliaCm(request.circonferenzaCavigliaCm());
-        visita.setProtocolloVita(request.protocolloVita());
         visita.setNote(request.note());
         visita.setObiettivo(request.obiettivo());
+        applicaParteDominante(visita, request);
 
         visita.setWhr(null);
         visita.setWhtr(null);

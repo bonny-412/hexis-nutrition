@@ -13,10 +13,13 @@ public record AggiornaPazienteRequest(
         @NotBlank @Pattern(regexp = "^[A-Za-z0-9]{16}$", message = "Il codice fiscale deve avere 16 caratteri alfanumerici.") String codiceFiscale,
         @NotBlank @Email String email,
         String telefono,
+        String cellulare,
         @NotNull LocalDate dataNascita,
         @NotNull Sesso sesso,
         String lavoro,
+        String medicoRiferimento,
         StileDiVita stileDiVita,
+        String trattamenti,
         String note
 ) {
 }

@@ -34,8 +34,7 @@ class PazienteSpecificationsTest extends AbstractIntegrationTest {
 
     private Visita creaVisita(UUID pazienteId, LocalDate dataVisita, ObiettivoVisita obiettivo) {
         Visita visita = new Visita(pazienteId, dataVisita, 178, new java.math.BigDecimal("75.0"),
-                null, null, null, null, null, null, null, null, null, null, null,
-                ProtocolloVita.OMS, null, obiettivo);
+                null, null, null, null, null, null, null, null, null, obiettivo);
         return visitaRepository.save(visita);
     }
 
