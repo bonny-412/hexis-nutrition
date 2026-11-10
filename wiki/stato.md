@@ -27,6 +27,8 @@ Sessione del 22 ottobre 2026: anagrafica paziente (medico di riferimento, cellul
 
 Sessione del 10 novembre 2026: **piano attivo modificabile** (solo i concluso restano in sola lettura, data di inizio sempre non modificabile), pulsanti "Annulla"/"Salva" in fondo alla pagina del piano e **conferma "Uscire senza salvare?"** su piano e visita, etichetta fascia BMI rimossa, rifiniture UI su scheda paziente. Non committato. Vedi sessione dedicata più sotto.
 
+Sessione del 10 novembre 2026 (seconda parte): **design e piano dell'Agenda scritti**, nessun codice. Si parte dall'implementazione con una nuova sessione: vedi "Prossimo passo consigliato" e la sessione dedicata più sotto.
+
 Il progetto vive in **un unico repo git**, `bonny-412/hexis-nutrition`, con la radice in `progetti/hexis-nutrition/`.
 
 ## Come far girare il backend su questa macchina
@@ -554,7 +556,21 @@ Sessione a richieste puntuali di Andrea una alla volta, su `master` dopo `3069c9
 - Matita su "Apri piano"/"Modifica" della scheda paziente (cambiata solo in "Piani precedenti"); icone anche sui chip di filtro dello stato account in lista pazienti.
 - Gli 8 test dei grafici e il fallimento noto di `PianiAlimentariListView.spec.ts` (li sistema Andrea).
 
+## Sessione del 10 novembre 2026 (parte 2) — Agenda: design e piano
+
+Brainstorming (`superpowers:brainstorming`) → design → revisione di un builder indipendente ("nessuna domanda importante") → piano. **Nessun codice scritto, nessun commit.** Mockup di riferimento: `Hexis Agenda.dc.html` nella cartella "Hexis Nutrition" scaricata (non versionata).
+
+- **Design**: [`docs/superpowers/specs/2026-11-10-agenda-design.md`](../docs/superpowers/specs/2026-11-10-agenda-design.md). **Piano**: [`docs/superpowers/plans/2026-11-10-agenda.md`](../docs/superpowers/plans/2026-11-10-agenda.md) (11 task: 5 backend, 5 frontend, 1 wiki).
+- **Deciso da Andrea**: tutto il mockup entra, compreso "Blocca fascia oraria". "Avvia visita" apre il form di visita registrata e **salvandola l'appuntamento diventa `CONCLUSA`**, collegato alla visita. **Sovrapposizioni: avviso, decide il professionista** (non si rifiuta). Le **visite annullate restano visibili, grigie e barrate**. **Archiviare un paziente elimina le sue visite e i suoi promemoria futuri.** Il videoconsulto ha un **link facoltativo** incollato a mano. **Data di fine del nuovo piano = prossima visita, se presente.** **Giorni festivi evidenziati** (nazionali italiani, Pasqua e Pasquetta; calcolati nel frontend). **Calendario costruito a mano con Tailwind**, nessuna libreria.
+- **Stato paziente**: chiuso. È solo lo stato account (mai invitato / invitato / attivo), già implementato; niente In target / A rischio, niente aderenza. La memoria di progetto è stata aggiornata.
+- **Scelte dell'agente da far verificare ad Andrea** (elenco completo nel design): "Annullata" distinta da "Conclusa" con etichetta e accento rossastro; il filtro "Visite" mostra anche i blocchi; creare un blocco sopra visite esistenti non avvisa; orari fuori dalla griglia 08–20 rifiutati; se la visita registrata collegata viene eliminata l'appuntamento resta `CONCLUSA` con collegamento nullo; i promemoria passati non vengono toccati dall'archiviazione; data/ora salvate come `DATE`+`TIME` locali (Europa/Roma); il 409 è riservato alle sovrapposizioni, gli altri errori sono 400.
+- **Terminologia**: *appuntamento* = evento d'agenda (nuovo); *visita registrata* = entità `Visita` esistente con misure. Esiste già un "Nuova visita" attivo (dashboard, palette, scheda paziente) che crea la visita registrata; "Nuovo appuntamento" era disabilitato e va attivato.
+- **Aperto prima di iniziare**: (1) **modalità di esecuzione** non ancora scelta: consigliata *subagent-driven*, in alternativa *native*; (2) **eccezione alla regola "mai `style` inline"**: nella griglia Settimana `top`/`height`/`left`/`width` degli eventi sono valori dinamici e il piano ammette `:style` limitato a quelli; Andrea ha approvato il piano ma l'eccezione va riconfermata in apertura di sessione; (3) il piano **non contiene test** (preferenza di Andrea): i casi a rischio sono nella sezione "Review Focus" del piano come verifiche di lettura/manuali.
+- **Per ripartire**: aprire Claude Code su `progetti/hexis-nutrition/`, leggere questa sezione, design e piano, scegliere la modalità e partire dal Task 1 (V30, entità, repository). **Riavviare il backend** dopo ogni task backend (nuove migrazioni, DTO ed endpoint). Nessun commit da nessuna parte (adattare la skill di esecuzione: solo `git add`).
+
 ## Prossimo passo consigliato
+
+**Aggiornato il 10 novembre 2026 (agenda), a fine sessione** (prevale sulle indicazioni sotto): implementare l'Agenda seguendo il piano `docs/superpowers/plans/2026-11-10-agenda.md`, dal Task 1. Prima mossa: scegliere la modalità di esecuzione e riconfermare l'eccezione `:style` (vedi sessione dedicata sopra). Il lavoro delle sessioni precedenti è già committato (ultimo commit `7e1715f`); in working tree restano solo design, piano, `wiki/stato.md` e `wiki/log.md` di questa sessione, non in staging. Andrea committa quando vuole.
 
 **Aggiornato il 22 ottobre 2026, a fine sessione** (prevale sulle indicazioni sotto): lavoro **non committato** (`git status` per l'elenco). Prima mossa: riavviare il backend (V25-V29; V28 cancella dati, vedi sessione del 22 ottobre), poi la suite frontend intera e le verifiche manuali elencate nella sessione. Poi, con l'agenda: prossima visita (colonna e filtro giÃ  pronti), stato pazienti, data di fine piano.
 

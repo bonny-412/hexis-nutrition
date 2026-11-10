@@ -584,3 +584,13 @@ Sessione a richieste puntuali di Andrea, su `master` dopo `3069c95`. Dettaglio c
 ## [2026-11-10] ingest | Piano attivo modificabile (ADR 0006)
 
 Fonte: [sorgenti/2026-11-10-piano-attivo-modificabile.md](sorgenti/2026-11-10-piano-attivo-modificabile.md) (richieste di Andrea in sessione). Nuovo [ADR 0006](decisioni/0006-piano-attivo-modificabile.md): bozza e attivo modificabili, solo il concluso in sola lettura, nessuna versione, `data_inizio` immutabile. Le due scelte proposte dall'agente (concluso resta bloccato, note invariate) sono state **confermate da Andrea** il 2026-11-10 e così indicate nell'ADR. Aggiornati `wiki/index.md` e `wiki/stato.md` (tolto il punto aperto "ADR non scritto").
+
+## [2026-11-10] handoff | Agenda: design e piano, implementazione nella prossima sessione
+
+Dettaglio in [stato](stato.md#sessione-del-10-novembre-2026-parte-2--agenda-design-e-piano). Nessun codice scritto, nessun commit.
+
+- **Design** `docs/superpowers/specs/2026-11-10-agenda-design.md` (revisione builder: nessuna domanda importante) e **piano** `docs/superpowers/plans/2026-11-10-agenda.md` (11 task).
+- **Deciso**: tutto il mockup compreso "Blocca fascia oraria"; "Avvia visita" apre il form di visita e salvandola l appuntamento diventa `CONCLUSA`; sovrapposizioni con avviso e conferma del professionista; annullate visibili, grigie e barrate; archiviare un paziente elimina visite e promemoria futuri; link facoltativo sul videoconsulto; data fine nuovo piano = prossima visita; giorni festivi evidenziati; calendario costruito a mano, nessuna libreria.
+- **Stato paziente**: chiuso, resta solo mai invitato / invitato / attivo (gia implementato).
+- **Aperto**: modalita di esecuzione (consigliata subagent-driven), riconferma dell eccezione `:style` per posizione e dimensione degli eventi in griglia, piano senza test per scelta di Andrea.
+- Aggiornato `wiki/stato.md`.
