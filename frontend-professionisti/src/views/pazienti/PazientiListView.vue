@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, type Component } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { AcceptableValue } from 'reka-ui'
 import { toast } from 'vue-sonner'
@@ -21,7 +21,7 @@ import { Label } from '@/components/ui/label'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
-import { ChevronRight, ArrowUp, ArrowDown, ArrowUpDown, UserPlus } from '@lucide/vue'
+import { ChevronRight, ArrowUp, ArrowDown, ArrowUpDown, UserPlus, MailX, MailCheck, UserCheck } from '@lucide/vue'
 import { formattaDataItalianaConMese, isoATimestamp } from '@/utils/data'
 import { ETICHETTE_OBIETTIVO } from '@/utils/visita'
 
@@ -38,6 +38,12 @@ const ETICHETTE_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
   MAI_INVITATO: 'Mai invitato',
   INVITATO: 'Invitato',
   ATTIVO: 'Attivo',
+}
+
+const ICONE_STATO_ACCOUNT: Record<Paziente['statoAccount'], Component> = {
+  MAI_INVITATO: MailX,
+  INVITATO: MailCheck,
+  ATTIVO: UserCheck,
 }
 
 const CLASSI_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
@@ -495,7 +501,12 @@ const conteggioTesto = computed(() => {
                   </template>
                   <span v-else class="text-(--fg4)">—</span>
                 </TableCell>
-                <TableCell><Badge :class="CLASSI_STATO_ACCOUNT[paziente.statoAccount]">{{ ETICHETTE_STATO_ACCOUNT[paziente.statoAccount] }}</Badge></TableCell>
+                <TableCell>
+                  <Badge :class="CLASSI_STATO_ACCOUNT[paziente.statoAccount]">
+                    <component :is="ICONE_STATO_ACCOUNT[paziente.statoAccount]" />
+                    {{ ETICHETTE_STATO_ACCOUNT[paziente.statoAccount] }}
+                  </Badge>
+                </TableCell>
                 <TableCell class="text-right">
                   <PazienteRigaAzioni
                     :paziente="paziente"

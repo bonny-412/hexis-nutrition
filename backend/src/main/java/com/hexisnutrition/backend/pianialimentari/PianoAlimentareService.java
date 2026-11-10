@@ -188,7 +188,7 @@ public class PianoAlimentareService {
     @Transactional
     public PianoAlimentareResponse aggiorna(UUID professionistaId, UUID pianoId, AggiornaPianoAlimentareRequest request) {
         PianoAlimentare piano = pianoDiProprieta(professionistaId, pianoId);
-        if (piano.getStato() != StatoPiano.BOZZA) {
+        if (piano.statoEffettivo() == StatoPianoVisualizzato.CONCLUSO) {
             throw new PianoAlimentareNonModificabileException();
         }
         if (request.modalita() != null && request.modalita() != piano.getModalita()) {

@@ -3,7 +3,7 @@ title: Stato del progetto
 tags: [stato]
 stato: stabile
 creato: 2026-08-08
-aggiornato: 2026-10-22
+aggiornato: 2026-11-10
 fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, sorgenti/2026-08-09-test-su-postgres-locale.md, sorgenti/2026-08-09-docker-solo-in-produzione.md, sorgenti/2026-08-30-hash-pulizia-invalidazione-token.md, ../docs/superpowers/specs/2026-08-31-nuovo-paziente-con-visita-design.md, ../docs/superpowers/specs/2026-09-01-plicometria-circonferenze-design.md, ../docs/superpowers/plans/2026-09-01-plicometria-circonferenze.md, log.md#2026-08-31-handoff--bug-fix-controlli-pazientenuovoview--ux-maiuscola-errori-live, log.md#2026-09-01-handoff--pagina-nuovo-paziente-eta-componente-visita-e-data-nascita-obbligatoria, log.md#2026-09-01-handoff--modulo-plicometria-e-redesign-circonferenze, log.md#2026-09-02-handoff--rifiniture-plicometria-fix-typescript-sulle-select-riorganizzazione-views, ../docs/superpowers/specs/2026-09-02-lista-pazienti-paginata-design.md, ../docs/superpowers/plans/2026-09-02-lista-pazienti-paginata.md, log.md#2026-09-02-handoff--lista-pazienti-paginata-redesign-ui-ricercafiltri-lato-server-archiviazione-paziente, log.md#2026-09-02-handoff--toast-di-notifica-globale-bug-fix-invito-rifiniture-lista-pazienti, ../docs/superpowers/specs/2026-09-02-dettaglio-paziente-andamento-design.md, ../docs/superpowers/plans/2026-09-02-dettaglio-paziente-andamento.md, log.md#2026-09-02-handoff--sezione-andamento-e-redesign-completo-della-pagina-di-dettaglio-paziente, log.md#2026-09-04-handoff--rifiniture-dettagliolista-paziente-elimina-visita-filtri-lato-server-ridisegnati, ../docs/superpowers/specs/2026-09-08-command-palette-design.md, ../docs/superpowers/plans/2026-09-08-command-palette.md, log.md#2026-09-08-handoff--categorie-bmi-oms-command-palette-globale-%E2%8C%98k-gestione-ui-pazienti-archiviati, ../docs/superpowers/specs/2026-09-12-piano-alimentare-design.md, ../docs/superpowers/plans/2026-09-12-piano-alimentare.md]
 ---
 
@@ -24,6 +24,8 @@ Sessione del 10 ottobre 2026: grafici Panoramica (ultime 5 visite, card unica ma
 Sessione del 20 ottobre 2026: ordinamenti di default (piani per ultima modifica, pazienti per cognome), **stati del piano unificati in Bozza/Attivo/Concluso**, pagina del piano in **sola lettura** oltre la bozza, **note di aggiornamento** sui piani attivi, "Duplica" che precompila "Nuovo piano" senza creare nulla, **riepilogo della visita precedente** nella pagina visita. Tutto non in staging, vedi la sessione dedicata più sotto.
 
 Sessione del 22 ottobre 2026: anagrafica paziente (medico di riferimento, cellulare, trattamenti, "Storia paziente"), visita senza collo/avambraccio/caviglia/protocollo vita e con **parte dominante** (migrazioni V25-V29), lista pazienti con colonna "Prossima visita" predisposta, colori degli stati account/piano, rimosso "Aderenza piano". **Riavviare il backend: V28 cancella dati.** Vedi sessione dedicata piÃ¹ sotto.
+
+Sessione del 10 novembre 2026: **piano attivo modificabile** (solo i concluso restano in sola lettura, data di inizio sempre non modificabile), pulsanti "Annulla"/"Salva" in fondo alla pagina del piano e **conferma "Uscire senza salvare?"** su piano e visita, etichetta fascia BMI rimossa, rifiniture UI su scheda paziente. Non committato. Vedi sessione dedicata più sotto.
 
 Il progetto vive in **un unico repo git**, `bonny-412/hexis-nutrition`, con la radice in `progetti/hexis-nutrition/`.
 
@@ -335,7 +337,7 @@ Lavoro **in staging** (`git add -A` fatto su tutto il repo), **nessun commit** �
 
 Dettaglio completo, incluso l'incidente di processo, in [log](log.md#2026-09-08-handoff--categorie-bmi-oms-command-palette-globale-%E2%8C%98k-gestione-ui-pazienti-archiviati).
 
-**Categorie BMI**: le 8 fasce OMS in `FASCE_BMI` (`frontend-professionisti/src/utils/visita.ts`) avevano già le soglie corrette — corretta solo l'etichetta "Sovrappeso"→"Sovrappeso (pre-obesità)". `categoriaBmi()` ora deriva da `fasciaBmi()`/`FASCE_BMI` invece di una propria logica a 4 categorie duplicata.
+**Categorie BMI**: le 8 fasce OMS in `FASCE_BMI` (`frontend-professionisti/src/utils/visita.ts`) avevano già le soglie corrette — corretta solo l'etichetta "Sovrappeso"→"Sovrappeso (pre-obesità)". `categoriaBmi()` ora deriva da `fasciaBmi()`/`FASCE_BMI` invece di una propria logica a 4 categorie duplicata. Dal 2026-11-10 l'etichetta della fascia non è più mostrata in UI (le funzioni restano in `visita.ts`, inutilizzate dai componenti).
 
 **Command palette globale (⌘K)**: percorso completo (brainstorming → spec → piano → `superpowers:subagent-driven-development`, direttamente su `master`) → nuovo `CommandPalette.vue` montato in `AppHeader.vue`. Scorciatoia Ctrl/Cmd+K, gruppo "Azioni" (le 4 voci di "Crea nuovo" della dashboard + "Nuovo alimento"), gruppo "Pazienti" con ricerca debounced (max 5 + "vedi tutti"), **niente ricerca alimenti** per scelta di Andrea. Due deep-link (`/alimenti?azione=nuovo`, `/pazienti?ricerca=...`) inizialmente letti solo in `onMounted` — la revisione finale whole-branch ha trovato che questo li rendeva un no-op silenzioso se già sulla pagina di destinazione (Vue Router riusa l'istanza a parità di route); corretto con `watch(..., { immediate: true })` + `router.replace` per ripulire il parametro. Nota di processo per il futuro: **qualunque view guidata da query string in questo progetto (route flat, nessun `<router-view :key>`) deve usare `watch` sul parametro, mai solo `onMounted`**.
 
@@ -467,7 +469,7 @@ Sessione a richieste puntuali di Andrea una alla volta, su `master` dopo `3f3076
 **Stati del piano (unificati)** — decisione di Andrea: scaduto e terminato sono la stessa cosa. L'API espone **tre** stati, `BOZZA`/`ATTIVO`/`CONCLUSO` (`StatoPianoVisualizzato`); `CONCLUSO` = `TERMINATO` persistito **oppure** `ATTIVO` con `data_fine` passata. Nel DB restano `BOZZA`/`ATTIVO`/`TERMINATO`, nessuna migrazione. Il filtro `stato=CONCLUSO` seleziona entrambi; liste piani/pazienti e pagina del piano mostrano "Concluso" (grigio).
 
 **Pagina del piano**
-- **Sola lettura per ogni piano non in bozza** (attivo e concluso): campi disabilitati con `fieldset`, pulsanti di aggiunta/rimozione nascosti, niente "Salva". I selettori dei giorni restano usabili (stanno fuori dai `fieldset`). Backend: `PUT` su piano non in bozza → **409**. Sarebbe stato utile, ma **non fatto**, poter prolungare un piano attivo (data di fine) — valutare se serve.
+- **Sola lettura per ogni piano non in bozza** (attivo e concluso): campi disabilitati con `fieldset`, pulsanti di aggiunta/rimozione nascosti, niente "Salva". I selettori dei giorni restano usabili (stanno fuori dai `fieldset`). Backend: `PUT` su piano non in bozza → **409**. Sarebbe stato utile, ma **non fatto**, poter prolungare un piano attivo (data di fine) — valutare se serve. **Superato il 2026-11-10**: ora il piano attivo è modificabile, solo il concluso è in sola lettura (vedi sessione del 10 novembre).
 - **Header**: badge di stato accanto al nome (ambra/verde/grigio) e **avatar del paziente colorato come il badge**; "Salva" primary; menu "⋯" con "Attiva piano" (solo bozza, prima voce), "Duplica come nuovo piano", "Stampa PDF", "Elimina" (solo bozza); pulsante **"Note"** con contatore sui piani non in bozza; riquadro informativo "sola lettura" con link "Aggiungi nota"/"Vedi note".
 - **Duplica** (lista, pagina, scheda paziente): **non crea nulla sul server**. Apre `/piani-alimentari/nuovo?duplicaDa={id}` precompilato (modalità, struttura, kcal, senza note, nome con la **fase incrementata** — "Ipertrofia · fase 2" → "fase 3", altrimenti "(copia)" —, data inizio oggi, nessuna data di fine); il piano nasce al "Salva". Copia la versione **salvata** del piano, non le modifiche in pagina. **Endpoint `POST /piani-alimentari/{id}/duplica` rimosso.**
 
@@ -483,7 +485,7 @@ Aggiornati `wiki/api-contracts.md` e `wiki/modello-dati.md`.
 
 **Da decidere / non fatto**
 - **Con l'agenda** (da riprendere insieme): lo **stato dei pazienti** (In target / Revisione piano / A rischio, senza aderenza né feedback del paziente, vedi memoria) e la **data di fine del nuovo piano precompilata con la data della prossima visita**.
-- Prolungare la data di fine di un piano attivo (oggi è tutto in sola lettura).
+- ~~Prolungare la data di fine di un piano attivo~~ — fatto il 2026-11-10: il piano attivo è modificabile, data di fine compresa.
 - Il fallimento noto in `PianiAlimentariListView.spec.ts` e gli 8 test dei grafici da sistemare (li scrive Andrea).
 - `pianiNellIntervallo` è una funzione pura senza test.
 - ADR non scritti: stati del piano unificati, "Duplica" solo frontend, regola piano↔visita per date.
@@ -522,6 +524,35 @@ Sessione a richieste puntuali di Andrea, su `master` dopo `f6df1d7`. **Nessun co
 - **Con l'agenda**: data di prossima visita (colonna e filtro già predisposti), stato dei pazienti, data di fine del nuovo piano = prossima visita.
 - Test da scrivere (Andrea): campi anagrafici nuovi lato backend (persistenza/lettura `medicoRiferimento`, `cellulare`, `trattamenti`), parte dominante e misure dominanti nel `POST/PUT` visita, `erroreCellulare`, blocco dominante di `DatiVisitaForm`.
 - Fallimenti noti non legati: 8 test di `ConfrontoBarChart`/`PazienteTabPanoramica` (mock `@unovis/vue` senza `VisTooltip`), 1 in `PianiAlimentariListView.spec.ts`.
+
+## Sessione del 10 novembre 2026 — piano attivo modificabile, "Annulla" con conferma, rifiniture UI
+
+Sessione a richieste puntuali di Andrea una alla volta, su `master` dopo `3069c95`. Brainstorming breve in chat (nessuna spec/piano scritti). **Nessun commit e nessun `git add`**: tutto non in staging. **Nulla provato in browser dall'agente.** Nessun test nuovo scritto (li fa Andrea). Dettaglio in [log](log.md).
+
+**Piano attivo modificabile** — decisione di Andrea: il professionista aggiorna il piano in base ai feedback del paziente, il paziente vede sempre la versione salvata (niente versioni né "pubblicazione"). Decisione registrata in [ADR 0006](decisioni/0006-piano-attivo-modificabile.md).
+- **Backend**: `PianoAlimentareService.aggiorna` risponde 409 (`PianoAlimentareNonModificabileException`) solo se `statoEffettivo() == CONCLUSO` (prima: solo `BOZZA` accettata). Bozza e attivo non scaduto sono modificabili, **modalità compresa**. Un piano concluso (terminato o `ATTIVO` con `data_fine` passata) resta in sola lettura (scelta dell'agente, per non riattivarlo di nascosto cambiando la data di fine).
+- **`dataInizio` non è modificabile** in nessuno stato (decisione di Andrea, "per il momento"): nessun campo nuovo nella richiesta di `PUT`.
+- **Frontend** (`PianoAlimentareFormView.vue`): `modalitaModificabile`/`solaLettura` ora dipendono solo da `CONCLUSO`; il riquadro "sola lettura" compare solo sui concluso (link "Vedi note"); il pulsante "Note" e le note di aggiornamento restano com'erano (si aggiungono solo su piano attivo).
+- **Equivoco in sessione**: Andrea ha ottenuto 409 salvando un piano attivo perché il backend in esecuzione era ancora il build precedente. Dopo il riavvio il problema non si è più presentato (i test erano ok). **Riavviare sempre il backend** dopo modifiche al servizio.
+- Aggiornata la riga del `PUT` in `wiki/api-contracts.md`.
+
+**"Annulla" con conferma di uscita**
+- **Pagina del piano**: "Annulla" e "Salva" spostati **in fondo alla pagina**, a destra (non più nell'header con "Note" e "⋯"), visibili su ogni piano modificabile (nuovo, bozza, attivo). Le modifiche non salvate si rilevano confrontando la serializzazione dei campi con quella dell'ultimo caricamento/salvataggio (`firmaCorrente`/`firmaBase`); il nome suggerito in automatico per un piano nuovo non conta come modifica. **Decisione di Andrea**: restano in fondo al contenuto, **non** in una barra fissa (stessa resa su tutti i form; una barra fissa andrebbe applicata a tutta l'app, non solo al piano).
+- **Form visita**: aggiunti `modificato()` a `DatiVisitaForm.vue` e `PlicometriaForm.vue` (confronto con i valori iniziali, **suggerimenti dell'ultima visita compresi**, a differenza di `valorizzato()` che confronta con "vuoto" ed è usato da `PazienteNuovoView`). `VisitaFormView.vue` mostra il dialog solo se `modificato()`.
+- **Dialog unico** in tutta l'app: "Uscire senza salvare?" (già in `PazienteNuovoView.vue`), con "Continua a compilare/modificare" ed "Esci senza salvare". Vale anche per il **link in alto** "Torna al paziente / Torna indietro" (pagine piano e visita), con `@click.capture.prevent`: senza `.capture` il `router-link` naviga prima dell'handler e il dialog non si vede. Restano senza conferma le uscite da sidebar, Command Palette, tasto indietro del browser e chiusura della scheda (servirebbe `onBeforeRouteLeave` + `beforeunload`, valutato e non fatto).
+
+**Rifiniture UI**
+- **Etichetta fascia BMI** non più mostrata (form visita, storico visite, riepilogo visita precedente). `FASCE_BMI`, `fasciaBmi()` e `categoriaBmi()` restano in `utils/visita.ts` (testati in `visita.spec.ts`) ma **non sono più usati da nessun componente**.
+- **Piani precedenti** (scheda paziente): icona occhio (`Eye`) al posto della matita. La matita resta su "Apri piano" del piano attivo e su "Modifica" della bozza.
+- **Dettaglio paziente**: il badge dello stato account ("Mai invitato"/"Invitato"/"Attivo") sta nella riga sotto il nome, accanto a "Nessuna visita programmata", con lo **stesso stile a pillola** e un'icona per stato: `MailX`, `MailCheck`, `UserCheck` (le ultime due scelte dell'agente). Il componente `Badge` non è più importato in quella vista. Nella **lista pazienti** il badge dello stato account (colonna "Stato") ha le stesse tre icone, nel formato compatto del componente `Badge` (icona `size-3`, nessun bordo): non è identico al dettaglio. I chip di filtro sopra la tabella restano senza icone.
+
+**Verifica**: backend `mvn test` → **194/194 verdi** (dopo la modifica al servizio). `vue-tsc --noEmit` **0 errori**. Frontend: form piano 10/10, dettaglio paziente 16/16, viste/componenti paziente verdi tranne i fallimenti noti: `PianiAlimentariListView.spec.ts` "mostra lo stato vuoto" (riprodotto due volte, **non verificato se preesistente**) e **8 test dei grafici** (`ConfrontoBarChart.spec.ts` ×6, `PazienteTabPanoramica.spec.ts` ×2: il mock di `@unovis/vue` non esporta `VisTooltip`), non toccati in sessione. Un'esecuzione di Vitest è fallita per un errore d'ambiente (`UNKNOWN: unknown error, read`) ed è passata al secondo tentativo.
+
+**Da provare a mano (Andrea)**: salvataggio di un piano attivo dopo il riavvio del backend (incluso cambio di modalità), il lato paziente (non verificabile finora), i dialog "Uscire senza salvare?" su piano e visita, il layout dei badge nel dettaglio paziente.
+
+**Da decidere / non fatto**
+- Matita su "Apri piano"/"Modifica" della scheda paziente (cambiata solo in "Piani precedenti"); icone anche sui chip di filtro dello stato account in lista pazienti.
+- Gli 8 test dei grafici e il fallimento noto di `PianiAlimentariListView.spec.ts` (li sistema Andrea).
 
 ## Prossimo passo consigliato
 

@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { avanzamentoPiano } from '@/utils/pianoAlimentare'
 import { formattaDataItalianaConMese } from '@/utils/data'
-import { Copy, Pencil } from '@lucide/vue'
+import { Copy, Eye, Pencil } from '@lucide/vue'
 
 const props = defineProps<{
   pazienteId: string
@@ -205,7 +205,7 @@ function onDuplica(piano: PianoAlimentareRigaLista) {
             <TableCell class="text-right tabular-nums text-(--fg2)">{{ target(piano) }}</TableCell>
             <TableCell class="text-right">
               <Button variant="neutral" size="icon-sm" as-child>
-                <router-link :to="linkPiano(piano)" aria-label="Apri piano" title="Apri piano"><Pencil :size="15" /></router-link>
+                <router-link :to="linkPiano(piano)" aria-label="Apri piano" title="Apri piano"><Eye :size="15" /></router-link>
               </Button>
             </TableCell>
           </TableRow>

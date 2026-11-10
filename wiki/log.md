@@ -569,3 +569,18 @@ Sessione a richieste puntuali di Andrea, su `master` dopo `f6df1d7`. Dettaglio c
 - **Verifica**: backend 194/194, `vue-tsc` 0 errori, frontend: solo fallimenti noti nelle ultime esecuzioni, ma **suite intera non rieseguita a fine sessione**; **nulla provato in browser dall'agente**. Nessun test nuovo.
 - **Aperto**: riavvio backend (V28 cancella dati), verifiche manuali, 4 decisioni lasciate ad Andrea (parte dominante obbligatoria? archiviati vs "Mai invitato"? colore nome piano in lista pazienti? regola 10 cifre telefono fisso).
 - Aggiornati `wiki/stato.md`, `wiki/modello-dati.md`, `wiki/api-contracts.md`.
+
+## [2026-11-10] handoff | Piano attivo modificabile, "Annulla" con conferma, rifiniture UI
+
+Sessione a richieste puntuali di Andrea, su `master` dopo `3069c95`. Dettaglio completo in [stato](stato.md#sessione-del-10-novembre-2026--piano-attivo-modificabile-annulla-con-conferma-rifiniture-ui).
+
+- **Piano attivo modificabile**: `PUT /piani-alimentari/{id}` risponde 409 solo per i piani `CONCLUSO` (prima: tutto tranne `BOZZA`); modalità modificabile anche sull'attivo; **`dataInizio` resta non modificabile** (richiesta di Andrea). Frontend: sola lettura solo per i concluso, riquadro informativo solo lì; le note di aggiornamento restano invariate. Un 409 visto in sessione era dovuto al backend non riavviato.
+- **"Annulla" con conferma**: pulsanti "Annulla"/"Salva" in fondo alla pagina del piano; dialog "Uscire senza salvare?" su piano (confronto con ultimo salvataggio) e su visita (`modificato()` in `DatiVisitaForm`/`PlicometriaForm`). Il dialog scatta anche dal link "Torna al paziente" in alto (`@click.capture.prevent`, altrimenti il `router-link` naviga per primo).
+- **UI**: etichetta fascia BMI rimossa da form visita, storico visite e riepilogo; icona occhio in "Piani precedenti"; badge stato account nel dettaglio paziente accanto a "Nessuna visita programmata", stesso stile e icone `MailX`/`MailCheck`/`UserCheck`, le stesse icone nel badge della lista pazienti (formato compatto).
+- **Verifica**: backend 194/194, `vue-tsc` 0 errori, form piano 10/10 e dettaglio paziente 16/16; restano il fallimento noto di `PianiAlimentariListView.spec.ts` e 8 test dei grafici (mock `VisTooltip`), non toccati. **Nulla provato in browser dall'agente.** Nessun test nuovo, nessun commit/`git add`.
+- **Aperto**: uscite senza conferma da sidebar/Command Palette/tasto indietro (nessuna guardia di navigazione), verifiche manuali (salvataggio piano attivo dopo riavvio backend, lato paziente).
+- Aggiornati `wiki/stato.md` e `wiki/api-contracts.md`.
+
+## [2026-11-10] ingest | Piano attivo modificabile (ADR 0006)
+
+Fonte: [sorgenti/2026-11-10-piano-attivo-modificabile.md](sorgenti/2026-11-10-piano-attivo-modificabile.md) (richieste di Andrea in sessione). Nuovo [ADR 0006](decisioni/0006-piano-attivo-modificabile.md): bozza e attivo modificabili, solo il concluso in sola lettura, nessuna versione, `data_inizio` immutabile. Le due scelte proposte dall'agente (concluso resta bloccato, note invariate) sono state **confermate da Andrea** il 2026-11-10 e così indicate nell'ADR. Aggiornati `wiki/index.md` e `wiki/stato.md` (tolto il punto aperto "ADR non scritto").

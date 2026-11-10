@@ -164,11 +164,11 @@ function onObiettivoKcalInput(valore: string | number) {
 
 // Un paziente scelto (o un piano già caricato) basta per mostrare il builder.
 const pronto = computed(() => piano.value !== null || pazienteSelezionato.value !== null)
-// La modalità si può cambiare solo su un piano nuovo o in bozza (il backend risponde 409 altrimenti):
-// per ogni altro piano modalitaScelta resta quella caricata dal server (vedi applicaPiano).
+// Un piano nuovo, in bozza o attivo è modificabile (la modalità compresa); il backend risponde 409
+// altrimenti. Per un piano concluso modalitaScelta resta quella caricata dal server (vedi applicaPiano).
 const modalitaAttiva = computed(() => modalitaScelta.value)
-const modalitaModificabile = computed(() => !piano.value || piano.value.stato === 'BOZZA')
-// Un piano non più in bozza (attivo, scaduto, terminato) è solo consultabile: nessun campo modificabile, niente "Salva".
+const modalitaModificabile = computed(() => !piano.value || piano.value.stato !== 'CONCLUSO')
+// Un piano concluso (scaduto o terminato) è solo consultabile: nessun campo modificabile, niente "Salva".
 const solaLettura = computed(() => !modalitaModificabile.value)
 
 // Tre stati: "Concluso" raccoglie già lato API i piani scaduti (data di fine passata) e quelli terminati a mano.
@@ -181,7 +181,6 @@ const BADGE_STATO: Record<StatoPagina, { etichetta: string; classi: string }> = 
 }
 
 const testoRiquadroSolaLettura = computed(() => {
-  if (statoPagina.value === 'ATTIVO') return 'I contenuti sono in sola lettura. Per gli aggiornamenti usa le note.'
   const fine = piano.value?.dataFine
   return `Piano concluso${fine ? ` il ${formattaDataItalianaConMese(fine)}` : ''}: contenuti e note sono consultabili in sola lettura. Per proseguire, duplicalo come nuovo piano.`
 })
@@ -286,6 +285,8 @@ watch(pazienteSelezionato, async (paziente) => {
   if (!ultimaVisita || nomeDaCopia.value) return
 
   const etichetta = ETICHETTE_OBIETTIVO[ultimaVisita.obiettivo]
+  // Il nome suggerito non è una modifica dell'utente: se finora non era cambiato nulla, resta "pulito".
+  const eraPulito = !modificato.value
   try {
     const pagina = await cercaPiani({ pazienteId: paziente.id, dimensione: 100 })
     const conteggio = pagina.contenuto.filter((p) => p.nome.startsWith(`${etichetta} · fase `)).length
@@ -293,6 +294,7 @@ watch(pazienteSelezionato, async (paziente) => {
   } catch {
     nome.value = `${etichetta} · fase 1`
   }
+  if (eraPulito) fissaBase()
 })
 
 const sottotitoloVisita = computed(() => {
@@ -537,6 +539,27 @@ function applicaEsempiDaRisultato(risultato: PianoAlimentare) {
 function applicaPiano(risultato: PianoAlimentare) {
   piano.value = risultato
   applicaContenuto(risultato)
+  fissaBase()
+}
+
+// Modifiche non salvate: stato corrente dei campi confrontato con quello dell'ultimo caricamento/salvataggio.
+// La data di partenza conta solo prima del primo salvataggio (dopo non è più modificabile).
+const firmaCorrente = computed(() => JSON.stringify([
+  modalitaScelta.value, nome.value, obiettivoKcalInput.value, dataFineInput.value,
+  piano.value ? null : dataInizioInput.value,
+  pastiLocali.value, giorniMacroLocali.value, esempiLocali.value,
+]))
+const firmaBase = ref<string | null>(null)
+const modificato = computed(() => firmaBase.value !== null && firmaCorrente.value !== firmaBase.value)
+function fissaBase() {
+  firmaBase.value = firmaCorrente.value
+}
+
+const confermaAnnullaAperta = ref(false)
+/** "Annulla": esce subito se non ci sono modifiche, altrimenti chiede conferma. */
+function annulla() {
+  if (modificato.value) confermaAnnullaAperta.value = true
+  else tornaIndietro()
 }
 
 /** Riempie i campi locali dal piano dato, senza considerarlo il piano aperto (usato anche per le copie). */
@@ -606,6 +629,7 @@ async function caricaCopia(idOrigine: string) {
     dataFineInput.value = ''
     dataInizioInput.value = oggiIso()
     pazienteSelezionato.value = paziente
+    fissaBase()
   } catch {
     erroreCaricamento.value = 'Non è stato possibile caricare il piano da duplicare.'
   } finally {
@@ -618,8 +642,9 @@ onMounted(() => {
     caricaCopia(duplicaDaQuery)
   } else if (pianoIdRoute) {
     caricaPiano(pianoIdRoute)
-  } else if (pazienteIdQuery) {
-    caricaPazienteQuery(pazienteIdQuery)
+  } else {
+    if (pazienteIdQuery) caricaPazienteQuery(pazienteIdQuery)
+    fissaBase()
   }
 })
 
@@ -956,7 +981,7 @@ function stampaPdf() {
         :to="linkIndietro"
         data-test="link-indietro"
         class="inline-flex w-fit items-center gap-2 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green) print:hidden"
-        @click.prevent="tornaIndietro"
+        @click.capture.prevent="annulla"
       >
         <ArrowLeft :size="16" />
         <span>{{ testoLinkIndietro }}</span>
@@ -1008,9 +1033,6 @@ function stampaPdf() {
               Note
               <span data-test="contatore-note" class="rounded-full bg-(--hover) px-1.5 text-[11px] font-bold text-(--fg3)">{{ note.length }}</span>
             </Button>
-            <Button v-if="!solaLettura" class="hover:bg-primary/80" :disabled="salvataggioInCorso || !nome.trim()" @click="salva">
-              <Save :size="16" /> {{ salvataggioInCorso ? 'Salvataggio…' : 'Salva' }}
-            </Button>
             <DropdownMenu v-if="piano">
               <DropdownMenuTrigger as-child>
                 <Button type="button" data-test="opzioni-piano" variant="neutral" size="icon" aria-label="Altre opzioni" title="Altre opzioni">
@@ -1045,12 +1067,12 @@ function stampaPdf() {
         </div>
 
         <div
-          v-if="statoPagina !== 'BOZZA'" data-test="riquadro-sola-lettura"
+          v-if="solaLettura" data-test="riquadro-sola-lettura"
           class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-xl border border-(--bd) bg-(--surf) px-4 py-3 text-sm text-(--fg2) print:hidden"
         >
           <span>{{ testoRiquadroSolaLettura }}</span>
           <button type="button" data-test="link-note" class="font-semibold text-(--green) hover:underline" @click="noteAperte = true">
-            {{ statoPagina === 'ATTIVO' ? 'Aggiungi nota' : 'Vedi note' }}
+            Vedi note
           </button>
         </div>
 
@@ -1497,6 +1519,15 @@ function stampaPdf() {
         </div>
         </fieldset>
       </div>
+
+      <div v-if="!solaLettura" class="flex w-full items-center justify-end gap-2 print:hidden">
+        <Button type="button" variant="neutral" data-test="annulla-modifiche" :disabled="salvataggioInCorso" @click="annulla">
+          Annulla
+        </Button>
+        <Button class="hover:bg-primary/80" :disabled="salvataggioInCorso || !nome.trim()" @click="salva">
+          <Save :size="16" /> {{ salvataggioInCorso ? 'Salvataggio…' : 'Salva' }}
+        </Button>
+      </div>
       </template>
     </div>
 
@@ -1512,6 +1543,21 @@ function stampaPdf() {
       @aggiunta="onNotaAggiunta"
       @eliminata="onNotaEliminata"
     />
+
+    <AlertDialog v-model:open="confermaAnnullaAperta">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Uscire senza salvare?</AlertDialogTitle>
+          <AlertDialogDescription>Hai delle modifiche non salvate. Se esci ora andranno perse.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel data-test="conferma-annulla-continua">Continua a modificare</AlertDialogCancel>
+          <AlertDialogAction data-test="conferma-annulla-esci" class="hover:bg-primary/80" @click="tornaIndietro">
+            Esci senza salvare
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
 
     <AlertDialog v-model:open="confermaEliminaAperta">
       <AlertDialogContent>

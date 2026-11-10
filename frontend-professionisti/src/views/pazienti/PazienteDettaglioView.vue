@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, type Component } from 'vue'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
 import AppShell from '@/components/AppShell.vue'
 import { dettaglio, invita, deArchivia, visite as caricaVisite, type Paziente, type Visita } from '@/api/pazienti'
 import { ApiError } from '@/api/client'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   AlertDialog,
@@ -42,12 +41,21 @@ import {
   Utensils,
   Archive,
   ArchiveRestore,
+  MailX,
+  MailCheck,
+  UserCheck,
 } from '@lucide/vue'
 
 const ETICHETTE_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
   MAI_INVITATO: 'Mai invitato',
   INVITATO: 'Invitato',
   ATTIVO: 'Attivo',
+}
+
+const ICONE_STATO_ACCOUNT: Record<Paziente['statoAccount'], Component> = {
+  MAI_INVITATO: MailX,
+  INVITATO: MailCheck,
+  ATTIVO: UserCheck,
 }
 
 const CLASSI_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
@@ -207,9 +215,6 @@ onMounted(() => {
           <div>
             <div class="flex flex-wrap items-center gap-2.5">
               <h1 class="font-heading text-2xl italic text-(--fg)">{{ paziente.nome }} {{ paziente.cognome }}</h1>
-              <Badge :class="CLASSI_STATO_ACCOUNT[paziente.statoAccount]">
-                {{ ETICHETTE_STATO_ACCOUNT[paziente.statoAccount] }}
-              </Badge>
               <Button
                 v-if="!paziente.archiviato"
                 variant="ghost"
@@ -238,6 +243,14 @@ onMounted(() => {
               <span v-if="primaVisita">paziente dal {{ formattaDataItalianaConMese(primaVisita.dataVisita) }}</span>
             </div>
             <div class="mt-2.5 flex flex-wrap items-center gap-2">
+              <span
+                data-test="badge-stato-account"
+                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold"
+                :class="CLASSI_STATO_ACCOUNT[paziente.statoAccount]"
+              >
+                <component :is="ICONE_STATO_ACCOUNT[paziente.statoAccount]" :size="16" />
+                {{ ETICHETTE_STATO_ACCOUNT[paziente.statoAccount] }}
+              </span>
               <span
                 v-if="paziente.archiviato"
                 class="inline-flex items-center gap-1.5 rounded-full bg-(--danger)/10 px-2.5 py-1 text-xs font-bold text-(--danger) border border-(--danger)"

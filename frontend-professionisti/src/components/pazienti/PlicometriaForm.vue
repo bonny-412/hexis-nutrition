@@ -153,7 +153,14 @@ function valorizzato(): boolean {
   )
 }
 
-defineExpose({ valida, ottieniDati, valorizzato })
+// Modificato rispetto ai valori con cui il form è stato creato (a differenza di valorizzato, che confronta con "vuoto").
+const firma = () => JSON.stringify([protocollo.value, etniaAtleta.value, Object.values(valoriPerCampo).map((rif) => rif.value)])
+const firmaIniziale = firma()
+function modificato(): boolean {
+  return firma() !== firmaIniziale
+}
+
+defineExpose({ valida, ottieniDati, valorizzato, modificato })
 </script>
 
 <template>

@@ -21,7 +21,7 @@ import {
 import { DatePicker } from '@/components/ui/date-picker'
 import { Ruler, ScissorsLineDashed } from '@lucide/vue'
 import type { CreaVisitaRequest, Visita } from '@/api/pazienti'
-import { calcolaBmi, fasciaBmi, formattaNumero, type FasciaBmi } from '@/utils/visita'
+import { calcolaBmi, formattaNumero } from '@/utils/visita'
 import PlicometriaForm from './PlicometriaForm.vue'
 
 import {
@@ -148,18 +148,6 @@ const bmi = computed(() => {
   if (erroreAltezza(altezzaCm.value) || errorePeso(pesoKg.value)) return null
   return calcolaBmi(numeroItaliano(altezzaCm.value), numeroItaliano(pesoKg.value))
 })
-const fasciaBmiAttiva = computed(() => fasciaBmi(bmi.value))
-
-function classeBadgeFascia(fascia: FasciaBmi): string {
-  switch (fascia.livello) {
-    case 'normale':
-      return 'border-transparent bg-(--mint) text-(--green)'
-    case 'moderato':
-      return 'border-transparent bg-(--warn-bg) text-(--warn-fg)'
-    case 'severo':
-      return 'border-transparent bg-(--danger)/10 text-(--danger)'
-  }
-}
 
 const creaHandlerCirconferenza = (rif: Ref<string>, chiave: string) =>
   conFiltro(rif, filtraDecimaleItaliano, chiave, erroreCirconferenza)
@@ -268,10 +256,27 @@ function valorizzato(): boolean {
   )
 }
 
+// Modificato rispetto ai valori con cui il form è stato creato (compresi i valori suggeriti dall'ultima visita):
+// a differenza di valorizzato, che confronta con "vuoto", non scatta se l'utente non ha toccato nulla.
+const firma = () => JSON.stringify([
+  dataVisita.value, altezzaCm.value, pesoKg.value,
+  circonferenzaVita.value, circonferenzaFianchi.value, circonferenzaAddome.value,
+  circonferenzaBraccioRilassato.value, circonferenzaCoscia.value, circonferenzaPolpaccio.value,
+  circonferenzaTorace.value, circonferenzaBraccioContratto.value,
+  circonferenzaBraccioRilassatoDominante.value, circonferenzaBraccioContrattoDominante.value,
+  circonferenzaCosciaDominante.value, circonferenzaPolpaccioDominante.value,
+  parteDominante.value, conParteDominante.value, note.value, obiettivo.value,
+])
+const firmaIniziale = firma()
+function modificato(): boolean {
+  return firma() !== firmaIniziale || (plicometriaForm.value?.modificato() ?? false)
+}
+
 defineExpose({
   valida,
   ottieniDati,
   valorizzato,
+  modificato,
 })
 </script>
 
@@ -322,11 +327,6 @@ defineExpose({
       <Label for="bmi" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">BMI</Label>
       <div class="flex items-center gap-2.5">
         <Input id="bmi" :model-value="bmi !== null ? formattaNumero(bmi, 1) : ''" type="text" disabled placeholder="Compila altezza e peso" class="sm:max-w-40" />
-        <span
-          v-if="fasciaBmiAttiva"
-          class="rounded-4xl border px-2 py-0.5 text-xs font-medium"
-          :class="classeBadgeFascia(fasciaBmiAttiva)"
-        >{{ fasciaBmiAttiva.etichetta }}</span>
       </div>
     </div>
 

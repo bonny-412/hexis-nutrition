@@ -14,3 +14,4 @@
 | [decisioni/0003-repo-unico-per-progetto](decisioni/0003-repo-unico-per-progetto.md) | Un solo repo git per ogni progetto del workspace | stabile |
 | [decisioni/0004-test-su-postgres-locale](decisioni/0004-test-su-postgres-locale.md) | Test di integrazione su Postgres locale, non Testcontainers | stabile |
 | [decisioni/0005-alimenti-bda-e-custom](decisioni/0005-alimenti-bda-e-custom.md) | Catalogo Alimenti: tabella unica BDA + custom, ownership nullable | stabile |
+| [decisioni/0006-piano-attivo-modificabile](decisioni/0006-piano-attivo-modificabile.md) | Piano alimentare modificabile in bozza e da attivo, solo il concluso in sola lettura | stabile |

@@ -14,7 +14,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { ETICHETTE_CIRCONFERENZE, ETICHETTE_OBIETTIVO, categoriaBmi, formattaNumero } from '@/utils/visita'
+import { ETICHETTE_CIRCONFERENZE, ETICHETTE_OBIETTIVO, formattaNumero } from '@/utils/visita'
 import { formattaDataItalianaConMese } from '@/utils/data'
 import { ChevronDown, Pencil, Trash2 } from '@lucide/vue'
 import type { Visita } from '@/api/pazienti'
@@ -120,7 +120,6 @@ interface RigaStorico {
   rel: string
   deltaPeso: number | null
   deltaMg: number | null
-  categoriaBmi: string | null
   circonferenze: Array<{ label: string; valore: number | null }>
   haCirconferenze: boolean
   recentissima: boolean
@@ -137,7 +136,6 @@ const righe = computed<RigaStorico[]>(() =>
       rel: posizione === 0 ? 'Più recente' : posizione === 1 ? '1 visita fa' : posizione + ' visite fa',
       deltaPeso: deltaPesoKg !== null ? +deltaPesoKg.toFixed(2) : null,
       deltaMg: deltaPercentualeGrasso !== null ? +deltaPercentualeGrasso.toFixed(2) : null,
-      categoriaBmi: categoriaBmi(visita.bmi),
       circonferenze,
       haCirconferenze: circonferenze.some((c) => c.valore !== null),
       recentissima: posizione === 0,
@@ -202,7 +200,6 @@ const righe = computed<RigaStorico[]>(() =>
 
             <div v-if="riga.visita.bmi !== null" class="flex flex-col gap-0.5">
               <span class="font-heading text-lg text-(--fg)">{{ formattaNumero(riga.visita.bmi, 1) }} <span class="text-xs font-sans text-(--fg4)">BMI</span></span>
-              <span class="text-xs text-(--fg4)">{{ riga.categoriaBmi }}</span>
             </div>
 
             <div v-if="riga.visita.plicometria" class="flex flex-col gap-0.5">

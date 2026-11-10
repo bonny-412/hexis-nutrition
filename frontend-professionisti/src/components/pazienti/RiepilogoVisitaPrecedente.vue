@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { X } from '@lucide/vue'
 import { formattaDataItalianaConMese } from '@/utils/data'
-import { ETICHETTE_CIRCONFERENZE, ETICHETTE_OBIETTIVO, categoriaBmi, formattaNumero } from '@/utils/visita'
+import { ETICHETTE_CIRCONFERENZE, ETICHETTE_OBIETTIVO, formattaNumero } from '@/utils/visita'
 
 const props = defineProps<{
   visita: Visita
@@ -52,8 +52,7 @@ const blocchi = computed<Blocco[]>(() => {
   const v = props.visita
   const generali: Riga[] = [{ etichetta: 'Peso', valore: `${formattaNumero(v.pesoKg)} kg` }]
   if (v.bmi !== null) {
-    const categoria = categoriaBmi(v.bmi)
-    generali.push({ etichetta: 'BMI', valore: `${formattaNumero(v.bmi, 1)}${categoria ? ` · ${categoria}` : ''}` })
+    generali.push({ etichetta: 'BMI', valore: formattaNumero(v.bmi, 1) })
   }
   if (props.stileDiVita) {
     generali.push({ etichetta: 'Livello di attività', valore: ETICHETTE_STILE_DI_VITA[props.stileDiVita] })

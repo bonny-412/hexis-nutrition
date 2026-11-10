@@ -19,6 +19,16 @@ import { cerca as cercaPiani, noteDelPiano } from '@/api/pianiAlimentari'
 import { pianiNellIntervallo, type PianoConNote } from '@/utils/pianoAlimentare'
 import { ApiError } from '@/api/client'
 import { Button } from '@/components/ui/button'
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog'
 import { ArrowLeft, History, Save } from '@lucide/vue'
 import { formattaDataItalianaConMese } from '@/utils/data'
 import { formattaNumero } from '@/utils/visita'
@@ -171,6 +181,22 @@ function tornaIndietro() {
   }
 }
 
+const mostraConfermaAnnulla = ref(false)
+
+/** "Annulla": esce subito se non è stato cambiato nulla, altrimenti chiede conferma. */
+function onAnnullaClick() {
+  if (datiVisitaForm.value?.modificato()) {
+    mostraConfermaAnnulla.value = true
+  } else {
+    tornaIndietro()
+  }
+}
+
+function confermaAnnulla() {
+  mostraConfermaAnnulla.value = false
+  tornaIndietro()
+}
+
 async function onSubmit() {
   if (!paziente.value) return
   const valido = datiVisitaForm.value?.valida() ?? false
@@ -203,7 +229,7 @@ async function onSubmit() {
         :to="linkIndietro"
         data-test="link-indietro"
         class="inline-flex items-center gap-2 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)"
-        @click.prevent="tornaIndietro"
+        @click.capture.prevent="onAnnullaClick"
       >
         <ArrowLeft :size="16" />
         <span>{{ testoLinkIndietro }}</span>
@@ -261,7 +287,7 @@ async function onSubmit() {
         </div>
 
         <div class="w-full flex justify-end items-center gap-2">
-          <Button type="button" variant="neutral" :disabled="inCorso" @click="tornaIndietro">
+          <Button type="button" data-test="btn-annulla" variant="neutral" :disabled="inCorso" @click="onAnnullaClick">
             Annulla
           </Button>
           <Button type="submit" :disabled="inCorso" class="hover:bg-primary/80">
@@ -282,5 +308,20 @@ async function onSubmit() {
       @chiudi="riepilogoAperto = false"
     />
     </div>
+
+    <AlertDialog v-model:open="mostraConfermaAnnulla">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Uscire senza salvare?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Hai delle modifiche non salvate. Se esci ora andranno perse.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel data-test="conferma-annulla-continua">Continua a compilare</AlertDialogCancel>
+          <AlertDialogAction data-test="conferma-annulla-esci" class="hover:bg-primary/80" @click="confermaAnnulla">Esci senza salvare</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </AppShell>
 </template>
