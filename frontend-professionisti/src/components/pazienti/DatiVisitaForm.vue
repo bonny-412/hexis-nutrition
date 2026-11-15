@@ -21,6 +21,7 @@ import {
 import { DatePicker } from '@/components/ui/date-picker'
 import { Ruler, ScissorsLineDashed } from '@lucide/vue'
 import type { CreaVisitaRequest, Visita } from '@/api/pazienti'
+import { oggiIso } from '@/utils/agenda'
 import { calcolaBmi, formattaNumero } from '@/utils/visita'
 import PlicometriaForm from './PlicometriaForm.vue'
 
@@ -46,7 +47,7 @@ function valoreIniziale(valore: number | null | undefined): string {
   return valore !== null && valore !== undefined ? formattaNumero(valore, 2) : ''
 }
 
-const dataVisita = ref(props.datiIniziali?.dataVisita ?? new Date().toISOString().slice(0, 10))
+const dataVisita = ref(props.datiIniziali?.dataVisita ?? oggiIso())
 const dataVisitaIniziale = dataVisita.value
 const altezzaCm = ref(
   props.datiIniziali

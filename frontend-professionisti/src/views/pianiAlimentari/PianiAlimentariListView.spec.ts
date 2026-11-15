@@ -12,6 +12,7 @@ async function creaRouter() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', name: 'dashboard', component: { template: '<div/>' } },
+      { path: '/agenda', name: 'agenda', component: { template: '<div/>' } },
       { path: '/pazienti', name: 'pazienti', component: { template: '<div/>' } },
       { path: '/alimenti', name: 'alimenti', component: { template: '<div/>' } },
       { path: '/piani-alimentari', name: 'piani-alimentari', component: PianiAlimentariListView },

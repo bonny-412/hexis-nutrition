@@ -3,6 +3,7 @@ package com.hexisnutrition.backend.pazienti;
 import com.hexisnutrition.backend.pianialimentari.PianoAlimentare;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record PazienteResponse(
@@ -27,7 +28,8 @@ public record PazienteResponse(
         String pianoNome,
         String pianoStato,
         LocalDate pianoDataFine,
-        LocalDate dataInizioObiettivo
+        LocalDate dataInizioObiettivo,
+        LocalDateTime prossimaVisita
 ) {
     public static PazienteResponse da(Paziente paziente) {
         return da(paziente, null, null);
@@ -47,6 +49,12 @@ public record PazienteResponse(
     // obiettivo dell'ultima visita — vedi PazienteService.dataInizioObiettivoPerPazienti.
     public static PazienteResponse da(Paziente paziente, Visita ultimaVisita, PianoAlimentare ultimoPiano,
             LocalDate dataInizioObiettivo) {
+        return da(paziente, ultimaVisita, ultimoPiano, dataInizioObiettivo, null);
+    }
+
+    // prossimaVisita = visita PROGRAMMATA più vicina da adesso — vedi PazienteService.prossimaVisitaPerPazienti.
+    public static PazienteResponse da(Paziente paziente, Visita ultimaVisita, PianoAlimentare ultimoPiano,
+            LocalDate dataInizioObiettivo, LocalDateTime prossimaVisita) {
         return new PazienteResponse(paziente.getId(), paziente.getNome(), paziente.getCognome(),
                 paziente.getCodiceFiscale(), paziente.getEmail(), paziente.getTelefono(), paziente.getCellulare(), paziente.getDataNascita(),
                 paziente.getSesso().name(), paziente.getLavoro(), paziente.getMedicoRiferimento(),
@@ -57,6 +65,7 @@ public record PazienteResponse(
                 ultimoPiano != null ? ultimoPiano.getNome() : null,
                 ultimoPiano != null ? ultimoPiano.statoEffettivo().name() : null,
                 ultimoPiano != null ? ultimoPiano.getDataFine() : null,
-                dataInizioObiettivo);
+                dataInizioObiettivo,
+                prossimaVisita);
     }
 }

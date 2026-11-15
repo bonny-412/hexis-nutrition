@@ -152,7 +152,10 @@ function onDataInizioChange(valore: string) {
   dataInizioInput.value = valore
   pulisciErroreSeCorretto('dataInizio', erroreDataInizioPiano, valore)
 }
+// Vero quando l'utente ha digitato la data di fine: da lì in poi non viene più precompilata dalla prossima visita.
+const dataFineModificataDallUtente = ref(false)
 function onDataFineChange(valore: string) {
+  dataFineModificataDallUtente.value = true
   dataFineInput.value = valore
   pulisciErroreSeCorretto('dataFine', (v) => erroreDataFinePiano(v, dataInizioEffettiva.value), valore)
 }
@@ -280,6 +283,14 @@ const nomeDaCopia = ref(false)
 watch(pazienteSelezionato, async (paziente) => {
   ultimaVisitaSelezionato.value = null
   if (!paziente || piano.value) return
+  if (!dataFineModificataDallUtente.value) {
+    // Data di fine suggerita = giorno della prossima visita, solo se successiva alla data di inizio
+    // (confronto tra stringhe ISO YYYY-MM-DD, senza Date).
+    const dataProssima = paziente.prossimaVisita ? paziente.prossimaVisita.slice(0, 10) : ''
+    const eraPulitoDataFine = !modificato.value
+    dataFineInput.value = dataProssima && dataProssima > dataInizioInput.value ? dataProssima : ''
+    if (eraPulitoDataFine) fissaBase()
+  }
   const ultimaVisita = await caricaUltimaVisita(paziente.id)
   ultimaVisitaSelezionato.value = ultimaVisita
   if (!ultimaVisita || nomeDaCopia.value) return

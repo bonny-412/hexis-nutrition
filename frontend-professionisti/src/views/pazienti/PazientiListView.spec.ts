@@ -18,6 +18,7 @@ function creaRouter() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', name: 'dashboard', component: { template: '<div/>' } },
+      { path: '/agenda', name: 'agenda', component: { template: '<div/>' } },
       { path: '/pazienti', name: 'pazienti', component: PazientiListView },
       { path: '/pazienti/nuovo', name: 'paziente-nuovo', component: { template: '<div/>' } },
       { path: '/pazienti/:id', name: 'paziente-dettaglio', component: { template: '<div/>' } },
@@ -40,6 +41,7 @@ const pazienteEsempio = {
   pianoStato: null as Paziente['pianoStato'],
   pianoDataFine: null as Paziente['pianoDataFine'],
   dataInizioObiettivo: null as Paziente['dataInizioObiettivo'],
+  prossimaVisita: null as Paziente['prossimaVisita'],
 }
 
 function paginaCon(contenuto: typeof pazienteEsempio[]): PaginaPazienti {

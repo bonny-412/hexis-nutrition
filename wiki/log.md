@@ -594,3 +594,14 @@ Dettaglio in [stato](stato.md#sessione-del-10-novembre-2026-parte-2--agenda-desi
 - **Stato paziente**: chiuso, resta solo mai invitato / invitato / attivo (gia implementato).
 - **Aperto**: modalita di esecuzione (consigliata subagent-driven), riconferma dell eccezione `:style` per posizione e dimensione degli eventi in griglia, piano senza test per scelta di Andrea.
 - Aggiornato `wiki/stato.md`.
+
+## [2026-11-15] handoff | Agenda
+
+Implementata l'Agenda (11 task, esecuzione subagent-driven sul design e il piano del 2026-11-10), su `master` dopo `f093d4e`. Dettaglio in [stato](stato.md#sessione-del-15-novembre-2026--agenda-implementata). **Tutto in staging (`git add`), nessun commit.**
+
+- **Backend**: pacchetto `agenda/` (V30, entità `Appuntamento`, `AgendaController` con sei endpoint, `AgendaService`, 409 `{"conflitti":[...]}` sulle sovrapposizioni), `prossimaVisita` in `PazienteResponse`, filtro `prossimaVisitaEntroGiorni` (7/14/21/30), archiviazione che elimina visite programmate e promemoria futuri, `POST /pazienti/{id}/visite?appuntamentoId=` che conclude l'appuntamento. `mvn test` 194/194 verdi al Task 5.
+- **Frontend**: pagina `/agenda` con viste Giorno/Settimana/Mese (costruite a mano), dialog appuntamento, menu azioni, festività; colonna e filtro "Prossima visita" in lista, badge e "Fissa appuntamento" nel dettaglio, "Nuovo appuntamento"/"Nuovo promemoria"/"Blocca fascia oraria" attivi in palette e dashboard, data di fine del piano precompilata dalla prossima visita. `vue-tsc` 0 errori; suite intera 291/300, i 9 fallimenti sono quelli noti non correlati.
+- **Nessun test scritto per scelta di Andrea**; adattati solo gli spec esistenti (rotta `agenda` nei router di test, `prossimaVisita: null` nei mock, terzo argomento di `creaVisita`).
+- **Da segnalare ad Andrea**: `:style` anche per il `top` della linea rossa "ora corrente" in `AgendaSettimana` (estensione dell'eccezione approvata per posizione e dimensione degli eventi), da confermare.
+- **Aperto**: riavviare il backend (V30), verifiche manuali in browser (elenco in stato), test candidati dal "Review Focus" del piano, Minor rinviati dalle review.
+- Nuovo [ADR 0007](decisioni/0007-appuntamenti-e-visite-registrate.md). Aggiornati `wiki/api-contracts.md`, `wiki/modello-dati.md`, `wiki/index.md`, `wiki/glossario.md`, `wiki/architettura.md`, `wiki/stato.md`.

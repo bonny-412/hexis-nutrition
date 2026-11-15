@@ -1,5 +1,11 @@
 package com.hexisnutrition.backend.pazienti;
 
+import com.hexisnutrition.backend.agenda.AgendaTempo;
+import com.hexisnutrition.backend.agenda.Appuntamento;
+import com.hexisnutrition.backend.agenda.AppuntamentoNonTrovatoException;
+import com.hexisnutrition.backend.agenda.AppuntamentoNonValidoException;
+import com.hexisnutrition.backend.agenda.AppuntamentoRepository;
+import com.hexisnutrition.backend.agenda.StatoAppuntamento;
 import com.hexisnutrition.backend.email.EmailSender;
 import com.hexisnutrition.backend.inviti.EmailGiaInUsoException;
 import com.hexisnutrition.backend.inviti.TipoToken;
@@ -25,6 +31,7 @@ import org.springframework.web.client.RestClientException;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -57,6 +64,7 @@ public class PazienteService {
     private final PasswordEncoder passwordEncoder;
     private final PlicometriaService plicometriaService;
     private final PlicometriaRepository plicometriaRepository;
+    private final AppuntamentoRepository appuntamentoRepository;
 
     public PazienteService(PazienteRepository pazienteRepository,
                             VisitaRepository visitaRepository,
@@ -66,7 +74,9 @@ public class PazienteService {
                             EmailSender emailSender,
                             PasswordEncoder passwordEncoder,
                             PlicometriaService plicometriaService,
-                            PlicometriaRepository plicometriaRepository) {
+                            PlicometriaRepository plicometriaRepository,
+                            AppuntamentoRepository appuntamentoRepository) {
+        this.appuntamentoRepository = appuntamentoRepository;
         this.pazienteRepository = pazienteRepository;
         this.visitaRepository = visitaRepository;
         this.pianoAlimentareRepository = pianoAlimentareRepository;
@@ -173,6 +183,24 @@ public class PazienteService {
     }
 
     /**
+     * Visita PROGRAMMATA più vicina (da adesso, fuso dell'agenda) di ciascun paziente tra gli id
+     * passati, in un'unica query. I pazienti senza visite future non compaiono nella mappa.
+     */
+    public Map<UUID, LocalDateTime> prossimaVisitaPerPazienti(List<UUID> pazienteIds) {
+        if (pazienteIds.isEmpty()) {
+            return Map.of();
+        }
+        LocalDateTime adesso = AgendaTempo.adesso();
+        return appuntamentoRepository.findAllByPazienteIdInAndStatoAndDataGreaterThanEqual(
+                        pazienteIds, StatoAppuntamento.PROGRAMMATA, adesso.toLocalDate()).stream()
+                .filter(a -> a.getTipo().isVisita() && a.getOraInizio() != null)
+                .map(a -> Map.entry(a.getPazienteId(), a.getData().atTime(a.getOraInizio())))
+                .filter(e -> !e.getValue().isBefore(adesso))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                        (d1, d2) -> d1.isBefore(d2) ? d1 : d2));
+    }
+
+    /**
      * Piano più di recente creazione di ciascun paziente tra gli id passati, in un'unica query
      * — qualunque sia il suo stato (bozza/attivo/scaduto/terminato), non solo quello attivo.
      */
@@ -200,6 +228,9 @@ public class PazienteService {
         }
         if (criteri.dataUltimaVisitaDa() != null || criteri.dataUltimaVisitaA() != null) {
             specifiche.add(PazienteSpecifications.conDataUltimaVisitaTra(criteri.dataUltimaVisitaDa(), criteri.dataUltimaVisitaA()));
+        }
+        if (criteri.prossimaVisitaEntroGiorni() != null) {
+            specifiche.add(PazienteSpecifications.conProssimaVisitaEntro(criteri.prossimaVisitaEntroGiorni()));
         }
         Specification<Paziente> specifica = Specification.allOf(specifiche);
 
@@ -321,7 +352,28 @@ public class PazienteService {
 
     @Transactional
     public VisitaResponse creaVisita(UUID professionistaId, UUID pazienteId, VisitaRequest request) {
+        return creaVisita(professionistaId, pazienteId, request, null);
+    }
+
+    @Transactional
+    public VisitaResponse creaVisita(UUID professionistaId, UUID pazienteId, VisitaRequest request, UUID appuntamentoId) {
         Paziente paziente = dettaglio(professionistaId, pazienteId);
+
+        Appuntamento appuntamento = null;
+        if (appuntamentoId != null) {
+            appuntamento = appuntamentoRepository.findById(appuntamentoId)
+                    .filter(a -> a.getProfessionistaId().equals(professionistaId))
+                    .orElseThrow(AppuntamentoNonTrovatoException::new);
+            if (!pazienteId.equals(appuntamento.getPazienteId())) {
+                throw new AppuntamentoNonValidoException("L'appuntamento non appartiene a questo paziente");
+            }
+            if (!appuntamento.getTipo().isVisita()) {
+                throw new AppuntamentoNonValidoException("L'appuntamento non è una visita");
+            }
+            if (appuntamento.getStato() != StatoAppuntamento.PROGRAMMATA) {
+                throw new AppuntamentoNonValidoException("L'appuntamento non è in programma");
+            }
+        }
 
         Visita visita = new Visita(paziente.getId(), request.dataVisita(), request.altezzaCm(), request.pesoKg(),
                 request.circonferenzaVitaCm(), request.circonferenzaFianchiCm(), request.circonferenzaAddomeCm(),
@@ -333,6 +385,11 @@ public class PazienteService {
         visitaRepository.save(visita);
         plicometriaService.elabora(paziente, visita, request.plicometria());
         visitaRepository.save(visita);
+
+        if (appuntamento != null) {
+            appuntamento.concludi(visita.getId());
+            appuntamentoRepository.save(appuntamento);
+        }
 
         return VisitaResponse.da(visita, plicometriaRepository.findByVisitaId(visita.getId()).orElse(null));
     }
@@ -407,6 +464,8 @@ public class PazienteService {
         Paziente paziente = dettaglio(professionistaId, pazienteId);
         paziente.setArchiviato(true);
         pazienteRepository.save(paziente);
+        LocalDateTime adesso = AgendaTempo.adesso();
+        appuntamentoRepository.eliminaFuturiDelPaziente(pazienteId, adesso.toLocalDate(), adesso.toLocalTime());
     }
 
     @Transactional

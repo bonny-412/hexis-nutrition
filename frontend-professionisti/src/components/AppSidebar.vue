@@ -13,7 +13,7 @@ const toggleSidebar = () => {
 
 const voci = [
   { nome: 'Dashboard', routeName: 'dashboard', routeNamesAttivi: ['dashboard'], icona: LayoutGrid },
-  { nome: 'Agenda', icona: Calendar },
+  { nome: 'Agenda', routeName: 'agenda', routeNamesAttivi: ['agenda'], icona: Calendar },
   { nome: 'Pazienti', routeName: 'pazienti', routeNamesAttivi: ['pazienti', 'paziente-nuovo', 'paziente-dettaglio'], icona: Users },
   { nome: 'Piani alimentari', routeName: 'piani-alimentari', routeNamesAttivi: ['piani-alimentari', 'piano-alimentare-nuovo', 'piano-alimentare-modifica'], icona: Utensils },
   { nome: 'Chat', icona: MessageSquare },

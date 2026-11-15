@@ -19,15 +19,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/pazienti")
 public class PazienteController {
+
+    private static final Set<Integer> GIORNI_PROSSIMA_VISITA_AMMESSI = Set.of(7, 14, 21, 30);
 
     private final PazienteService pazienteService;
 
@@ -39,13 +44,21 @@ public class PazienteController {
     @ResponseStatus(HttpStatus.CREATED)
     public PazienteResponse crea(@AuthenticationPrincipal UUID professionistaId,
                                   @Valid @RequestBody CreaPazienteRequest request) {
-        return PazienteResponse.da(pazienteService.crea(professionistaId, request));
+        return conProssimaVisita(pazienteService.crea(professionistaId, request));
+    }
+
+    private PazienteResponse conProssimaVisita(Paziente paziente) {
+        LocalDateTime prossima = pazienteService.prossimaVisitaPerPazienti(List.of(paziente.getId())).get(paziente.getId());
+        return PazienteResponse.da(paziente, null, null, null, prossima);
     }
 
     @GetMapping
     public List<PazienteResponse> lista(@AuthenticationPrincipal UUID professionistaId) {
-        return pazienteService.listaPerProfessionista(professionistaId).stream()
-                .map(PazienteResponse::da)
+        List<Paziente> pazienti = pazienteService.listaPerProfessionista(professionistaId);
+        Map<UUID, LocalDateTime> prossime = pazienteService.prossimaVisitaPerPazienti(
+                pazienti.stream().map(Paziente::getId).toList());
+        return pazienti.stream()
+                .map(p -> PazienteResponse.da(p, null, null, null, prossime.get(p.getId())))
                 .toList();
     }
 
@@ -66,7 +79,11 @@ public class PazienteController {
             @RequestParam(required = false) ObiettivoVisita obiettivo,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataUltimaVisitaDa,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataUltimaVisitaA,
-            @RequestParam(defaultValue = "false") boolean archiviato) {
+            @RequestParam(defaultValue = "false") boolean archiviato,
+            @RequestParam(required = false) Integer prossimaVisitaEntroGiorni) {
+        if (prossimaVisitaEntroGiorni != null && !GIORNI_PROSSIMA_VISITA_AMMESSI.contains(prossimaVisitaEntroGiorni)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "prossimaVisitaEntroGiorni ammesso: 7, 14, 21, 30");
+        }
         int paginaEffettiva = Math.max(pagina, 0);
         int dimensioneEffettiva = Math.min(Math.max(dimensione, 1), 100);
         Sort.Direction direzioneSort = direzione == DirezioneOrdinamento.desc ? Sort.Direction.DESC : Sort.Direction.ASC;
@@ -75,24 +92,25 @@ public class PazienteController {
                 ? Sort.by(direzioneSort, "cognome", "nome")
                 : Sort.by(direzioneSort, ordinaPer.name());
         Pageable pageable = PageRequest.of(paginaEffettiva, dimensioneEffettiva, ordinamento);
-        CriteriRicercaPazienti criteri = new CriteriRicercaPazienti(ricerca, statoAccount, obiettivo, dataUltimaVisitaDa, dataUltimaVisitaA, archiviato);
+        CriteriRicercaPazienti criteri = new CriteriRicercaPazienti(ricerca, statoAccount, obiettivo, dataUltimaVisitaDa, dataUltimaVisitaA, archiviato, prossimaVisitaEntroGiorni);
         Page<Paziente> pagina1 = pazienteService.cerca(professionistaId, criteri, pageable);
         List<UUID> idPagina = pagina1.getContent().stream().map(Paziente::getId).toList();
         Map<UUID, Visita> ultimeVisite = pazienteService.ultimeVisitePerPazienti(idPagina);
         Map<UUID, PianoAlimentare> ultimiPiani = pazienteService.ultimiPianiPerPazienti(idPagina);
         Map<UUID, LocalDate> dataInizioObiettivo = pazienteService.dataInizioObiettivoPerPazienti(idPagina);
-        return PazienteListaPaginataResponse.da(pagina1, ultimeVisite, ultimiPiani, dataInizioObiettivo);
+        Map<UUID, LocalDateTime> prossimeVisite = pazienteService.prossimaVisitaPerPazienti(idPagina);
+        return PazienteListaPaginataResponse.da(pagina1, ultimeVisite, ultimiPiani, dataInizioObiettivo, prossimeVisite);
     }
 
     @GetMapping("/{id}")
     public PazienteResponse dettaglio(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id) {
-        return PazienteResponse.da(pazienteService.dettaglio(professionistaId, id));
+        return conProssimaVisita(pazienteService.dettaglio(professionistaId, id));
     }
 
     @PutMapping("/{id}")
     public PazienteResponse aggiorna(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id,
                                       @Valid @RequestBody AggiornaPazienteRequest request) {
-        return PazienteResponse.da(pazienteService.aggiorna(professionistaId, id, request));
+        return conProssimaVisita(pazienteService.aggiorna(professionistaId, id, request));
     }
 
     @GetMapping("/{id}/visite")
@@ -110,8 +128,9 @@ public class PazienteController {
     @PostMapping("/{id}/visite")
     @ResponseStatus(HttpStatus.CREATED)
     public VisitaResponse creaVisita(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id,
-                                      @Valid @RequestBody VisitaRequest request) {
-        return pazienteService.creaVisita(professionistaId, id, request);
+                                      @Valid @RequestBody VisitaRequest request,
+                                      @RequestParam(required = false) UUID appuntamentoId) {
+        return pazienteService.creaVisita(professionistaId, id, request, appuntamentoId);
     }
 
     @GetMapping("/{id}/visite/{visitaId}")

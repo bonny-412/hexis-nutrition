@@ -38,6 +38,8 @@ const router = useRouter()
 
 const pazienteIdRoute = route.params.id as string | undefined
 const visitaId = route.params.visitaId as string | undefined
+// Presente quando si arriva da "Avvia visita" dell'agenda: l'appuntamento viene concluso alla registrazione.
+const appuntamentoId = typeof route.query.appuntamentoId === 'string' ? route.query.appuntamentoId : undefined
 const modalitaModifica = computed(() => !!visitaId)
 
 const paziente = ref<Paziente | null>(null)
@@ -209,12 +211,16 @@ async function onSubmit() {
       await aggiornaVisita(paziente.value.id, visitaId, dati)
       toast.success('Visita aggiornata con successo.')
     } else {
-      await creaVisita(paziente.value.id, dati)
+      await creaVisita(paziente.value.id, dati, appuntamentoId)
       toast.success('Visita registrata con successo.')
     }
     router.push(`/pazienti/${paziente.value.id}`)
-  } catch {
-    toast.error('Non è stato possibile salvare la visita. Controlla i dati e riprova.')
+  } catch (errore) {
+    if (appuntamentoId && errore instanceof ApiError && (errore.status === 400 || errore.status === 404)) {
+      toast.error("L'appuntamento non è più valido: la visita non è stata salvata. Riapri la visita dall'agenda o dalla scheda paziente.")
+    } else {
+      toast.error('Non è stato possibile salvare la visita. Controlla i dati e riprova.')
+    }
   } finally {
     inCorso.value = false
   }

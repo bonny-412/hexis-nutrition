@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, UserPlus, ClipboardPlus, CalendarPlus, Apple, Utensils } from '@lucide/vue'
+import { Search, UserPlus, ClipboardPlus, CalendarPlus, CalendarOff, StickyNote, Apple, Utensils } from '@lucide/vue'
 import { Input } from '@/components/ui/input'
 import { cerca, type Paziente } from '@/api/pazienti'
 
@@ -15,7 +15,9 @@ interface AzionePalette {
 
 const AZIONI: AzionePalette[] = [
   { id: 'nuovo-paziente', etichetta: 'Nuovo paziente', icona: UserPlus, href: '/pazienti/nuovo' },
-  { id: 'nuovo-appuntamento', etichetta: 'Nuovo appuntamento', icona: CalendarPlus, disabilitata: true },
+  { id: 'nuovo-appuntamento', etichetta: 'Nuovo appuntamento', icona: CalendarPlus, href: '/agenda?nuovo=visita' },
+  { id: 'nuovo-promemoria', etichetta: 'Nuovo promemoria', icona: StickyNote, href: '/agenda?nuovo=promemoria' },
+  { id: 'blocca-fascia-oraria', etichetta: 'Blocca fascia oraria', icona: CalendarOff, href: '/agenda?nuovo=blocco' },
   { id: 'nuova-visita', etichetta: 'Nuova visita', icona: ClipboardPlus, href: '/pazienti/visite/nuova' },
   { id: 'nuovo-piano-alimentare', etichetta: 'Nuovo piano alimentare', icona: Utensils, href: '/piani-alimentari/nuovo' },
   { id: 'nuovo-alimento', etichetta: 'Nuovo alimento', icona: Apple, href: '/alimenti?azione=nuovo' },

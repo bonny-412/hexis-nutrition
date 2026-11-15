@@ -37,6 +37,7 @@ async function creaRouter(path: string) {
     history: createMemoryHistory(),
     routes: [
       { path: '/', name: 'dashboard', component: { template: '<div/>' } },
+      { path: '/agenda', name: 'agenda', component: { template: '<div/>' } },
       { path: '/pazienti', name: 'pazienti', component: { template: '<div/>' } },
       { path: '/pazienti/:id', name: 'paziente-dettaglio', component: { template: '<div/>' } },
       { path: '/alimenti', name: 'alimenti', component: { template: '<div/>' } },

@@ -20,6 +20,7 @@ function creaRouter() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', name: 'dashboard', component: { template: '<div/>' } },
+      { path: '/agenda', name: 'agenda', component: { template: '<div/>' } },
       { path: '/pazienti', name: 'pazienti', component: { template: '<div/>' } },
       { path: '/pazienti/visite/nuova', name: 'visita-nuova-senza-paziente', component: VisitaFormView },
       { path: '/pazienti/:id', name: 'paziente-dettaglio', component: { template: '<div/>' } },
@@ -40,7 +41,7 @@ function pazienteEsempio(overrides: Partial<Paziente> = {}): Paziente {
     telefono: null, dataNascita: '1990-01-01', sesso: 'M', lavoro: null, cellulare: null, medicoRiferimento: null, trattamenti: null, stileDiVita: null, note: null,
     statoAccount: 'MAI_INVITATO', archiviato: false,
     obiettivoUltimaVisita: null, dataUltimaVisita: null,
-    pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null,
+    pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null, prossimaVisita: null,
     ...overrides,
   }
 }
@@ -183,7 +184,7 @@ describe('VisitaFormView', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
-    expect(pazientiApi.creaVisita).toHaveBeenCalledWith('1', expect.objectContaining({ altezzaCm: 178, pesoKg: 82.5 }))
+    expect(pazientiApi.creaVisita).toHaveBeenCalledWith('1', expect.objectContaining({ altezzaCm: 178, pesoKg: 82.5 }), undefined)
     expect(toast.success).toHaveBeenCalled()
     expect(router.currentRoute.value.fullPath).toBe('/pazienti/1')
   })

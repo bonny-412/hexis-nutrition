@@ -61,6 +61,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/inviti/*/attiva").permitAll()
                         .requestMatchers("/pazienti/**").hasRole("PROFESSIONISTA")
                         .requestMatchers("/alimenti/**").hasRole("PROFESSIONISTA")
+                        .requestMatchers("/agenda/**").hasRole("PROFESSIONISTA")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class);

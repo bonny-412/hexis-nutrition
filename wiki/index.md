@@ -15,3 +15,4 @@
 | [decisioni/0004-test-su-postgres-locale](decisioni/0004-test-su-postgres-locale.md) | Test di integrazione su Postgres locale, non Testcontainers | stabile |
 | [decisioni/0005-alimenti-bda-e-custom](decisioni/0005-alimenti-bda-e-custom.md) | Catalogo Alimenti: tabella unica BDA + custom, ownership nullable | stabile |
 | [decisioni/0006-piano-attivo-modificabile](decisioni/0006-piano-attivo-modificabile.md) | Piano alimentare modificabile in bozza e da attivo, solo il concluso in sola lettura | stabile |
+| [decisioni/0007-appuntamenti-e-visite-registrate](decisioni/0007-appuntamenti-e-visite-registrate.md) | Agenda: appuntamento distinto dalla visita registrata, conclusione al salvataggio, avviso sulle sovrapposizioni, archiviazione elimina il futuro | stabile |

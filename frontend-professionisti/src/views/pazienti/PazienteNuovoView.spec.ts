@@ -18,6 +18,7 @@ function creaRouter() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', name: 'dashboard', component: { template: '<div/>' } },
+      { path: '/agenda', name: 'agenda', component: { template: '<div/>' } },
       { path: '/pazienti', name: 'pazienti', component: { template: '<div/>' } },
       { path: '/pazienti/nuovo', name: 'paziente-nuovo', component: PazienteNuovoView },
       { path: '/pazienti/:id', name: 'paziente-dettaglio', component: { template: '<div/>' } },
@@ -72,7 +73,7 @@ describe('PazienteNuovoView', () => {
       id: '42', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
       telefono: null, dataNascita: null, sesso: 'M', lavoro: null, cellulare: null, medicoRiferimento: null, trattamenti: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
       obiettivoUltimaVisita: null, dataUltimaVisita: null,
-      pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null,
+      pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null, prossimaVisita: null,
     })
     const router = creaRouter()
     router.push('/pazienti/nuovo')
@@ -110,7 +111,7 @@ describe('PazienteNuovoView', () => {
       id: '43', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
       telefono: null, dataNascita: null, sesso: 'M', lavoro: null, cellulare: null, medicoRiferimento: null, trattamenti: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
       obiettivoUltimaVisita: null, dataUltimaVisita: null,
-      pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null,
+      pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null, prossimaVisita: null,
     })
     const router = creaRouter()
     router.push('/pazienti/nuovo')
@@ -358,7 +359,7 @@ describe('PazienteNuovoView', () => {
       id: '44', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
       telefono: null, dataNascita: null, sesso: 'M', lavoro: null, cellulare: null, medicoRiferimento: null, trattamenti: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
       obiettivoUltimaVisita: null, dataUltimaVisita: null,
-      pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null,
+      pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null, prossimaVisita: null,
     })
     const router = creaRouter()
     router.push('/pazienti/nuovo')
@@ -402,7 +403,7 @@ describe('PazienteNuovoView', () => {
       id: '45', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
       telefono: null, dataNascita: null, sesso: 'M', lavoro: null, cellulare: null, medicoRiferimento: null, trattamenti: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
       obiettivoUltimaVisita: null, dataUltimaVisita: null,
-      pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null,
+      pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null, prossimaVisita: null,
     })
     const router = creaRouter()
     router.push('/pazienti/nuovo')

@@ -106,9 +106,7 @@ const statoAccount = ref<'TUTTI' | Paziente['statoAccount']>('TUTTI')
 const obiettivo = ref<'TUTTI' | NonNullable<Paziente['obiettivoUltimaVisita']>>('TUTTI')
 const dataUltimaVisitaDa = ref('')
 const dataUltimaVisitaA = ref('')
-// Struttura pronta per l'agenda: non esiste ancora una data di prossima visita, quindi il filtro resta
-// disattivato e non entra nei criteri di ricerca inviati al backend.
-const prossimaVisitaEntro = ref('TUTTE')
+const prossimaVisitaEntro = ref<'TUTTE' | '7' | '14' | '21' | '30'>('TUTTE')
 const mostraArchiviati = ref(false)
 const filtriAvanzatiAperti = ref(false)
 const pagina = ref(0)
@@ -134,7 +132,7 @@ watch(ricercaInput, (valore) => {
 onUnmounted(() => clearTimeout(debounceHandle))
 
 const filtriAvanzatiAttivi = computed(() =>
-  [obiettivo.value !== 'TUTTI', !!dataUltimaVisitaDa.value, !!dataUltimaVisitaA.value, mostraArchiviati.value].filter(Boolean).length,
+  [obiettivo.value !== 'TUTTI', !!dataUltimaVisitaDa.value, !!dataUltimaVisitaA.value, prossimaVisitaEntro.value !== 'TUTTE', mostraArchiviati.value].filter(Boolean).length,
 )
 
 const filtriAttivi = computed(() =>
@@ -153,6 +151,7 @@ function criteriCorrenti(): CriteriRicercaPazienti {
     obiettivo: obiettivo.value === 'TUTTI' ? undefined : obiettivo.value,
     dataUltimaVisitaDa: dataUltimaVisitaDa.value || undefined,
     dataUltimaVisitaA: dataUltimaVisitaA.value || undefined,
+    prossimaVisitaEntroGiorni: prossimaVisitaEntro.value === 'TUTTE' ? undefined : (Number(prossimaVisitaEntro.value) as 7 | 14 | 21 | 30),
     archiviato: mostraArchiviati.value,
   }
 }
@@ -180,7 +179,7 @@ async function carica() {
 }
 
 watch(
-  [ricercaEffettiva, statoAccount, obiettivo, dataUltimaVisitaDa, dataUltimaVisitaA, mostraArchiviati, pagina, ordinaPer, direzione],
+  [ricercaEffettiva, statoAccount, obiettivo, dataUltimaVisitaDa, dataUltimaVisitaA, prossimaVisitaEntro, mostraArchiviati, pagina, ordinaPer, direzione],
   carica,
 )
 
@@ -219,6 +218,11 @@ function onDataUltimaVisitaAChange(valore: string) {
   pagina.value = 0
 }
 
+function onProssimaVisitaEntroChange(valore: AcceptableValue) {
+  prossimaVisitaEntro.value = valore as typeof prossimaVisitaEntro.value
+  pagina.value = 0
+}
+
 function onMostraArchiviatiChange(valore: boolean) {
   mostraArchiviati.value = valore
   pagina.value = 0
@@ -250,6 +254,7 @@ function pulisciFiltri() {
   obiettivo.value = 'TUTTI'
   dataUltimaVisitaDa.value = ''
   dataUltimaVisitaA.value = ''
+  prossimaVisitaEntro.value = 'TUTTE'
   mostraArchiviati.value = false
   pagina.value = 0
 }
@@ -376,17 +381,16 @@ const conteggioTesto = computed(() => {
         </div>
         <div class="flex flex-col gap-1.5">
           <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Prossima visita</Label>
-          <Select v-model="prossimaVisitaEntro" disabled>
-            <SelectTrigger id="filtro-prossima-visita" class="w-full" title="Disponibile con l'agenda"><SelectValue /></SelectTrigger>
+          <Select :model-value="prossimaVisitaEntro" @update:model-value="onProssimaVisitaEntroChange">
+            <SelectTrigger id="filtro-prossima-visita" class="w-full"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="TUTTE">Tutte</SelectItem>
-              <SelectItem value="1_SETTIMANA">Entro 1 settimana</SelectItem>
-              <SelectItem value="2_SETTIMANE">Entro 2 settimane</SelectItem>
-              <SelectItem value="3_SETTIMANE">Entro 3 settimane</SelectItem>
-              <SelectItem value="1_MESE">Entro 1 mese</SelectItem>
+              <SelectItem value="7">Entro 1 settimana</SelectItem>
+              <SelectItem value="14">Entro 2 settimane</SelectItem>
+              <SelectItem value="21">Entro 3 settimane</SelectItem>
+              <SelectItem value="30">Entro 1 mese</SelectItem>
             </SelectContent>
           </Select>
-          <p class="text-[10px] text-(--fg4)">Disponibile con l'agenda</p>
         </div>
         <div class="flex items-end pb-px">
           <button
@@ -492,7 +496,11 @@ const conteggioTesto = computed(() => {
                   <span v-else class="text-(--fg4)">—</span>
                 </TableCell>
                 <TableCell>
-                  <span class="text-(--fg4)">—</span>
+                  <template v-if="paziente.prossimaVisita">
+                    <div class="font-semibold text-(--fg)">{{ formattaDataItalianaConMese(paziente.prossimaVisita.slice(0, 10)) }}</div>
+                    <div class="text-xs text-(--fg4)">{{ paziente.prossimaVisita.slice(11, 16) }}</div>
+                  </template>
+                  <span v-else class="text-(--fg4)">—</span>
                 </TableCell>
                 <TableCell>
                   <template v-if="paziente.pianoNome">

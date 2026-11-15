@@ -53,9 +53,11 @@ onMounted(async () => {
               Nuovo paziente
             </router-link>
           </DropdownMenuItem>
-          <DropdownMenuItem disabled class="gap-2 px-2.5 py-1.5 cursor-pointer">
-            <CalendarPlus :size="16" />
-            Nuovo appuntamento
+          <DropdownMenuItem as-child class="gap-2 px-2.5 py-1.5 cursor-pointer">
+            <router-link to="/agenda?nuovo=visita">
+              <CalendarPlus :size="16" />
+              Nuovo appuntamento
+            </router-link>
           </DropdownMenuItem>
           <DropdownMenuItem as-child class="gap-2 px-2.5 py-1.5 cursor-pointer">
             <router-link to="/pazienti/visite/nuova">

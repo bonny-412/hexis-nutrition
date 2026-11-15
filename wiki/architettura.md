@@ -29,7 +29,7 @@ Lo scope funzionale è stato diviso in 4 sotto-progetti sequenziali (vedi [stato
 
 1. Fondamenta — autenticazione, anagrafica paziente, invito/onboarding.
 2. Piano alimentare — database alimenti, costruzione/assegnazione piani.
-3. Monitoraggio — misurazioni e appuntamenti.
+3. Monitoraggio — misurazioni e appuntamenti (l'agenda del professionista è implementata dal 2026-11-15, vedi [decisioni/0007](decisioni/0007-appuntamenti-e-visite-registrate.md); restano le misurazioni e il lato paziente).
 4. Chat — messaggistica professionista-paziente.
 
 ## Ambienti

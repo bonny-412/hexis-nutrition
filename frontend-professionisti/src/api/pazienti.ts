@@ -26,6 +26,8 @@ export interface Paziente {
   pianoNome: string | null
   pianoStato: 'BOZZA' | 'ATTIVO' | 'CONCLUSO' | null
   pianoDataFine: string | null
+  // Data/ora (ISO YYYY-MM-DDTHH:mm:ss) della prossima visita in agenda, se presente.
+  prossimaVisita: string | null
 }
 
 export interface CriteriRicercaPazienti {
@@ -39,6 +41,7 @@ export interface CriteriRicercaPazienti {
   dataUltimaVisitaDa?: string
   dataUltimaVisitaA?: string
   archiviato?: boolean
+  prossimaVisitaEntroGiorni?: 7 | 14 | 21 | 30
 }
 
 export interface PaginaPazienti {
@@ -213,6 +216,7 @@ export function cerca(criteri: CriteriRicercaPazienti = {}): Promise<PaginaPazie
   if (criteri.dataUltimaVisitaDa) parametri.set('dataUltimaVisitaDa', criteri.dataUltimaVisitaDa)
   if (criteri.dataUltimaVisitaA) parametri.set('dataUltimaVisitaA', criteri.dataUltimaVisitaA)
   if (criteri.archiviato !== undefined) parametri.set('archiviato', String(criteri.archiviato))
+  if (criteri.prossimaVisitaEntroGiorni) parametri.set('prossimaVisitaEntroGiorni', String(criteri.prossimaVisitaEntroGiorni))
 
   const query = parametri.toString()
   return apiRequest<PaginaPazienti>(`/pazienti/ricerca${query ? `?${query}` : ''}`)
@@ -242,8 +246,9 @@ export function visite(id: string): Promise<Visita[]> {
   return apiRequest<Visita[]>(`/pazienti/${id}/visite`)
 }
 
-export function creaVisita(pazienteId: string, request: CreaVisitaRequest): Promise<Visita> {
-  return apiRequest<Visita>(`/pazienti/${pazienteId}/visite`, { method: 'POST', body: request })
+export function creaVisita(pazienteId: string, request: CreaVisitaRequest, appuntamentoId?: string): Promise<Visita> {
+  const query = appuntamentoId ? `?appuntamentoId=${encodeURIComponent(appuntamentoId)}` : ''
+  return apiRequest<Visita>(`/pazienti/${pazienteId}/visite${query}`, { method: 'POST', body: request })
 }
 
 export function dettaglioVisita(pazienteId: string, visitaId: string): Promise<Visita> {

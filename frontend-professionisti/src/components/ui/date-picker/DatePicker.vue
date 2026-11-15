@@ -40,6 +40,18 @@ const valoreMin = computed<DateValue | undefined>(() => (props.min ? parseDate(p
 const valoreMax = computed<DateValue | undefined>(() => (props.max ? parseDate(props.max) : undefined))
 
 const aperto = ref(false)
+const ancora = ref<HTMLElement | null>(null)
+
+/** Nella modalità digitabile il focus resta sul campo: aprendo il calendario con un click si può continuare a scrivere. */
+function evitaFocusSulCalendario(evento: Event) {
+  if (props.digitabile) evento.preventDefault()
+}
+
+/** Un click sul campo (o sull'icona) mentre il calendario è aperto non lo chiude: lo gestisce già il campo stesso. */
+function nonChiudereSulCampo(evento: Event & { detail?: { originalEvent?: Event } }) {
+  const bersaglio = (evento.detail?.originalEvent?.target ?? evento.target) as Node | null
+  if (props.digitabile && bersaglio && ancora.value?.contains(bersaglio)) evento.preventDefault()
+}
 
 /** Selezionare una data nel calendario chiude il popover: nessun secondo click per confermare. */
 watch(() => props.modelValue, () => {
@@ -112,7 +124,7 @@ async function onTestoInput(valore: string | number) {
   <Popover v-model:open="aperto">
     <template v-if="digitabile">
       <PopoverAnchor as-child>
-        <div class="relative w-full">
+        <div ref="ancora" class="relative w-full">
           <Input
             :id="id"
             type="text"
@@ -123,6 +135,7 @@ async function onTestoInput(valore: string | number) {
             :class="cn('pr-9', props.class)"
             @focus="inFocus = true"
             @blur="inFocus = false"
+            @click="aperto = true"
             @update:model-value="onTestoInput"
           />
           <PopoverTrigger as-child>
@@ -153,14 +166,18 @@ async function onTestoInput(valore: string | number) {
         {{ testoVisualizzato }}
       </Button>
     </PopoverTrigger>
-    <PopoverContent class="w-auto overflow-hidden p-0">
+    <PopoverContent
+      class="w-auto overflow-hidden p-0"
+      @open-auto-focus="evitaFocusSulCalendario"
+      @interact-outside="nonChiudereSulCampo"
+    >
       <Calendar
         v-model="valore"
         :min-value="valoreMin"
         :max-value="valoreMax"
         locale="it"
         layout="month-and-year"
-        initial-focus
+        :initial-focus="!digitabile"
       />
     </PopoverContent>
   </Popover>

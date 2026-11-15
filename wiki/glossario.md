@@ -15,3 +15,5 @@ fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brain
 - **Piano alimentare**: entità centrale assegnata dal professionista a un paziente; strutturato in giorni/pasti/alimenti con calcolo automatico di calorie/macro (dettagli in [modello-dati](modello-dati.md), sotto-progetto "Piano alimentare").
 - **Invito**: meccanismo a token+email con cui il professionista attiva l'accesso di un paziente all'app.
 - **Fondamenta**: primo sotto-progetto della roadmap di prodotto — autenticazione, anagrafica paziente, invito/onboarding. Vedi [stato](stato.md).
+- **Appuntamento** (o evento d'agenda): voce del calendario del professionista (visita in studio, videoconsulto, promemoria, blocco di fascia oraria); tabella `appuntamenti` (vedi [modello-dati](modello-dati.md), [decisioni/0007](decisioni/0007-appuntamenti-e-visite-registrate.md)). **Non** è una visita registrata.
+- **Visita registrata**: l'entità `Visita` con misure antropometriche e plicometria (creata dal form "Nuova visita"). Salvandola da "Avvia visita" conclude l'appuntamento collegato.

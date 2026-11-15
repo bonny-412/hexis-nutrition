@@ -21,6 +21,7 @@ function creaRouter() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', name: 'dashboard', component: { template: '<div/>' } },
+      { path: '/agenda', name: 'agenda', component: { template: '<div/>' } },
       { path: '/pazienti', name: 'pazienti', component: { template: '<div/>' } },
       { path: '/pazienti/:id', name: 'paziente-dettaglio', component: PazienteDettaglioView },
       { path: '/pazienti/:id/visite/nuova', name: 'visita-nuova', component: { template: '<div/>' } },
@@ -61,7 +62,7 @@ async function montaConPaziente(pazienteOverrides: Partial<pazientiApi.Paziente>
     id: '1', nome: 'Luca', cognome: 'Verdi', codiceFiscale: 'RSSMRA80A01H501U', email: 'luca@example.com',
     telefono: null, dataNascita: null, sesso: 'M', lavoro: null, cellulare: null, medicoRiferimento: null, trattamenti: null, stileDiVita: null, note: null, statoAccount: 'MAI_INVITATO', archiviato: false,
     obiettivoUltimaVisita: null, dataUltimaVisita: null,
-    pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null,
+    pianoNome: null, pianoStato: null, pianoDataFine: null, dataInizioObiettivo: null, prossimaVisita: null,
     ...pazienteOverrides,
   })
   const router = creaRouter()

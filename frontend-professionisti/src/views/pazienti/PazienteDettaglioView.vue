@@ -44,6 +44,8 @@ import {
   MailX,
   MailCheck,
   UserCheck,
+  CalendarCheck,
+  CalendarPlus,
 } from '@lucide/vue'
 
 const ETICHETTE_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
@@ -258,6 +260,13 @@ onMounted(() => {
                 <Archive :size="16" />
                 Paziente archiviato
               </span>
+              <span
+                v-else-if="paziente.prossimaVisita"
+                class="inline-flex items-center gap-1.5 rounded-full bg-(--mint) px-2.5 py-1 text-xs font-bold text-(--green) border border-(--green)"
+              >
+                <CalendarCheck :size="16" />
+                Prossima visita: {{ formattaDataItalianaConMese(paziente.prossimaVisita.slice(0, 10)) }} · {{ paziente.prossimaVisita.slice(11, 16) }}
+              </span>
               <span v-else class="inline-flex items-center gap-1.5 rounded-full bg-(--warn-bg) px-2.5 py-1 text-xs font-bold text-(--warn-fg) border border-(--warn-fg)">
                 <CalendarX2 :size="16" />
                 Nessuna visita programmata
@@ -271,6 +280,12 @@ onMounted(() => {
             <router-link :to="`/piani-alimentari/nuovo?pazienteId=${paziente.id}`">
               <Utensils :size="15" />
               <span>Nuovo piano</span>
+            </router-link>
+          </Button>
+          <Button variant="neutral" as-child>
+            <router-link :to="`/agenda?nuovo=visita&pazienteId=${paziente.id}`">
+              <CalendarPlus :size="15" />
+              <span>Fissa appuntamento</span>
             </router-link>
           </Button>
           <Button as-child class="hover:bg-primary/80">
