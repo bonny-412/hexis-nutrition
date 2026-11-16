@@ -1,6 +1,11 @@
 spring:
   application:
     name: backend
+  task:
+    scheduling:
+      # Più di un thread: un job lento (es. invio push) non deve fermare gli altri job pianificati.
+      pool:
+        size: 2
   datasource:
     url: jdbc:postgresql://localhost:5432/hexis
     username: hexis
@@ -22,6 +27,14 @@ resend:
   from-email: ${RESEND_FROM_EMAIL:no-reply@hexisnutrition.example}
 
 app:
+  push:
+    # Chiavi VAPID per le Web Push (si generano una volta con `npx web-push generate-vapid-keys`).
+    # Se mancano, le push sono disattivate e il resto delle notifiche funziona.
+    vapid-public-key: ${VAPID_PUBLIC_KEY:}
+    vapid-private-key: ${VAPID_PRIVATE_KEY:}
+    subject: ${VAPID_SUBJECT:mailto:no-reply@hexisnutrition.example}
+    # Domini dei servizi push dei browser (Chrome, Firefox, Edge, Safari) ammessi come endpoint di iscrizione.
+    endpoint-ammessi: fcm.googleapis.com,push.services.mozilla.com,notify.windows.com,push.apple.com
   jwt:
     secret: ${JWT_SECRET}
     expiration-minutes: 480

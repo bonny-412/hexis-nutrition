@@ -18,6 +18,8 @@ public record AppuntamentoRequest(
         @JsonFormat(pattern = "HH:mm") LocalTime oraInizio,
         @Min(5) @Max(480) Integer durataMinuti,
         @Size(max = 500) String testo,
-        @Size(max = 500) @Pattern(regexp = "^https?://\\S+$") String linkVideo
+        @Size(max = 500) @Pattern(regexp = "^https?://\\S+$") String linkVideo,
+        Boolean notifica,
+        Integer anticipoNotificaMinuti
 ) {
 }

@@ -42,4 +42,4 @@ Tenere l'appuntamento separato dalla visita registrata lascia invariato tutto il
 - **Il 409 è riservato alle sovrapposizioni**; ogni altro errore di dominio è 400. Il client deve mandare `linkVideo: null`, mai `""` (che dà 400).
 - Il confronto "da adesso" usa `AgendaTempo.adesso()` (fuso `Europe/Rome`): su un server con un fuso diverso funziona comunque, ma lo studio resta mono-fuso.
 - **API e dati**: sezione Agenda in [api-contracts](../api-contracts.md), tabella `appuntamenti` in [modello-dati](../modello-dati.md).
-- **Aperto**: lato paziente (richiesta di appuntamento e conferma), notifiche/email di promemoria, ricorrenze e link automatici di videoconsulto sono fuori scope (decisione del design).
+- **Aperto**: lato paziente (richiesta di appuntamento e conferma), email di promemoria (le notifiche per il professionista sono state aggiunte dopo: vedi [0008](0008-notifiche-agenda.md)), ricorrenze e link automatici di videoconsulto sono fuori scope (decisione del design).

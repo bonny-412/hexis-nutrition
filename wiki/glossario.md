@@ -16,4 +16,7 @@ fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brain
 - **Invito**: meccanismo a token+email con cui il professionista attiva l'accesso di un paziente all'app.
 - **Fondamenta**: primo sotto-progetto della roadmap di prodotto — autenticazione, anagrafica paziente, invito/onboarding. Vedi [stato](stato.md).
 - **Appuntamento** (o evento d'agenda): voce del calendario del professionista (visita in studio, videoconsulto, promemoria, blocco di fascia oraria); tabella `appuntamenti` (vedi [modello-dati](modello-dati.md), [decisioni/0007](decisioni/0007-appuntamenti-e-visite-registrate.md)). **Non** è una visita registrata.
+- **Notifica** (dell'agenda): avviso al professionista che una visita o un promemoria con orario sta per iniziare, con un anticipo scelto (15/30/45/60/120 min). Compare nel campanello, con un puntino in sidebar e come push del browser. Vedi [decisioni/0008](decisioni/0008-notifiche-agenda.md).
+- **Scatto**: l'istante in cui una notifica diventa dovuta (`inizio dell'evento − anticipo`).
+- **Push** (Web Push): avviso di sistema mostrato dal browser anche con Hexis chiuso, tramite service worker e chiavi VAPID. Testo sempre generico.
 - **Visita registrata**: l'entità `Visita` con misure antropometriche e plicometria (creata dal form "Nuova visita"). Salvandola da "Avvia visita" conclude l'appuntamento collegato.

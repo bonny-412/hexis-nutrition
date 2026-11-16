@@ -20,7 +20,9 @@ public record AppuntamentoResponse(
         String testo,
         String linkVideo,
         boolean fatto,
-        UUID visitaId
+        UUID visitaId,
+        boolean notifica,
+        int anticipoNotificaMinuti
 ) {
 
     public static AppuntamentoResponse da(Appuntamento a, Paziente pazienteOrNull) {
@@ -37,6 +39,8 @@ public record AppuntamentoResponse(
                 a.getTesto(),
                 a.getLinkVideo(),
                 a.isFatto(),
-                a.getVisitaId());
+                a.getVisitaId(),
+                a.isNotifica(),
+                a.getAnticipoNotificaMinuti());
     }
 }

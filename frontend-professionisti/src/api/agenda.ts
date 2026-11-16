@@ -21,6 +21,10 @@ export interface Appuntamento {
   linkVideo: string | null
   fatto: boolean
   visitaId: string | null
+  /** Se true, il professionista riceve la notifica prima dell'inizio (solo visite e promemoria con orario). */
+  notifica: boolean
+  /** 15, 30, 45, 60 o 120. */
+  anticipoNotificaMinuti: number
 }
 
 export interface AppuntamentoRichiesta {
@@ -31,6 +35,8 @@ export interface AppuntamentoRichiesta {
   durataMinuti?: number | null
   testo?: string | null
   linkVideo?: string | null
+  notifica?: boolean
+  anticipoNotificaMinuti?: number
 }
 
 export class SovrapposizioneError extends Error {

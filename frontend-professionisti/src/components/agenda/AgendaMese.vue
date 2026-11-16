@@ -6,7 +6,7 @@ import { celleDelMese, minutiDaOra, oggiIso } from '@/utils/agenda'
 import { barrato, classiEvento, eVisitaAttiva, titolo } from '@/utils/agendaStile'
 
 const props = defineProps<{ riferimento: string; appuntamenti: Appuntamento[] }>()
-const emit = defineEmits<{ apriGiorno: [iso: string] }>()
+const emit = defineEmits<{ apriGiorno: [iso: string]; dettaglio: [appuntamento: Appuntamento] }>()
 
 const NOMI_GIORNI = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
 const MAX_EVENTI = 2
@@ -41,38 +41,42 @@ const celle = computed(() => {
       </div>
     </div>
     <div class="grid grid-cols-7">
-      <button
+      <!-- La cella è un div (non un button): al suo interno gli eventi sono pulsanti, niente pulsanti annidati. -->
+      <div
         v-for="c in celle"
         :key="c.iso"
-        type="button"
-        class="flex h-28 min-w-0 cursor-pointer flex-col gap-1 overflow-hidden border-b border-r border-(--div) p-1.5 text-left transition-colors hover:bg-(--soft) focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-(--green)"
+        class="flex h-28 min-w-0 cursor-pointer flex-col gap-1 overflow-hidden border-b border-r border-(--div) p-1.5 text-left transition-colors hover:bg-(--soft)"
         :class="[c.festa ? 'bg-(--warn-bg)' : c.eOggi ? 'bg-(--mint)' : '', c.fuoriMese ? 'opacity-45' : '']"
-        :aria-label="`Apri il giorno ${c.iso}`"
         :data-test="`mese-cella-${c.iso}`"
         @click="emit('apriGiorno', c.iso)"
       >
         <div class="flex items-center gap-1.5">
-          <span
-            class="flex size-6 flex-none items-center justify-center rounded-full text-xs font-bold"
+          <button
+            type="button"
+            class="flex size-6 flex-none cursor-pointer items-center justify-center rounded-full text-xs font-bold focus-visible:outline-2 focus-visible:outline-(--green)"
             :class="c.eOggi ? 'bg-(--green) text-(--on-green)' : 'text-(--fg)'"
+            :aria-label="`Apri il giorno ${c.iso}`"
+            :data-test="`mese-giorno-${c.iso}`"
           >
             {{ c.numero }}
-          </span>
+          </button>
           <span v-if="c.festa" class="min-w-0 flex-1 truncate text-[10px] font-semibold text-(--warn-fg)" :title="c.festa">{{ c.festa }}</span>
           <span v-if="c.visite > 0" class="ml-auto flex-none text-[10.5px] font-semibold text-(--fg3)">{{ c.visite }}</span>
         </div>
-        <div
+        <button
           v-for="a in c.mostrati"
           :key="a.id"
-          class="flex min-w-0 items-center gap-1 rounded border-l-[3px] px-1 py-px text-[10.5px] text-(--fg)"
+          type="button"
+          class="flex w-full min-w-0 cursor-pointer items-center gap-1 rounded border-l-[3px] px-1 py-px text-left text-[10.5px] text-(--fg) focus-visible:outline-2 focus-visible:outline-(--green)"
           :class="[classiEvento(a), { 'line-through': barrato(a) }]"
           :data-test="`agenda-evento-${a.id}`"
+          @click.stop="emit('dettaglio', a)"
         >
           <span v-if="a.oraInizio" class="flex-none font-bold">{{ a.oraInizio }}</span>
           <span class="truncate font-semibold">{{ titolo(a) }}</span>
-        </div>
+        </button>
         <div v-if="c.altri > 0" class="px-1 text-[10.5px] font-bold text-(--fg3)">+{{ c.altri }} altri</div>
-      </button>
+      </div>
     </div>
   </section>
 </template>

@@ -55,6 +55,12 @@ public class Appuntamento {
     @Column(nullable = false)
     private boolean fatto;
 
+    @Column(nullable = false)
+    private boolean notifica = true;
+
+    @Column(name = "anticipo_notifica_minuti", nullable = false)
+    private int anticipoNotificaMinuti = AgendaTempo.ANTICIPO_NOTIFICA_DEFAULT;
+
     @Column(name = "creato_il", nullable = false)
     private Instant creatoIl = Instant.now();
 
@@ -111,4 +117,10 @@ public class Appuntamento {
 
     public boolean isFatto() { return fatto; }
     public void setFatto(boolean fatto) { this.fatto = fatto; }
+
+    public boolean isNotifica() { return notifica; }
+    public void setNotifica(boolean notifica) { this.notifica = notifica; }
+
+    public int getAnticipoNotificaMinuti() { return anticipoNotificaMinuti; }
+    public void setAnticipoNotificaMinuti(int anticipoNotificaMinuti) { this.anticipoNotificaMinuti = anticipoNotificaMinuti; }
 }

@@ -605,3 +605,27 @@ Implementata l'Agenda (11 task, esecuzione subagent-driven sul design e il piano
 - **Da segnalare ad Andrea**: `:style` anche per il `top` della linea rossa "ora corrente" in `AgendaSettimana` (estensione dell'eccezione approvata per posizione e dimensione degli eventi), da confermare.
 - **Aperto**: riavviare il backend (V30), verifiche manuali in browser (elenco in stato), test candidati dal "Review Focus" del piano, Minor rinviati dalle review.
 - Nuovo [ADR 0007](decisioni/0007-appuntamenti-e-visite-registrate.md). Aggiornati `wiki/api-contracts.md`, `wiki/modello-dati.md`, `wiki/index.md`, `wiki/glossario.md`, `wiki/architettura.md`, `wiki/stato.md`.
+
+## [2026-11-15] handoff | Agenda: revisione finale, selettori data/ora, test alla prossima sessione
+
+Dettaglio in [stato](stato.md#sessione-del-15-novembre-2026--agenda-implementata). Nessun commit; tutto in staging.
+
+- **Revisione finale** (whole-branch, Opus): "Ready to merge", nessun Critical/Important. Corretti 4 Minor: filtro per giorno in `AgendaGiorno`, guardia di staleness e "Salva" disabilitato in `AppuntamentoDialog`, toast specifico in `VisitaFormView` per `appuntamentoId` non valido, `oggiIso()` in `DatiVisitaForm`.
+- **Selettori**: il `DatePicker` digitabile si apre con un click sul campo; nuovo `TimePicker` (`components/ui/time-picker/`) al posto di `type="time"`, con lo stesso aspetto del `DatePicker`.
+- **Verifica**: backend 194/194, `vue-tsc` 0 errori, frontend 291/300 (9 falliti noti non correlati). Nulla provato in browser, nessun test nuovo.
+- **Prossima sessione**: Andrea scrive i test (candidati in `stato.md`, incluso `TimePicker`); prima riavviare il backend (V30) e fare le verifiche a mano. Aperti: OK sull'eccezione `:style` della linea rossa, durata massima 120 minuti nel dialog.
+- Aggiornato `wiki/stato.md`.
+
+## [2026-11-16] handoff | Notifiche dell'agenda
+
+- Orario calendario 07:00-20:00, Textarea per testo/note, dialog di dettaglio degli eventi con link alla scheda paziente.
+- Notifiche dell'agenda con campanello, puntino in sidebar e Web Push generiche: backend (V31, V32, scheduler, `WebPushService`) e frontend (store, lista, service worker). Decisione in [decisioni/0008](decisioni/0008-notifiche-agenda.md).
+- Backend 194/194, `vue-tsc` pulito, frontend 291/300 (9 falliti noti). Nessun commit, nessun test nuovo. Da fare a mano: chiavi VAPID, riavvio backend, prove su Windows e Mac.
+- Aggiornati `api-contracts.md`, `modello-dati.md`, `glossario.md`, `index.md`, `stato.md`, ADR 0007.
+
+## [2026-11-16] handoff | Notifiche dell'agenda: revisione e fine sessione
+
+- Revisione finale con agente separato: nessun Critical; corretti I1 (timeout push + 2 thread dello scheduler), I3 (endpoint push validato: https, allowlist, max 10 dispositivi) e l'ordine della richiesta di permesso (Safari). Backend 194/194, `vue-tsc` pulito.
+- Chiavi VAPID di sviluppo impostate nella configurazione di avvio di STS; `GET /notifiche/push/chiave` risponde correttamente. Nulla provato nel browser: troppo tardi, riprendere da lì.
+- Aperto: avviso push soppresso con scheda visibile (rischio Safari); Minor rimandati M1-M8 (in `stato.md`), in particolare M7 e M5. Test da scrivere a cura di Andrea.
+- Aggiornati `stato.md` (sezione del 16 novembre e "Prossimo passo"), ADR 0008. Nessun commit.

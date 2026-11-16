@@ -12,10 +12,12 @@ import {
   type TipoAppuntamento,
 } from '@/api/agenda'
 import { dettaglio, type Paziente } from '@/api/pazienti'
-import { minutiDaOra } from '@/utils/agenda'
+import { ANTICIPI_NOTIFICA, ANTICIPO_NOTIFICA_DEFAULT, minutiDaOra } from '@/utils/agenda'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { TimePicker } from '@/components/ui/time-picker'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -53,7 +55,7 @@ const emit = defineEmits<{
 }>()
 
 const DURATE = [15, 30, 45, 60, 90, 120]
-const INIZIO_MIN = 8 * 60
+const INIZIO_MIN = 7 * 60
 const FINE_MIN = 20 * 60
 const REGEX_ORA = /^([01]\d|2[0-3]):[0-5]\d$/
 const REGEX_LINK = /^https?:\/\/\S+$/
@@ -66,6 +68,8 @@ const ora = ref('')
 const durata = ref('30')
 const testo = ref('')
 const link = ref('')
+const notifica = ref(true)
+const anticipo = ref(String(ANTICIPO_NOTIFICA_DEFAULT))
 const errori = ref<Record<string, string>>({})
 const inCorso = ref(false)
 
@@ -79,6 +83,8 @@ const eVisita = computed(() => tipo.value === 'VISITA_STUDIO' || tipo.value === 
 const ePromemoria = computed(() => tipo.value === 'PROMEMORIA')
 const eBlocco = computed(() => tipo.value === 'BLOCCO')
 const inModifica = computed(() => !!props.appuntamento)
+// La notifica ha senso solo per visite e per promemoria con un orario valido: per gli altri la sezione non compare.
+const sezioneNotifica = computed(() => eVisita.value || (ePromemoria.value && REGEX_ORA.test(ora.value.trim())))
 
 const titolo = computed(() => {
   if (ePromemoria.value) return inModifica.value ? 'Modifica promemoria' : 'Nuovo promemoria'
@@ -93,7 +99,7 @@ const opzioniDurata = computed(() => {
 })
 
 const firmaCorrente = computed(() =>
-  JSON.stringify([tipo.value, paziente.value?.id ?? null, data.value, ora.value, durata.value, testo.value, link.value]),
+  JSON.stringify([tipo.value, paziente.value?.id ?? null, data.value, ora.value, durata.value, testo.value, link.value, notifica.value, anticipo.value]),
 )
 const modificato = computed(() => firmaBase.value !== null && firmaCorrente.value !== firmaBase.value)
 
@@ -113,6 +119,8 @@ async function inizializza() {
   durata.value = String(a?.durataMinuti ?? (tipo.value === 'BLOCCO' ? 60 : 30))
   testo.value = a?.testo ?? ''
   link.value = a?.linkVideo ?? ''
+  notifica.value = a?.notifica ?? true
+  anticipo.value = String(a?.anticipoNotificaMinuti ?? ANTICIPO_NOTIFICA_DEFAULT)
   paziente.value = null
   errori.value = {}
   inCorso.value = false
@@ -146,9 +154,9 @@ function erroreOra(): string | undefined {
   if (!valore) return obbligatoria ? "L'ora di inizio è obbligatoria." : undefined
   if (!REGEX_ORA.test(valore)) return 'Inserisci un orario valido (es. 09:30).'
   const inizio = minutiDaOra(valore)
-  if (inizio < INIZIO_MIN) return "L'orario deve essere compreso tra le 08:00 e le 20:00."
+  if (inizio < INIZIO_MIN) return "L'orario deve essere compreso tra le 07:00 e le 20:00."
   if (ePromemoria.value) {
-    return inizio >= FINE_MIN ? "L'orario deve essere compreso tra le 08:00 e le 20:00." : undefined
+    return inizio >= FINE_MIN ? "L'orario deve essere compreso tra le 07:00 e le 20:00." : undefined
   }
   if (inizio + Number(durata.value) > FINE_MIN) return "L'appuntamento deve terminare entro le 20:00."
   return undefined
@@ -201,6 +209,16 @@ function valida(): boolean {
 }
 
 function costruisciRichiesta(): AppuntamentoRichiesta {
+  const richiesta = costruisciRichiestaBase()
+  // Senza sezione notifica (blocchi, promemoria senza ora) i campi non si inviano: il backend li imposta a false.
+  if (sezioneNotifica.value) {
+    richiesta.notifica = notifica.value
+    richiesta.anticipoNotificaMinuti = Number(anticipo.value)
+  }
+  return richiesta
+}
+
+function costruisciRichiestaBase(): AppuntamentoRichiesta {
   const testoPulito = testo.value.trim() || null
   if (eVisita.value) {
     const linkPulito = link.value.trim()
@@ -347,7 +365,7 @@ function etichettaConflitto(c: Appuntamento): string {
               <TimePicker
                 id="appuntamento-ora"
                 v-model="ora"
-                min="08:00"
+                min="07:00"
                 max="20:00"
                 :aria-invalid="!!errori.ora"
                 data-test="appuntamento-ora"
@@ -372,15 +390,33 @@ function etichettaConflitto(c: Appuntamento): string {
             <Label for="appuntamento-testo" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">
               {{ ePromemoria ? 'Testo*' : eBlocco ? 'Motivo (facoltativo)' : 'Note brevi (facoltative)' }}
             </Label>
-            <Input
+            <Textarea
               id="appuntamento-testo"
               v-model="testo"
-              type="text"
+              rows="3"
               :aria-invalid="!!errori.testo"
               :placeholder="ePromemoria ? 'Es. Richiamare per i risultati delle analisi' : eBlocco ? 'Es. Pausa pranzo' : 'Es. Controllo mensile'"
               data-test="appuntamento-testo"
             />
             <p v-if="errori.testo" class="text-xs font-medium text-(--danger)">{{ errori.testo }}</p>
+          </div>
+
+          <div v-if="sezioneNotifica" class="flex flex-col gap-3 rounded-lg border border-(--bd) p-3" data-test="appuntamento-notifica-sezione">
+            <div class="flex items-center gap-2.5">
+              <Checkbox id="appuntamento-notifica" v-model="notifica" data-test="appuntamento-notifica" />
+              <Label for="appuntamento-notifica" class="cursor-pointer text-sm font-medium text-(--fg)">Ricevi notifica</Label>
+            </div>
+            <div v-if="notifica" class="flex flex-col gap-1.5">
+              <Label for="appuntamento-anticipo" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Anticipo</Label>
+              <Select v-model="anticipo">
+                <SelectTrigger id="appuntamento-anticipo" class="w-full" data-test="appuntamento-anticipo">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="o in ANTICIPI_NOTIFICA" :key="o.valore" :value="String(o.valore)">{{ o.etichetta }}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div v-if="tipo === 'VIDEOCONSULTO'" class="flex flex-col gap-1.5">

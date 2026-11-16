@@ -1,9 +1,19 @@
 export type VistaAgenda = 'MESE' | 'SETTIMANA' | 'GIORNO'
 export type FiltroAgenda = 'TUTTI' | 'VISITE' | 'PROMEMORIA'
 
-/** Pixel per ora della griglia oraria e ora di origine (08:00). */
+/** Pixel per ora della griglia oraria e ora di origine (07:00). */
 export const PX_PER_ORA = 58
-export const ORA_ORIGINE_MIN = 8 * 60
+export const ORA_ORIGINE_MIN = 7 * 60
+
+/** Anticipi tra cui scegliere per la notifica di un evento (minuti prima dell'inizio). */
+export const ANTICIPO_NOTIFICA_DEFAULT = 45
+export const ANTICIPI_NOTIFICA: { valore: number; etichetta: string }[] = [
+  { valore: 120, etichetta: '2 ore' },
+  { valore: 60, etichetta: '1 ora' },
+  { valore: 45, etichetta: '45 minuti' },
+  { valore: 30, etichetta: '30 minuti' },
+  { valore: 15, etichetta: '15 minuti' },
+]
 
 const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre']
 const GIORNI_BREVI = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']

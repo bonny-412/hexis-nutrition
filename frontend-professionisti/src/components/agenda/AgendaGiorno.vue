@@ -9,7 +9,7 @@ import { minutiDaOra } from '@/utils/agenda'
 import { barrato, classiEvento, etichettaTipo, oraFine, sottotitolo, titolo } from '@/utils/agendaStile'
 
 const props = defineProps<{ giorno: string; appuntamenti: Appuntamento[] }>()
-const emit = defineEmits<{ azione: [appuntamento: Appuntamento, azione: AzioneAppuntamento] }>()
+const emit = defineEmits<{ azione: [appuntamento: Appuntamento, azione: AzioneAppuntamento]; dettaglio: [appuntamento: Appuntamento] }>()
 
 const festa = computed(() => festivitaDelGiorno(props.giorno))
 
@@ -43,9 +43,10 @@ const daFare = computed(() => delGiorno.value.filter((a) => a.tipo === 'PROMEMOR
         <li
           v-for="a in impegni"
           :key="a.id"
-          class="flex items-center gap-3 rounded-lg border-l-4 px-3 py-2.5"
+          class="flex cursor-pointer items-center gap-3 rounded-lg border-l-4 px-3 py-2.5"
           :class="classiEvento(a)"
           :data-test="`agenda-evento-${a.id}`"
+          @click="emit('dettaglio', a)"
         >
           <div class="w-20 flex-none text-xs text-(--fg2)">
             <div class="text-sm font-bold text-(--fg)">{{ a.oraInizio }}</div>
@@ -59,7 +60,9 @@ const daFare = computed(() => delGiorno.value.filter((a) => a.tipo === 'PROMEMOR
             <Video v-if="a.tipo === 'VIDEOCONSULTO'" :size="13" />
             {{ etichettaTipo(a) }}
           </span>
-          <AppuntamentoMenu :appuntamento="a" @azione="(azione) => emit('azione', a, azione)" />
+          <span @click.stop>
+            <AppuntamentoMenu :appuntamento="a" @azione="(azione) => emit('azione', a, azione)" />
+          </span>
         </li>
       </ul>
 
@@ -67,16 +70,20 @@ const daFare = computed(() => delGiorno.value.filter((a) => a.tipo === 'PROMEMOR
         <h4 class="mb-2.5 font-heading text-base italic text-(--fg)">Da fare oggi</h4>
         <p v-if="daFare.length === 0" class="text-xs text-(--fg3)">Nessun promemoria senza orario.</p>
         <ul v-else class="flex flex-col gap-2">
-          <li v-for="a in daFare" :key="a.id" class="flex items-center gap-2.5">
-            <Checkbox
-              :model-value="a.fatto"
-              :aria-label="`Fatto: ${titolo(a)}`"
-              @update:model-value="emit('azione', a, a.fatto ? 'DA_FARE' : 'FATTO')"
-            />
+          <li v-for="a in daFare" :key="a.id" class="flex cursor-pointer items-center gap-2.5" :data-test="`agenda-evento-${a.id}`" @click="emit('dettaglio', a)">
+            <span class="flex" @click.stop>
+              <Checkbox
+                :model-value="a.fatto"
+                :aria-label="`Fatto: ${titolo(a)}`"
+                @update:model-value="emit('azione', a, a.fatto ? 'DA_FARE' : 'FATTO')"
+              />
+            </span>
             <span class="min-w-0 flex-1 truncate text-sm text-(--fg)" :class="{ 'text-(--fg4) line-through': a.fatto }">
               {{ titolo(a) }}
             </span>
-            <AppuntamentoMenu :appuntamento="a" @azione="(azione) => emit('azione', a, azione)" />
+            <span @click.stop>
+              <AppuntamentoMenu :appuntamento="a" @azione="(azione) => emit('azione', a, azione)" />
+            </span>
           </li>
         </ul>
       </aside>

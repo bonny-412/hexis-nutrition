@@ -122,13 +122,30 @@ Dal 2026-11-15. Vedi [decisioni/0007](decisioni/0007-appuntamenti-e-visite-regis
 - **Visita in studio / videoconsulto**: `pazienteId`, `oraInizio` e `durataMinuti` obbligatori; il paziente deve essere del professionista (404 altrimenti) e **non archiviato** (400). Stato `PROGRAMMATA`.
 - **Blocco**: `oraInizio` e `durataMinuti` obbligatori, nessun paziente (se inviato viene ignorato), nessuno stato.
 - **Promemoria**: `testo` obbligatorio non vuoto; `oraInizio` facoltativo (senza ora è un promemoria "di giornata"), nessuna durata; `pazienteId` facoltativo (se c'è, stesse regole: del professionista e non archiviato).
-- **Fascia oraria**: visite e blocchi devono stare tra le **08:00 e le 20:00** (inizio >= 08:00 e fine <= 20:00); un promemoria con ora deve iniziare tra 08:00 e 20:00 (20:00 escluso). Altrimenti 400.
+- **Fascia oraria**: visite e blocchi devono stare tra le **07:00 e le 20:00** (inizio >= 07:00 e fine <= 20:00); un promemoria con ora deve iniziare tra 07:00 e 20:00 (20:00 escluso). Altrimenti 400.
 - **`linkVideo`**: ha senso solo sul `VIDEOCONSULTO` (negli altri tipi il server lo azzera); se presente deve rispettare `^https?://\S+$` (max 500). **Una stringa vuota `""` dà 400**: i client devono inviare `null`, mai `""` (il frontend lo fa).
 - Gli errori di validazione di dominio rispondono sempre **400**; il **409 è riservato alle sovrapposizioni**.
 
 **Sovrapposizioni**: il controllo vale solo per le visite (studio e videoconsulto). Sono in conflitto, nello stesso giorno, i blocchi e le visite `PROGRAMMATA` o `CONCLUSA` con intervallo che si interseca (intervalli semiaperti `[inizio, fine)`: una visita che finisce alle 10:00 e una che inizia alle 10:00 **non** si sovrappongono); le `ANNULLATA`, i promemoria e l'appuntamento stesso (in modifica) non contano. Creare un **blocco** sopra visite esistenti non avvisa. È un avviso, non un blocco: decide il professionista ([decisioni/0007](decisioni/0007-appuntamenti-e-visite-registrate.md)).
 
-**`AppuntamentoResponse`**: `id`, `tipo`, `stato` (`null` per promemoria e blocchi), `data`, `oraInizio` (`HH:mm`), `durataMinuti`, `pazienteId`, `pazienteNome`, `pazienteCognome` (risolti con una sola query sui pazienti distinti), `testo`, `linkVideo`, `fatto`, `visitaId` (la visita registrata collegata dopo la conclusione, `null` altrimenti).
+**`AppuntamentoResponse`**: `id`, `tipo`, `stato` (`null` per promemoria e blocchi), `data`, `oraInizio` (`HH:mm`), `durataMinuti`, `pazienteId`, `pazienteNome`, `pazienteCognome` (risolti con una sola query sui pazienti distinti), `testo`, `linkVideo`, `fatto`, `visitaId` (la visita registrata collegata dopo la conclusione, `null` altrimenti), `notifica` (boolean) e `anticipoNotificaMinuti` (15/30/45/60/120) dal 2026-11-16.
+
+**Notifica dell'evento** (dal 2026-11-16, [decisioni/0008](decisioni/0008-notifiche-agenda.md)): `AppuntamentoRequest` accetta `notifica` (boolean, default `true`) e `anticipoNotificaMinuti` (default `45`, valori ammessi 15/30/45/60/120, altrimenti 400 "Anticipo di notifica non valido"). Valgono solo per visite e promemoria **con orario**: per i blocchi e per i promemoria senza ora il server ignora i due campi e salva `notifica = false`.
+
+### Endpoint delle Notifiche (dal 2026-11-16)
+
+Vedi [decisioni/0008](decisioni/0008-notifiche-agenda.md). Solo ruolo PROFESSIONISTA (`/notifiche/**` in `SecurityConfig`); consumati da `frontend-professionisti/` (`api/notifiche.ts`, `stores/notifiche.ts`, `utils/push.ts`, `public/sw.js`).
+
+| Metodo | Path | Ruolo | Descrizione |
+|---|---|---|---|
+| GET | `/notifiche` | PROFESSIONISTA | Notifiche **attive** del professionista: `{ notifiche: [NotificaResponse], nonLette, nonVisteInAgenda }`. `NotificaResponse`: `id`, `appuntamentoId`, `tipo`, `data`, `oraInizio`, `anticipoMinuti`, `testo`, `pazienteNome`, `pazienteCognome`, `scattaIl`, `letta`, `agendaVista`. Attiva = visita ancora `PROGRAMMATA` e non finita, o promemoria non fatto e del giorno corrente |
+| POST | `/notifiche/lette` | PROFESSIONISTA | Body `{ "ids": [uuid] }`: segna lette **solo** quelle indicate (le notifiche arrivate a lista aperta restano non lette), 204. Id di altri professionisti ignorati |
+| POST | `/notifiche/agenda-viste` | PROFESSIONISTA | Segna tutte come viste in agenda (spegne il puntino della sidebar), 204 |
+| GET | `/notifiche/push/chiave` | PROFESSIONISTA | `{ "chiave": "<VAPID pubblica>" }`, `null` se le push non sono configurate |
+| POST | `/notifiche/push/iscrizioni` | PROFESSIONISTA | Body `{ endpoint, p256dh, auth }`: registra il dispositivo per le Web Push (upsert per `endpoint`), 204 |
+| DELETE | `/notifiche/push/iscrizioni` | PROFESSIONISTA | Body `{ endpoint }`: rimuove l'iscrizione del dispositivo, 204 |
+
+**Scatto**: lo scheduler (ogni minuto) crea una notifica quando `data + oraInizio − anticipo` (fuso `Europe/Rome`) è raggiunto e l'evento non è ancora iniziato, una sola volta per evento e orario di scatto. L'avviso push è generico ("Hai una visita/un promemoria tra N minuti"), senza dati del paziente. Una pulizia notturna (03:00) elimina le notifiche scattate prima del giorno corrente.
 
 ### Effetti sugli endpoint dei pazienti
 

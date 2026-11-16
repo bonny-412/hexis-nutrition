@@ -2,7 +2,9 @@
 import { RouterLink, useRoute } from 'vue-router'
 import { LayoutGrid, Calendar, Users, MessageSquare, BarChart3, Apple, PanelLeftOpen, PanelLeftClose, Utensils } from '@lucide/vue'
 import { ref } from 'vue';
+import { useNotificheStore } from '@/stores/notifiche'
 
+const notifiche = useNotificheStore()
 const props = withDefaults(defineProps<{ class?: string }>(), { class: '' })
 
 const isCollapsed = ref(false)
@@ -42,7 +44,7 @@ const route = useRoute()
           v-for="voce in voci"
           :key="voce.nome"
           :to="voce.routeName ? { name: voce.routeName } : undefined"
-          class="flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium transition-colors"
+          class="relative flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium transition-colors"
           :class="[
             isCollapsed ? 'justify-center px-0' : '',
             voce.routeNamesAttivi?.includes(route.name as string)
@@ -54,6 +56,13 @@ const route = useRoute()
         >
           <component :is="voce.icona" :size="16" :stroke-width="1.8" />
           <span v-if="!isCollapsed" class="truncate">{{ voce.nome }}</span>
+          <span
+            v-if="voce.nome === 'Agenda' && notifiche.nonVisteInAgenda > 0"
+            class="size-2 flex-none rounded-full bg-(--green)"
+            :class="isCollapsed ? 'absolute right-2 top-1.5' : 'ml-auto'"
+            aria-label="Nuove notifiche in agenda"
+            data-test="sidebar-agenda-puntino"
+          />
         </component>
       </nav>
     </div>

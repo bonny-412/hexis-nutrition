@@ -16,6 +16,9 @@ public interface AppuntamentoRepository extends JpaRepository<Appuntamento, UUID
     List<Appuntamento> findAllByProfessionistaIdAndDataBetweenOrderByDataAscOraInizioAsc(
             UUID professionistaId, LocalDate da, LocalDate a);
 
+    /** Tutti i professionisti: serve allo scheduler delle notifiche. */
+    List<Appuntamento> findAllByDataBetweenAndNotificaTrue(LocalDate da, LocalDate a);
+
     List<Appuntamento> findAllByProfessionistaIdAndData(UUID professionistaId, LocalDate data);
 
     List<Appuntamento> findAllByPazienteIdInAndStatoAndDataGreaterThanEqual(

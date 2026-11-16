@@ -10,6 +10,7 @@ import AgendaSettimana from '@/components/agenda/AgendaSettimana.vue'
 import AgendaMese from '@/components/agenda/AgendaMese.vue'
 import AgendaLegenda from '@/components/agenda/AgendaLegenda.vue'
 import AppuntamentoDialog from '@/components/agenda/AppuntamentoDialog.vue'
+import AppuntamentoDettaglioDialog from '@/components/agenda/AppuntamentoDettaglioDialog.vue'
 import type { AzioneAppuntamento } from '@/components/agenda/AppuntamentoMenu.vue'
 import { Button } from '@/components/ui/button'
 import {
@@ -39,6 +40,7 @@ import {
   type AppuntamentoRichiesta,
   type TipoAppuntamento,
 } from '@/api/agenda'
+import { useNotificheStore } from '@/stores/notifiche'
 import { aggiungiGiorni, intervalloVisibile, oggiIso, type FiltroAgenda, type VistaAgenda } from '@/utils/agenda'
 
 const router = useRouter()
@@ -97,6 +99,19 @@ function apriLinkVideo(link: string) {
   window.open(url.href, '_blank', 'noopener,noreferrer')
 }
 
+// --- Dialog di dettaglio ---
+// Si tiene l'id, non l'oggetto: dopo un ricaricamento il dettaglio mostra i dati aggiornati.
+const dettaglioId = ref<string | null>(null)
+const dettaglioAppuntamento = computed(() => appuntamenti.value.find((a) => a.id === dettaglioId.value) ?? null)
+const dettaglioAperto = computed({
+  get: () => dettaglioAppuntamento.value !== null,
+  set: (v: boolean) => { if (!v) dettaglioId.value = null },
+})
+
+function apriDettaglio(a: Appuntamento) {
+  dettaglioId.value = a.id
+}
+
 // --- Dialog di creazione/modifica ---
 const dialogAperto = ref(false)
 const dialogTipo = ref<TipoAppuntamento>('VISITA_STUDIO')
@@ -137,6 +152,41 @@ watch(
   { immediate: true },
 )
 
+// Le notifiche si considerano "viste in agenda" appena si entra qui, anche se ne arrivano altre a pagina aperta.
+const notificheStore = useNotificheStore()
+watch(
+  () => notificheStore.nonVisteInAgenda,
+  (n) => { if (n > 0) void notificheStore.segnaAgendaViste() },
+  { immediate: true },
+)
+
+// `?evento=<id>&data=YYYY-MM-DD` (dal clic su una notifica): mostra quel giorno e apre il dettaglio dell'evento.
+const REGEX_DATA = /^\d{4}-\d{2}-\d{2}$/
+const eventoDaAprire = ref<string | null>(null)
+watch(
+  () => route.query.evento,
+  (evento) => {
+    if (typeof evento !== 'string' || !REGEX_UUID.test(evento)) return
+    const dataEvento = typeof route.query.data === 'string' && REGEX_DATA.test(route.query.data) ? route.query.data : null
+    eventoDaAprire.value = evento
+    if (dataEvento) riferimento.value = dataEvento
+    router.replace({ query: { ...route.query, evento: undefined, data: undefined } })
+    // Se era già in elenco (stesso intervallo) il watch su `appuntamenti` non scatta: controllo subito.
+    apriEventoInAttesa()
+  },
+  { immediate: true },
+)
+
+function apriEventoInAttesa() {
+  if (!eventoDaAprire.value) return
+  const trovato = appuntamenti.value.find((a) => a.id === eventoDaAprire.value)
+  if (trovato) {
+    apriDettaglio(trovato)
+    eventoDaAprire.value = null
+  }
+}
+watch(appuntamenti, apriEventoInAttesa)
+
 async function onSalvato() {
   await carica()
 }
@@ -169,6 +219,8 @@ function richiestaDa(a: Appuntamento, data: string): AppuntamentoRichiesta {
     durataMinuti: a.durataMinuti,
     testo: a.testo,
     linkVideo: a.tipo === 'VIDEOCONSULTO' && a.linkVideo ? a.linkVideo : null,
+    notifica: a.notifica,
+    anticipoNotificaMinuti: a.anticipoNotificaMinuti,
   }
 }
 
@@ -302,24 +354,29 @@ function titoloEliminazione(a: Appuntamento | null): string {
         :giorno="riferimento"
         :appuntamenti="appuntamentiFiltrati"
         @azione="onAzione"
+        @dettaglio="apriDettaglio"
       />
       <AgendaSettimana
         v-else-if="vista === 'SETTIMANA'"
         :riferimento="riferimento"
         :appuntamenti="appuntamentiFiltrati"
         @azione="onAzione"
+        @dettaglio="apriDettaglio"
       />
       <AgendaMese
         v-else
         :riferimento="riferimento"
         :appuntamenti="appuntamentiFiltrati"
         @apri-giorno="apriGiorno"
+        @dettaglio="apriDettaglio"
       />
     </template>
 
     <div class="mt-3.5">
       <AgendaLegenda />
     </div>
+
+    <AppuntamentoDettaglioDialog v-model:aperto="dettaglioAperto" :appuntamento="dettaglioAppuntamento" @azione="onAzione" />
 
     <AppuntamentoDialog
       v-model:aperto="dialogAperto"

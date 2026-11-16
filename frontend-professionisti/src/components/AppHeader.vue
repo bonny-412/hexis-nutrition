@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
+import { useNotificheStore } from '@/stores/notifiche'
+import { disattivaPush, sincronizzaPush } from '@/utils/push'
 import { useRouter } from 'vue-router'
+import { onMounted, onUnmounted } from 'vue'
 import { Menu, Bell, ChevronDown, LogOut, Moon } from '@lucide/vue'
 import CommandPalette from './CommandPalette.vue'
+import NotificheLista from './notifiche/NotificheLista.vue'
 import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -21,8 +26,17 @@ defineEmits<{ 'apri-menu': [] }>()
 const auth = useAuthStore()
 const tema = useThemeStore()
 const router = useRouter()
+const notifiche = useNotificheStore()
 
-function onLogout() {
+onMounted(() => {
+  notifiche.avviaPolling()
+  void sincronizzaPush()
+})
+onUnmounted(() => notifiche.fermaPolling())
+
+async function onLogout() {
+  // Prima del logout: serve ancora il token per togliere l'iscrizione push di questo dispositivo.
+  await disattivaPush()
   auth.logout()
   router.push({ name: 'login' })
 }
@@ -49,10 +63,22 @@ function onLogout() {
     <div class="flex items-center gap-2.5">
       <CommandPalette />
 
-      <Button variant="neutral" size="icon" class="relative" aria-label="Notifiche">
-        <Bell :size="16" />
-        <span class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-(--green) shadow-[0_0_0_2px_var(--surf)]"></span>
-      </Button>
+      <Popover :open="notifiche.listaAperta" @update:open="(aperto) => (aperto ? notifiche.apriLista() : notifiche.chiudiLista())">
+        <PopoverTrigger as-child>
+          <Button variant="neutral" size="icon" class="relative lg:size-10" aria-label="Notifiche" data-test="notifiche-campanello">
+            <Bell :size="18" />
+            <span
+              v-if="notifiche.nonLette > 0"
+              class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-(--green) shadow-[0_0_0_2px_var(--surf)]"
+              :class="{ 'animate-pulse': notifiche.pulsa }"
+              data-test="notifiche-puntino"
+            ></span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" class="w-80">
+          <NotificheLista />
+        </PopoverContent>
+      </Popover>
 
       <div class="mx-1 h-5.5 w-px bg-(--bd) hidden lg:flex"></div>
 

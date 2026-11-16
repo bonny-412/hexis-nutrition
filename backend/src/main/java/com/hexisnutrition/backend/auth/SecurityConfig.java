@@ -62,6 +62,7 @@ public class SecurityConfig {
                         .requestMatchers("/pazienti/**").hasRole("PROFESSIONISTA")
                         .requestMatchers("/alimenti/**").hasRole("PROFESSIONISTA")
                         .requestMatchers("/agenda/**").hasRole("PROFESSIONISTA")
+                        .requestMatchers("/notifiche/**").hasRole("PROFESSIONISTA")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class);

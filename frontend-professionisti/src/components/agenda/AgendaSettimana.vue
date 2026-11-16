@@ -16,11 +16,11 @@ import {
 import { barrato, classiEvento, eVisitaAttiva, etichettaTipo, nomePaziente, titolo } from '@/utils/agendaStile'
 
 const props = defineProps<{ riferimento: string; appuntamenti: Appuntamento[] }>()
-const emit = defineEmits<{ azione: [appuntamento: Appuntamento, azione: AzioneAppuntamento] }>()
+const emit = defineEmits<{ azione: [appuntamento: Appuntamento, azione: AzioneAppuntamento]; dettaglio: [appuntamento: Appuntamento] }>()
 
 const NOMI_GIORNI = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
 const ORA_FINE_MIN = 20 * 60
-const ORE = Array.from({ length: 12 }, (_, i) => 8 + i)
+const ORE = Array.from({ length: 13 }, (_, i) => 7 + i)
 /** Durata minima (minuti) con cui un evento resta visibile e cliccabile in griglia (anche i promemoria, senza durata). */
 const DURATA_MINIMA = 30
 
@@ -48,7 +48,7 @@ function oraDaMinuti(min: number): string {
 const colonne = computed(() =>
   giorniDellaSettimana(props.riferimento).map((iso, i) => {
     const delGiorno = props.appuntamenti.filter((a) => a.data === iso)
-    // Eventi in griglia, ritagliati nella fascia 08:00-20:00 (mai fuori dalla griglia).
+    // Eventi in griglia, ritagliati nella fascia 07:00-20:00 (mai fuori dalla griglia).
     const inGriglia = delGiorno
       .filter((a) => a.oraInizio !== null)
       .map((a) => {
@@ -117,14 +117,17 @@ function testoEvento(a: Appuntamento): string {
             <li
               v-for="a in c.senzaOra"
               :key="a.id"
-              class="group flex items-center gap-1 rounded-md border-l-[3px] py-0.5 pl-1.5 pr-0.5"
+              class="group flex cursor-pointer items-center gap-1 rounded-md border-l-[3px] py-0.5 pl-1.5 pr-0.5"
               :class="classiEvento(a)"
               :data-test="`agenda-evento-${a.id}`"
+              @click="emit('dettaglio', a)"
             >
               <span class="min-w-0 flex-1 truncate text-[11px] font-semibold text-(--fg)" :class="{ 'line-through': barrato(a) }" :title="titolo(a)">
                 {{ titolo(a) }}
               </span>
-              <AppuntamentoMenu :appuntamento="a" @azione="(azione) => emit('azione', a, azione)" />
+              <span @click.stop>
+                <AppuntamentoMenu :appuntamento="a" @azione="(azione) => emit('azione', a, azione)" />
+              </span>
             </li>
           </ul>
         </div>
@@ -152,7 +155,7 @@ function testoEvento(a: Appuntamento): string {
           <div
             v-for="e in c.eventi"
             :key="e.a.id"
-            class="group absolute overflow-hidden rounded-md border-l-[3px] px-1.5 py-0.5"
+            class="group absolute cursor-pointer overflow-hidden rounded-md border-l-[3px] px-1.5 py-0.5"
             :class="classiEvento(e.a)"
             :style="{
               top: `${e.topPx}px`,
@@ -162,13 +165,14 @@ function testoEvento(a: Appuntamento): string {
             }"
             :title="testoEvento(e.a)"
             :data-test="`agenda-evento-${e.a.id}`"
+            @click="emit('dettaglio', e.a)"
           >
             <div class="flex items-center gap-1 pr-5 text-[10.5px] font-bold leading-tight text-(--fg)" :class="{ 'line-through': barrato(e.a) }">
               <Video v-if="e.a.tipo === 'VIDEOCONSULTO'" :size="11" class="flex-none" />
               <span class="truncate">{{ e.a.oraInizio }} {{ titolo(e.a) }}</span>
             </div>
             <div v-if="e.a.stato === 'ANNULLATA'" class="truncate text-[10px] font-bold uppercase tracking-wide text-(--danger)">Annullata</div>
-            <div class="absolute right-0 top-0 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+            <div class="absolute right-0 top-0 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100" @click.stop>
               <AppuntamentoMenu :appuntamento="e.a" @azione="(azione) => emit('azione', e.a, azione)" />
             </div>
           </div>

@@ -1,5 +1,6 @@
 package com.hexisnutrition.backend.agenda;
 
+import com.hexisnutrition.backend.notifiche.NotificheService;
 import com.hexisnutrition.backend.pazienti.Paziente;
 import com.hexisnutrition.backend.pazienti.PazienteArchiviatoException;
 import com.hexisnutrition.backend.pazienti.PazienteRepository;
@@ -26,12 +27,16 @@ public class AgendaService {
     private final PazienteRepository pazienteRepository;
     private final PazienteService pazienteService;
 
+    private final NotificheService notificheService;
+
     public AgendaService(AppuntamentoRepository appuntamentoRepository,
                          PazienteRepository pazienteRepository,
-                         PazienteService pazienteService) {
+                         PazienteService pazienteService,
+                         NotificheService notificheService) {
         this.appuntamentoRepository = appuntamentoRepository;
         this.pazienteRepository = pazienteRepository;
         this.pazienteService = pazienteService;
+        this.notificheService = notificheService;
     }
 
     @Transactional(readOnly = true)
@@ -96,7 +101,9 @@ public class AgendaService {
         Appuntamento app = new Appuntamento(professionistaId, r.tipo(), r.data());
         Paziente paziente = applica(professionistaId, app, r);
         verificaSovrapposizione(professionistaId, app, confermaSovrapposizione);
-        return AppuntamentoResponse.da(appuntamentoRepository.save(app), paziente);
+        Appuntamento salvato = appuntamentoRepository.save(app);
+        notificheService.riallinea(salvato);
+        return AppuntamentoResponse.da(salvato, paziente);
     }
 
     @Transactional
@@ -114,7 +121,9 @@ public class AgendaService {
         Paziente paziente = applica(professionistaId, app, r);
         // L'entità è già modificata ma l'eccezione fa rollback: nulla viene persistito.
         verificaSovrapposizione(professionistaId, app, confermaSovrapposizione);
-        return AppuntamentoResponse.da(appuntamentoRepository.save(app), paziente);
+        Appuntamento salvato = appuntamentoRepository.save(app);
+        notificheService.riallinea(salvato);
+        return AppuntamentoResponse.da(salvato, paziente);
     }
 
     @Transactional
@@ -125,6 +134,7 @@ public class AgendaService {
         }
         app.annulla();
         appuntamentoRepository.save(app);
+        notificheService.riallinea(app);
     }
 
     @Transactional
@@ -135,6 +145,7 @@ public class AgendaService {
         }
         app.setFatto(fatto);
         appuntamentoRepository.save(app);
+        notificheService.riallinea(app);
         return AppuntamentoResponse.da(app, pazienteCollegato(app));
     }
 
@@ -197,7 +208,7 @@ public class AgendaService {
                 }
                 LocalTime ora = r.oraInizio();
                 if (ora != null && (ora.isBefore(AgendaTempo.INIZIO_GRIGLIA) || !ora.isBefore(AgendaTempo.FINE_GRIGLIA))) {
-                    throw new AppuntamentoNonValidoException("L'orario deve essere compreso tra le 08:00 e le 20:00");
+                    throw new AppuntamentoNonValidoException("L'orario deve essere compreso tra le 07:00 e le 20:00");
                 }
                 if (r.pazienteId() != null) {
                     paziente = pazienteAttivo(professionistaId, r.pazienteId());
@@ -210,7 +221,19 @@ public class AgendaService {
                 app.setTesto(r.testo());
             }
         }
+        applicaNotifica(app, r);
         return paziente;
+    }
+
+    /** Le notifiche valgono solo per visite e promemoria con orario; per gli altri eventi il flag è sempre spento. */
+    private static void applicaNotifica(Appuntamento app, AppuntamentoRequest r) {
+        boolean notificabile = app.getTipo() != TipoAppuntamento.BLOCCO && app.getOraInizio() != null;
+        int anticipo = r.anticipoNotificaMinuti() == null ? AgendaTempo.ANTICIPO_NOTIFICA_DEFAULT : r.anticipoNotificaMinuti();
+        if (notificabile && !AgendaTempo.ANTICIPI_NOTIFICA_MINUTI.contains(anticipo)) {
+            throw new AppuntamentoNonValidoException("Anticipo di notifica non valido");
+        }
+        app.setNotifica(notificabile && !Boolean.FALSE.equals(r.notifica()));
+        app.setAnticipoNotificaMinuti(notificabile ? anticipo : AgendaTempo.ANTICIPO_NOTIFICA_DEFAULT);
     }
 
     private Paziente pazienteAttivo(UUID professionistaId, UUID pazienteId) {
@@ -227,7 +250,7 @@ public class AgendaService {
         int limiteInizio = AgendaTempo.INIZIO_GRIGLIA.getHour() * 60 + AgendaTempo.INIZIO_GRIGLIA.getMinute();
         int limiteFine = AgendaTempo.FINE_GRIGLIA.getHour() * 60 + AgendaTempo.FINE_GRIGLIA.getMinute();
         if (inizioMin < limiteInizio || fineMin > limiteFine) {
-            throw new AppuntamentoNonValidoException("L'orario deve essere compreso tra le 08:00 e le 20:00");
+            throw new AppuntamentoNonValidoException("L'orario deve essere compreso tra le 07:00 e le 20:00");
         }
     }
 }
