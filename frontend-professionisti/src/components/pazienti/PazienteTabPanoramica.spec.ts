@@ -89,14 +89,13 @@ describe('PazienteTabPanoramica', () => {
     const wrapper = monta([visita({ dataVisita: '2026-06-01', pesoKg: 80 }), visita({ dataVisita: '2026-08-01', pesoKg: 77.5 })])
 
     expect(wrapper.text()).toContain('Peso')
-    expect(wrapper.text()).toContain('77,5')
     expect(wrapper.text()).toContain('BMI')
-    expect(wrapper.text()).toContain('Massa grassa e massa magra')
+    expect(wrapper.text()).toContain('Massa magra e % grasso')
     expect(wrapper.text()).toContain('Dati non disponibili')
     expect(wrapper.text()).not.toContain('% Grasso corporeo')
   })
 
-  it('mostra un unico grafico con grasso corporeo e massa magra quando la plicometria è presente', () => {
+  it('con una sola visita non disegna i grafici ma mostra i valori della plicometria', () => {
     const wrapper = monta([
       visita({
         dataVisita: '2026-06-01',
@@ -109,8 +108,8 @@ describe('PazienteTabPanoramica', () => {
       }),
     ])
 
-    expect(wrapper.text()).toContain('% Grasso corporeo')
-    expect(wrapper.text()).toContain('Massa magra (kg)')
+    expect(wrapper.find('[data-test="andamento-una-visita"]').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('Massa magra e % grasso')
     expect(wrapper.text()).toContain('18,20%')
     expect(wrapper.text()).toContain('63,40 kg')
   })

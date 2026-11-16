@@ -34,6 +34,7 @@ import { formattaDataItalianaConMese } from '@/utils/data'
 import { ArrowLeft, MoreHorizontal, Trash2, Pencil, X, Save, Printer, CircleCheck, Copy, StickyNote } from '@lucide/vue'
 import PianoNoteSheet from '@/components/pianiAlimentari/PianoNoteSheet.vue'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
+import { nomeAlimentoLeggibile } from '@/utils/testo'
 
 function oggiIso(): string {
   const oggi = new Date()
@@ -179,7 +180,7 @@ type StatoPagina = StatoPiano
 const statoPagina = computed<StatoPagina>(() => piano.value?.stato ?? 'BOZZA')
 const BADGE_STATO: Record<StatoPagina, { etichetta: string; classi: string }> = {
   BOZZA: { etichetta: 'Bozza', classi: 'bg-(--warn-bg) text-(--warn-fg)' },
-  ATTIVO: { etichetta: 'Attivo', classi: 'bg-(--mint) text-(--green)' },
+  ATTIVO: { etichetta: 'Attivo', classi: 'bg-(--mint) text-(--green-d)' },
   CONCLUSO: { etichetta: 'Concluso', classi: 'bg-(--danger)/10 text-(--danger)' },
 }
 
@@ -738,10 +739,12 @@ const macroCardsGiorno = computed(() => {
   const targetCarboidrati = (obiettivo * 0.5) / 4
   const targetGrassi = (obiettivo * 0.25) / 9
   return [
-    { label: 'Energia', val: Math.round(t.kcal), unit: 'kcal', pct: percentuale(t.kcal, obiettivo), barColor: 'var(--green)', valFg: 'var(--green)' },
-    { label: 'Proteine', val: Math.round(t.proteine), unit: 'g', pct: percentuale(t.proteine, targetProteine), barColor: 'var(--danger)', valFg: 'var(--fg)' },
-    { label: 'Carboidrati', val: Math.round(t.carboidrati), unit: 'g', pct: percentuale(t.carboidrati, targetCarboidrati), barColor: 'var(--warn-fg)', valFg: 'var(--fg)' },
-    { label: 'Grassi', val: Math.round(t.grassi), unit: 'g', pct: percentuale(t.grassi, targetGrassi), barColor: 'var(--green-d)', valFg: 'var(--fg)' },
+    // "Energia" è l'unica tessera piena (petrolio, barra lime): è il numero a cui tutto il resto si riferisce.
+    // Il rosso non si usa per le proteine: qui non segnala un errore.
+    { label: 'Energia', hero: true, val: Math.round(t.kcal), unit: 'kcal', pct: percentuale(t.kcal, obiettivo), barColor: 'var(--lime)', valFg: 'var(--on-hero)' },
+    { label: 'Proteine', hero: false, val: Math.round(t.proteine), unit: 'g', pct: percentuale(t.proteine, targetProteine), barColor: 'var(--chart-1)', valFg: 'var(--fg)' },
+    { label: 'Carboidrati', hero: false, val: Math.round(t.carboidrati), unit: 'g', pct: percentuale(t.carboidrati, targetCarboidrati), barColor: 'var(--chart-3)', valFg: 'var(--fg)' },
+    { label: 'Grassi', hero: false, val: Math.round(t.grassi), unit: 'g', pct: percentuale(t.grassi, targetGrassi), barColor: 'var(--chart-2)', valFg: 'var(--fg)' },
   ]
 })
 
@@ -991,10 +994,10 @@ function stampaPdf() {
       <router-link
         :to="linkIndietro"
         data-test="link-indietro"
-        class="inline-flex w-fit items-center gap-2 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green) print:hidden"
+        class="group inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green) print:hidden"
         @click.capture.prevent="annulla"
       >
-        <ArrowLeft :size="16" />
+        <ArrowLeft :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:-translate-x-0.5" />
         <span>{{ testoLinkIndietro }}</span>
       </router-link>
 
@@ -1082,7 +1085,7 @@ function stampaPdf() {
           class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-xl border border-(--bd) bg-(--surf) px-4 py-3 text-sm text-(--fg2) print:hidden"
         >
           <span>{{ testoRiquadroSolaLettura }}</span>
-          <button type="button" data-test="link-note" class="font-semibold text-(--green) hover:underline" @click="noteAperte = true">
+          <button type="button" data-test="link-note" class="font-semibold text-(--green) transition-colors hover:text-(--green-d)" @click="noteAperte = true">
             Vedi note
           </button>
         </div>
@@ -1153,7 +1156,7 @@ function stampaPdf() {
             <div
               v-for="categoria in CATEGORIE_ESEMPI"
               :key="categoria.tipo"
-              class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf) shadow-xs"
+              class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)"
             >
               <!-- Header della colonna categoria -->
               <div class="flex items-center gap-2 border-b border-(--div) bg-(--soft) px-5 py-4">
@@ -1168,7 +1171,7 @@ function stampaPdf() {
                   v-for="esempio in esempiPerCategoria(categoria.tipo)"
                   :key="esempio.clientId"
                   data-test="card-esempio"
-                  class="rounded-xl border border-(--bd) bg-(--bg) p-4 transition-shadow hover:shadow-xs"
+                  class="rounded-xl border border-(--bd) bg-(--bg) p-4 transition-colors hover:border-(--bd2)"
                 >
                   <!-- Header dell'esempio (Nome ed Eliminazione) -->
                   <div class="mb-3 flex items-center justify-between gap-2 border-b border-(--div)/50 pb-3">
@@ -1200,7 +1203,7 @@ function stampaPdf() {
                       :key="riga.clientId"
                       class="group flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-xs transition-colors hover:bg-(--soft)"
                     >
-                      <span class="min-w-0 flex-1 truncate font-medium text-(--fg2)">{{ riga.nome }}</span>
+                      <span class="min-w-0 flex-1 truncate font-medium text-(--fg2)">{{ nomeAlimentoLeggibile(riga.nome) }}</span>
                       <span class="flex shrink-0 items-center gap-1">
                         <Input
                           type="text" inputmode="decimal" class="h-7 w-16 text-right text-xs"
@@ -1246,7 +1249,7 @@ function stampaPdf() {
                 <button
                   v-if="!solaLettura"
                   :data-test="`nuovo-esempio-${categoria.tipo}`"
-                  class="flex w-full items-center justify-center rounded-xl border border-dashed border-(--bd2) py-2.5 text-xs font-semibold text-(--fg3) transition-colors hover:border-(--green) hover:bg-(--mint)/30 hover:text-(--green)"
+                  class="flex w-full items-center justify-center rounded-xl border border-dashed border-(--bd2) py-2.5 text-xs font-semibold text-(--fg3) transition-colors hover:border-(--green) hover:bg-(--mint)/30 hover:text-(--green-d)"
                   @click="aggiungiEsempio(categoria.tipo, categoria.etichetta)"
                 >
                   + Nuovo esempio
@@ -1274,7 +1277,7 @@ function stampaPdf() {
             data-test="giorno-tab"
             class="flex w-full items-center justify-between px-4 py-3 text-left transition-all hover:bg-(--mint)/40"
             :class="giornoSelezionato === giorno.chiave
-              ? 'bg-(--mint) text-(--green) font-semibold border-l-4 border-(--green) pl-3'
+              ? 'bg-(--mint) text-(--green-d) font-semibold border-l-4 border-(--green) pl-3'
               : 'text-(--fg2)'"
             @click="giornoSelezionato = giorno.chiave"
           >
@@ -1285,7 +1288,7 @@ function stampaPdf() {
 
         <!-- Pannello Form Target Macro -->
         <fieldset :disabled="solaLettura" class="contents">
-        <div v-if="macroDelGiornoSelezionato" class="rounded-2xl border border-(--bd) bg-(--surf) p-5 shadow-xs">
+        <div v-if="macroDelGiornoSelezionato" class="rounded-2xl border border-(--bd) bg-(--surf) p-5">
           <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h3 class="font-heading text-base font-semibold text-(--fg)">
               Target macro · {{ GIORNI.find(g => g.chiave === giornoSelezionato)?.etichetta }}
@@ -1382,7 +1385,7 @@ function stampaPdf() {
             data-test="giorno-tab"
             class="flex w-full items-center justify-between px-4 py-3 text-left transition-all hover:bg-(--mint)/40"
             :class="giornoSelezionato === giorno.chiave 
-              ? 'bg-(--mint) text-(--green) font-semibold border-l-4 border-(--green) pl-3' 
+              ? 'bg-(--mint) text-(--green-d) font-semibold border-l-4 border-(--green) pl-3' 
               : 'text-(--fg2)'"
             @click="giornoSelezionato = giorno.chiave"
           >
@@ -1394,12 +1397,16 @@ function stampaPdf() {
         <fieldset :disabled="solaLettura" class="contents">
         <div class="flex flex-col gap-3">
           <div class="grid grid-cols-2 gap-2 sm:grid-cols-4" data-test="macro-card-giorno">
-            <div v-for="m in macroCardsGiorno" :key="m.label" class="rounded-xl border border-(--bd) bg-(--surf) p-3">
-              <p class="text-[10px] font-bold uppercase tracking-wide text-(--fg3)">{{ m.label }}</p>
+            <div
+              v-for="m in macroCardsGiorno" :key="m.label"
+              class="rounded-xl border p-3"
+              :class="m.hero ? 'border-(--hero-d) bg-(--hero)' : 'border-(--bd) bg-(--surf)'"
+            >
+              <p class="text-[10px] font-bold uppercase tracking-wide" :class="m.hero ? 'text-(--on-hero-2)' : 'text-(--fg3)'">{{ m.label }}</p>
               <p class="font-heading text-lg font-semibold" :style="{ color: m.valFg }">
-                {{ m.val }}<span class="ml-0.5 text-xs font-normal text-(--fg4)">{{ m.unit }}</span>
+                {{ m.val }}<span class="ml-0.5 text-xs font-normal" :class="m.hero ? 'text-(--on-hero-2)' : 'text-(--fg4)'">{{ m.unit }}</span>
               </p>
-              <div class="mt-2 h-1 overflow-hidden rounded-full bg-(--div)">
+              <div class="mt-2 h-1 overflow-hidden rounded-full" :class="m.hero ? 'bg-(--hero-track)' : 'bg-(--div)'">
                 <div class="h-full rounded-full" :style="{ width: m.pct + '%', background: m.barColor }" />
               </div>
             </div>
@@ -1469,7 +1476,7 @@ function stampaPdf() {
                 </thead>
                 <tbody class="divide-y divide-(--div)">
                   <tr v-for="riga in pasto.righe" :key="riga.clientId" class="transition-colors hover:bg-(--soft)/30">
-                    <td class="p-2 pl-4 text-xs font-semibold text-(--fg)">{{ riga.nome }}</td>
+                    <td class="p-2 pl-4 text-xs font-semibold text-(--fg)">{{ nomeAlimentoLeggibile(riga.nome) }}</td>
                     <td class="p-2 text-right">
                       <Input
                         type="text" inputmode="decimal" class="h-7 w-16 text-right text-xs"
@@ -1535,7 +1542,7 @@ function stampaPdf() {
         <Button type="button" variant="neutral" data-test="annulla-modifiche" :disabled="salvataggioInCorso" @click="annulla">
           Annulla
         </Button>
-        <Button class="hover:bg-primary/80" :disabled="salvataggioInCorso || !nome.trim()" @click="salva">
+        <Button :disabled="salvataggioInCorso || !nome.trim()" @click="salva">
           <Save :size="16" /> {{ salvataggioInCorso ? 'Salvataggio…' : 'Salva' }}
         </Button>
       </div>
@@ -1563,7 +1570,7 @@ function stampaPdf() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel data-test="conferma-annulla-continua">Continua a modificare</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-annulla-esci" class="hover:bg-primary/80" @click="tornaIndietro">
+          <AlertDialogAction data-test="conferma-annulla-esci" @click="tornaIndietro">
             Esci senza salvare
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -1578,7 +1585,7 @@ function stampaPdf() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-elimina-piano" class="bg-(--danger) hover:bg-(--danger)/80" @click="confermaElimina">
+          <AlertDialogAction data-test="conferma-elimina-piano" class="bg-(--danger) hover:bg-(--danger-d)" @click="confermaElimina">
             Elimina
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -1595,7 +1602,7 @@ function stampaPdf() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel @click="annullaCambioModalita" variant="neutral">Annulla</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-cambio-modalita" class="bg-(--danger) hover:bg-(--danger)/80" @click="confermaCambioModalita">
+          <AlertDialogAction data-test="conferma-cambio-modalita" class="bg-(--danger) hover:bg-(--danger-d)" @click="confermaCambioModalita">
             Cambia modalità
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -1610,7 +1617,7 @@ function stampaPdf() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel @click="rimozionePendente = null" variant="neutral">Annulla</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-rimuovi-elemento" class="bg-(--danger) hover:bg-(--danger)/80" @click="confermaRimozione">
+          <AlertDialogAction data-test="conferma-rimuovi-elemento" class="bg-(--danger) hover:bg-(--danger-d)" @click="confermaRimozione">
             Rimuovi
           </AlertDialogAction>
         </AlertDialogFooter>

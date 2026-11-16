@@ -171,7 +171,7 @@ function inizialiPaziente(paziente: Paziente) {
               class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-(--fg) transition-colors hover:bg-(--soft) disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
               @click="selezionaAzione(azione)"
             >
-              <span class="flex h-6 w-6 items-center justify-center rounded-md bg-(--mint) text-(--green)">
+              <span class="flex h-6 w-6 items-center justify-center rounded-md bg-(--mint) text-(--green-d)">
                 <component :is="azione.icona" :size="13" />
               </span>
               {{ azione.etichetta }}
@@ -187,7 +187,7 @@ function inizialiPaziente(paziente: Paziente) {
               class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-(--fg) transition-colors hover:bg-(--soft)"
               @click="selezionaPaziente(paziente)"
             >
-              <span class="flex h-6 w-6 items-center justify-center rounded-md bg-(--mint) text-[10px] font-bold text-(--green)">
+              <span class="flex h-6 w-6 items-center justify-center rounded-md bg-(--mint) text-[10px] font-bold text-(--green-d)">
                 {{ inizialiPaziente(paziente) }}
               </span>
               {{ paziente.nome }} {{ paziente.cognome }}

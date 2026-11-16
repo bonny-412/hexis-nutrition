@@ -332,7 +332,7 @@ function etichettaConflitto(c: Appuntamento): string {
       <form class="flex min-h-0 flex-1 flex-col gap-4" novalidate @submit.prevent="onSubmit">
         <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-0.5 py-0.5">
           <div v-if="eVisita" class="flex flex-col gap-1.5">
-            <Label for="appuntamento-tipo" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Tipo</Label>
+            <Label for="appuntamento-tipo" class="text-[13px] font-medium text-(--fg2)">Tipo</Label>
             <Select :model-value="tipo" @update:model-value="onTipoChange">
               <SelectTrigger id="appuntamento-tipo" class="w-full" data-test="appuntamento-tipo">
                 <SelectValue />
@@ -345,7 +345,7 @@ function etichettaConflitto(c: Appuntamento): string {
           </div>
 
           <div v-if="eVisita || ePromemoria" class="flex flex-col gap-1.5">
-            <Label class="text-xs font-bold uppercase tracking-wide text-(--fg3)">
+            <Label class="text-[13px] font-medium text-(--fg2)">
               Paziente{{ eVisita ? '*' : ' (facoltativo)' }}
             </Label>
             <SelezionaPazienteCombobox v-model="paziente" />
@@ -354,12 +354,12 @@ function etichettaConflitto(c: Appuntamento): string {
 
           <div class="grid gap-3 sm:grid-cols-2">
             <div class="flex flex-col gap-1.5">
-              <Label for="appuntamento-data" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Data*</Label>
+              <Label for="appuntamento-data" class="text-[13px] font-medium text-(--fg2)">Data*</Label>
               <DatePicker id="appuntamento-data" v-model="data" digitabile class="w-full" />
               <p v-if="errori.data" class="text-xs font-medium text-(--danger)">{{ errori.data }}</p>
             </div>
             <div class="flex flex-col gap-1.5">
-              <Label for="appuntamento-ora" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">
+              <Label for="appuntamento-ora" class="text-[13px] font-medium text-(--fg2)">
                 Ora{{ ePromemoria ? ' (facoltativa)' : '*' }}
               </Label>
               <TimePicker
@@ -375,7 +375,7 @@ function etichettaConflitto(c: Appuntamento): string {
           </div>
 
           <div v-if="!ePromemoria" class="flex flex-col gap-1.5">
-            <Label for="appuntamento-durata" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Durata</Label>
+            <Label for="appuntamento-durata" class="text-[13px] font-medium text-(--fg2)">Durata</Label>
             <Select :model-value="durata" @update:model-value="onDurataChange">
               <SelectTrigger id="appuntamento-durata" class="w-full" data-test="appuntamento-durata">
                 <SelectValue />
@@ -387,7 +387,7 @@ function etichettaConflitto(c: Appuntamento): string {
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="appuntamento-testo" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">
+            <Label for="appuntamento-testo" class="text-[13px] font-medium text-(--fg2)">
               {{ ePromemoria ? 'Testo*' : eBlocco ? 'Motivo (facoltativo)' : 'Note brevi (facoltative)' }}
             </Label>
             <Textarea
@@ -407,7 +407,7 @@ function etichettaConflitto(c: Appuntamento): string {
               <Label for="appuntamento-notifica" class="cursor-pointer text-sm font-medium text-(--fg)">Ricevi notifica</Label>
             </div>
             <div v-if="notifica" class="flex flex-col gap-1.5">
-              <Label for="appuntamento-anticipo" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Anticipo</Label>
+              <Label for="appuntamento-anticipo" class="text-[13px] font-medium text-(--fg2)">Anticipo</Label>
               <Select v-model="anticipo">
                 <SelectTrigger id="appuntamento-anticipo" class="w-full" data-test="appuntamento-anticipo">
                   <SelectValue />
@@ -420,7 +420,7 @@ function etichettaConflitto(c: Appuntamento): string {
           </div>
 
           <div v-if="tipo === 'VIDEOCONSULTO'" class="flex flex-col gap-1.5">
-            <Label for="appuntamento-link" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Link del videoconsulto (facoltativo)</Label>
+            <Label for="appuntamento-link" class="text-[13px] font-medium text-(--fg2)">Link del videoconsulto (facoltativo)</Label>
             <Input
               id="appuntamento-link"
               v-model="link"
@@ -438,7 +438,7 @@ function etichettaConflitto(c: Appuntamento): string {
           <Button type="button" variant="neutral" :disabled="inCorso" data-test="appuntamento-annulla" @click="richiediChiusura">
             Annulla
           </Button>
-          <Button type="submit" :disabled="inCorso || pazienteInCaricamento" class="hover:bg-primary/80" data-test="appuntamento-salva">
+          <Button type="submit" :disabled="inCorso || pazienteInCaricamento" data-test="appuntamento-salva">
             <Save :size="16" />
             {{ inCorso ? 'Salvataggio…' : 'Salva' }}
           </Button>
@@ -455,7 +455,7 @@ function etichettaConflitto(c: Appuntamento): string {
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel data-test="uscita-continua">Continua a modificare</AlertDialogCancel>
-        <AlertDialogAction class="hover:bg-primary/80" data-test="uscita-esci" @click="esciSenzaSalvare">
+        <AlertDialogAction data-test="uscita-esci" @click="esciSenzaSalvare">
           Esci senza salvare
         </AlertDialogAction>
       </AlertDialogFooter>
@@ -475,7 +475,7 @@ function etichettaConflitto(c: Appuntamento): string {
       </ul>
       <AlertDialogFooter>
         <AlertDialogCancel data-test="sovrapposizione-cambia">Cambia orario</AlertDialogCancel>
-        <AlertDialogAction class="hover:bg-primary/80" data-test="sovrapposizione-conferma" @click="confermaComunque">
+        <AlertDialogAction data-test="sovrapposizione-conferma" @click="confermaComunque">
           Conferma comunque
         </AlertDialogAction>
       </AlertDialogFooter>

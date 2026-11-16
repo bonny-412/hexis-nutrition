@@ -81,7 +81,7 @@ function onTriplaChange(valore: boolean | 'indeterminate') {
 <template>
   <div class="flex flex-col gap-1.5">
     <div class="flex items-center justify-between gap-2">
-      <Label :for="id" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">{{ label }} (mm)</Label>
+      <Label :for="id" class="text-[13px] font-medium text-(--fg2)">{{ label }} (mm)</Label>
       <label class="flex items-center gap-1.5 text-xs text-(--fg3)">
         <Checkbox :id="`${id}-tripla`" :model-value="tripla" @update:model-value="onTriplaChange" />
         Tripla misurazione

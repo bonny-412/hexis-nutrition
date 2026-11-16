@@ -33,6 +33,8 @@ Sessione del 15 novembre 2026: **Agenda implementata** (backend V30 + `/agenda`,
 
 Il progetto vive in **un unico repo git**, `bonny-412/hexis-nutrition`, con la radice in `progetti/hexis-nutrition/`.
 
+Sessione del 16 novembre 2026 (revisione UI): **tema scuro rifatto** ("Notte di petrolio", provato nel browser), palette dei grafici con quattro tinte distinte, Dashboard con "Prossime visite" e "Piani in bozza", fascia "Oggi" tolta dall'agenda, sovrapposizioni a cascata, tabelle senza maiuscolo e serif. Dettagli in [decisioni/0009](decisioni/0009-palette-verde-petrolio-lime.md) e nel log. Nessun commit.
+
 ## Come far girare il backend su questa macchina
 
 - **Database**: PostgreSQL 13 locale (servizio `postgresql-x64-13`). Due database creati a mano con pgAdmin, tabelle generate da Flyway: `hexis` per l'applicazione, `hexis_test` per la suite. Credenziali note ad Andrea.
@@ -638,7 +640,37 @@ Decisione e dettagli in [decisioni/0008](decisioni/0008-notifiche-agenda.md); de
 - **Minor rimandati** (dalla revisione): M1 testo della push con l'anticipo configurato invece di quello reale per eventi creati a ridosso; M2 push senza TTL e con codifica AESGCM; M3 corsa tra modifica e scheduler che può lasciare una notifica con l'orario vecchio; M4 possibile ciclo di richieste se `POST /notifiche/agenda-viste` fallisce; M5 lo store notifiche non si svuota al logout (nomi pazienti visibili per un attimo a un altro utente sullo stesso computer); M6 il clic su una push ricarica la pagina; **M7 promemoria senza ora a cui si aggiunge l'ora: la casella "Ricevi notifica" compare spenta invece che accesa (contraddice il design)**; M8 stato push scambiato per "non configurato" su errori di rete, due iscrizioni simultanee con lo stesso endpoint danno 500, eventi di Settimana/Giorno non raggiungibili da tastiera.
 - **Verifiche**: `mvn test` 194/194 con JDK 21; nessuna prova manuale in browser.
 
+## Sessione del 16 novembre 2026 (seconda parte) — Palette, rifiniture e blocchi colorati
+
+Decisione e regole in [decisioni/0009](decisioni/0009-palette-verde-petrolio-lime.md). Nessun commit; nessun test nuovo; nulla visto nel browser da Claude (Andrea ha aperto Chrome e ha dato feedback a voce).
+
+- **Palette "Verde petrolio + Lime"** applicata rimappando i token di `main.css` (chiaro e scuro). Lime solo per i segnali (puntino campanello e sidebar, pallino "non letta", barretta voce attiva). Errori in rosso lampone, avvisi in ambra. Contrasti rivisti (`--fg3`, `--fg4`, testo su menta con `--green-d`).
+- **Pulsanti**: hover centralizzato in `ui/button/index.ts` (`--green-d`, `--danger-d`), tolto `hover:bg-primary/80` da 26 punti. **Badge**: usano i token, già allineati. Etichette dei campi in minuscolo in tutta l'app (70 punti).
+- **Blocchi petrolio** (uno per pagina): banner della **Dashboard** (saluto, frase "Oggi hai N visite…", prossima visita, "Visite oggi" reale), intestazione della **scheda paziente**, card del **piano attivo**, tessera **"Energia"** dell'editor del piano, fascia **"Oggi"** nell'agenda con "Vai a oggi". Nuova utilità `utils/riepilogoOggi.ts`.
+- **Agenda e notifiche, rifiniture**: orario 07:00-20:00, `Textarea` per testo/note, **dialog di dettaglio** (titolo fisso "Promemoria"/"Fascia bloccata", "Apri scheda paziente"), campanello più grande, cerchio di oggi nel calendario di nuovo petrolio, videoconsulto con bordo verde scuro.
+- **Tema scuro**: il primo tentativo (sfondi tinti di petrolio) non è piaciuto ad Andrea ("per niente"): riportato a grigi neutri grafite con accenti petrolio. **Feedback atteso** su cosa non convinceva davvero (vedi sotto).
+- **Verifiche**: `vue-tsc` 0 errori; frontend 291/300 (stessi 9 falliti noti); backend 194/194 (ultima esecuzione prima delle modifiche solo frontend). Le chiavi VAPID di sviluppo sono nella configurazione di avvio di STS; `GET /notifiche/push/chiave` risponde con la chiave (verificato con un token fornito da Andrea).
+
+## Sessione del 16 novembre 2026 (terza parte) — Revisione UI con frontend-design
+
+Revisione dell'app in Chrome (chiaro e scuro, viste da Claude nel browser) e modifiche chieste da Andrea. Regole in [decisioni/0009](decisioni/0009-palette-verde-petrolio-lime.md), che sostituisce quanto scritto nella sezione precedente su tema scuro grafite, blocchi hero "uguali in chiaro e scuro" e fascia "Oggi". **Nessun commit, nessun test nuovo.**
+
+- **Tema scuro "Notte di petrolio"** (terza versione, provata dal vivo prima di applicarla): fondo quasi nero, sidebar più scura della pagina, hero in petrolio profondo, pillole hero sui nuovi token `--hero-pill*` (niente più `bg-white` scritto a mano). Tema chiaro invariato, approvato da Andrea.
+- **Grafici**: quattro tinte distinte (petrolio, viola, ocra, blu) invece di quattro verdi; nel Confronto visita A grigia e B petrolio; barre dei macro nel piano sugli stessi token.
+- **Dashboard**: via i placeholder "Disponibile a breve"; nuovi blocchi "Prossime visite" (7 giorni) e "Piani in bozza" (`cerca` con `stato=BOZZA`).
+- **Agenda**: tolta la fascia "Oggi"; appuntamenti sovrapposti a cascata (`stileCorsia` in `utils/agenda.ts`).
+- **Scheda paziente**: valori solo nella riga di indicatori; grafici della Panoramica solo da 2 visite, senza numero ripetuto; "Invita" diventato pillola.
+- **Tabelle e testi**: intestazioni ed etichette di card in minuscolo, nomi in Figtree, nomi BDA leggibili (`utils/testo.ts`, anche nell'editor del piano); "Concluso" grigio; avatar dello stesso colore del badge (scelta di Andrea).
+- **Logo e favicon** su petrolio + lime (favicon in tessera scura); **pulsanti testo** senza sottolineatura con freccia che scorre all'hover, freccia solo sui link di navigazione; **link "Torna indietro"** uniformati (anche "Password dimenticata").
+- **Ombre** solo sugli elementi sovrapposti (dialog, menu, palette, tooltip); **tutti i pulsanti azione** scendono di 2 px al click (base di `buttonVariants`), quelli testo no.
+- **Test**: adeguati gli spec esistenti che verificavano comportamenti tolti (`AndamentoChart.spec.ts`: 5 test sul valore/delta sostituiti da uno; 2 in `PazienteTabPanoramica.spec.ts`; 1 in `DashboardView.spec.ts`). Frontend **289/296**: i 7 falliti sono preesistenti e in file non toccati per comportamento (`ConfrontoBarChart.spec.ts`: mock di `@unovis/vue` senza `VisTooltip`; `PianiAlimentariListView.spec.ts`: testo dello stato vuoto).
+- **Non verificato**: favicon nella scheda del browser (cattura bloccata), login da mobile, editor del piano e dialog dopo la rimozione delle ombre, agenda in vista Mese/Giorno col nuovo scuro.
+
 ## Prossimo passo consigliato
+
+**Aggiornato il 16 novembre 2026 (revisione UI), a fine sessione** (prevale sulle indicazioni sotto): tutto **non committato** (`git status`; il commit lo fa Andrea). Il tema scuro e le regole UI sono in [decisioni/0009](decisioni/0009-palette-verde-petrolio-lime.md), ancora `in-discussione` finché Andrea non conferma lo scuro nell'uso. Prima mossa: un giro a mano delle pagine non viste (elenco "Non verificato" nella sezione sopra), poi sistemare i 7 test preesistenti (mock `VisTooltip`, testo stato vuoto piani). Da valutare: effetto di pressione anche su chip dei filtri e selettori Mese/Settimana/Giorno (lasciati fuori di proposito); il token `--shadow` in `main.css` ora non è usato. Restano validi gli aperti delle notifiche (Safari, Minor M1-M8, prova push in browser).
+
+**Aggiornato il 16 novembre 2026 (palette e blocchi colorati), a fine sessione** (prevale sulle indicazioni sotto): la **palette e i cinque blocchi petrolio sono applicati ma NON provati da Claude e NON committati** (`git status`). Prima mossa: Andrea guarda le pagine in chiaro e in scuro e dice **cosa non convince del tema scuro** (fondi troppo verdi? pulsanti `#2DB3A4` troppo chiari? blocchi petrolio troppo forti su grafite? oppure tornare del tutto ai colori vecchi). Poi: decidere il badge "Concluso" (rosso → neutro), l'avviso push soppresso con scheda visibile su Safari e i Minor M1-M8 delle notifiche (sotto), e provare le notifiche push in browser. Test ancora da scrivere a cura di Andrea (notifiche: casi nel piano `docs/superpowers/plans/2026-11-16-notifiche-agenda.md`).
 
 **Aggiornato il 16 novembre 2026 (notifiche dell'agenda), a fine sessione** (prevale sulle indicazioni sotto): le **notifiche dell'agenda sono implementate ma NON provate nel browser e NON committate** (`git status` per l'elenco; il commit lo fa Andrea). Le chiavi VAPID di sviluppo sono già nella configurazione di avvio di STS e `GET /notifiche/push/chiave` risponde con la chiave (verificato). Prima mossa della prossima sessione, a mano da Andrea: dal campanello "Attiva le notifiche su questo dispositivo", poi una visita tra ~5 minuti con anticipo 15 min: puntino che pulsa su campanello e sidebar, chiusura lista, puntino sidebar spento entrando in Agenda, **push a scheda chiusa** con testo generico, clic sulla notifica che apre il dettaglio; provare su Windows e Mac. Poi: decidere la questione Safari (sotto), scrivere i test (casi nel piano `docs/superpowers/plans/2026-11-16-notifiche-agenda.md`), valutare i Minor rimandati. Per la produzione serve una coppia VAPID **diversa** da quella di sviluppo e HTTPS.
 

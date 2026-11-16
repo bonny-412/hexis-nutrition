@@ -172,7 +172,7 @@ defineExpose({ valida, ottieniDati, valorizzato, modificato })
     <template v-else>
       <div class="grid gap-5 sm:grid-cols-2">
         <div class="flex flex-col gap-1.5">
-          <Label for="protocollo-plico" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Protocollo</Label>
+          <Label for="protocollo-plico" class="text-[13px] font-medium text-(--fg2)">Protocollo</Label>
           <Select :model-value="protocollo || VALORE_SELEZIONA" @update:model-value="onProtocolloChange">
             <SelectTrigger id="protocollo-plico" class="w-full">
               <SelectValue placeholder="Seleziona" />
@@ -190,7 +190,7 @@ defineExpose({ valida, ottieniDati, valorizzato, modificato })
         </div>
 
         <div v-if="protocollo === 'EVANS_ATLETI'" class="flex flex-col gap-1.5">
-          <Label for="etnia-atleta" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Etnia</Label>
+          <Label for="etnia-atleta" class="text-[13px] font-medium text-(--fg2)">Etnia</Label>
           <Select v-model="etniaAtleta">
             <SelectTrigger id="etnia-atleta" class="w-full">
               <SelectValue placeholder="Caucasico" />

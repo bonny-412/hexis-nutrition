@@ -9,7 +9,7 @@ const sidebarAperta = ref(false)
 
 <template>
   <div class="flex h-screen overflow-hidden bg-(--bg)">
-    <AppSidebar class="m-[14px_0_14px_14px] hidden rounded-[18px] border border-(--side-bd) shadow-(--shadow) lg:flex" />
+    <AppSidebar class="m-[14px_0_14px_14px] hidden rounded-[18px] border border-(--side-bd) lg:flex" />
 
     <Sheet v-model:open="sidebarAperta">
       <SheetContent

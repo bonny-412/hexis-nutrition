@@ -171,7 +171,7 @@ const righe = computed<RigaStorico[]>(() =>
         />
       </div>
 
-      <div class="min-w-0 flex-1 overflow-hidden rounded-2xl border border-(--bd) bg-(--surf) shadow-sm transition-colors hover:border-(--green)">
+      <div class="min-w-0 flex-1 overflow-hidden rounded-2xl border border-(--bd) bg-(--surf) transition-colors hover:border-(--green)">
         <button
           type="button"
           data-test="storico-riga"
@@ -183,7 +183,7 @@ const righe = computed<RigaStorico[]>(() =>
             <span class="text-xs text-(--fg4)">{{ riga.rel }}</span>
           </div>
 
-          <Badge class="bg-(--mint) text-(--green)">{{ ETICHETTE_OBIETTIVO[riga.visita.obiettivo] }}</Badge>
+          <Badge class="bg-(--mint) text-(--green-d)">{{ ETICHETTE_OBIETTIVO[riga.visita.obiettivo] }}</Badge>
 
           <div class="flex flex-1 flex-wrap gap-6">
             <div class="flex flex-col gap-0.5">
@@ -237,7 +237,7 @@ const righe = computed<RigaStorico[]>(() =>
 
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div class="rounded-xl bg-(--soft) p-4">
-              <h5 class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Generali</h5>
+              <h5 class="text-xs font-semibold text-(--fg3)">Generali</h5>
               <dl class="mt-2 space-y-1 text-sm">
                 <div class="flex items-center justify-between"><dt class="text-(--fg2)">Peso</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.pesoKg) }} kg</dd></div>
                 <div v-if="riga.visita.bmi !== null" class="flex items-center justify-between"><dt class="text-(--fg2)">BMI</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.bmi, 1) }}</dd></div>
@@ -246,12 +246,12 @@ const righe = computed<RigaStorico[]>(() =>
             </div>
 
             <div class="rounded-xl bg-(--soft) p-4">
-              <h5 class="text-xs font-bold uppercase tracking-wide text-(--fg3)">BIA</h5>
+              <h5 class="text-xs font-semibold text-(--fg3)">BIA</h5>
               <p class="mt-2 text-xs text-(--fg4)">Dati non disponibili.</p>
             </div>
 
             <div class="rounded-xl bg-(--soft) p-4">
-              <h5 class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Plicometria</h5>
+              <h5 class="text-xs font-semibold text-(--fg3)">Plicometria</h5>
               <dl v-if="riga.visita.plicometria" class="mt-2 space-y-1 text-sm">
                 <div class="flex items-center justify-between"><dt class="text-(--fg2)">% Grasso</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.plicometria.percentualeGrassoCorporeo) }}%</dd></div>
                 <div class="flex items-center justify-between"><dt class="text-(--fg2)">Massa grassa</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.plicometria.massaGrassaKg) }} kg</dd></div>
@@ -261,7 +261,7 @@ const righe = computed<RigaStorico[]>(() =>
             </div>
 
             <div class="rounded-xl bg-(--soft) p-4">
-              <h5 class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenze</h5>
+              <h5 class="text-xs font-semibold text-(--fg3)">Circonferenze</h5>
               <dl v-if="riga.haCirconferenze" class="mt-2 space-y-1 text-sm">
                 <div v-for="c in riga.circonferenze" :key="c.label" class="flex items-center justify-between">
                   <dt class="text-(--fg2)">{{ c.label }}</dt>
@@ -296,7 +296,7 @@ const righe = computed<RigaStorico[]>(() =>
         <AlertDialogAction
           data-test="elimina-visita-conferma"
           :disabled="eliminazioneInCorso"
-          class="bg-(--danger) hover:bg-(--danger)/80"
+          class="bg-(--danger) hover:bg-(--danger-d)"
           @click="confermaEliminazione"
         >
           {{ eliminazioneInCorso ? 'Eliminazione…' : 'Elimina' }}

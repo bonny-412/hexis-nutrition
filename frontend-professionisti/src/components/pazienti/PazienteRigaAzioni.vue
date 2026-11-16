@@ -132,7 +132,7 @@ function etichettaAzione(paziente: Paziente) {
           <AlertDialogCancel data-test="conferma-annulla" variant="neutral">Annulla</AlertDialogCancel>
           <AlertDialogAction
             data-test="conferma-conferma"
-            :class="mostraArchiviati ? 'hover:bg-primary/80' : 'bg-(--danger) hover:bg-(--danger)/80'"
+            :class="mostraArchiviati ? '' : 'bg-(--danger) hover:bg-(--danger-d)'"
             @click="confermaAzione"
           >
             Conferma

@@ -1,6 +1,4 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap');
-
 /* src/assets/main.css */
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -9,38 +7,59 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --bg: #F7F6F2;
+  /* Palette "Verde petrolio + Lime": petrolio #087F74 (pulsanti), lime #C7F36B (solo segnali),
+     sfondo #F5F8F6, verde scuro #183C3A (testo e sidebar). Errori in rosso lampone (#B82E47) e avvisi in ambra (#855600 su #FFF4D9), scelti per stare con petrolio e lime. */
+  --bg: #F5F8F6;
   --surf: #FFFFFF;
-  --bd: #E6E4DC;
-  --bd2: #E1E6E2;
-  --div: #F0EFE9;
-  --soft: #FBFBF8;
-  --hover: #EFEEE8;
-  --fg: #12211A;
-  --fg2: #5D6B64;
-  --fg3: #7C8A83;
-  --fg4: #9AA6A0;
-  --green: #1B5E3F;
-  --green-d: #154A32;
+  --bd: #DCE6E2;
+  --bd2: #D6E2DD;
+  --div: #EAF1EE;
+  --soft: #FAFCFB;
+  --hover: #E8F0ED;
+  --fg: #183C3A;
+  --fg2: #4A6663;
+  --fg3: #5A7673;
+  --fg4: #77918D;
+  --green: #087F74;
+  --green-d: #06675F;
   --on-green: #FFFFFF;
-  --mint: #E3F3E9;
-  --sage: #7BC299;
-  --danger: #B3432E;
-  --warn-bg: #FBF1E4;
-  --warn-fg: #A8641F;
-  --chart-1: var(--green);
-  --chart-2: var(--sage);
-  --chart-3: var(--warn-fg);
-  --chart-4: var(--green-d);
-  --bg-blur: rgba(247, 246, 242, 0.88);
-  --shadow: 0 1px 2px rgba(18, 40, 31, 0.05);
+  --mint: #E0F1EE;
+  --sage: #4FB3A7;
+  --lime: #C7F36B;
+  --lime-d: #B4E052;
+  --on-lime: #183C3A;
+  /* Blocchi "hero" (es. piano attivo): petrolio pieno, uguale in chiaro e scuro, con testi chiari e lime per i segnali. */
+  --hero: #087F74;
+  --hero-d: #06675F;
+  --hero-track: rgba(10, 45, 42, 0.38);
+  --on-hero: #FFFFFF;
+  --on-hero-2: #EAF6F4;
+  --on-hero-warn: #FFF4C9;
+  /* Pillole e pulsanti secondari dentro i blocchi hero: bianchi pieni in chiaro, vetro traslucido in scuro. */
+  --hero-pill: #FFFFFF;
+  --hero-pill-hover: rgba(255, 255, 255, 0.85);
+  --hero-pill-fg: #06675F;
+  --hero-pill-ring: transparent;
+  --danger-fixed: #B82E47; /* rosso per testo sulle pillole hero */
+  --danger: #B82E47;
+  --danger-d: #98233A;
+  --warn-bg: #FFF4D9;
+  --warn-fg: #855600;
+  /* Grafici: quattro tinte ben distinte (non quattro verdi), con il petrolio del brand come prima serie.
+     1 petrolio (peso, proteine) · 2 viola (BMI, grassi) · 3 ocra (% grasso, carboidrati) · 4 blu (massa magra). */
+  --chart-1: #087F74;
+  --chart-2: #7559C4;
+  --chart-3: #C27C12;
+  --chart-4: #3A6CC2;
+  --bg-blur: rgba(245, 248, 246, 0.88);
+  --shadow: 0 1px 2px rgba(24, 60, 58, 0.05);
 
   /* Sidebar: variante "Scura tenue", vedi Opzioni Dashboard nei mockup */
-  --side: #1E3A2C;
-  --side-bd: rgba(123, 194, 153, 0.22);
-  --side-fg: rgba(226, 238, 231, 0.78);
-  --side-fg2: rgba(226, 238, 231, 0.48);
-  --side-act-bg: rgba(123, 194, 153, 0.22);
+  --side: #183C3A;
+  --side-bd: rgba(199, 243, 107, 0.16);
+  --side-fg: rgba(228, 242, 238, 0.80);
+  --side-fg2: rgba(228, 242, 238, 0.50);
+  --side-act-bg: rgba(199, 243, 107, 0.16);
 
   /* Token semantici di shadcn-vue, rimappati sulla palette brand sopra
      invece dei grigi neutri di default: ogni componente shadcn (Button,
@@ -74,34 +93,118 @@
   --sidebar-ring: var(--sage);
 }
 
-.dark {
-  --bg: #0F1417;
-  --surf: #171D21;
-  --bd: #283035;
-  --bd2: #2E373D;
-  --div: #212930;
-  --soft: #1B2226;
-  --hover: #232C32;
-  --fg: #E8EDF0;
-  --fg2: #AAB5BC;
-  --fg3: #8B959C;
-  --fg4: #78838A;
-  --green: #7BC299;
-  --green-d: #96D3AF;
-  --on-green: #0F1417;
-  --mint: #1F2C29;
-  --sage: #7BC299;
-  --danger: #E28068;
-  --warn-bg: #332A1D;
-  --warn-fg: #DDB585;
-  --bg-blur: rgba(15, 20, 23, 0.88);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 
-  /* Sidebar: variante "Scura tenue" in dark mode, vedi mockup Opzioni Dashboard */
-  --side: #1A252A;
+.dark {
+  /* Tema scuro "Notte di petrolio" (2026-11-16): fondo quasi nero con poco verde, sidebar più scura
+     della pagina (come l'isola scura del tema chiaro), un solo petrolio per primari e blocchi hero,
+     lime unico segnale acceso. */
+
+  /* Superfici */
+  --bg: #0B1413;
+  --surf: #121D1C;
+  --bd: #213230;
+  --bd2: #293B38;
+  --div: #1A2826;
+  --soft: #152220;
+  --hover: #1A2927;
+
+  /* Testi */
+  --fg: #E4EDEB;
+  --fg2: #A7B9B5;
+  --fg3: #879B97;
+  --fg4: #6B807C;
+
+  /* Petrolio: schiarito per il contrasto, testo scuro sopra */
+  --green: #3DBFAE;
+  --green-d: #8FE0D4;
+  --on-green: #04201C;
+
+  /* Superfici verdi */
+  --mint: #11302C;
+  --sage: #4FB3A7;
+
+  /* Lime: accento */
+  --lime: #C7F36B;
+  --lime-d: #D5F58D;
+  --on-lime: #183C3A;
+
+  /* Hero: petrolio profondo invece del petrolio pieno, che sul fondo scuro abbagliava */
+  --hero: #0E3A35;
+  --hero-d: #17524B;
+  --hero-track: rgba(0, 0, 0, 0.35);
+  --on-hero: #F2FAF8;
+  --on-hero-2: #B9D6D1;
+  --hero-pill: rgba(255, 255, 255, 0.09);
+  --hero-pill-hover: rgba(255, 255, 255, 0.15);
+  --hero-pill-fg: #E9F6F3;
+  --hero-pill-ring: rgba(255, 255, 255, 0.12);
+
+  /* Errori */
+  --danger: #EF8A98;
+  --danger-d: #F7AFB9;
+  --danger-fixed: #F59AA7;
+
+  /* Avvisi */
+  --warn-bg: #2B2410;
+  --warn-fg: #E9C766;
+
+  /* Grafici */
+  --chart-1: #3DBFAE;
+  --chart-2: #AE97EE;
+  --chart-3: #E5B04A;
+  --chart-4: #82A6EE;
+
+  /* Effetti */
+  --bg-blur: rgba(11, 20, 19, 0.88);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+  /* Sidebar */
+  --side: #060E0D;
+  --side-bd: rgba(255, 255, 255, 0.06);
+  --side-fg: rgba(228, 237, 235, 0.78);
+  --side-fg2: rgba(228, 237, 235, 0.45);
+  --side-act-bg: rgba(61, 191, 174, 0.14);
+
+  /* Token semantici shadcn-vue */
+  --background: var(--bg);
+  --foreground: var(--fg);
+
+  --card: var(--surf);
+  --card-foreground: var(--fg);
+
+  --popover: var(--surf);
+  --popover-foreground: var(--fg);
+
+  --primary: var(--green);
+  --primary-foreground: var(--on-green);
+
+  --secondary: var(--mint);
+  --secondary-foreground: var(--green-d);
+
+  --muted: var(--hover);
+  --muted-foreground: var(--fg3);
+
+  --accent: var(--mint);
+  --accent-foreground: var(--green-d);
+
+  --destructive: var(--danger);
+
+  --border: var(--bd2);
+  --input: var(--bd2);
+  --ring: var(--sage);
+
+  --sidebar: var(--side);
+  --sidebar-foreground: var(--side-fg);
+  --sidebar-primary: var(--side-act-bg);
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: var(--side-act-bg);
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: var(--side-bd);
+  --sidebar-ring: var(--sage);
 
   color-scheme: dark;
 }
+
 
 @theme inline {
   --font-sans: Figtree, system-ui, sans-serif;
@@ -149,14 +252,5 @@
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
   }
 }

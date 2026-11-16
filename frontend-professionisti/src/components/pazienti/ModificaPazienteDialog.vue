@@ -205,25 +205,25 @@ async function onSubmit() {
         <div class="min-h-0 flex-1 space-y-5 overflow-y-auto px-0.5 py-0.5">
           <div class="grid gap-5 sm:grid-cols-2">
             <div class="flex flex-col gap-1.5">
-              <Label for="modifica-nome" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Nome*</Label>
+              <Label for="modifica-nome" class="text-[13px] font-medium text-(--fg2)">Nome*</Label>
               <Input id="modifica-nome" :model-value="nome" @update:model-value="onNomeInput" type="text" :aria-invalid="!!errori.nome" placeholder="Es. Mario" />
               <p v-if="errori.nome" class="text-xs font-medium text-(--danger)">{{ errori.nome }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="modifica-cognome" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Cognome*</Label>
+              <Label for="modifica-cognome" class="text-[13px] font-medium text-(--fg2)">Cognome*</Label>
               <Input id="modifica-cognome" :model-value="cognome" @update:model-value="onCognomeInput" type="text" :aria-invalid="!!errori.cognome" placeholder="Es. Rossi" />
               <p v-if="errori.cognome" class="text-xs font-medium text-(--danger)">{{ errori.cognome }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="modifica-codice-fiscale" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Codice fiscale*</Label>
+              <Label for="modifica-codice-fiscale" class="text-[13px] font-medium text-(--fg2)">Codice fiscale*</Label>
               <Input id="modifica-codice-fiscale" :model-value="codiceFiscale" @update:model-value="onCodiceFiscaleInput" type="text" :aria-invalid="!!errori.codiceFiscale" placeholder="Es. RSSMRA80A01H501U" />
               <p v-if="errori.codiceFiscale" class="text-xs font-medium text-(--danger)">{{ errori.codiceFiscale }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="modifica-sesso" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Sesso*</Label>
+              <Label for="modifica-sesso" class="text-[13px] font-medium text-(--fg2)">Sesso*</Label>
               <Select :model-value="sesso" @update:model-value="onSessoChange">
                 <SelectTrigger id="modifica-sesso" class="w-full" :aria-invalid="!!errori.sesso">
                   <SelectValue placeholder="Seleziona" />
@@ -238,41 +238,41 @@ async function onSubmit() {
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="modifica-data-nascita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Data di nascita*</Label>
+              <Label for="modifica-data-nascita" class="text-[13px] font-medium text-(--fg2)">Data di nascita*</Label>
               <DatePicker id="modifica-data-nascita" :model-value="dataNascita" @update:model-value="onDataNascitaChange" />
               <p v-if="errori.dataNascita" class="text-xs font-medium text-(--danger)">{{ errori.dataNascita }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="modifica-email" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Email*</Label>
+              <Label for="modifica-email" class="text-[13px] font-medium text-(--fg2)">Email*</Label>
               <Input id="modifica-email" :model-value="email" @update:model-value="onEmailInput" type="text" :aria-invalid="!!errori.email" placeholder="Es. mariorossi@gmail.com" />
               <p v-if="errori.email" class="text-xs font-medium text-(--danger)">{{ errori.email }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="modifica-telefono" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Telefono</Label>
+              <Label for="modifica-telefono" class="text-[13px] font-medium text-(--fg2)">Telefono</Label>
               <Input id="modifica-telefono" :model-value="telefono" @update:model-value="onTelefonoInput" type="text" inputmode="numeric" :aria-invalid="!!errori.telefono" placeholder="Es. 0212345678" />
               <p v-if="errori.telefono" class="text-xs font-medium text-(--danger)">{{ errori.telefono }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="modifica-cellulare" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Cellulare</Label>
+              <Label for="modifica-cellulare" class="text-[13px] font-medium text-(--fg2)">Cellulare</Label>
               <Input id="modifica-cellulare" :model-value="cellulare" @update:model-value="onCellulareInput" type="text" inputmode="numeric" :aria-invalid="!!errori.cellulare" placeholder="Es. 3325676543" />
               <p v-if="errori.cellulare" class="text-xs font-medium text-(--danger)">{{ errori.cellulare }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="modifica-lavoro" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Lavoro</Label>
+              <Label for="modifica-lavoro" class="text-[13px] font-medium text-(--fg2)">Lavoro</Label>
               <Input id="modifica-lavoro" :model-value="lavoro" @update:model-value="onLavoroInput" type="text" placeholder="Es. Impiegato" />
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="modifica-medico-riferimento" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Medico di riferimento</Label>
+              <Label for="modifica-medico-riferimento" class="text-[13px] font-medium text-(--fg2)">Medico di riferimento</Label>
               <Input id="modifica-medico-riferimento" :model-value="medicoRiferimento" @update:model-value="onMedicoRiferimentoInput" type="text" placeholder="Es. Dott. Mario Bianchi" />
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="modifica-stile-di-vita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Stile di vita</Label>
+              <Label for="modifica-stile-di-vita" class="text-[13px] font-medium text-(--fg2)">Stile di vita</Label>
               <Select :model-value="stileDiVita || VALORE_SELEZIONA" @update:model-value="onStileDiVitaChange">
                 <SelectTrigger id="modifica-stile-di-vita" class="w-full">
                   <SelectValue placeholder="Seleziona" />
@@ -290,20 +290,20 @@ async function onSubmit() {
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="modifica-note" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Storia paziente</Label>
+            <Label for="modifica-note" class="text-[13px] font-medium text-(--fg2)">Storia paziente</Label>
             <Textarea id="modifica-note" v-model="note" maxlength="2000" placeholder="Es. vive da solo, fuma, beve, è autonomo, allergie, patologie…" />
             <p class="text-right text-xs text-(--fg3)">{{ note.length }}/2000</p>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="modifica-trattamenti" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Trattamenti/Terapie</Label>
+            <Label for="modifica-trattamenti" class="text-[13px] font-medium text-(--fg2)">Trattamenti/Terapie</Label>
             <Textarea id="modifica-trattamenti" v-model="trattamenti" maxlength="2000" placeholder="Es. terapie farmacologiche in corso, integratori, trattamenti…" />
             <p class="text-right text-xs text-(--fg3)">{{ trattamenti.length }}/2000</p>
           </div>
         </div>
 
         <DialogFooter>
-          <Button type="submit" :disabled="inCorso" class="hover:bg-primary/80">
+          <Button type="submit" :disabled="inCorso">
             <Save :size="16" />
             {{ inCorso ? 'Salvataggio…' : 'Salva modifiche' }}
           </Button>

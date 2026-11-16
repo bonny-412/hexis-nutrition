@@ -60,10 +60,11 @@ const ICONE_STATO_ACCOUNT: Record<Paziente['statoAccount'], Component> = {
   ATTIVO: UserCheck,
 }
 
-const CLASSI_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
-  MAI_INVITATO: 'bg-(--danger)/10 text-(--danger) border border-(--danger)',
-  INVITATO: 'bg-(--warn-bg) text-(--warn-fg) border border-(--warn-fg)',
-  ATTIVO: 'bg-(--mint) text-(--green) border border-(--green)',
+// Sul fondo petrolio dell'intestazione le pillole sono piene e chiare: leggibili in chiaro e in scuro.
+const CLASSI_STATO_ACCOUNT_HERO: Record<Paziente['statoAccount'], string> = {
+  MAI_INVITATO: 'bg-(--hero-pill) text-(--danger-fixed) ring-1 ring-(--hero-pill-ring)',
+  INVITATO: 'bg-(--warn-bg) text-(--warn-fg)',
+  ATTIVO: 'bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring)',
 }
 
 const TAB_DEFS = [
@@ -171,9 +172,9 @@ onMounted(() => {
     <!-- Link Torna Indietro -->
     <div>
       <router-link to="/pazienti"
-        class="inline-flex items-center gap-2 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)"
+        class="group inline-flex items-center gap-1.5 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)"
       >
-        <ArrowLeft :size="16" />
+        <ArrowLeft :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:-translate-x-0.5" />
         <span>Torna alla lista pazienti</span>
       </router-link>
     </div>
@@ -181,7 +182,7 @@ onMounted(() => {
     <!-- Stato Errore Caricamento -->
     <div
       v-if="erroreCaricamento"
-      class="flex flex-col items-center justify-center rounded-2xl border border-(--bd) bg-(--surf) p-12 text-center shadow-sm"
+      class="flex flex-col items-center justify-center rounded-2xl border border-(--bd) bg-(--surf) p-12 text-center"
     >
       <AlertCircle :size="40" class="text-(--danger) mb-3" />
       <h2 class="font-heading text-xl italic text-(--fg)">Errore di caricamento</h2>
@@ -206,21 +207,22 @@ onMounted(() => {
     <!-- Contenuto Principale -->
     <div v-else-if="paziente" class="space-y-6 mt-4">
       <!-- 1. INTESTAZIONE PAZIENTE -->
-      <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+      <div class="flex flex-col gap-4 rounded-2xl border border-(--hero-d) bg-(--hero) px-5 py-4 text-(--on-hero) sm:flex-row sm:flex-wrap sm:items-start sm:justify-between" data-test="paziente-hero">
         <div class="flex items-start gap-4">
           <span
             class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-heading text-2xl font-semibold select-none"
-            :class="paziente.archiviato ? 'bg-(--danger)/10 text-(--danger) border border-(--danger)' : CLASSI_STATO_ACCOUNT[paziente.statoAccount]"
+            :class="paziente.archiviato ? 'bg-(--hero-pill) text-(--danger-fixed) ring-1 ring-(--hero-pill-ring)' : 'bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring)'"
           >
             {{ paziente.nome[0] }}{{ paziente.cognome[0] }}
           </span>
           <div>
             <div class="flex flex-wrap items-center gap-2.5">
-              <h1 class="font-heading text-2xl italic text-(--fg)">{{ paziente.nome }} {{ paziente.cognome }}</h1>
+              <h1 class="font-heading text-2xl italic text-(--on-hero)">{{ paziente.nome }} {{ paziente.cognome }}</h1>
               <Button
                 v-if="!paziente.archiviato"
                 variant="ghost"
                 size="icon"
+                class="text-(--on-hero) hover:bg-white/15 hover:text-(--on-hero)"
                 title="Modifica dati anagrafici"
                 aria-label="Modifica dati anagrafici"
                 @click="mostraModificaAnagrafica = true"
@@ -231,13 +233,13 @@ onMounted(() => {
                 v-if="paziente.statoAccount !== 'ATTIVO' && !paziente.archiviato"
                 type="button"
                 :disabled="invitoInCorso"
-                class="text-sm font-semibold text-(--green) underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                class="rounded-full bg-(--hero-pill) px-2.5 py-0.5 text-xs font-bold text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) transition-all hover:bg-(--hero-pill-hover) active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                 @click="onInvita"
               >
                 {{ paziente.statoAccount === 'MAI_INVITATO' ? 'Invita' : 'Reinvia invito' }}
               </button>
             </div>
-            <div class="mt-1 text-sm text-(--fg3) flex w-full lg:flex-wrap lg:flex-row flex-col lg:items-center">
+            <div class="mt-1 text-sm text-(--on-hero-2) flex w-full lg:flex-wrap lg:flex-row flex-col lg:items-center">
               <span>{{ paziente.email }}</span>
               <span class="hidden lg:flex mx-1"> · </span>
               <span v-if="ultimaVisita">Obiettivo attuale: {{ ETICHETTE_OBIETTIVO[ultimaVisita.obiettivo] }}</span>
@@ -248,26 +250,26 @@ onMounted(() => {
               <span
                 data-test="badge-stato-account"
                 class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold"
-                :class="CLASSI_STATO_ACCOUNT[paziente.statoAccount]"
+                :class="CLASSI_STATO_ACCOUNT_HERO[paziente.statoAccount]"
               >
                 <component :is="ICONE_STATO_ACCOUNT[paziente.statoAccount]" :size="16" />
                 {{ ETICHETTE_STATO_ACCOUNT[paziente.statoAccount] }}
               </span>
               <span
                 v-if="paziente.archiviato"
-                class="inline-flex items-center gap-1.5 rounded-full bg-(--danger)/10 px-2.5 py-1 text-xs font-bold text-(--danger) border border-(--danger)"
+                class="inline-flex items-center gap-1.5 rounded-full bg-(--hero-pill) px-2.5 py-1 text-xs font-bold text-(--danger-fixed) ring-1 ring-(--hero-pill-ring)"
               >
                 <Archive :size="16" />
                 Paziente archiviato
               </span>
               <span
                 v-else-if="paziente.prossimaVisita"
-                class="inline-flex items-center gap-1.5 rounded-full bg-(--mint) px-2.5 py-1 text-xs font-bold text-(--green) border border-(--green)"
+                class="inline-flex items-center gap-1.5 rounded-full bg-(--hero-pill) px-2.5 py-1 text-xs font-bold text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring)"
               >
                 <CalendarCheck :size="16" />
                 Prossima visita: {{ formattaDataItalianaConMese(paziente.prossimaVisita.slice(0, 10)) }} · {{ paziente.prossimaVisita.slice(11, 16) }}
               </span>
-              <span v-else class="inline-flex items-center gap-1.5 rounded-full bg-(--warn-bg) px-2.5 py-1 text-xs font-bold text-(--warn-fg) border border-(--warn-fg)">
+              <span v-else class="inline-flex items-center gap-1.5 rounded-full bg-(--warn-bg) px-2.5 py-1 text-xs font-bold text-(--warn-fg)">
                 <CalendarX2 :size="16" />
                 Nessuna visita programmata
               </span>
@@ -276,19 +278,19 @@ onMounted(() => {
         </div>
 
         <div v-if="!paziente.archiviato" class="flex flex-wrap items-center gap-2 ">
-          <Button variant="neutral" as-child>
+          <Button as-child class="border-transparent bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) hover:bg-(--hero-pill-hover)">
             <router-link :to="`/piani-alimentari/nuovo?pazienteId=${paziente.id}`">
               <Utensils :size="15" />
               <span>Nuovo piano</span>
             </router-link>
           </Button>
-          <Button variant="neutral" as-child>
+          <Button as-child class="border-transparent bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) hover:bg-(--hero-pill-hover)">
             <router-link :to="`/agenda?nuovo=visita&pazienteId=${paziente.id}`">
               <CalendarPlus :size="15" />
               <span>Fissa appuntamento</span>
             </router-link>
           </Button>
-          <Button as-child class="hover:bg-primary/80">
+          <Button as-child class="bg-(--lime) text-(--on-lime) hover:bg-(--lime-d)">
             <router-link :to="`/pazienti/${paziente.id}/visite/nuova`">
               <ClipboardPlus :size="15" />
               <span>Nuova visita</span>
@@ -296,7 +298,7 @@ onMounted(() => {
           </Button>
         </div>
         <div v-else class="flex flex-wrap items-center gap-2">
-          <Button type="button" variant="neutral" @click="confermaDeArchiviaAperta = true">
+          <Button type="button" class="border-transparent bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) hover:bg-(--hero-pill-hover)" @click="confermaDeArchiviaAperta = true">
             <ArchiveRestore :size="15" />
             <span>De-archivia paziente</span>
           </Button>
@@ -308,10 +310,10 @@ onMounted(() => {
         Non è stato possibile caricare i dati clinici del paziente.
       </p>
       <div v-else class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4 shadow-sm">
+        <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4">
           <div class="flex items-center gap-1.5">
             <Scale :size="14" class="text-primary" />
-            <p class="text-xs font-bold uppercase tracking-wide text-(--fg4)">Peso attuale</p>
+            <p class="text-xs font-semibold text-(--fg3)">Peso attuale</p>
           </div>
           <div v-if="visiteInCaricamento" class="mt-2 h-6 w-16 animate-pulse rounded bg-(--hover)" />
           <template v-else>
@@ -330,10 +332,10 @@ onMounted(() => {
           </template>
         </div>
 
-        <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4 shadow-sm">
+        <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4">
           <div class="flex items-center gap-1.5">
             <Ruler :size="14" class="text-primary" />
-            <p class="text-xs font-bold uppercase tracking-wide text-(--fg4)">BMI</p>
+            <p class="text-xs font-semibold text-(--fg3)">BMI</p>
           </div>
           <div v-if="visiteInCaricamento" class="mt-2 h-6 w-12 animate-pulse rounded bg-(--hover)" />
           <template v-else>
@@ -352,10 +354,10 @@ onMounted(() => {
           </template>
         </div>
 
-        <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4 shadow-sm">
+        <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4">
           <div class="flex items-center gap-1.5">
             <Percent :size="14" class="text-primary" />
-            <p class="text-xs font-bold uppercase tracking-wide text-(--fg4)">Massa grassa</p>
+            <p class="text-xs font-semibold text-(--fg3)">Massa grassa</p>
           </div>
           <div v-if="visiteInCaricamento" class="mt-2 h-6 w-12 animate-pulse rounded bg-(--hover)" />
           <template v-else>
@@ -374,10 +376,10 @@ onMounted(() => {
           </template>
         </div>
 
-        <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4 shadow-sm">
+        <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4">
           <div class="flex items-center gap-1.5">
             <Dumbbell :size="14" class="text-primary" />
-            <p class="text-xs font-bold uppercase tracking-wide text-(--fg4)">Massa magra</p>
+            <p class="text-xs font-semibold text-(--fg3)">Massa magra</p>
           </div>
           <div v-if="visiteInCaricamento" class="mt-2 h-6 w-16 animate-pulse rounded bg-(--hover)" />
           <template v-else>
@@ -467,7 +469,7 @@ onMounted(() => {
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel variant="neutral" :disabled="deArchiviazioneInCorso">Annulla</AlertDialogCancel>
-        <AlertDialogAction class="hover:bg-primary/80" :disabled="deArchiviazioneInCorso" @click="onDeArchivia">
+        <AlertDialogAction :disabled="deArchiviazioneInCorso" @click="onDeArchivia">
           {{ deArchiviazioneInCorso ? 'De-archiviazione…' : 'Conferma' }}
         </AlertDialogAction>
       </AlertDialogFooter>

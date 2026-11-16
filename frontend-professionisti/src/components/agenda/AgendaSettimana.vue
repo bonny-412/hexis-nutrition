@@ -12,6 +12,7 @@ import {
   ORA_ORIGINE_MIN,
   posizioneEvento,
   PX_PER_ORA,
+  stileCorsia,
 } from '@/utils/agenda'
 import { barrato, classiEvento, eVisitaAttiva, etichettaTipo, nomePaziente, titolo } from '@/utils/agendaStile'
 
@@ -99,7 +100,7 @@ function testoEvento(a: Appuntamento): string {
           :data-test="`settimana-intestazione-${c.iso}`"
         >
           <div class="flex items-center gap-2">
-            <span class="text-[10.5px] font-bold uppercase tracking-widest" :class="c.eOggi ? 'text-(--green)' : 'text-(--fg4)'">
+            <span class="text-[10.5px] font-bold uppercase tracking-widest" :class="c.eOggi ? 'text-(--green-d)' : 'text-(--fg4)'">
               {{ c.nome }}
             </span>
             <span
@@ -155,13 +156,12 @@ function testoEvento(a: Appuntamento): string {
           <div
             v-for="e in c.eventi"
             :key="e.a.id"
-            class="group absolute cursor-pointer overflow-hidden rounded-md border-l-[3px] px-1.5 py-0.5"
+            class="group absolute cursor-pointer overflow-hidden rounded-md border-l-[3px] px-1.5 py-0.5 ring-[1.5px] ring-(--surf)"
             :class="classiEvento(e.a)"
             :style="{
               top: `${e.topPx}px`,
               height: `${e.altezzaPx}px`,
-              width: `${100 / e.corsie}%`,
-              left: `${(e.corsia * 100) / e.corsie}%`,
+              ...stileCorsia(e.corsia, e.corsie),
             }"
             :title="testoEvento(e.a)"
             :data-test="`agenda-evento-${e.a.id}`"

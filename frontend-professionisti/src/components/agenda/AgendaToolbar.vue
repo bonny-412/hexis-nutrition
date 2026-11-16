@@ -64,7 +64,7 @@ function sposta(direzione: 1 | -1) {
           type="button"
           class="rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
           :class="filtro === f.valore
-            ? 'border-(--sage) bg-(--mint) text-(--green)'
+            ? 'border-(--sage) bg-(--mint) text-(--green-d)'
             : 'border-(--bd2) bg-(--surf) text-(--fg2) hover:border-(--sage)'"
           :aria-pressed="filtro === f.valore"
           :data-test="`agenda-filtro-${f.valore}`"

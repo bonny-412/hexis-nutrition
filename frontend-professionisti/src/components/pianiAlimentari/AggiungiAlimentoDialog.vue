@@ -4,6 +4,7 @@ import { cerca as cercaAlimenti, type Alimento } from '@/api/alimenti'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { nomeAlimentoLeggibile } from '@/utils/testo'
 import {
   filtraDecimaleItaliano, numeroItaliano, numeroItalianoOpzionale,
   erroreNomeAlimento, erroreNumeroDecimaleObbligatorio, erroreNumeroDecimale, bloccaTastoNonNumerico,
@@ -175,7 +176,7 @@ function aggiungiManuale() {
             @click="selezionaRisultato(risultato)"
           >
             <span class="flex flex-col">
-              <span class="text-sm font-semibold text-(--fg)">{{ risultato.nome }}</span>
+              <span class="text-sm font-semibold text-(--fg)">{{ nomeAlimentoLeggibile(risultato.nome) }}</span>
               <span class="text-xs text-(--fg3)">{{ risultato.categoria }}</span>
             </span>
             <span class="whitespace-nowrap text-xs font-bold text-(--fg3)">{{ risultato.kcal }} kcal/100g</span>

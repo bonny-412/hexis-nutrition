@@ -55,6 +55,7 @@ const errore = ref(false)
 
 // Guardia sulla richiesta più recente: una risposta in ritardo non sovrascrive quella attuale.
 let richiestaElenco = 0
+
 async function carica() {
   const richiesta = ++richiestaElenco
   caricamento.value = true
@@ -316,7 +317,7 @@ function titoloEliminazione(a: Appuntamento | null): string {
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
-          <Button type="button" class="hover:bg-primary/80" data-test="agenda-aggiungi">
+          <Button type="button" data-test="agenda-aggiungi">
             <CalendarPlus :size="16" /> Aggiungi <ChevronDown :size="14" />
           </Button>
         </DropdownMenuTrigger>
@@ -395,7 +396,7 @@ function titoloEliminazione(a: Appuntamento | null): string {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel variant="neutral">Indietro</AlertDialogCancel>
-          <AlertDialogAction class="bg-(--danger) hover:bg-(--danger)/80" data-test="conferma-annulla-appuntamento" @click="confermaAnnulla">
+          <AlertDialogAction class="bg-(--danger) hover:bg-(--danger-d)" data-test="conferma-annulla-appuntamento" @click="confermaAnnulla">
             Annulla appuntamento
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -410,7 +411,7 @@ function titoloEliminazione(a: Appuntamento | null): string {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
-          <AlertDialogAction class="bg-(--danger) hover:bg-(--danger)/80" data-test="conferma-elimina-appuntamento" @click="confermaElimina">
+          <AlertDialogAction class="bg-(--danger) hover:bg-(--danger-d)" data-test="conferma-elimina-appuntamento" @click="confermaElimina">
             Elimina
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -428,7 +429,7 @@ function titoloEliminazione(a: Appuntamento | null): string {
         </ul>
         <AlertDialogFooter>
           <AlertDialogCancel variant="neutral">Cambia orario</AlertDialogCancel>
-          <AlertDialogAction class="hover:bg-primary/80" @click="confermaSpostamento">Conferma comunque</AlertDialogAction>
+          <AlertDialogAction @click="confermaSpostamento">Conferma comunque</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

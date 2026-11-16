@@ -69,7 +69,7 @@ async function onLogout() {
             <Bell :size="18" />
             <span
               v-if="notifiche.nonLette > 0"
-              class="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-(--green) shadow-[0_0_0_2px_var(--surf)]"
+              class="absolute right-1.5 top-1.5 size-2 rounded-full border border-(--green-d) bg-(--lime)"
               :class="{ 'animate-pulse': notifiche.pulsa }"
               data-test="notifiche-puntino"
             ></span>
@@ -90,7 +90,7 @@ async function onLogout() {
             class="group flex items-center gap-2 rounded-xl lg:border lg:border-(--bd2) lg:bg-(--surf) lg:py-1 lg:pl-1 lg:pr-2.5"
           >
             <Avatar class="bg-(--mint)">
-              <AvatarFallback class="bg-(--mint) text-xs font-bold text-(--green)">
+              <AvatarFallback class="bg-(--mint) text-xs font-bold text-(--green-d)">
                 {{ auth.professionista?.nome?.[0] }}{{ auth.professionista?.cognome?.[0] }}
               </AvatarFallback>
             </Avatar>

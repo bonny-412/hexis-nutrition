@@ -287,7 +287,7 @@ defineExpose({
 
     <div class="mt-5 grid gap-5 sm:grid-cols-2">
       <div class="flex flex-col gap-1.5">
-        <Label for="obiettivo" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Obiettivo</Label>
+        <Label for="obiettivo" class="text-[13px] font-medium text-(--fg2)">Obiettivo</Label>
         <Select :model-value="obiettivo" @update:model-value="onObiettivoChange">
           <SelectTrigger id="obiettivo" class="w-full">
             <SelectValue placeholder="Seleziona" />
@@ -307,32 +307,32 @@ defineExpose({
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <Label for="data-visita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Data visita</Label>
+        <Label for="data-visita" class="text-[13px] font-medium text-(--fg2)">Data visita</Label>
         <DatePicker id="data-visita" v-model="dataVisita" />
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <Label for="altezza" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Altezza (cm)*</Label>
+        <Label for="altezza" class="text-[13px] font-medium text-(--fg2)">Altezza (cm)*</Label>
         <Input id="altezza" :model-value="altezzaCm" @update:model-value="onAltezzaInput" type="text" inputmode="numeric" :aria-invalid="!!errori.altezzaCm" placeholder="Es. 178" />
         <p v-if="errori.altezzaCm" class="text-xs font-medium text-(--danger)">{{ errori.altezzaCm }}</p>
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <Label for="peso" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Peso (kg)*</Label>
+        <Label for="peso" class="text-[13px] font-medium text-(--fg2)">Peso (kg)*</Label>
         <Input id="peso" :model-value="pesoKg" @update:model-value="onPesoInput" type="text" inputmode="decimal" :aria-invalid="!!errori.pesoKg" placeholder="Es. 78,50" />
         <p v-if="errori.pesoKg" class="text-xs font-medium text-(--danger)">{{ errori.pesoKg }}</p>
       </div>
     </div>
 
     <div class="mt-5 flex flex-col gap-1.5">
-      <Label for="bmi" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">BMI</Label>
+      <Label for="bmi" class="text-[13px] font-medium text-(--fg2)">BMI</Label>
       <div class="flex items-center gap-2.5">
         <Input id="bmi" :model-value="bmi !== null ? formattaNumero(bmi, 1) : ''" type="text" disabled placeholder="Compila altezza e peso" class="sm:max-w-40" />
       </div>
     </div>
 
     <div class="mt-5 flex flex-col gap-1.5">
-      <Label for="note-visita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Note</Label>
+      <Label for="note-visita" class="text-[13px] font-medium text-(--fg2)">Note</Label>
       <Textarea id="note-visita" v-model="note" maxlength="500" placeholder="Note operative, piccoli obiettivi fino alla prossima visita..." />
       <p class="text-right text-xs text-(--fg3)">{{ note.length }}/500</p>
     </div>
@@ -346,7 +346,7 @@ defineExpose({
       <AccordionItem value="plicometria" class="overflow-hidden rounded-xl border border-(--bd)">
         <AccordionTrigger class="group px-4 py-3.5 hover:no-underline sm:px-5">
           <div class="flex items-center gap-3">
-            <div class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-(--mint) text-(--green)">
+            <div class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-(--mint) text-(--green-d)">
               <ScissorsLineDashed :size="18" />
             </div>
 
@@ -369,7 +369,7 @@ defineExpose({
       <AccordionItem value="circonferenze" class="overflow-hidden rounded-xl border border-(--bd)">
         <AccordionTrigger class="group px-4 py-3.5 hover:no-underline sm:px-5">
           <div class="flex items-center gap-3">
-            <div class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-(--mint) text-(--green)">
+            <div class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-(--mint) text-(--green-d)">
               <Ruler :size="18" />
             </div>
 
@@ -383,31 +383,31 @@ defineExpose({
           <div class="mx-2 border-t-2 border-t-(--bd)"></div>
           <div class="grid gap-5 py-4 px-6 sm:grid-cols-2">
             <div class="flex flex-col gap-1.5">
-              <Label for="circonferenza-vita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza vita</Label>
+              <Label for="circonferenza-vita" class="text-[13px] font-medium text-(--fg2)">Circonferenza vita</Label>
               <Input id="circonferenza-vita" :model-value="circonferenzaVita" @update:model-value="onCirconferenzaVitaInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaVita" />
               <p v-if="errori.circonferenzaVita" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaVita }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="circonferenza-fianchi" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza fianchi</Label>
+              <Label for="circonferenza-fianchi" class="text-[13px] font-medium text-(--fg2)">Circonferenza fianchi</Label>
               <Input id="circonferenza-fianchi" :model-value="circonferenzaFianchi" @update:model-value="onCirconferenzaFianchiInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaFianchi" />
               <p v-if="errori.circonferenzaFianchi" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaFianchi }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="circonferenza-addome" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza addome</Label>
+              <Label for="circonferenza-addome" class="text-[13px] font-medium text-(--fg2)">Circonferenza addome</Label>
               <Input id="circonferenza-addome" :model-value="circonferenzaAddome" @update:model-value="onCirconferenzaAddomeInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaAddome" />
               <p v-if="errori.circonferenzaAddome" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaAddome }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="circonferenza-torace" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza torace</Label>
+              <Label for="circonferenza-torace" class="text-[13px] font-medium text-(--fg2)">Circonferenza torace</Label>
               <Input id="circonferenza-torace" :model-value="circonferenzaTorace" @update:model-value="onCirconferenzaToraceInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaTorace" />
               <p v-if="errori.circonferenzaTorace" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaTorace }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5 sm:col-span-2">
-              <Label for="parte-dominante" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Parte dominante</Label>
+              <Label for="parte-dominante" class="text-[13px] font-medium text-(--fg2)">Parte dominante</Label>
               <Select :model-value="parteDominante || VALORE_SELEZIONA" @update:model-value="onParteDominanteChange">
                 <SelectTrigger id="parte-dominante" class="w-full sm:w-1/2">
                   <SelectValue placeholder="Seleziona" />
@@ -423,25 +423,25 @@ defineExpose({
             <h3 class="text-sm font-bold text-(--fg) sm:col-span-2">Parte non dominante</h3>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="circonferenza-braccio-rilassato" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Braccio rilassato</Label>
+              <Label for="circonferenza-braccio-rilassato" class="text-[13px] font-medium text-(--fg2)">Braccio rilassato</Label>
               <Input id="circonferenza-braccio-rilassato" :model-value="circonferenzaBraccioRilassato" @update:model-value="onCirconferenzaBraccioRilassatoInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaBraccioRilassato" />
               <p v-if="errori.circonferenzaBraccioRilassato" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaBraccioRilassato }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="circonferenza-braccio-contratto" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Braccio contratto</Label>
+              <Label for="circonferenza-braccio-contratto" class="text-[13px] font-medium text-(--fg2)">Braccio contratto</Label>
               <Input id="circonferenza-braccio-contratto" :model-value="circonferenzaBraccioContratto" @update:model-value="onCirconferenzaBraccioContrattoInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaBraccioContratto" />
               <p v-if="errori.circonferenzaBraccioContratto" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaBraccioContratto }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="circonferenza-coscia" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza coscia</Label>
+              <Label for="circonferenza-coscia" class="text-[13px] font-medium text-(--fg2)">Circonferenza coscia</Label>
               <Input id="circonferenza-coscia" :model-value="circonferenzaCoscia" @update:model-value="onCirconferenzaCosciaInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaCoscia" />
               <p v-if="errori.circonferenzaCoscia" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaCoscia }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="circonferenza-polpaccio" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza polpaccio</Label>
+              <Label for="circonferenza-polpaccio" class="text-[13px] font-medium text-(--fg2)">Circonferenza polpaccio</Label>
               <Input id="circonferenza-polpaccio" :model-value="circonferenzaPolpaccio" @update:model-value="onCirconferenzaPolpaccioInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaPolpaccio" />
               <p v-if="errori.circonferenzaPolpaccio" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaPolpaccio }}</p>
             </div>
@@ -455,25 +455,25 @@ defineExpose({
               <h3 class="text-sm font-bold text-(--fg) sm:col-span-2">Parte dominante</h3>
 
               <div class="flex flex-col gap-1.5">
-                <Label for="circonferenza-braccio-rilassato-dominante" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Braccio rilassato</Label>
+                <Label for="circonferenza-braccio-rilassato-dominante" class="text-[13px] font-medium text-(--fg2)">Braccio rilassato</Label>
                 <Input id="circonferenza-braccio-rilassato-dominante" :model-value="circonferenzaBraccioRilassatoDominante" @update:model-value="onCirconferenzaBraccioRilassatoDominanteInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaBraccioRilassatoDominante" />
                 <p v-if="errori.circonferenzaBraccioRilassatoDominante" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaBraccioRilassatoDominante }}</p>
               </div>
 
               <div class="flex flex-col gap-1.5">
-                <Label for="circonferenza-braccio-contratto-dominante" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Braccio contratto</Label>
+                <Label for="circonferenza-braccio-contratto-dominante" class="text-[13px] font-medium text-(--fg2)">Braccio contratto</Label>
                 <Input id="circonferenza-braccio-contratto-dominante" :model-value="circonferenzaBraccioContrattoDominante" @update:model-value="onCirconferenzaBraccioContrattoDominanteInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaBraccioContrattoDominante" />
                 <p v-if="errori.circonferenzaBraccioContrattoDominante" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaBraccioContrattoDominante }}</p>
               </div>
 
               <div class="flex flex-col gap-1.5">
-                <Label for="circonferenza-coscia-dominante" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza coscia</Label>
+                <Label for="circonferenza-coscia-dominante" class="text-[13px] font-medium text-(--fg2)">Circonferenza coscia</Label>
                 <Input id="circonferenza-coscia-dominante" :model-value="circonferenzaCosciaDominante" @update:model-value="onCirconferenzaCosciaDominanteInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaCosciaDominante" />
                 <p v-if="errori.circonferenzaCosciaDominante" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaCosciaDominante }}</p>
               </div>
 
               <div class="flex flex-col gap-1.5">
-                <Label for="circonferenza-polpaccio-dominante" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenza polpaccio</Label>
+                <Label for="circonferenza-polpaccio-dominante" class="text-[13px] font-medium text-(--fg2)">Circonferenza polpaccio</Label>
                 <Input id="circonferenza-polpaccio-dominante" :model-value="circonferenzaPolpaccioDominante" @update:model-value="onCirconferenzaPolpaccioDominanteInput" type="text" placeholder="Es. 78,50" inputmode="decimal" :aria-invalid="!!errori.circonferenzaPolpaccioDominante" />
                 <p v-if="errori.circonferenzaPolpaccioDominante" class="text-xs font-medium text-(--danger)">{{ errori.circonferenzaPolpaccioDominante }}</p>
               </div>

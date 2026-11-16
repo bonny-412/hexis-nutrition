@@ -117,6 +117,22 @@ export function impaginaSovrapposizioni<T extends { inizioMin: number; fineMin: 
   return risultato
 }
 
+/** Rientro di ogni corsia successiva, in % della colonna, e larghezza minima di un evento. */
+const RIENTRO_CORSIA_PCT = 22
+const LARGHEZZA_MIN_PCT = 56
+
+/**
+ * Posizione orizzontale di un evento nella sua colonna. Gli eventi sovrapposti non si dividono la
+ * colonna in strisce strette (testo illeggibile): si sfalsano a cascata, ciascuno rientrato rispetto
+ * al precedente e disegnato sopra di lui, così il titolo resta leggibile per quasi tutta la larghezza.
+ */
+export function stileCorsia(corsia: number, corsie: number): { left: string; width: string; zIndex: number } {
+  if (corsie <= 1) return { left: '0%', width: '100%', zIndex: 1 }
+  const rientro = Math.min(RIENTRO_CORSIA_PCT, (100 - LARGHEZZA_MIN_PCT) / (corsie - 1))
+  const left = corsia * rientro
+  return { left: `${left}%`, width: `${100 - left}%`, zIndex: corsia + 1 }
+}
+
 export function etichettaPeriodo(vista: VistaAgenda, riferimento: string): string {
   const [anno, mese, giorno] = riferimento.split('-').map(Number)
   if (vista === 'MESE') {

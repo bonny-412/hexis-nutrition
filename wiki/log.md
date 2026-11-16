@@ -629,3 +629,30 @@ Dettaglio in [stato](stato.md#sessione-del-15-novembre-2026--agenda-implementata
 - Chiavi VAPID di sviluppo impostate nella configurazione di avvio di STS; `GET /notifiche/push/chiave` risponde correttamente. Nulla provato nel browser: troppo tardi, riprendere da lì.
 - Aperto: avviso push soppresso con scheda visibile (rischio Safari); Minor rimandati M1-M8 (in `stato.md`), in particolare M7 e M5. Test da scrivere a cura di Andrea.
 - Aggiornati `stato.md` (sezione del 16 novembre e "Prossimo passo"), ADR 0008. Nessun commit.
+
+## [2026-11-16] handoff | Palette petrolio + lime, rifiniture UI e blocchi colorati
+
+- Applicata la palette "Verde petrolio + Lime" via token (chiaro e scuro), con rossi/ambra nuovi, contrasti rivisti, hover dei pulsanti centralizzato, etichette dei campi in minuscolo. Decisione in [decisioni/0009](decisioni/0009-palette-verde-petrolio-lime.md).
+- Cinque blocchi petrolio: banner Dashboard, intestazione scheda paziente, card piano attivo, tessera Energia del piano, fascia "Oggi" dell'agenda.
+- Rifiniture: dialog di dettaglio con titolo fisso e link alla scheda paziente, campanello più grande, orario 07:00-20:00.
+- Tema scuro rifatto in grafite neutra dopo il rifiuto di Andrea; feedback atteso. Nulla visto nel browser da Claude. `vue-tsc` pulito, frontend 291/300 (9 falliti noti). Nessun commit, nessun test nuovo.
+- Aggiornati `stato.md`, `index.md`, nuova ADR 0009.
+
+## [2026-11-16] handoff | Revisione UI: tema scuro "Notte di petrolio", grafici, dashboard
+
+- Revisione dell'app in Chrome con la skill frontend-design, chiaro e scuro. Tema chiaro intatto; tema scuro rifatto (terza versione) dopo prova dal vivo nel browser: fondo quasi nero, sidebar più scura della pagina, hero in petrolio profondo, pillole hero su token `--hero-pill*` al posto di `bg-white`. Aggiornata [decisioni/0009](decisioni/0009-palette-verde-petrolio-lime.md).
+- Dashboard: tolti i placeholder "Disponibile a breve"; nuovi blocchi "Prossime visite" (7 giorni) e "Piani in bozza"; link di navigazione con freccia (solo navigazione, non azioni).
+- Agenda: tolta la fascia "Oggi"; appuntamenti sovrapposti sfalsati a cascata.
+- Scheda paziente: grafici solo da 2 visite in su, senza il valore ripetuto (resta nella riga di indicatori).
+- Tabelle: intestazioni ed etichette in minuscolo, nomi in Figtree, nomi BDA leggibili. "Concluso" grigio; avatar dello stesso colore del badge.
+- Palette grafici con quattro tinte distinte; confronto visite grigio/petrolio.
+- Test: adeguati gli spec esistenti di AndamentoChart, PazienteTabPanoramica, Dashboard (comportamento cambiato). Frontend 289/296: i 7 falliti sono preesistenti (mock `VisTooltip` in ConfrontoBarChart, stato vuoto della lista piani). Nessun commit.
+- Aggiunta: logo e favicon ricolorati su petrolio + lime (favicon in tessera scura), pulsanti testo senza sottolineatura con freccia che scorre all'hover. ADR 0009 aggiornata.
+- Aggiunta: tolte le ombre dalle card nella pagina (restano solo sugli elementi sovrapposti); tutti i pulsanti azione scendono di 2 px al click, come "Crea nuovo". ADR 0009 aggiornata. Frontend sempre 289/296 (7 falliti preesistenti).
+- Aggiunta: link "Torna indietro" uniformati (freccia da 14 px che scorre a sinistra all'hover, anche in "Password dimenticata"). ADR 0009 aggiornata.
+
+## [2026-11-16] handoff | Fine sessione revisione UI
+
+- `stato.md`: nuova sezione "Sessione del 16 novembre 2026 (terza parte)" e voce in cima a "Prossimo passo consigliato"; segnalato che sostituisce tema scuro grafite, hero uguali nei due temi e fascia "Oggi" della sezione precedente.
+- Aperto: pagine non verificate (favicon, login mobile, editor del piano e dialog senza ombre, agenda Mese/Giorno in scuro), 7 test preesistenti da sistemare, pressione su chip e selettori da decidere, token `--shadow` inutilizzato. ADR 0009 resta `in-discussione`.
+- Nessun commit.

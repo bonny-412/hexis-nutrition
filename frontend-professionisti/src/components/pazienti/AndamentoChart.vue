@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { ChartContainer, type ChartConfig } from '@/components/ui/chart'
 import { VisAxis, VisLine, VisScatter, VisXYContainer } from '@unovis/vue'
-import { ArrowDown, ArrowUp } from '@lucide/vue'
 import { MAX_PUNTI_GRAFICO, type Andamento } from '@/utils/andamento'
 import { formattaDataItaliana, isoATimestamp } from '@/utils/data'
 
@@ -53,15 +52,12 @@ const chartConfig = computed<ChartConfig>(() => ({
   valore: { label: props.titolo, color: props.colore },
 }))
 
-function formatta(valore: number): string {
-  return valore.toLocaleString('it-IT', { minimumFractionDigits: props.decimali, maximumFractionDigits: props.decimali })
-}
 </script>
 
 <template>
   <Card>
     <CardHeader>
-      <CardTitle class="flex items-baseline justify-between gap-2 text-xs font-bold uppercase tracking-wide text-(--fg3)">
+      <CardTitle class="flex items-baseline justify-between gap-2 text-sm font-semibold text-(--fg2)">
         {{ titolo }}
         <span v-if="andamento.punti.length > 0" class="text-[10px] font-medium normal-case tracking-normal text-(--fg4)">
           {{ etichettaIntervallo }}
@@ -71,22 +67,8 @@ function formatta(valore: number): string {
     <CardContent>
       <div v-if="andamento.punti.length === 0" class="text-sm text-(--fg4)">Nessun dato disponibile</div>
       <template v-else>
-        <div class="flex items-baseline gap-2">
-          <span class="font-heading text-3xl font-semibold text-(--fg)">{{ formatta(andamento.ultimo as number) }}</span>
-          <span v-if="unita" class="text-sm text-(--fg3)">{{ unita }}</span>
-          <span
-            v-if="andamento.delta !== null"
-            data-test="andamento-delta"
-            class="flex items-center gap-0.5 text-sm font-medium"
-            :class="andamento.delta < 0 ? 'text-(--green)' : andamento.delta > 0 ? 'text-(--danger)' : 'text-(--fg3)'"
-          >
-            <ArrowDown v-if="andamento.delta < 0" :size="14" />
-            <ArrowUp v-else-if="andamento.delta > 0" :size="14" />
-            {{ formatta(Math.abs(andamento.delta)) }}{{ unita ? ' ' + unita : '' }}
-          </span>
-          <span v-else class="text-sm text-(--fg3)">Prima visita</span>
-        </div>
-        <ChartContainer :config="chartConfig" class="mt-4 h-40 aspect-auto">
+        <!-- Valore attuale e variazione stanno nella riga di indicatori in cima alla scheda paziente: qui solo l'andamento. -->
+        <ChartContainer :config="chartConfig" class="h-40 aspect-auto">
           <VisXYContainer :data="datiGrafico" :margin="{ left: 20, right: 20 }">
             <VisLine :x="(d: PuntoGrafico) => d.timestamp" :y="(d: PuntoGrafico) => d.valore" :color="colore" />
             <VisScatter

@@ -81,7 +81,7 @@ async function onSubmit() {
       <div class="w-full max-w-sm">
         <!-- Logo Mobile -->
         <div class="mb-8 flex items-center gap-3 md:hidden">
-          <img src="@/assets/hexis-logo.svg" alt="Hexis" class="size-10 rounded-xl" />
+          <img src="@/assets/hexis-logo.svg" alt="Hexis" class="size-10 rounded-xl bg-(--side) p-1.5" />
           <span class="font-heading text-xl font-semibold text-(--fg)">Hexis Nutrition</span>
         </div>
 
@@ -109,7 +109,7 @@ async function onSubmit() {
           <div class="space-y-1.5">
             <div class="flex items-center justify-between">
               <Label for="password" class="text-xs font-semibold uppercase tracking-wider text-(--fg3)">Password</Label>
-              <router-link to="/password-dimenticata" class="text-xs font-semibold text-(--green) hover:underline">
+              <router-link to="/password-dimenticata" class="text-xs font-semibold text-(--green) transition-colors hover:text-(--green-d)">
                 Password dimenticata?
               </router-link>
             </div>
@@ -147,7 +147,7 @@ async function onSubmit() {
           <Button
             type="submit"
             :disabled="inCorso"
-            class="mt-2 h-11 w-full rounded-xl bg-(--green) text-sm font-semibold text-(--on-green) shadow-sm transition-all hover:bg-primary/80 active:not-aria-[haspopup]:translate-y-0.5"
+            class="mt-2 h-11 w-full rounded-xl bg-(--green) text-sm font-semibold text-(--on-green) transition-all hover:bg-(--green-d) active:not-aria-[haspopup]:translate-y-0.5"
           >
             <Loader2 v-if="inCorso" :size="18" class="mr-2 animate-spin" />
             <span>{{ inCorso ? 'Accesso in corso…' : 'Accedi' }}</span>

@@ -111,46 +111,50 @@ function onDuplica(piano: PianoAlimentareRigaLista) {
     <div v-for="n in 2" :key="n" data-test="piani-skeleton" class="h-28 animate-pulse rounded-2xl bg-(--hover)" />
   </div>
 
-  <div v-else-if="errore" class="rounded-2xl border border-(--bd) bg-(--surf) p-8 text-center shadow-sm">
+  <div v-else-if="errore" class="rounded-2xl border border-(--bd) bg-(--surf) p-8 text-center">
     <p class="text-sm text-(--fg3)">Non è stato possibile caricare i piani alimentari.</p>
     <Button variant="neutral" class="mt-3" @click="carica">Riprova</Button>
   </div>
 
   <div v-else class="flex flex-col gap-4">
-    <div class="rounded-2xl border border-(--bd) bg-(--surf) px-5 py-4 shadow-sm">
+    <div
+      class="rounded-2xl border px-5 py-4"
+      :class="pianoAttivo && avanzamento ? 'border-(--hero-d) bg-(--hero) text-(--on-hero)' : 'border-(--bd) bg-(--surf)'"
+      data-test="piano-attivo-card"
+    >
       <template v-if="pianoAttivo && avanzamento">
         <div class="flex flex-wrap items-start gap-3.5">
           <div class="min-w-55 flex-1">
             <div class="flex flex-wrap items-center gap-2">
-              <span class="text-[10px] font-bold uppercase tracking-widest text-(--fg3)">Piano attivo</span>
-              <Badge variant="secondary" class="bg-(--mint) text-(--green)">{{ ETICHETTE_MODALITA[pianoAttivo.modalita] }}</Badge>
+              <span class="text-xs font-semibold text-(--on-hero-2)">Piano attivo</span>
+              <Badge variant="secondary" class="bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring)">{{ ETICHETTE_MODALITA[pianoAttivo.modalita] }}</Badge>
             </div>
-            <div class="font-heading mt-1 text-[21px] font-medium italic text-(--fg)">{{ pianoAttivo.nome }}</div>
-            <div class="mt-0.5 text-[12.5px] text-(--fg3)">
+            <div class="font-heading mt-1 text-[21px] font-medium italic text-(--on-hero)">{{ pianoAttivo.nome }}</div>
+            <div class="mt-0.5 text-[12.5px] text-(--on-hero-2)">
               {{ periodo(pianoAttivo) }}<template v-if="pianoAttivo.obiettivoKcal != null"> · {{ target(pianoAttivo) }}/giorno</template>
             </div>
           </div>
           <div class="flex flex-wrap gap-2">
-            <Button v-if="!archiviato" variant="neutral" @click="onDuplica(pianoAttivo)">
+            <Button v-if="!archiviato" class="border-transparent bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) hover:bg-(--hero-pill-hover)" @click="onDuplica(pianoAttivo)">
               <Copy :size="15" />
               <span>Duplica</span>
             </Button>
-            <Button as-child>
+            <Button as-child class="bg-(--lime) text-(--on-lime) hover:bg-(--lime-d)">
               <router-link :to="linkPiano(pianoAttivo)"><Pencil :size="15" /> Apri piano</router-link>
             </Button>
           </div>
         </div>
 
         <div v-if="avanzamento.percentuale !== null" class="mt-3.5">
-          <div class="mb-1 flex justify-between text-[11.5px] text-(--fg3)">
+          <div class="mb-1 flex justify-between text-[11.5px] text-(--on-hero-2)">
             <span>{{ avanzamento.durataLabel }}</span>
             <span
               class="font-bold"
-              :class="avanzamento.scadenzaInGiornata || avanzamento.scadenzaScaduta ? 'text-(--warn-fg)' : ''"
+              :class="avanzamento.scadenzaInGiornata || avanzamento.scadenzaScaduta ? 'text-(--on-hero-warn)' : ''"
             >{{ avanzamento.scadenzaLabel }}</span>
           </div>
-          <div class="h-1.5 overflow-hidden rounded bg-(--div)">
-            <div data-test="piano-avanzamento" class="h-full rounded bg-(--green)" :style="{ width: `${avanzamento.percentuale}%` }" />
+          <div class="h-1.5 overflow-hidden rounded bg-(--hero-track)">
+            <div data-test="piano-avanzamento" class="h-full rounded bg-(--lime)" :style="{ width: `${avanzamento.percentuale}%` }" />
           </div>
         </div>
       </template>
@@ -158,7 +162,7 @@ function onDuplica(piano: PianoAlimentareRigaLista) {
       <div v-else-if="bozzaRecente" data-test="piano-bozza" class="flex flex-wrap items-center gap-3.5">
         <div class="min-w-55 flex-1">
           <div class="flex flex-wrap items-center gap-2">
-            <span class="text-[10px] font-bold uppercase tracking-widest text-(--fg3)">Nessun piano attivo · ultima bozza</span>
+            <span class="text-xs font-semibold text-(--fg3)">Nessun piano attivo · ultima bozza</span>
             <Badge variant="secondary" class="bg-(--warn-bg) text-(--warn-fg)">Bozza</Badge>
           </div>
           <div class="font-heading mt-1 text-[21px] font-medium italic text-(--fg)">{{ bozzaRecente.nome }}</div>
@@ -176,7 +180,7 @@ function onDuplica(piano: PianoAlimentareRigaLista) {
 
       <div v-else class="flex flex-wrap items-center gap-3.5">
         <div class="min-w-55 flex-1">
-          <span class="text-[10px] font-bold uppercase tracking-widest text-(--fg3)">Piano attivo</span>
+          <span class="text-xs font-semibold text-(--fg3)">Piano attivo</span>
           <div class="font-heading mt-1 text-lg italic text-(--fg)">Nessun piano attivo</div>
           <p class="mt-0.5 text-[12.5px] text-(--fg3)">
             {{ totalePiani > 0 ? 'Apri un piano dallo storico per attivarlo, oppure creane uno nuovo.' : 'Questo paziente non ha ancora nessun piano alimentare.' }}
@@ -185,15 +189,15 @@ function onDuplica(piano: PianoAlimentareRigaLista) {
       </div>
     </div>
 
-    <div v-if="pianiPrecedenti && pianiPrecedenti.contenuto.length > 0" class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf) shadow-sm">
+    <div v-if="pianiPrecedenti && pianiPrecedenti.contenuto.length > 0" class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)">
       <div class="font-heading border-b border-(--div) px-4.5 py-3.5 text-[15px] font-semibold">Piani precedenti</div>
       <Table class="min-w-150" :class="aggiornamentoInCorso ? 'opacity-60' : ''">
         <TableHeader>
           <TableRow class="bg-(--soft)">
-            <TableHead class="uppercase tracking-wide text-(--fg4)">Piano</TableHead>
-            <TableHead class="uppercase tracking-wide text-(--fg4)">Tipo</TableHead>
-            <TableHead class="uppercase tracking-wide text-(--fg4)">Periodo</TableHead>
-            <TableHead class="text-right uppercase tracking-wide text-(--fg4)">Target</TableHead>
+            <TableHead class="text-(--fg4)">Piano</TableHead>
+            <TableHead class="text-(--fg4)">Tipo</TableHead>
+            <TableHead class="text-(--fg4)">Periodo</TableHead>
+            <TableHead class="text-right text-(--fg4)">Target</TableHead>
             <TableHead class="w-20" />
           </TableRow>
         </TableHeader>

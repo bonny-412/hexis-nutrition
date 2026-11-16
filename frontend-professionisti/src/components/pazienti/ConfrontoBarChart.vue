@@ -40,7 +40,7 @@ const punti = computed<PuntoConfronto[]>(() =>
 )
 
 /** Colore della prima visita (A): verde chiaro, da affiancare al verde scuro della seconda (B). */
-const COLORE_A = 'var(--chart-2)'
+const COLORE_A = 'var(--fg4)' // visita precedente in neutro: il colore resta alla visita più recente
 
 /** Larghezza massima (px) di una coppia di barre nel grafico verticale: su schermi larghi le colonne restano snelle. */
 const LARGHEZZA_MAX_GRUPPO = 80
@@ -84,7 +84,7 @@ const chartConfig = computed<ChartConfig>(() => ({
   <Card>
     <CardHeader>
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <CardTitle class="text-xs font-bold uppercase tracking-wide text-(--fg3)">{{ titolo }}</CardTitle>
+        <CardTitle class="text-sm font-semibold text-(--fg2)">{{ titolo }}</CardTitle>
         <div v-if="punti.length > 0" class="flex items-center gap-3 text-[11px] text-(--fg3)">
           <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-sm" :style="{ background: COLORE_A }" />{{ etichettaA }}</span>
           <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-sm" :style="{ background: colore }" />{{ etichettaB }}</span>

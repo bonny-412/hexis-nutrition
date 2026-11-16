@@ -38,7 +38,7 @@ async function apri(n: Notifica) {
 
     <div v-if="push === 'da-attivare'" class="rounded-lg border border-(--bd) p-2.5" data-test="notifiche-push-invito">
       <p class="mb-2 text-xs text-(--fg3)">Ricevi un avviso anche quando Hexis è chiuso.</p>
-      <Button type="button" size="sm" class="w-full hover:bg-primary/80" data-test="notifiche-push-attiva" @click="attiva">
+      <Button type="button" size="sm" class="w-full" data-test="notifiche-push-attiva" @click="attiva">
         <BellRing :size="14" /> Attiva le notifiche su questo dispositivo
       </Button>
     </div>
@@ -67,7 +67,7 @@ async function apri(n: Notifica) {
             <span class="block truncate text-[13px] font-semibold text-(--fg)">{{ titolo(n) }}</span>
             <span v-if="sottotitolo(n)" class="block truncate text-xs text-(--fg3)">{{ sottotitolo(n) }}</span>
           </span>
-          <span v-if="!n.letta" class="mt-1.5 size-1.5 flex-none rounded-full bg-(--green)" aria-label="Non letta" />
+          <span v-if="!n.letta" class="mt-1.5 size-2 flex-none rounded-full border border-(--green-d) bg-(--lime)" aria-label="Non letta" />
         </button>
       </li>
     </ul>

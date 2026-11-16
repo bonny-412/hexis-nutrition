@@ -226,8 +226,8 @@ async function onSubmit() {
 <template>
   <AppShell>
     <div class="mb-6">
-      <router-link to="/pazienti" class="inline-flex items-center gap-2 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)">
-        <ArrowLeft :size="16" />
+      <router-link to="/pazienti" class="group inline-flex items-center gap-1.5 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)">
+        <ArrowLeft :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:-translate-x-0.5" />
         <span>Torna alla lista pazienti</span>
       </router-link>
       <h1 class="font-heading text-3xl italic text-(--fg)">Nuovo paziente</h1>
@@ -237,7 +237,7 @@ async function onSubmit() {
     </div>
 
     <form class="space-y-6" @submit.prevent="onSubmit">
-      <div class="rounded-2xl border border-(--bd) bg-(--surf) p-6 shadow-sm sm:p-8">
+      <div class="rounded-2xl border border-(--bd) bg-(--surf) p-6 sm:p-8">
         <div class="w-full flex items-center">
           <!-- <div class="flex size-8 shrink-0 items-center justify-center  text-(--green)">
             <User :size="18" />
@@ -247,25 +247,25 @@ async function onSubmit() {
 
         <div class="mt-5 grid gap-5 sm:grid-cols-2">
           <div class="flex flex-col gap-1.5">
-            <Label for="nome" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Nome*</Label>
+            <Label for="nome" class="text-[13px] font-medium text-(--fg2)">Nome*</Label>
             <Input id="nome" :model-value="nome" @update:model-value="onNomeInput" type="text" :aria-invalid="!!errori.nome" placeholder="Es. Mario" />
             <p v-if="errori.nome" class="text-xs font-medium text-(--danger)">{{ errori.nome }}</p>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="cognome" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Cognome*</Label>
+            <Label for="cognome" class="text-[13px] font-medium text-(--fg2)">Cognome*</Label>
             <Input id="cognome" :model-value="cognome" @update:model-value="onCognomeInput" type="text" :aria-invalid="!!errori.cognome" placeholder="Es. Rossi" />
             <p v-if="errori.cognome" class="text-xs font-medium text-(--danger)">{{ errori.cognome }}</p>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="codice-fiscale" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Codice fiscale*</Label>
+            <Label for="codice-fiscale" class="text-[13px] font-medium text-(--fg2)">Codice fiscale*</Label>
             <Input id="codice-fiscale" :model-value="codiceFiscale" @update:model-value="onCodiceFiscaleInput" type="text" :aria-invalid="!!errori.codiceFiscale" placeholder="Es. RSSMRA80A01H501U" />
             <p v-if="errori.codiceFiscale" class="text-xs font-medium text-(--danger)">{{ errori.codiceFiscale }}</p>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="sesso" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Sesso*</Label>
+            <Label for="sesso" class="text-[13px] font-medium text-(--fg2)">Sesso*</Label>
             <Select :model-value="sesso" @update:model-value="onSessoChange">
               <SelectTrigger id="sesso" class="w-full" :aria-invalid="!!errori.sesso">
                 <SelectValue placeholder="Seleziona" />
@@ -280,46 +280,46 @@ async function onSubmit() {
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="data-nascita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Data di nascita*</Label>
+            <Label for="data-nascita" class="text-[13px] font-medium text-(--fg2)">Data di nascita*</Label>
             <DatePicker id="data-nascita" :model-value="dataNascita" @update:model-value="onDataNascitaChange" />
             <p v-if="errori.dataNascita" class="text-xs font-medium text-(--danger)">{{ errori.dataNascita }}</p>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="eta" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Età</Label>
+            <Label for="eta" class="text-[13px] font-medium text-(--fg2)">Età</Label>
             <Input id="eta" :model-value="eta ?? ''" type="text" disabled placeholder="—" />
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="email" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Email*</Label>
+            <Label for="email" class="text-[13px] font-medium text-(--fg2)">Email*</Label>
             <Input id="email" :model-value="email" @update:model-value="onEmailInput" type="text" :aria-invalid="!!errori.email" placeholder="Es. mariorossi@gmail.com" />
             <p v-if="errori.email" class="text-xs font-medium text-(--danger)">{{ errori.email }}</p>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="telefono" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Telefono</Label>
+            <Label for="telefono" class="text-[13px] font-medium text-(--fg2)">Telefono</Label>
             <Input id="telefono" :model-value="telefono" @update:model-value="onTelefonoInput" type="text" inputmode="numeric" :aria-invalid="!!errori.telefono" placeholder="Es. 0212345678" />
             <p v-if="errori.telefono" class="text-xs font-medium text-(--danger)">{{ errori.telefono }}</p>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="cellulare" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Cellulare</Label>
+            <Label for="cellulare" class="text-[13px] font-medium text-(--fg2)">Cellulare</Label>
             <Input id="cellulare" :model-value="cellulare" @update:model-value="onCellulareInput" type="text" inputmode="numeric" :aria-invalid="!!errori.cellulare" placeholder="Es. 3325676543" />
             <p v-if="errori.cellulare" class="text-xs font-medium text-(--danger)">{{ errori.cellulare }}</p>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="lavoro" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Lavoro</Label>
+            <Label for="lavoro" class="text-[13px] font-medium text-(--fg2)">Lavoro</Label>
             <Input id="lavoro" :model-value="lavoro" @update:model-value="onLavoroInput" type="text" placeholder="Es. Impiegato" />
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="medico-riferimento" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Medico di riferimento</Label>
+            <Label for="medico-riferimento" class="text-[13px] font-medium text-(--fg2)">Medico di riferimento</Label>
             <Input id="medico-riferimento" :model-value="medicoRiferimento" @update:model-value="onMedicoRiferimentoInput" type="text" placeholder="Es. Dott. Mario Bianchi" />
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="stile-di-vita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Stile di vita</Label>
+            <Label for="stile-di-vita" class="text-[13px] font-medium text-(--fg2)">Stile di vita</Label>
             <Select :model-value="stileDiVita || VALORE_SELEZIONA" @update:model-value="onStileDiVitaChange">
               <SelectTrigger id="stile-di-vita" class="w-full">
                 <SelectValue placeholder="Seleziona" />
@@ -337,19 +337,19 @@ async function onSubmit() {
         </div>
 
         <div class="mt-5 flex flex-col gap-1.5">
-          <Label for="note" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Storia paziente</Label>
+          <Label for="note" class="text-[13px] font-medium text-(--fg2)">Storia paziente</Label>
           <Textarea id="note" v-model="note" maxlength="2000" placeholder="Es. vive da solo, fuma, beve, è autonomo, allergie, patologie…" />
           <p class="text-right text-xs text-(--fg3)">{{ note.length }}/2000</p>
         </div>
 
         <div class="mt-5 flex flex-col gap-1.5">
-          <Label for="trattamenti" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Trattamenti/Terapie</Label>
+          <Label for="trattamenti" class="text-[13px] font-medium text-(--fg2)">Trattamenti/Terapie</Label>
           <Textarea id="trattamenti" v-model="trattamenti" maxlength="2000" placeholder="Es. terapie farmacologiche in corso, integratori, trattamenti…" />
           <p class="text-right text-xs text-(--fg3)">{{ trattamenti.length }}/2000</p>
         </div>
       </div>
 
-      <div class="rounded-2xl border border-(--bd) bg-(--surf) p-6 shadow-sm sm:p-8">
+      <div class="rounded-2xl border border-(--bd) bg-(--surf) p-6 sm:p-8">
         <DatiVisitaForm ref="datiVisitaForm" :sesso="sesso" />
       </div>
 
@@ -358,7 +358,7 @@ async function onSubmit() {
           <X :size="16" />
           Annulla
         </Button>
-        <Button type="submit" :disabled="inCorso" class="hover:bg-primary/80 active:not-aria-[haspopup]:translate-y-0.5">
+        <Button type="submit" :disabled="inCorso" class="active:not-aria-[haspopup]:translate-y-0.5">
           <Save :size="16" />
           {{ inCorso ? 'Salvataggio…' : 'Salva paziente' }}
         </Button>
@@ -375,7 +375,7 @@ async function onSubmit() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel data-test="conferma-annulla-continua">Continua a compilare</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-annulla-esci" @click="confermaAnnulla" class="hover:bg-primary/80">Esci senza salvare</AlertDialogAction>
+          <AlertDialogAction data-test="conferma-annulla-esci" @click="confermaAnnulla">Esci senza salvare</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

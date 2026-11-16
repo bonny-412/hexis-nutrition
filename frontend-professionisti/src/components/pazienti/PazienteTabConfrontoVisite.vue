@@ -93,14 +93,14 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
   <div v-else class="space-y-5">
     <div class="flex flex-wrap items-end gap-4">
       <label class="flex flex-col gap-1.5">
-        <Label class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Visita A</Label>
+        <Label class="text-[13px] font-medium text-(--fg2)">Visita A</Label>
         <NativeSelect v-model="idxA" class="[&_select]:bg-(--surf)">
           <NativeSelectOption v-for="(v, i) in visite" :key="v.id" :value="i">{{ formattaDataItalianaConMese(v.dataVisita) }}</NativeSelectOption>
         </NativeSelect>
       </label>
       <span class="mb-1.5 text-(--fg4)">→</span>
       <label class="flex flex-col gap-1.5">
-        <Label class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Visita B</Label>
+        <Label class="text-[13px] font-medium text-(--fg2)">Visita B</Label>
         <NativeSelect v-model="idxB" class="[&_select]:bg-(--surf)">
           <NativeSelectOption v-for="(v, i) in visite" :key="v.id" :value="i">{{ formattaDataItalianaConMese(v.dataVisita) }}</NativeSelectOption>
         </NativeSelect>
@@ -131,11 +131,11 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
       />
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf) shadow-sm">
+    <div class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)">
       <div class="overflow-x-auto">
         <table class="w-full min-w-140 border-collapse text-sm">
           <thead>
-            <tr class="bg-(--soft) text-xs font-bold uppercase tracking-wide text-(--fg3)">
+            <tr class="bg-(--soft) text-xs font-semibold text-(--fg3)">
               <th class="px-5 py-3 text-left">Parametro</th>
               <th class="px-3 py-3 text-right">{{ formattaDataItalianaConMese(visitaA!.dataVisita) }}</th>
               <th class="px-3 py-3 text-right">{{ formattaDataItalianaConMese(visitaB!.dataVisita) }}</th>
@@ -163,13 +163,13 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
               </td>
             </tr>
 
-            <tr><td colspan="4" class="border-t border-(--div) bg-(--soft)/50 px-5 py-2 text-xs font-bold uppercase tracking-wide text-(--fg3)">BIA</td></tr>
+            <tr><td colspan="4" class="border-t border-(--div) bg-(--soft)/50 px-5 py-2 text-xs font-semibold text-(--fg3)">BIA</td></tr>
             <tr class="border-t">
               <td colspan="4" class="px-5 py-2.5 text-(--fg4)">Dati non disponibili: la bioimpedenziometria non è ancora supportata.</td>
             </tr>
 
             <template v-if="haPlicometria">
-              <tr><td colspan="4" class="border-t border-(--div) bg-(--soft)/50 px-5 py-2 text-xs font-bold uppercase tracking-wide text-(--fg3)">Plicometria</td></tr>
+              <tr><td colspan="4" class="border-t border-(--div) bg-(--soft)/50 px-5 py-2 text-xs font-semibold text-(--fg3)">Plicometria</td></tr>
               <tr v-for="r in righeConVariazione(righePlicometria)" :key="r.label" class="border-t">
                 <td class="px-5 py-2.5 font-semibold text-(--fg2)">{{ r.label }}</td>
                 <td class="px-3 py-2.5 text-right tabular-nums">{{ formattaCella(r.a, r.unita, r.decimali) }}</td>
@@ -184,7 +184,7 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
             </template>
 
             <template v-if="haCirconferenze">
-              <tr><td colspan="4" class="border-t border-(--div) bg-(--soft)/50 px-5 py-2 text-xs font-bold uppercase tracking-wide text-(--fg3)">Circonferenze</td></tr>
+              <tr><td colspan="4" class="border-t border-(--div) bg-(--soft)/50 px-5 py-2 text-xs font-semibold text-(--fg3)">Circonferenze</td></tr>
               <tr v-for="r in righeConVariazione(righeCirconferenze)" :key="r.label" class="border-t">
                 <td class="px-5 py-2.5 font-semibold text-(--fg2)">{{ r.label }}</td>
                 <td class="px-3 py-2.5 text-right tabular-nums">{{ formattaCella(r.a, r.unita, r.decimali) }}</td>

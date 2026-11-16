@@ -33,7 +33,7 @@ describe('DashboardView', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('2')
-    expect(wrapper.text()).toContain('Disponibile a breve')
+    expect(wrapper.text()).not.toContain('Disponibile a breve')
   })
 
   it('mostra un trattino se il caricamento fallisce', async () => {

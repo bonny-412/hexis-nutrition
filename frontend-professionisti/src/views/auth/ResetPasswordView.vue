@@ -52,12 +52,12 @@ async function onSubmit() {
       <h1 class="font-heading text-2xl italic text-(--fg)">Imposta una nuova password</h1>
 
       <div class="mb-3.5 mt-4 flex flex-col gap-1.5">
-        <Label for="nuova-password" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Nuova password</Label>
+        <Label for="nuova-password" class="text-[13px] font-medium text-(--fg2)">Nuova password</Label>
         <Input id="nuova-password" v-model="nuovaPassword" type="password" required />
       </div>
 
       <div class="mb-5 flex flex-col gap-1.5">
-        <Label for="conferma-password" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Conferma password</Label>
+        <Label for="conferma-password" class="text-[13px] font-medium text-(--fg2)">Conferma password</Label>
         <Input id="conferma-password" v-model="conferma" type="password" required />
       </div>
 

@@ -5,6 +5,7 @@ import { richiediResetPassword } from '@/api/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ArrowLeft } from '@lucide/vue'
 
 const email = ref('')
 const inviato = ref(false)
@@ -35,7 +36,7 @@ async function onSubmit() {
 
       <form v-else class="mt-4" @submit.prevent="onSubmit">
         <div class="mb-5 flex flex-col gap-1.5">
-          <Label for="email" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Email</Label>
+          <Label for="email" class="text-[13px] font-medium text-(--fg2)">Email</Label>
           <Input id="email" v-model="email" type="email" required placeholder="nome@studio.it" />
         </div>
 
@@ -44,7 +45,10 @@ async function onSubmit() {
         </Button>
       </form>
 
-      <router-link to="/login" class="mt-4 inline-block text-sm font-semibold">← Torna al login</router-link>
+      <router-link to="/login" class="group mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)">
+        <ArrowLeft :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:-translate-x-0.5" />
+        <span>Torna al login</span>
+      </router-link>
     </div>
   </div>
 </template>

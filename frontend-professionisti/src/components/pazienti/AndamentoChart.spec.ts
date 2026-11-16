@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount, type VueWrapper } from '@vue/test-utils'
-import { ArrowDown, ArrowUp } from '@lucide/vue'
 import AndamentoChart from './AndamentoChart.vue'
 import type { Andamento } from '@/utils/andamento'
 import { isoATimestamp } from '@/utils/data'
@@ -86,59 +85,12 @@ describe('AndamentoChart', () => {
     expect(wrapper.text()).toContain('Nessun dato disponibile')
   })
 
-  it('mostra l\'ultimo valore e "Prima visita" quando il delta è null', () => {
-    const wrapper = montaConAndamento({ punti: [{ data: '2026-01-01', valore: 80 }], ultimo: 80, delta: null })
-
-    expect(wrapper.text()).toContain('80,0')
-    expect(wrapper.text()).toContain('Prima visita')
-  })
-
-  it('mostra il delta negativo con il segno e senza "Prima visita"', () => {
+  it('non ripete valore e variazione: stanno nella riga di indicatori della scheda paziente', () => {
     const wrapper = montaConAndamento(DUE_VISITE)
 
-    expect(wrapper.text()).toContain('77,5')
-    expect(wrapper.text()).toContain('2,5')
-    expect(wrapper.text()).not.toContain('Prima visita')
-  })
-
-  it('mostra il delta negativo con la freccia in giù in verde', () => {
-    const wrapper = montaConAndamento(DUE_VISITE)
-    const delta = wrapper.get('[data-test="andamento-delta"]')
-
-    expect(delta.findComponent(ArrowDown).exists()).toBe(true)
-    expect(delta.findComponent(ArrowUp).exists()).toBe(false)
-    expect(delta.classes()).toContain('text-(--green)')
-  })
-
-  it('mostra il delta positivo con la freccia in su in rosso, in valore assoluto', () => {
-    const wrapper = montaConAndamento({
-      punti: [{ data: '2026-06-01', valore: 77.5 }, { data: '2026-08-01', valore: 80 }],
-      ultimo: 80,
-      delta: 2.5,
-    })
-    const delta = wrapper.get('[data-test="andamento-delta"]')
-
-    expect(delta.findComponent(ArrowUp).exists()).toBe(true)
-    expect(delta.findComponent(ArrowDown).exists()).toBe(false)
-    expect(delta.classes()).toContain('text-(--danger)')
-    expect(delta.text()).toContain('2,5')
-    expect(delta.text()).not.toContain('-')
-    expect(wrapper.text()).not.toContain('Prima visita')
-  })
-
-  it('mostra il delta nullo senza frecce e in colore neutro', () => {
-    const wrapper = montaConAndamento({
-      punti: [{ data: '2026-06-01', valore: 80 }, { data: '2026-08-01', valore: 80 }],
-      ultimo: 80,
-      delta: 0,
-    })
-    const delta = wrapper.get('[data-test="andamento-delta"]')
-
-    expect(delta.findComponent(ArrowUp).exists()).toBe(false)
-    expect(delta.findComponent(ArrowDown).exists()).toBe(false)
-    expect(delta.classes()).toContain('text-(--fg3)')
-    expect(delta.text()).toContain('0,0')
-    expect(wrapper.text()).not.toContain('Prima visita')
+    expect(wrapper.find('[data-test="andamento-delta"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('77,5')
+    expect(wrapper.text()).toContain('Ultime 2 visite')
   })
 
   it('disegna i marker dei punti oltre alla linea, così una sola visita resta visibile', () => {

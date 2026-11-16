@@ -234,10 +234,10 @@ async function onSubmit() {
       <router-link
         :to="linkIndietro"
         data-test="link-indietro"
-        class="inline-flex items-center gap-2 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)"
+        class="group inline-flex items-center gap-1.5 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)"
         @click.capture.prevent="onAnnullaClick"
       >
-        <ArrowLeft :size="16" />
+        <ArrowLeft :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:-translate-x-0.5" />
         <span>{{ testoLinkIndietro }}</span>
       </router-link>
       <h1 class="font-heading text-3xl italic text-(--fg)">{{ modalitaModifica ? 'Modifica visita' : 'Nuova visita' }}</h1>
@@ -251,7 +251,7 @@ async function onSubmit() {
         variant="neutral"
         data-test="apri-riepilogo"
         :aria-pressed="riepilogoAperto"
-        :class="riepilogoAperto && 'border-(--green) bg-(--mint) text-(--green) hover:bg-(--mint)'"
+        :class="riepilogoAperto && 'border-(--green) bg-(--mint) text-(--green-d) hover:bg-(--mint)'"
         @click="riepilogoAperto = !riepilogoAperto"
       >
         <History :size="15" />
@@ -263,7 +263,7 @@ async function onSubmit() {
     <div class="min-w-0 flex-1">
     <div
       v-if="erroreCaricamento"
-      class="flex flex-col items-center justify-center rounded-2xl border border-(--bd) bg-(--surf) p-12 text-center shadow-sm"
+      class="flex flex-col items-center justify-center rounded-2xl border border-(--bd) bg-(--surf) p-12 text-center"
     >
       <p class="text-sm text-(--fg3)">{{ erroreCaricamento }}</p>
     </div>
@@ -281,7 +281,7 @@ async function onSubmit() {
       />
 
       <form v-if="paziente" class="space-y-6" @submit.prevent="onSubmit">
-        <div class="rounded-2xl border border-(--bd) bg-(--surf) p-6 shadow-sm sm:p-8">
+        <div class="rounded-2xl border border-(--bd) bg-(--surf) p-6 sm:p-8">
           <DatiVisitaForm
             ref="datiVisitaForm"
             :sesso="paziente.sesso"
@@ -296,7 +296,7 @@ async function onSubmit() {
           <Button type="button" data-test="btn-annulla" variant="neutral" :disabled="inCorso" @click="onAnnullaClick">
             Annulla
           </Button>
-          <Button type="submit" :disabled="inCorso" class="hover:bg-primary/80">
+          <Button type="submit" :disabled="inCorso">
             <Save :size="16" />
             {{ inCorso ? 'Salvataggio…' : 'Salva visita' }}
           </Button>
@@ -325,7 +325,7 @@ async function onSubmit() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel data-test="conferma-annulla-continua">Continua a compilare</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-annulla-esci" class="hover:bg-primary/80" @click="confermaAnnulla">Esci senza salvare</AlertDialogAction>
+          <AlertDialogAction data-test="conferma-annulla-esci" @click="confermaAnnulla">Esci senza salvare</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

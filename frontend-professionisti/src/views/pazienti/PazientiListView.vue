@@ -49,7 +49,7 @@ const ICONE_STATO_ACCOUNT: Record<Paziente['statoAccount'], Component> = {
 const CLASSI_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
   MAI_INVITATO: 'bg-(--danger)/10 text-(--danger)',
   INVITATO: 'bg-(--warn-bg) text-(--warn-fg)',
-  ATTIVO: 'bg-(--mint) text-(--green)',
+  ATTIVO: 'bg-(--mint) text-(--green-d)',
 }
 
 const CLASSE_TESTO_STATO_PIANO: Record<NonNullable<Paziente['pianoStato']>, string> = {
@@ -317,7 +317,7 @@ const conteggioTesto = computed(() => {
         <h1 class="font-heading text-3xl italic text-(--fg)">Pazienti</h1>
         <p class="mt-1 text-sm text-(--fg3)">Gestisci la lista dei pazienti, gli inviti e le cartelle cliniche.</p>
       </div>
-      <Button as-child class="hover:bg-primary/80">
+      <Button as-child>
         <router-link to="/pazienti/nuovo"><UserPlus :size="16" /> Nuovo paziente</router-link>
       </Button>
     </div>
@@ -337,7 +337,7 @@ const conteggioTesto = computed(() => {
             type="button"
             class="rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
             :class="statoAccount === chip.valore
-              ? 'border-(--sage) bg-(--mint) text-(--green)'
+              ? 'border-(--sage) bg-(--mint) text-(--green-d)'
               : 'border-(--bd2) bg-(--surf) text-(--fg2) hover:border-(--sage)'"
             @click="selezionaStato(chip.valore)"
           >
@@ -433,32 +433,32 @@ const conteggioTesto = computed(() => {
             <TableHeader>
               <TableRow>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('cognome')">
+                  <button type="button" class="flex items-center gap-1 text-(--fg4)" @click="ordina('cognome')">
                     Paziente
                     <component :is="iconaOrdinamento('cognome')" :size="12" :class="ordinaPer === 'cognome' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
-                <TableHead class="uppercase tracking-wide text-(--fg4)">Obiettivo</TableHead>
+                <TableHead class="text-(--fg4)">Obiettivo</TableHead>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('dataUltimaVisita')">
+                  <button type="button" class="flex items-center gap-1 text-(--fg4)" @click="ordina('dataUltimaVisita')">
                     Ultima visita
                     <component :is="iconaOrdinamento('dataUltimaVisita')" :size="12" :class="ordinaPer === 'dataUltimaVisita' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
-                <TableHead class="uppercase tracking-wide text-(--fg4)">Prossima visita</TableHead>
+                <TableHead class="text-(--fg4)">Prossima visita</TableHead>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('piano')">
+                  <button type="button" class="flex items-center gap-1 text-(--fg4)" @click="ordina('piano')">
                     Piano alimentare
                     <component :is="iconaOrdinamento('piano')" :size="12" :class="ordinaPer === 'piano' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('statoAccount')">
+                  <button type="button" class="flex items-center gap-1 text-(--fg4)" @click="ordina('statoAccount')">
                     Stato account
                     <component :is="iconaOrdinamento('statoAccount')" :size="12" :class="ordinaPer === 'statoAccount' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
-                <TableHead class="text-right uppercase tracking-wide text-(--fg4)">Azioni</TableHead>
+                <TableHead class="text-right text-(--fg4)">Azioni</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -466,13 +466,13 @@ const conteggioTesto = computed(() => {
                 <TableCell>
                   <div class="flex items-center gap-2.5">
                     <span
-                      class="flex h-9 w-9 items-center justify-center rounded-full font-heading font-semibold"
+                      class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold"
                       :class="paziente.archiviato ? 'bg-(--danger)/10 text-(--danger)' : CLASSI_STATO_ACCOUNT[paziente.statoAccount]"
                     >
                       {{ paziente.nome[0] }}{{ paziente.cognome[0] }}
                     </span>
                     <div>
-                      <router-link :to="`/pazienti/${paziente.id}`" class="font-heading font-semibold text-(--fg)">
+                      <router-link :to="`/pazienti/${paziente.id}`" class="font-semibold text-(--fg) hover:text-(--green)">
                         {{ paziente.nome }} {{ paziente.cognome }}
                       </router-link>
                       <div class="text-xs text-(--fg4)">{{ paziente.email }} · {{ paziente.codiceFiscale }}</div>
@@ -489,7 +489,7 @@ const conteggioTesto = computed(() => {
                 <TableCell>
                   <template v-if="paziente.dataUltimaVisita">
                     <div class="font-semibold text-(--fg)">{{ testoUltimaVisita(paziente.dataUltimaVisita) }}</div>
-                    <div v-if="notaUltimaVisita(paziente.dataUltimaVisita)" class="text-xs text-(--danger)">
+                    <div v-if="notaUltimaVisita(paziente.dataUltimaVisita)" class="text-xs text-(--fg4)">
                       {{ notaUltimaVisita(paziente.dataUltimaVisita) }}
                     </div>
                   </template>

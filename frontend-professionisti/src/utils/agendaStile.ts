@@ -32,7 +32,7 @@ export function classiEvento(a: Appuntamento): string {
   if (a.stato === 'CONCLUSA') return 'border-l-(--fg4) bg-(--hover) opacity-70'
   if (a.tipo === 'BLOCCO') return 'border border-dashed border-(--fg4) bg-(--soft)'
   if (a.tipo === 'PROMEMORIA') return 'border-l-(--warn-fg) bg-(--warn-bg)'
-  if (a.tipo === 'VIDEOCONSULTO') return 'border-y border-r border-y-(--bd2) border-r-(--bd2) border-l-(--sage) bg-(--surf)'
+  if (a.tipo === 'VIDEOCONSULTO') return 'border-y border-r border-y-(--bd2) border-r-(--bd2) border-l-(--fg) bg-(--surf)'
   return 'border-l-(--green) bg-(--mint)'
 }
 

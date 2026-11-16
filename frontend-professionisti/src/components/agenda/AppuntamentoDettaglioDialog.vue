@@ -75,19 +75,19 @@ function esegui(azione: AzioneAppuntamento) {
 
         <dl class="space-y-3 text-sm">
           <div>
-            <dt class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Data e ora</dt>
+            <dt class="text-[13px] font-medium text-(--fg2)">Data e ora</dt>
             <dd class="mt-0.5 text-(--fg)" data-test="dettaglio-data">{{ dataEstesa }} · {{ orario }}</dd>
           </div>
           <div v-if="paziente && !eVisita">
-            <dt class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Paziente</dt>
+            <dt class="text-[13px] font-medium text-(--fg2)">Paziente</dt>
             <dd class="mt-0.5 text-(--fg)" data-test="dettaglio-paziente">{{ paziente }}</dd>
           </div>
           <div v-if="a.testo">
-            <dt class="text-xs font-bold uppercase tracking-wide text-(--fg3)">{{ etichettaTesto }}</dt>
+            <dt class="text-[13px] font-medium text-(--fg2)">{{ etichettaTesto }}</dt>
             <dd class="mt-0.5 whitespace-pre-wrap break-words text-(--fg)" :class="{ 'line-through': ePromemoria && a.fatto }" data-test="dettaglio-testo">{{ a.testo }}</dd>
           </div>
           <div v-if="a.tipo === 'VIDEOCONSULTO' && a.linkVideo">
-            <dt class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Link del videoconsulto</dt>
+            <dt class="text-[13px] font-medium text-(--fg2)">Link del videoconsulto</dt>
             <dd class="mt-0.5 break-all" data-test="dettaglio-link">
               <a v-if="linkSicuro" :href="linkSicuro" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-(--green) underline">
                 <Video :size="13" /> {{ a.linkVideo }}
@@ -96,7 +96,7 @@ function esegui(azione: AzioneAppuntamento) {
             </dd>
           </div>
           <div v-if="ePromemoria">
-            <dt class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Stato</dt>
+            <dt class="text-[13px] font-medium text-(--fg2)">Stato</dt>
             <dd class="mt-0.5 text-(--fg)" data-test="dettaglio-stato">{{ a.fatto ? 'Fatto' : 'Da fare' }}</dd>
           </div>
         </dl>
@@ -108,20 +108,20 @@ function esegui(azione: AzioneAppuntamento) {
             <Button type="button" variant="destructive-neutral" class="text-(--danger)" data-test="dettaglio-annulla" @click="esegui('ANNULLA')"><XCircle /> Annulla visita</Button>
             <Button v-if="a.linkVideo" type="button" variant="neutral" data-test="dettaglio-apri-video" @click="esegui('APRI_VIDEO')"><Video /> Apri videoconsulto</Button>
             <Button type="button" variant="neutral" data-test="dettaglio-modifica" @click="esegui('MODIFICA')"><CalendarClock /> Sposta / Modifica</Button>
-            <Button type="button" class="hover:bg-primary/80" data-test="dettaglio-avvia-visita" @click="esegui('AVVIA_VISITA')"><Play /> Avvia visita</Button>
+            <Button type="button" data-test="dettaglio-avvia-visita" @click="esegui('AVVIA_VISITA')"><Play /> Avvia visita</Button>
           </template>
 
           <template v-else-if="ePromemoria">
             <Button type="button" variant="destructive-neutral" class="text-(--danger)" data-test="dettaglio-elimina" @click="esegui('ELIMINA')"><Trash2 /> Elimina</Button>
             <Button type="button" variant="neutral" data-test="dettaglio-sposta-domani" @click="esegui('SPOSTA_DOMANI')"><CalendarPlus /> Sposta a domani</Button>
             <Button type="button" variant="neutral" data-test="dettaglio-modifica" @click="esegui('MODIFICA')"><Pencil /> Modifica</Button>
-            <Button v-if="!a.fatto" type="button" class="hover:bg-primary/80" data-test="dettaglio-fatto" @click="esegui('FATTO')"><Check /> Segna come fatto</Button>
-            <Button v-else type="button" class="hover:bg-primary/80" data-test="dettaglio-da-fare" @click="esegui('DA_FARE')"><RotateCcw /> Da fare</Button>
+            <Button v-if="!a.fatto" type="button" data-test="dettaglio-fatto" @click="esegui('FATTO')"><Check /> Segna come fatto</Button>
+            <Button v-else type="button" data-test="dettaglio-da-fare" @click="esegui('DA_FARE')"><RotateCcw /> Da fare</Button>
           </template>
 
           <template v-else-if="eBlocco">
             <Button type="button" variant="destructive-neutral" class="text-(--danger)" data-test="dettaglio-elimina" @click="esegui('ELIMINA')"><Trash2 /> Elimina</Button>
-            <Button type="button" class="hover:bg-primary/80" data-test="dettaglio-modifica" @click="esegui('MODIFICA')"><Pencil /> Modifica</Button>
+            <Button type="button" data-test="dettaglio-modifica" @click="esegui('MODIFICA')"><Pencil /> Modifica</Button>
           </template>
         </DialogFooter>
       </template>

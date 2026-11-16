@@ -20,6 +20,7 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
 import { Eye, MoreHorizontal, Pencil, Trash2 } from '@lucide/vue'
+import { nomeAlimentoLeggibile } from '@/utils/testo'
 
 const props = defineProps<{
   alimento: Alimento
@@ -72,14 +73,14 @@ function confermaEliminazione() {
     <AlertDialog v-model:open="confermaAperta">
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Eliminare {{ alimento.nome }}?</AlertDialogTitle>
+          <AlertDialogTitle>Eliminare {{ nomeAlimentoLeggibile(alimento.nome) }}?</AlertDialogTitle>
           <AlertDialogDescription>
             L'alimento verrà rimosso definitivamente dal tuo catalogo personalizzato.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
-          <AlertDialogAction class="bg-(--danger) hover:bg-(--danger)/80" @click="confermaEliminazione">
+          <AlertDialogAction class="bg-(--danger) hover:bg-(--danger-d)" @click="confermaEliminazione">
             Conferma
           </AlertDialogAction>
         </AlertDialogFooter>

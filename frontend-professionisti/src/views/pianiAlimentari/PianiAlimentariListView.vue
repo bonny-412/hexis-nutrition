@@ -40,12 +40,12 @@ const ETICHETTE_MODALITA: Record<ModalitaPiano, string> = {
 
 const CLASSI_STATO: Record<StatoPiano, string> = {
   BOZZA: 'bg-(--warn-bg) text-(--warn-fg)',
-  ATTIVO: 'bg-(--mint) text-(--green)',
-  CONCLUSO: 'bg-(--danger)/10 text-(--danger)',
+  ATTIVO: 'bg-(--mint) text-(--green-d)',
+  // Un piano concluso è la fine normale del ciclo, non un errore: grigio neutro invece del rosso.
+  CONCLUSO: 'bg-(--hover) text-(--fg3)',
 }
 
-// Stesso avatar a iniziali della lista pazienti (PazientiListView.vue), colorato però con
-// CLASSI_STATO (stato del piano) invece che con lo stato account, che qui non è disponibile.
+// Stesso avatar a iniziali della lista pazienti (PazientiListView.vue), colorato come il badge di stato del piano.
 function inizialiPaziente(nomeCompleto: string): string {
   const parti = nomeCompleto.trim().split(/\s+/)
   const prima = parti[0]?.[0] ?? ''
@@ -214,7 +214,7 @@ const conteggioTesto = computed(() => {
         <h1 class="font-heading text-3xl italic text-(--fg)">Piani alimentari</h1>
         <p class="mt-1 text-sm text-(--fg3)">Gestisci i piani alimentari dei tuoi pazienti.</p>
       </div>
-      <Button as-child class="hover:bg-primary/80">
+      <Button as-child>
         <router-link to="/piani-alimentari/nuovo"><Plus :size="16" /> Nuovo piano</router-link>
       </Button>
     </div>
@@ -227,7 +227,7 @@ const conteggioTesto = computed(() => {
             v-for="chip in CHIP_STATI" :key="chip.valore" type="button" :data-test="`chip-stato-${chip.valore}`"
             class="rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
             :class="statoFiltro === chip.valore
-              ? 'border-(--sage) bg-(--mint) text-(--green)'
+              ? 'border-(--sage) bg-(--mint) text-(--green-d)'
               : 'border-(--bd2) bg-(--surf) text-(--fg2) hover:border-(--sage)'"
             @click="selezionaStato(chip.valore)"
           >
@@ -293,38 +293,38 @@ const conteggioTesto = computed(() => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead class="uppercase tracking-wide text-(--fg4)">Paziente</TableHead>
+                <TableHead class="text-(--fg4)">Paziente</TableHead>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('nome')">
+                  <button type="button" class="flex items-center gap-1 text-(--fg4)" @click="ordina('nome')">
                     Piano
                     <component :is="iconaOrdinamento('nome')" :size="12" :class="ordinaPer === 'nome' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
-                <TableHead class="uppercase tracking-wide text-(--fg4)">Stato</TableHead>
-                <TableHead class="uppercase tracking-wide text-(--fg4)">Obiettivo</TableHead>
+                <TableHead class="text-(--fg4)">Stato</TableHead>
+                <TableHead class="text-(--fg4)">Obiettivo</TableHead>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('dataInizio')">
+                  <button type="button" class="flex items-center gap-1 text-(--fg4)" @click="ordina('dataInizio')">
                     Inizio
                     <component :is="iconaOrdinamento('dataInizio')" :size="12" :class="ordinaPer === 'dataInizio' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('dataFine')">
+                  <button type="button" class="flex items-center gap-1 text-(--fg4)" @click="ordina('dataFine')">
                     Scadenza
                     <component :is="iconaOrdinamento('dataFine')" :size="12" :class="ordinaPer === 'dataFine' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
-                <TableHead class="text-right uppercase tracking-wide text-(--fg4)">Azioni</TableHead>
+                <TableHead class="text-right text-(--fg4)">Azioni</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               <TableRow v-for="riga in paginaDati.contenuto" :key="riga.id" class="hover:bg-(--soft)">
                 <TableCell>
                   <div class="flex items-center gap-2.5">
-                    <span class="flex h-9 w-9 flex-none items-center justify-center rounded-full font-heading font-semibold" :class="CLASSI_STATO[riga.stato]">
+                    <span class="flex h-9 w-9 flex-none items-center justify-center rounded-full text-[13px] font-semibold" :class="CLASSI_STATO[riga.stato]">
                       {{ inizialiPaziente(riga.pazienteNomeCompleto) }}
                     </span>
-                    <span class="font-heading font-semibold text-(--fg)">{{ riga.pazienteNomeCompleto }}</span>
+                    <span class="font-semibold text-(--fg)">{{ riga.pazienteNomeCompleto }}</span>
                   </div>
                 </TableCell>
                 <TableCell>

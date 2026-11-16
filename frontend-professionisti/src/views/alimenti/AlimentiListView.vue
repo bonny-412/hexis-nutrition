@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { Plus, ArrowUp, ArrowDown, ArrowUpDown } from '@lucide/vue'
+import { nomeAlimentoLeggibile } from '@/utils/testo'
 
 type CampoOrdinamento = NonNullable<CriteriRicercaAlimenti['ordinaPer']>
 
@@ -181,7 +182,7 @@ const conteggioTesto = computed(() => {
         <h1 class="font-heading text-3xl italic text-(--fg)">Alimenti</h1>
         <p class="mt-1 text-sm text-(--fg3)">Banca Dati Alimenti in sola lettura e i tuoi alimenti personalizzati, in un'unica tabella.</p>
       </div>
-      <Button class="hover:bg-primary/80" @click="apriCreazione">
+      <Button @click="apriCreazione">
         <Plus :size="16" /> Nuovo alimento
       </Button>
     </div>
@@ -196,7 +197,7 @@ const conteggioTesto = computed(() => {
             type="button"
             class="rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
             :class="fonte === chip.valore
-              ? 'border-(--sage) bg-(--mint) text-(--green)'
+              ? 'border-(--sage) bg-(--mint) text-(--green-d)'
               : 'border-(--bd2) bg-(--surf) text-(--fg2) hover:border-(--sage)'"
             @click="selezionaFonte(chip.valore)"
           >
@@ -222,17 +223,17 @@ const conteggioTesto = computed(() => {
             <TableHeader>
               <TableRow>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 uppercase tracking-wide text-(--fg4)" @click="ordina('nome')">
+                  <button type="button" class="flex items-center gap-1 text-(--fg4)" @click="ordina('nome')">
                     Alimento
                     <component :is="iconaOrdinamento('nome')" :size="12" :class="ordinaPer === 'nome' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
-                <TableHead class="uppercase tracking-wide text-(--fg4)">Fonte</TableHead>
-                <TableHead class="text-right uppercase tracking-wide text-(--fg4)">kcal</TableHead>
-                <TableHead class="text-right uppercase tracking-wide text-(--fg4)">Prot.</TableHead>
-                <TableHead class="text-right uppercase tracking-wide text-(--fg4)">Carb.</TableHead>
-                <TableHead class="text-right uppercase tracking-wide text-(--fg4)">Grassi</TableHead>
-                <TableHead class="text-right uppercase tracking-wide text-(--fg4)">Azioni</TableHead>
+                <TableHead class="text-(--fg4)">Fonte</TableHead>
+                <TableHead class="text-right text-(--fg4)">kcal</TableHead>
+                <TableHead class="text-right text-(--fg4)">Prot.</TableHead>
+                <TableHead class="text-right text-(--fg4)">Carb.</TableHead>
+                <TableHead class="text-right text-(--fg4)">Grassi</TableHead>
+                <TableHead class="text-right text-(--fg4)">Azioni</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -244,7 +245,7 @@ const conteggioTesto = computed(() => {
               >
                 <TableCell>
                   <div class="flex flex-col gap-0.5">
-                    <span class="font-heading font-semibold text-(--fg)">{{ alimento.nome }}</span>
+                    <span class="font-semibold text-(--fg)">{{ nomeAlimentoLeggibile(alimento.nome) }}</span>
                     <span class="text-xs text-(--fg3)">
                       {{ alimento.categoria }}<template v-if="!alimento.bda"> · {{ alimento.quantitaG.toFixed(0) }} g</template>
                     </span>
@@ -253,7 +254,7 @@ const conteggioTesto = computed(() => {
                 <TableCell>
                   <span
                     class="rounded px-2 py-0.5 text-[10.5px] font-bold tracking-wide"
-                    :class="alimento.bda ? 'bg-(--mint) text-(--green)' : 'bg-(--warn-bg) text-(--warn-fg)'"
+                    :class="alimento.bda ? 'bg-(--mint) text-(--green-d)' : 'bg-(--warn-bg) text-(--warn-fg)'"
                   >
                     {{ alimento.bda ? 'BDA' : 'PERSONALIZZATO' }}
                   </span>

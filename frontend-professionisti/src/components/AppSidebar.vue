@@ -48,7 +48,7 @@ const route = useRoute()
           :class="[
             isCollapsed ? 'justify-center px-0' : '',
             voce.routeNamesAttivi?.includes(route.name as string)
-              ? 'bg-(--side-act-bg) text-white'
+              ? 'bg-(--side-act-bg) text-white before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-(--lime)'
               : voce.routeName
                 ? 'text-(--side-fg) hover:bg-(--side-act-bg)/50'
                 : 'cursor-not-allowed text-(--side-fg2)',
@@ -58,7 +58,7 @@ const route = useRoute()
           <span v-if="!isCollapsed" class="truncate">{{ voce.nome }}</span>
           <span
             v-if="voce.nome === 'Agenda' && notifiche.nonVisteInAgenda > 0"
-            class="size-2 flex-none rounded-full bg-(--green)"
+            class="size-2 flex-none rounded-full bg-(--lime)"
             :class="isCollapsed ? 'absolute right-2 top-1.5' : 'ml-auto'"
             aria-label="Nuove notifiche in agenda"
             data-test="sidebar-agenda-puntino"
@@ -73,10 +73,10 @@ const route = useRoute()
         <RouterLink
             :to="{ name: 'alimenti' }"
             :title="isCollapsed ? 'Alimenti' : undefined"
-            class="flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium transition-colors"
+            class="relative flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium transition-colors"
             :class="[
               isCollapsed ? 'justify-center px-0' : '',
-              route.name === 'alimenti' ? 'bg-(--side-act-bg) text-white' : 'text-(--side-fg) hover:bg-(--side-act-bg)/50',
+              route.name === 'alimenti' ? 'bg-(--side-act-bg) text-white before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-(--lime)' : 'text-(--side-fg) hover:bg-(--side-act-bg)/50',
             ]"
           >
             <Apple :size="16" :stroke-width="1.8" class="shrink-0" />

@@ -278,7 +278,7 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
       <form class="flex min-h-0 flex-1 flex-col gap-4" @submit.prevent="onSubmit">
         <div class="min-h-0 flex-1 space-y-4 overflow-y-auto px-0.5 py-0.5">
           <div class="flex flex-col gap-1.5">
-            <Label for="alimento-nome" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Nome alimento*</Label>
+            <Label for="alimento-nome" class="text-[13px] font-medium text-(--fg2)">Nome alimento*</Label>
             <Input
               id="alimento-nome"
               :model-value="nome"
@@ -292,7 +292,7 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="alimento-categoria" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Categoria*</Label>
+            <Label for="alimento-categoria" class="text-[13px] font-medium text-(--fg2)">Categoria*</Label>
             <Input
               id="alimento-categoria"
               :model-value="categoria"
@@ -306,7 +306,7 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="alimento-quantita" class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Quantità di riferimento (g)*</Label>
+            <Label for="alimento-quantita" class="text-[13px] font-medium text-(--fg2)">Quantità di riferimento (g)*</Label>
             <Input
               id="alimento-quantita"
               :model-value="quantitaG"
@@ -357,7 +357,7 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
           >
             <Trash2 :size="16" /> Elimina
           </Button>
-          <Button v-if="modo !== 'view'" type="submit" :disabled="inCorso" class="hover:bg-primary/80">
+          <Button v-if="modo !== 'view'" type="submit" :disabled="inCorso">
             <Save :size="16" />
             {{ inCorso ? 'Salvataggio…' : 'Salva' }}
           </Button>
@@ -374,7 +374,7 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
-        <AlertDialogAction class="bg-(--danger) hover:bg-(--danger)/80" @click="onElimina">Conferma</AlertDialogAction>
+        <AlertDialogAction class="bg-(--danger) hover:bg-(--danger-d)" @click="onElimina">Conferma</AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>

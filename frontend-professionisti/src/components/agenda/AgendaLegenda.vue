@@ -2,7 +2,7 @@
 // Legenda dei colori degli eventi. Le classi coincidono con quelle usate in AgendaGiorno.
 const voci = [
   { etichetta: 'Visita in studio', classe: 'bg-(--mint) border-l-(--green)' },
-  { etichetta: 'Videoconsulto', classe: 'bg-(--surf) border-l-(--sage) border-y-(--bd2) border-r-(--bd2)' },
+  { etichetta: 'Videoconsulto', classe: 'bg-(--surf) border-l-(--fg) border-y-(--bd2) border-r-(--bd2)' },
   { etichetta: 'Promemoria', classe: 'bg-(--warn-bg) border-l-(--warn-fg)' },
   { etichetta: 'Conclusa', classe: 'bg-(--hover) border-l-(--fg4) opacity-70' },
   { etichetta: 'Annullata', classe: 'bg-(--hover) border-l-(--danger)/50 opacity-70' },

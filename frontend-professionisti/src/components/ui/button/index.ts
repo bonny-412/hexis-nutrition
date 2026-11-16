@@ -4,20 +4,22 @@ import { cva } from 'class-variance-authority'
 export { default as Button } from './Button.vue'
 
 export const buttonVariants = cva(
-  'focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 rounded-lg border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-3 aria-invalid:ring-3 active:not-aria-[haspopup]:translate-y-px [&_svg:not([class*=size-])]:size-4 group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
+  'focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 rounded-lg border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-3 aria-invalid:ring-3 active:translate-y-0.5 [&_svg:not([class*=size-])]:size-4 group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground [a]:hover:bg-primary/80',
+        // Hover: petrolio più scuro (--green-d), non un'opacità: il testo bianco mantiene il contrasto.
+        default: 'bg-primary text-primary-foreground hover:bg-(--green-d) aria-expanded:bg-(--green-d)',
         outline: 'border-border bg-background hover:bg-muted hover:text-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 aria-expanded:bg-muted aria-expanded:text-foreground',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-[color-mix(in_srgb,var(--mint),var(--green)_12%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
         ghost: 'hover:bg-muted hover:text-foreground dark:hover:bg-muted/50 aria-expanded:bg-muted aria-expanded:text-foreground',
         destructive: 'bg-destructive/10 hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/20 text-destructive focus-visible:border-destructive/40 dark:hover:bg-destructive/30',
         'destructive-outline': 'border-destructive/30 text-destructive bg-background hover:bg-destructive/10 hover:border-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:border-destructive/40 dark:hover:bg-destructive/20',
-        link: 'text-primary underline-offset-4 hover:underline',
+        // Pulsante testo: niente sottolineatura né effetto di pressione (quello è solo dei pulsanti azione).
+        link: 'text-primary hover:text-(--green-d) active:translate-y-0',
         neutral: 'bg-card text-foreground border-border [a]:hover:bg-muted hover:bg-muted aria-expanded:bg-muted',
         'destructive-ghost': 'text-destructive hover:bg-destructive/10 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 hover:text-destructive dark:hover:bg-destructive/20 aria-expanded:bg-destructive/10',
-        'ghost-primary': 'text-(--green) hover:bg-(--mint) hover:text-(--green) dark:hover:bg-(--mint)/20 aria-expanded:bg-(--mint)',
+        'ghost-primary': 'text-(--green) hover:bg-(--mint) hover:text-(--green-d) dark:hover:bg-(--mint)/20 aria-expanded:bg-(--mint)',
         'destructive-neutral': 'bg-destructive/10 text-destructive border-border hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/20 dark:hover:bg-destructive/30 focus-visible:border-destructive/40',
       },
       size: {

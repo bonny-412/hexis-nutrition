@@ -105,7 +105,7 @@ function periodoPiano(piano: PianoAlimentareRigaLista): string {
   />
   <aside
     data-test="riepilogo-precedente"
-    class="fixed inset-y-0 right-0 z-50 flex w-[min(380px,100%)] flex-col overflow-hidden border-l border-(--bd) bg-(--surf) shadow-xl lg:sticky lg:top-6 lg:z-auto lg:max-h-[calc(100vh-3rem)] lg:w-95 lg:flex-none lg:rounded-2xl lg:border lg:shadow-sm"
+    class="fixed inset-y-0 right-0 z-50 flex w-[min(380px,100%)] flex-col overflow-hidden border-l border-(--bd) bg-(--surf) shadow-xl lg:sticky lg:top-6 lg:z-auto lg:max-h-[calc(100vh-3rem)] lg:w-95 lg:flex-none lg:rounded-2xl lg:border lg:shadow-none"
   >
     <header class="flex flex-none items-start justify-between gap-3 border-b border-(--div) px-4 py-3.5">
       <div>
@@ -121,7 +121,7 @@ function periodoPiano(piano: PianoAlimentareRigaLista): string {
       <section class="flex flex-col gap-3">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h3 class="text-sm font-bold text-(--fg)">Ultima visita</h3>
-          <Badge variant="secondary" class="bg-(--mint) text-(--green)" data-test="badge-ultima-visita">
+          <Badge variant="secondary" class="bg-(--mint) text-(--green-d)" data-test="badge-ultima-visita">
             {{ formattaDataItalianaConMese(visita.dataVisita) }} · {{ ETICHETTE_OBIETTIVO[visita.obiettivo] }}
           </Badge>
         </div>
