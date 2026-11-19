@@ -1,0 +1,240 @@
+<title>Hexis — stima del progetto</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: colonna di lettura singola, schema a tre livelli (client → API → DB), poi tabelle per modulo e riepilogo. Colori presi dalla palette del prodotto (petrolio + lime). */
+:root {
+  --bg: #f5f8f7;
+  --surf: #ffffff;
+  --fg: #12282c;
+  --fg2: #4a6266;
+  --line: #d9e3e2;
+  --petrolio: #0f5260;
+  --petrolio-soft: #e3eff0;
+  --lime: #6f8f12;
+  --lime-soft: #eef5d8;
+  --todo: #9a5b12;
+  --todo-soft: #fbefdc;
+  --display: "Fraunces", Georgia, "Times New Roman", serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b1a1d; --surf: #10252a; --fg: #e4eeec; --fg2: #9db3b2; --line: #22403f;
+  --petrolio: #5fb3c2; --petrolio-soft: #143841; --lime: #b9dc5a; --lime-soft: #26361a;
+  --todo: #e9a85a; --todo-soft: #3a2a17; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0b1a1d; --surf: #10252a; --fg: #e4eeec; --fg2: #9db3b2; --line: #22403f;
+  --petrolio: #5fb3c2; --petrolio-soft: #143841; --lime: #b9dc5a; --lime-soft: #26361a;
+  --todo: #e9a85a; --todo-soft: #3a2a17; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 900px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 44px; }
+h1, h2 { font-family: var(--display); font-weight: 650; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(30px, 5vw, 42px); line-height: 1.1; }
+h2 { font-size: 23px; }
+h3 { font-size: 15px; font-weight: 600; margin: 0; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg2); font-weight: 600; }
+.muted { color: var(--fg2); }
+section { display: flex; flex-direction: column; gap: 16px; }
+.num { font-variant-numeric: tabular-nums; }
+
+header { display: flex; flex-direction: column; gap: 12px; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--fg2); }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.pill.done { background: var(--lime-soft); color: var(--lime); }
+.pill.todo { background: var(--todo-soft); color: var(--todo); }
+
+/* schema architettura */
+.arch { display: grid; gap: 10px; }
+.tier { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: stretch; }
+.tier-label { font-size: 12px; color: var(--fg2); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding-top: 14px; }
+.boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.box { border: 1.5px solid var(--line); background: var(--surf); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.box.done { border-color: var(--lime); }
+.box.todo { border-style: dashed; border-color: var(--todo); }
+.box .tech { font-family: var(--mono); font-size: 12px; color: var(--fg2); }
+.arrow { text-align: center; color: var(--fg2); font-size: 13px; padding-left: 132px; }
+
+/* tabelle */
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surf); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 520px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; color: var(--fg2); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+td.h { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 13px; }
+th.h { text-align: right; }
+tr:last-child td { border-bottom: 0; }
+tr.tot td { font-weight: 600; background: var(--petrolio-soft); }
+td small { display: block; color: var(--fg2); font-size: 13px; margin-top: 2px; }
+
+/* ore reali */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.stat { background: var(--surf); border: 1px solid var(--line); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 2px; }
+.stat b { font-family: var(--display); font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; color: var(--petrolio); }
+.stat span { font-size: 13px; color: var(--fg2); }
+.cal { display: flex; flex-direction: column; gap: 8px; }
+.month { display: grid; grid-template-columns: 80px 1fr; gap: 10px; align-items: center; }
+.days { display: flex; flex-wrap: wrap; gap: 6px; }
+.day { font-family: var(--mono); font-size: 12px; padding: 4px 8px; border-radius: 6px; background: var(--petrolio-soft); color: var(--petrolio); }
+
+.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cbox { border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--line); background: var(--surf); }
+.cbox b { font-family: var(--display); font-size: 28px; font-variant-numeric: tabular-nums; }
+.cbox.real b { color: var(--petrolio); }
+.cbox.mkt b { color: var(--lime); }
+
+.price { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.offer { background: var(--surf); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.offer.pick { border: 2px solid var(--petrolio); }
+.offer .amt { font-family: var(--display); font-size: 22px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.note { font-size: 13px; color: var(--fg2); border-left: 3px solid var(--line); padding-left: 12px; }
+
+@media (max-width: 620px) {
+  .tier { grid-template-columns: 1fr; gap: 6px; }
+  .tier-label { padding-top: 0; }
+  .arrow { padding-left: 0; }
+  .compare { grid-template-columns: 1fr; }
+  .month { grid-template-columns: 1fr; gap: 4px; }
+}
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Hexis Nutrition · aggiornato al 17 novembre 2026</span>
+  <h1>Hexis: cosa c'è, cosa manca, quanto vale</h1>
+  <p class="muted">Schema dell'intero progetto, con le ore che servirebbero a uno sviluppatore senza AI (prezzo di mercato) e le ore lavorate davvero, ricostruite da git e dal diario del progetto.</p>
+  <div class="legend"><span class="pill done">● Fatto</span><span class="pill todo">○ Da fare</span></div>
+</header>
+
+<section>
+  <h2>Architettura</h2>
+  <div class="arch">
+    <div class="tier">
+      <div class="tier-label">Chi lo usa</div>
+      <div class="boxes">
+        <div class="box done"><h3>Webapp professionista</h3><span class="tech">Vue 3 · shadcn-vue · Tailwind</span><span class="muted">Pazienti, visite, piani, agenda</span></div>
+        <div class="box todo"><h3>Webapp paziente</h3><span class="tech">Vue 3</span><span class="muted">Per chi non vuole scaricare l'app</span></div>
+        <div class="box todo"><h3>App paziente</h3><span class="tech">Flutter · iOS + Android</span><span class="muted">Piani, misure, appuntamenti, chat</span></div>
+      </div>
+    </div>
+    <div class="arrow">↓ API REST con login JWT ↓</div>
+    <div class="tier">
+      <div class="tier-label">Server</div>
+      <div class="boxes">
+        <div class="box done"><h3>Backend</h3><span class="tech">Java 21 · Spring Boot 3</span><span class="muted">Logica, calcoli clinici, email, notifiche</span></div>
+        <div class="box todo"><h3>Produzione</h3><span class="tech">Docker · hosting · backup</span><span class="muted">Non ancora messo online</span></div>
+      </div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="tier">
+      <div class="tier-label">Dati</div>
+      <div class="boxes">
+        <div class="box done"><h3>Database</h3><span class="tech">PostgreSQL · 32 migrazioni</span><span class="muted">Pazienti, visite, alimenti, piani, agenda</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Funzionalità già fatte</h2>
+  <p class="muted">Ore = quanto ci metterebbe uno sviluppatore esperto lavorando senza AI, backend e frontend compresi.</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Modulo</th><th class="h">Ore di mercato</th></tr></thead>
+    <tbody>
+      <tr><td>Accesso e account<small>Login con ruoli, invito del paziente via email, reset password, token sicuri</small></td><td class="h">80–120</td></tr>
+      <tr><td>Pazienti<small>Anagrafica con codice fiscale, lista paginata con ricerca e filtri, modifica, archiviazione</small></td><td class="h">80–120</td></tr>
+      <tr><td>Visite e misure<small>Circonferenze, plicometria con 6 protocolli clinici (Jackson-Pollock 3/7, Durnin-Womersley, Faulkner, Slaughter, Evans), BMI, WHR, WHtR, MAMC, massa grassa e magra</small></td><td class="h">120–180</td></tr>
+      <tr><td>Andamento<small>Grafici dell'andamento, confronto tra visite, storico</small></td><td class="h">40–70</td></tr>
+      <tr><td>Catalogo alimenti<small>Banca dati BDA-IEO importata e alimenti personalizzati del professionista</small></td><td class="h">50–80</td></tr>
+      <tr><td>Piani alimentari<small>Editor per giorni e pasti, calcolo calorie e macro, bozza / attivo / concluso, duplica, note, filtri</small></td><td class="h">120–180</td></tr>
+      <tr><td>Agenda e notifiche<small>Viste giorno, settimana e mese, prossima visita, avvio visita dall'appuntamento, notifiche push al professionista</small></td><td class="h">80–120</td></tr>
+      <tr><td>Interfaccia generale<small>Dashboard, ricerca rapida (Ctrl+K), tema chiaro e scuro, avvisi, design su misura</small></td><td class="h">50–80</td></tr>
+      <tr class="tot"><td>Totale già fatto</td><td class="h">620–950</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Funzionalità da fare</h2>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Modulo</th><th class="h">Ore di mercato</th></tr></thead>
+    <tbody>
+      <tr><td>Webapp paziente<small>Vedere i piani, registrare le proprie misure, chiedere un appuntamento</small></td><td class="h">120–200</td></tr>
+      <tr><td>Servizi per l'area paziente<small>Backend per misure inserite dal paziente e richiesta / conferma appuntamenti</small></td><td class="h">40–70</td></tr>
+      <tr><td>Chat professionista ↔ paziente<small>Messaggi in tempo reale, lato server e webapp</small></td><td class="h">60–100</td></tr>
+      <tr><td>App Flutter<small>Login, piani, misure, appuntamenti, chat, notifiche push, pubblicazione sugli store</small></td><td class="h">250–450</td></tr>
+      <tr><td>Messa online<small>Docker, hosting, dominio, backup, aggiornamenti automatici</small></td><td class="h">30–60</td></tr>
+      <tr><td>Privacy e dati sanitari (GDPR)<small>Consensi, informativa, registro degli accessi, cifratura</small></td><td class="h">30–60</td></tr>
+      <tr><td>Collaudo<small>Test, correzione bug, prova con utenti reali</small></td><td class="h">60–100</td></tr>
+      <tr class="tot"><td>Totale da fare</td><td class="h">590–1.040</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Ore lavorate davvero</h2>
+  <p>Git non registra le ore, ma da commit e diario si ricostruiscono i giorni di lavoro e quanto è durata ogni giornata. Il conto è approssimativo: i commit sono stati fatti a blocchi e spesso il lavoro è rimasto non salvato per giorni.</p>
+  <div class="stats">
+    <div class="stat"><b>20</b><span>giornate di lavoro, dall'8 agosto al 16 novembre</span></div>
+    <div class="stat"><b>64</b><span>commit su git</span></div>
+    <div class="stat"><b>~29.000</b><span>righe di codice scritte, di cui ~9.600 di test</span></div>
+    <div class="stat"><b>~90–130 h</b><span>ore stimate di lavoro reale</span></div>
+  </div>
+  <div class="cal">
+    <div class="month"><span class="eyebrow">Agosto</span><div class="days"><span class="day">8</span><span class="day">9</span><span class="day">30</span><span class="day">31</span></div></div>
+    <div class="month"><span class="eyebrow">Settembre</span><div class="days"><span class="day">1</span><span class="day">2</span><span class="day">3</span><span class="day">4</span><span class="day">5</span><span class="day">8</span><span class="day">12</span><span class="day">13</span><span class="day">14</span></div></div>
+    <div class="month"><span class="eyebrow">Ottobre</span><div class="days"><span class="day">6</span><span class="day">10</span><span class="day">20</span><span class="day">22</span></div></div>
+    <div class="month"><span class="eyebrow">Novembre</span><div class="days"><span class="day">10</span><span class="day">15</span><span class="day">16</span></div></div>
+  </div>
+  <p class="note">Come è stimato: per ogni giornata, l'arco tra il primo e l'ultimo commit (per esempio il 30 agosto dalle 16:25 alle 22:20, il 2 settembre dalle 11:40 alle 23:54) più il lavoro registrato nel diario del progetto, con le pause tolte. Le giornate vanno da circa 3 a circa 9 ore. La cifra è probabilmente bassa: non conta i giorni senza commit, né il tempo speso su brainstorming, design e documentazione.</p>
+  <div class="compare">
+    <div class="cbox real"><span class="eyebrow">Lavoro reale, con AI</span><b>~90–130 h</b><span class="muted">Il tempo che hai speso davvero</span></div>
+    <div class="cbox mkt"><span class="eyebrow">Equivalente di mercato</span><b>620–950 h</b><span class="muted">Il tempo che servirebbe senza AI, cioè quanto vale</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Quanto costerebbe sul mercato</h2>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Parte</th><th class="h">Ore</th><th class="h">Freelance<br>35–50 €/h</th><th class="h">Agenzia<br>60–80 €/h</th></tr></thead>
+    <tbody>
+      <tr><td>Già fatto</td><td class="h">620–950</td><td class="h">22–48 k€</td><td class="h">37–76 k€</td></tr>
+      <tr><td>Area paziente web, chat, servizi</td><td class="h">220–370</td><td class="h">8–19 k€</td><td class="h">13–30 k€</td></tr>
+      <tr><td>App Flutter</td><td class="h">250–450</td><td class="h">9–23 k€</td><td class="h">15–36 k€</td></tr>
+      <tr><td>Online, privacy, collaudo</td><td class="h">120–220</td><td class="h">4–11 k€</td><td class="h">7–18 k€</td></tr>
+      <tr class="tot"><td>Progetto completo per il suo studio</td><td class="h">1.210–1.990</td><td class="h">42–100 k€</td><td class="h">73–160 k€</td></tr>
+      <tr><td>Per venderlo ad altri<small>Registrazione self-service dei professionisti, pannello di amministrazione, sito di presentazione, pagamenti online. Dipende dal modello di vendita, ancora da decidere: abbonamento, licenza una tantum o altro</small></td><td class="h">140–240</td><td class="h">5–12 k€</td><td class="h">8–19 k€</td></tr>
+      <tr class="tot"><td>Prodotto pronto da vendere</td><td class="h">1.350–2.230</td><td class="h">47–112 k€</td><td class="h">81–178 k€</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Spese vive a carico suo, fuori da queste cifre: hosting, dominio e indirizzo IP, Apple Developer (99 $ l'anno), Google Play (25 $ una tantum). Resta da concordare la manutenzione: con tre app collegate allo stesso server, di solito costa ogni anno il 20–25% di quanto è stato pagato lo sviluppo (per esempio 2–4 k€ l'anno su 12 k€ di sviluppo).</p>
+</section>
+
+<section>
+  <h2>Come chiedere i soldi a un amico</h2>
+  <div class="price">
+    <div class="offer">
+      <span class="eyebrow">A · Ore reali</span>
+      <span class="amt">4,5–6,5 k€</span>
+      <span class="muted">Le ore lavorate davvero a 50 €/h, il massimo della fascia freelance. È il minimo: non tiene conto di quanto vale il software.</span>
+    </div>
+    <div class="offer">
+      <span class="eyebrow">B · Vendita del software</span>
+      <span class="amt">45–100 k€</span>
+      <span class="muted">Lui paga il valore di mercato del progetto completo (oggi esiste il già fatto, 22–48 k€; il resto si paga a consegna) e il codice diventa suo, compreso il diritto di rivenderlo. Per un amico è difficile da sostenere, e tu non guadagni nulla dalle vendite future.</span>
+    </div>
+    <div class="offer pick">
+      <span class="eyebrow">C · Soci (consigliata)</span>
+      <span class="amt">8–15 k€ + quota</span>
+      <span class="muted">Un compenso ridotto per il lavoro, circa un terzo del valore freelance del già fatto, pagato a blocchi (fatto, area paziente, app Flutter), più una quota dei ricavi o della società. Lui porta clienti, competenza clinica e spese; tu il software.</span>
+    </div>
+  </div>
+  <p class="note">Se l'idea è venderlo, la domanda vera è di chi è il codice. Senza un accordo scritto il software resta tuo, perché l'hai scritto tu, ma conviene metterlo nero su bianco prima della prima vendita: modello di vendita (abbonamento, licenza o altro), chi possiede il codice, che percentuale va a chi, chi fa manutenzione e assistenza, cosa succede se uno dei due esce.</p>
+</section>
+
+</div>

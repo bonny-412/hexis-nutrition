@@ -3,8 +3,8 @@ title: 0005 - Catalogo Alimenti — tabella unica BDA + custom, ownership nullab
 tags: [adr, dati, alimenti, piano-alimentare]
 stato: stabile
 creato: 2026-09-05
-aggiornato: 2026-09-05
-fonti: [sorgenti/2026-09-05-brainstorming-alimenti-design.md]
+aggiornato: 2026-11-19
+fonti: [sorgenti/2026-09-05-brainstorming-alimenti-design.md, sorgenti/2026-11-19-alimenti-bda-json/]
 ---
 
 # ADR 0005 — Catalogo Alimenti: tabella unica BDA + custom, ownership nullable
@@ -38,5 +38,5 @@ Coerenza con il pattern di multi-tenancy già stabilito (`professionista_id` com
 
 - **`alimenti` non ha un vincolo FK da `professionista_id` verso `professionisti(id)`, e la tabella è esclusa dal `TRUNCATE` globale di `AbstractIntegrationTest`** (vedi [decisioni/0004](0004-test-su-postgres-locale.md)) — stesso trattamento già riservato a `durnin_womersley_coefficienti` (tabella di riferimento seminata una tantum, mai svuotata dai test). Motivo: `TRUNCATE ... CASCADE` su `professionisti` propaga automaticamente a **qualunque** tabella che la referenzi via FK, anche se non elencata esplicitamente nello statement — con un vincolo FK, le 1109 righe BDA seminate da `V19` verrebbero cancellate al primo test eseguito e mai più ripristinate (Flyway applica le migrazioni di seed una sola volta, all'avvio del contesto Spring, non ad ogni test). Le classi di test che creano alimenti custom durante l'esecuzione puliscono quelle righe da sole (`@AfterEach`, ambito ristretto alla singola classe), per non far crescere indefinitamente la tabella nel database locale persistente.
 - `hexis_test` avrà quindi sempre 1109 righe BDA presenti dopo l'applicazione della migrazione di seed, per tutta la vita del database locale.
-- Se in futuro servirà aggiornare il dataset BDA (nuova versione, correzioni), non c'è un meccanismo di re-seed: andrà scritta una nuova migrazione additiva. Accettabile per ora, il dataset BDA-IEO 2024 è considerato stabile.
+- Se in futuro servirà aggiornare il dataset BDA (nuova versione, correzioni), non c'è un meccanismo di re-seed: andrà scritta una nuova migrazione additiva. Accettabile per ora, il dataset BDA-IEO 2024 è considerato stabile. **Aggiornamento 2026-11-19**: il primo aggiornamento è servito davvero (JSON revisionati da Andrea, con correzioni e nutrienti nuovi, in [sorgenti/2026-11-19-alimenti-bda-json](../sorgenti/2026-11-19-alimenti-bda-json/)). Visto che il DB non è in produzione, invece di una migrazione additiva V33 cancella piani e alimenti e reimporta tutto da zero — vedi [modello-dati](../modello-dati.md). Una volta in produzione questa strada non sarà più praticabile: i piani e gli alimenti personalizzati andranno preservati.
 - Nessuna UI paziente né collegamento a "Piano alimentare" in questa iterazione: quando quel sotto-progetto verrà progettato, andrà deciso se una "riga" di piano copia uno snapshot dei valori nutrizionali (come faceva `ProgettoEdo`, vedi [sorgenti/2026-09-05-brainstorming-alimenti-design](../sorgenti/2026-09-05-brainstorming-alimenti-design.md)) o referenzia l'alimento a runtime — non ancora deciso, segnalato in [domande-aperte](../domande-aperte.md).

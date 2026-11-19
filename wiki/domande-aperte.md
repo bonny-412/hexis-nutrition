@@ -3,7 +3,7 @@ title: Domande aperte
 tags: [domande-aperte]
 stato: stabile
 creato: 2026-08-08
-aggiornato: 2026-09-12
+aggiornato: 2026-11-17
 fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, log.md#2026-08-31-handoff--bug-fix-controlli-pazientenuovoview--ux-maiuscola-errori-live, log.md#2026-09-01-handoff--pagina-nuovo-paziente-eta-componente-visita-e-data-nascita-obbligatoria]
 ---
 
@@ -21,6 +21,10 @@ fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brain
 - **Nessuna cache client-side delle pagine già viste in `AlimentiListView.vue`** (2026-09-05): la paginazione degli alimenti è interamente server-side (`GET /alimenti/ricerca`, max 20 righe a chiamata) — scelta corretta per non caricare tutti i 1109+ alimenti in un colpo solo. Tornare a una pagina già vista (bottone "Precedente") però richiama sempre il server da capo: `paginaDati` viene sovrascritto a ogni cambio di `pagina` (`watch([ricercaEffettiva, fonte, pagina], carica)`, `AlimentiListView.vue:75,84-90`), nessuna pagina viene tenuta in memoria. Non è mai stato un problema di performance reale finora — da valutare se in futuro serve una cache in-memory per pagina (es. `Map<numeroPagina, PaginaAlimenti>`, invalidata quando cambiano ricerca/filtri) per evitare la seconda chiamata di rete quando si torna indietro. Segnalato da Andrea durante una domanda sul funzionamento della paginazione.
 - **Validazione server-side incompleta anche su `CreaAlimentoRequest`** (2026-09-05, parte 2): `nome`/`categoria` hanno solo `@NotBlank`, nessun pattern — stesso gap già noto su `CreaPazienteRequest` (voce sopra), qui scoperto mentre si colmava la validazione lato UI di `AlimentoFormDialog.vue` (che prima non validava proprio nulla). Non affrontato lato backend perché fuori dallo scope delle richieste di Andrea in quella sessione.
 - **Stato "Inviato al paziente" per `PianoAlimentare`** (2026-09-12): oggi `PianoAlimentare.stato` distingue 3 valori persistiti (`BOZZA`/`ATTIVO`/`TERMINATO`; `SCADUTO` è solo derivato in lettura, mai scritto a DB — vedi [modello-dati](modello-dati.md)). Il piano però deve una volta essere inviato al paziente (via `frontend-cliente/`, non ancora costruito) — è prevista una transizione intermedia? L'app non ha oggi nessun valore di `stato` per "il piano è finito/approvato dal professionista ma non ancora visto dal paziente", né una data di invio. Rimandato finché `frontend-cliente/` non esiste e il flusso "consegna piano" diventa concreto.
+- **App paziente in Flutter** (2026-11-17): deciso a voce di affiancare alla webapp paziente Vue un'app Flutter per iOS e Android. Da formalizzare in un'ADR e nello stack di `CLAUDE.md`. Resta da scegliere se tenere due codici per il paziente (Vue web + Flutter mobile) o usare Flutter anche per il web: un solo codice e circa 150–250 h in meno, ma un caricamento più pesante. Vedi [stato](stato.md), sessione del 17 novembre 2026.
+- **Modello di vendita** (2026-11-17): il software sarà venduto ad altri professionisti, ma non è deciso come (abbonamento, licenza una tantum o altro). Cambia il lavoro necessario (pagamenti, registrazione self-service, pannello di amministrazione) e l'accordo con chi finanzia il progetto.
+- **Verifiche legali prima della vendita** (2026-11-17): (1) la licenza della banca dati BDA-IEO consente l'uso in un prodotto commerciale? (2) i calcoli clinici (plicometria, indici) fanno rientrare Hexis nel regolamento europeo sui dispositivi medici (MDR)? (3) adempimenti GDPR per dati sanitari e ruoli di titolare e responsabile del trattamento. Nessuna è stata verificata.
+- **Accordo con il finanziatore** (2026-11-17): proprietà del codice, compenso, quota, manutenzione e uscita non ancora decisi. Domande dettagliate in [stato](stato.md), sessione del 17 novembre 2026.
 
 ## Risolte
 

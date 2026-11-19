@@ -1,0 +1,261 @@
+<title>Hexis — proposta di collaborazione</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: colonna di lettura singola. Prima il prodotto (schema, fatto, da fare), poi valore e costi, infine la proposta con i campi da definire evidenziati. Palette del prodotto: petrolio + lime. */
+:root {
+  --bg: #f5f8f7;
+  --surf: #ffffff;
+  --fg: #12282c;
+  --fg2: #4a6266;
+  --line: #d9e3e2;
+  --petrolio: #0f5260;
+  --petrolio-soft: #e3eff0;
+  --lime: #6f8f12;
+  --lime-soft: #eef5d8;
+  --todo: #9a5b12;
+  --todo-soft: #fbefdc;
+  --display: "Fraunces", Georgia, "Times New Roman", serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0b1a1d; --surf: #10252a; --fg: #e4eeec; --fg2: #9db3b2; --line: #22403f;
+  --petrolio: #5fb3c2; --petrolio-soft: #143841; --lime: #b9dc5a; --lime-soft: #26361a;
+  --todo: #e9a85a; --todo-soft: #3a2a17; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0b1a1d; --surf: #10252a; --fg: #e4eeec; --fg2: #9db3b2; --line: #22403f;
+  --petrolio: #5fb3c2; --petrolio-soft: #143841; --lime: #b9dc5a; --lime-soft: #26361a;
+  --todo: #e9a85a; --todo-soft: #3a2a17; color-scheme: dark }
+
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 900px; margin: 0 auto; padding-block: 40px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex; flex-direction: column; gap: 44px; }
+h1, h2 { font-family: var(--display); font-weight: 650; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(30px, 5vw, 42px); line-height: 1.1; }
+h2 { font-size: 23px; }
+h3 { font-size: 15px; font-weight: 600; margin: 0; }
+p { margin: 0; max-width: 68ch; }
+ul { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; max-width: 70ch; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--fg2); font-weight: 600; }
+.muted { color: var(--fg2); }
+section { display: flex; flex-direction: column; gap: 16px; }
+
+header { display: flex; flex-direction: column; gap: 12px; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--fg2); }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.pill.done { background: var(--lime-soft); color: var(--lime); }
+.pill.todo { background: var(--todo-soft); color: var(--todo); }
+.tbd { display: inline-block; padding: 1px 8px; border-radius: 4px; border: 1px dashed var(--todo); color: var(--todo); background: var(--todo-soft); font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+
+.arch { display: grid; gap: 10px; }
+.tier { display: grid; grid-template-columns: 120px 1fr; gap: 12px; align-items: stretch; }
+.tier-label { font-size: 12px; color: var(--fg2); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding-top: 14px; }
+.boxes { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; }
+.box { border: 1.5px solid var(--line); background: var(--surf); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.box.done { border-color: var(--lime); }
+.box.todo { border-style: dashed; border-color: var(--todo); }
+.box .tech { font-family: var(--mono); font-size: 12px; color: var(--fg2); }
+.arrow { text-align: center; color: var(--fg2); font-size: 13px; padding-left: 132px; }
+
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surf); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 520px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 12px; color: var(--fg2); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+td.h { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-family: var(--mono); font-size: 13px; }
+th.h { text-align: right; }
+tr:last-child td { border-bottom: 0; }
+tr.tot td { font-weight: 600; background: var(--petrolio-soft); }
+td small { display: block; color: var(--fg2); font-size: 13px; margin-top: 2px; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.card { background: var(--surf); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.card .eyebrow { color: var(--petrolio); }
+.note { font-size: 13px; color: var(--fg2); border-left: 3px solid var(--line); padding-left: 12px; }
+
+@media (max-width: 620px) {
+  .tier { grid-template-columns: 1fr; gap: 6px; }
+  .tier-label { padding-top: 0; }
+  .arrow { padding-left: 0; }
+}
+</style>
+
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Hexis Nutrition · novembre 2026</span>
+  <h1>Proposta di collaborazione</h1>
+  <p class="muted">Cosa è già stato costruito, cosa manca per arrivare a un prodotto da vendere ad altri nutrizionisti, quanto vale e come dividerci lavoro, costi e ricavi.</p>
+  <div class="legend"><span class="pill done">● Fatto</span><span class="pill todo">○ Da fare</span><span><span class="tbd">da definire</span> punti da decidere insieme</span></div>
+</header>
+
+<section>
+  <h2>Com'è fatto Hexis</h2>
+  <div class="arch">
+    <div class="tier">
+      <div class="tier-label">Chi lo usa</div>
+      <div class="boxes">
+        <div class="box done"><h3>Webapp professionista</h3><span class="tech">Vue 3</span><span class="muted">Pazienti, visite, piani, agenda</span></div>
+        <div class="box todo"><h3>Webapp paziente</h3><span class="tech">Vue 3</span><span class="muted">Per chi non vuole scaricare l'app</span></div>
+        <div class="box todo"><h3>App paziente</h3><span class="tech">Flutter · iOS + Android</span><span class="muted">Piani, misure, appuntamenti, chat</span></div>
+      </div>
+    </div>
+    <div class="arrow">↓ connessione sicura con login ↓</div>
+    <div class="tier">
+      <div class="tier-label">Server</div>
+      <div class="boxes">
+        <div class="box done"><h3>Backend</h3><span class="tech">Java · Spring Boot</span><span class="muted">Logica, calcoli clinici, email, notifiche</span></div>
+        <div class="box todo"><h3>Messa online</h3><span class="tech">Server · backup</span><span class="muted">Oggi gira solo in sviluppo</span></div>
+      </div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="tier">
+      <div class="tier-label">Dati</div>
+      <div class="boxes">
+        <div class="box done"><h3>Database</h3><span class="tech">PostgreSQL</span><span class="muted">Pazienti, visite, alimenti, piani, agenda</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Già fatto</h2>
+  <p class="muted">Le ore indicano quanto richiederebbe ogni modulo a uno sviluppatore esperto, backend e interfaccia compresi.</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Modulo</th><th class="h">Ore di mercato</th></tr></thead>
+    <tbody>
+      <tr><td>Accesso e account<small>Login con ruoli, invito del paziente via email, recupero password</small></td><td class="h">80–120</td></tr>
+      <tr><td>Pazienti<small>Anagrafica con codice fiscale, lista con ricerca e filtri, modifica, archiviazione</small></td><td class="h">80–120</td></tr>
+      <tr><td>Visite e misure<small>Circonferenze, plicometria con 6 protocolli clinici (Jackson-Pollock 3/7, Durnin-Womersley, Faulkner, Slaughter, Evans), BMI, WHR, WHtR, MAMC, massa grassa e magra</small></td><td class="h">120–180</td></tr>
+      <tr><td>Andamento<small>Grafici dell'andamento, confronto tra visite, storico</small></td><td class="h">40–70</td></tr>
+      <tr><td>Catalogo alimenti<small>Banca dati BDA-IEO e alimenti personalizzati</small></td><td class="h">50–80</td></tr>
+      <tr><td>Piani alimentari<small>Editor per giorni e pasti, calcolo calorie e macro, bozza / attivo / concluso, duplica, note</small></td><td class="h">120–180</td></tr>
+      <tr><td>Agenda<small>Viste giorno, settimana e mese, prossima visita, avvio della visita dall'appuntamento, notifiche al professionista</small></td><td class="h">80–120</td></tr>
+      <tr><td>Interfaccia generale<small>Dashboard, ricerca rapida, tema chiaro e scuro, design su misura</small></td><td class="h">50–80</td></tr>
+      <tr class="tot"><td>Totale già fatto</td><td class="h">620–950</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Da fare</h2>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Modulo</th><th class="h">Ore di mercato</th></tr></thead>
+    <tbody>
+      <tr><td>Area paziente web<small>Vedere i piani, registrare le proprie misure, chiedere un appuntamento, con i servizi lato server</small></td><td class="h">160–270</td></tr>
+      <tr><td>Chat professionista ↔ paziente<small>Messaggi in tempo reale</small></td><td class="h">60–100</td></tr>
+      <tr><td>App Flutter<small>Le stesse funzioni dell'area paziente, notifiche push, pubblicazione su App Store e Google Play</small></td><td class="h">250–450</td></tr>
+      <tr><td>Messa online, privacy, collaudo<small>Server, backup, adeguamento GDPR per dati sanitari, test con utenti reali</small></td><td class="h">120–220</td></tr>
+      <tr><td>Per venderlo ad altri<small>Registrazione self-service dei professionisti, pannello di amministrazione, sito di presentazione, pagamenti online. Le ore dipendono dal modello di vendita, ancora da decidere: abbonamento, licenza una tantum o altro</small></td><td class="h">140–240</td></tr>
+      <tr class="tot"><td>Totale da fare</td><td class="h">730–1.280</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Valore di mercato</h2>
+  <p>Quanto costerebbe far sviluppare Hexis a terzi, alle tariffe correnti in Italia.</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Parte</th><th class="h">Ore</th><th class="h">Freelance<br>35–50 €/h</th><th class="h">Agenzia<br>60–80 €/h</th></tr></thead>
+    <tbody>
+      <tr><td>Già fatto</td><td class="h">620–950</td><td class="h">22–48 k€</td><td class="h">37–76 k€</td></tr>
+      <tr><td>Da fare</td><td class="h">730–1.280</td><td class="h">26–64 k€</td><td class="h">44–102 k€</td></tr>
+      <tr class="tot"><td>Prodotto pronto da vendere</td><td class="h">1.350–2.230</td><td class="h">47–112 k€</td><td class="h">81–178 k€</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Costi di gestione</h2>
+  <p>Spese vive per tenere Hexis online, a carico del promotore. Sono stime indicative, che crescono con il numero di professionisti iscritti.</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Voce</th><th class="h">Costo indicativo</th></tr></thead>
+    <tbody>
+      <tr><td>Server e database<small>Un server cloud con backup automatici</small></td><td class="h">20–50 €/mese</td></tr>
+      <tr><td>Dominio e indirizzo IP</td><td class="h">10–30 €/anno</td></tr>
+      <tr><td>Invio email<small>Inviti e recupero password; gratis fino a 3.000 email al mese</small></td><td class="h">0–20 €/mese</td></tr>
+      <tr><td>Notifiche push</td><td class="h">gratis</td></tr>
+      <tr><td>Apple Developer</td><td class="h">99 $/anno</td></tr>
+      <tr><td>Google Play</td><td class="h">25 $ una tantum</td></tr>
+      <tr><td>Consulenze legali e privacy<small>GDPR, contratti, verifiche prima della vendita</small></td><td class="h">a preventivo</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>La proposta</h2>
+  <div class="cards">
+    <div class="card">
+      <span class="eyebrow">Sviluppo</span>
+      <h3>Compenso a tappe</h3>
+      <p class="muted">Ridotto rispetto al valore di mercato, pagato al raggiungimento di ogni tappa.</p>
+    </div>
+    <div class="card">
+      <span class="eyebrow">Società</span>
+      <h3>Quota sui ricavi</h3>
+      <p class="muted">Lo sviluppatore partecipa alla vendita del prodotto: <span class="tbd">__ %</span> <span class="tbd">dei ricavi / della società</span></p>
+    </div>
+    <div class="card">
+      <span class="eyebrow">Dopo il lancio</span>
+      <h3>Manutenzione e assistenza</h3>
+      <p class="muted">Canone di <span class="tbd">__ €/mese</span> per la manutenzione ordinaria, con un monte di <span class="tbd">__ ore/mese</span> per piccole modifiche e nuove funzionalità. Il dettaglio è nella sezione seguente.</p>
+    </div>
+  </div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Tappa</th><th class="h">Compenso</th><th class="h">Pagamento</th><th class="h">Consegna prevista</th></tr></thead>
+    <tbody>
+      <tr><td>Area professionista<small>Il lavoro già fatto</small></td><td class="h"><span class="tbd">__ €</span></td><td class="h">alla firma</td><td class="h">già disponibile</td></tr>
+      <tr><td>Area paziente web e chat</td><td class="h"><span class="tbd">__ €</span></td><td class="h">alla consegna</td><td class="h"><span class="tbd">mese</span></td></tr>
+      <tr><td>Messa online e collaudo</td><td class="h"><span class="tbd">__ €</span></td><td class="h">al lancio</td><td class="h"><span class="tbd">mese</span></td></tr>
+      <tr><td>App Flutter</td><td class="h"><span class="tbd">__ €</span></td><td class="h">alla pubblicazione</td><td class="h"><span class="tbd">mese</span></td></tr>
+      <tr><td>Funzioni per la vendita</td><td class="h"><span class="tbd">__ €</span></td><td class="h">alla consegna</td><td class="h"><span class="tbd">mese</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>Il software va mantenuto nel tempo</h2>
+  <p>Un software non si consegna una volta per sempre. Dopo il lancio serve lavoro continuo per tenerlo funzionante, sicuro e al passo con quello che chiedono i professionisti che lo usano. Di solito questo lavoro costa ogni anno il 20–25% di quanto è costato lo sviluppo.</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>Attività</th><th>Cosa comprende</th><th class="h">Come si paga</th></tr></thead>
+    <tbody>
+      <tr><td>Correzione dei bug</td><td>Errori segnalati dagli utenti o trovati durante l'uso, su webapp, app e server</td><td class="h">canone</td></tr>
+      <tr><td>Sicurezza e aggiornamenti tecnici</td><td>Aggiornamento di linguaggi e librerie (Java, Vue, Flutter), correzione delle vulnerabilità, rinnovo dei certificati</td><td class="h">canone</td></tr>
+      <tr><td>Compatibilità con iOS e Android</td><td>Nuove versioni dell'app quando Apple e Google aggiornano i sistemi o cambiano le regole degli store, cosa che succede ogni anno</td><td class="h">canone</td></tr>
+      <tr><td>Server e dati</td><td>Controllo che il servizio sia attivo, backup, ripristino in caso di guasto, crescita del server con l'aumento degli utenti</td><td class="h">canone</td></tr>
+      <tr><td>Assistenza</td><td>Supporto ai professionisti che usano Hexis, entro i tempi di risposta concordati</td><td class="h">canone</td></tr>
+      <tr><td>Adeguamenti normativi</td><td>Modifiche richieste da nuove norme su privacy, dati sanitari o fatturazione</td><td class="h">canone o preventivo</td></tr>
+      <tr><td>Nuove funzionalità</td><td>Evoluzioni del prodotto richieste dai clienti o decise insieme: nuovi moduli, report, integrazioni, miglioramenti dell'interfaccia</td><td class="h">monte ore o preventivo</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Le richieste che superano il monte ore mensile si stimano e si approvano prima di iniziare. Tempi di risposta per i bug bloccanti: <span class="tbd">da definire</span>.</p>
+</section>
+
+<section>
+  <h2>Da mettere per iscritto</h2>
+  <p>Un accordo scritto tutela entrambi e va firmato prima della prima vendita.</p>
+  <ul>
+    <li><strong>Modello di vendita</strong>: abbonamento mensile o annuale, licenza una tantum o altro. Cambia i ricavi, il lavoro da fare e il modo di calcolare le quote.</li>
+    <li><strong>Proprietà del codice</strong>: a chi appartiene il software e chi può rivenderlo.</li>
+    <li><strong>Ruoli</strong>: chi cura sviluppo e assistenza tecnica, chi i clienti, la parte clinica e la promozione.</li>
+    <li><strong>Manutenzione</strong>: canone, monte ore, tempi di risposta, come si chiedono e si approvano le nuove funzionalità.</li>
+    <li><strong>Quote e ricavi</strong>: percentuali, su cosa si calcolano, quando si pagano.</li>
+    <li><strong>Uscita</strong>: cosa succede se uno dei due lascia o se il progetto si ferma.</li>
+    <li><strong>Dati sanitari</strong>: chi è titolare del trattamento e chi responsabile, chi risponde in caso di violazione.</li>
+    <li><strong>Forma legale e fatturazione</strong>: società, contratto di collaborazione, partita IVA.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Verifiche prima di vendere</h2>
+  <ul>
+    <li><strong>Privacy</strong>: Hexis tratta dati sanitari, che il GDPR considera particolari. Servono informativa, consensi e misure di sicurezza adeguate.</li>
+    <li><strong>Banca dati alimenti</strong>: verificare che la licenza della BDA-IEO consenta l'uso in un prodotto venduto.</li>
+    <li><strong>Dispositivi medici</strong>: verificare se i calcoli clinici fanno rientrare Hexis nel regolamento europeo sui dispositivi medici (MDR).</li>
+  </ul>
+  <p class="note">Su questi tre punti conviene un parere legale prima del lancio commerciale.</p>
+</section>
+
+</div>

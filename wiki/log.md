@@ -656,3 +656,40 @@ Dettaglio in [stato](stato.md#sessione-del-15-novembre-2026--agenda-implementata
 - `stato.md`: nuova sezione "Sessione del 16 novembre 2026 (terza parte)" e voce in cima a "Prossimo passo consigliato"; segnalato che sostituisce tema scuro grafite, hero uguali nei due temi e fascia "Oggi" della sezione precedente.
 - Aperto: pagine non verificate (favicon, login mobile, editor del piano e dialog senza ombre, agenda Mese/Giorno in scuro), 7 test preesistenti da sistemare, pressione su chip e selettori da decidere, token `--shadow` inutilizzato. ADR 0009 resta `in-discussione`.
 - Nessun commit.
+
+## [2026-11-17] handoff | Stima del progetto e proposta di collaborazione
+
+- Sessione senza codice: stima del valore di Hexis per l'amico che lo finanzia. Ore di mercato: già fatto 620–950 h, da fare 730–1.280 h; prodotto pronto da vendere 47–112 k€ (freelance) / 81–178 k€ (agenzia). Ore reali ricostruite da commit e diario: ~90–130 h in 20 giornate.
+- Decisioni a voce: app paziente anche in Flutter, accanto alla webapp Vue; il software sarà venduto, con modello di vendita da decidere; hosting, dominio e store a carico del finanziatore.
+- Prodotti in `docs/` (non tracciati): `stima-progetto-hexis.html` + `.pdf` (privato per Andrea) e `proposta-collaborazione-hexis.html` (per l'amico, con campi "da definire"). Entrambi pubblicati anche come artifact privati. Riletti da un subagent indipendente, correzioni applicate.
+- Aggiornati `stato.md` (nuova sezione e voce in cima a "Prossimo passo consigliato") e `domande-aperte.md` (Flutter, modello di vendita, verifiche legali BDA-IEO/MDR/GDPR, accordo). Nessun commit.
+
+## [2026-11-17] handoff | Proposta: sezione manutenzione e PDF
+
+- Aggiunta a `docs/proposta-collaborazione-hexis.html` la sezione "Il software va mantenuto nel tempo": correzione bug, sicurezza e aggiornamenti tecnici, compatibilità iOS/Android, server e backup, assistenza, adeguamenti normativi (canone) e nuove funzionalità (monte ore o preventivo). Card "Manutenzione e assistenza" con canone + monte ore mensile; voce "Manutenzione" in "Da mettere per iscritto".
+- Generato `docs/proposta-collaborazione-hexis.pdf` (7 pagine A4, campi "da definire" ancora vuoti, compreso monte ore e tempi di risposta per i bug bloccanti). Artifact della proposta ripubblicato.
+- `stato.md` aggiornato in "Prossimo passo consigliato". File di `docs/` non tracciati, nessun commit.
+
+## [2026-11-19] ingest | JSON alimenti BDA aggiornati
+
+- Copiati in `sorgenti/2026-11-19-alimenti-bda-json/` i 1109 JSON da `E:\ProgettoEdo_files\Hexis-Alimenti-BDA` (copia verificata con hash, 3,2 MB). Rispetto ai JSON da cui è stato generato V19 (`ProgettoEdo\public\foods`), Andrea ha aggiunto nuovi dati e corretto valori errati.
+- Da fare: nuova migrazione (V33) che aggiunge le colonne nuove e corregge le esistenti con `UPDATE ... FROM (VALUES ...)` su `codice_bda`. V19 non si tocca (checksum Flyway) e le righe non si reinseriscono (gli id sono referenziati dai piani). Lo script di generazione è in `docs/superpowers/plans/2026-09-05-alimenti.md`, da adattare.
+
+## [2026-11-19] ingest | Reimport completo alimenti BDA (V33)
+
+- Verificati i JSON in `sorgenti/2026-11-19-alimenti-bda-json/`: 1109 file identici byte per byte a `E:\ProgettoEdo_files\Hexis-Alimenti-BDA`, tutti con le stesse 103 voci. `note_alimento` vale `0` quando manca: importato come NULL.
+- Sostituisce il "da fare" della voce precedente. Rimossi `V33__correggi_alimenti_bda.sql` (solo `UPDATE` delle colonne storiche) e `sorgenti/2026-11-19-alimenti-bda/`, creati da un'altra sessione da una copia dei JSON ormai vecchia (633 file diversi). Decisione di Andrea.
+- Nuova `V33__reimporta_alimenti_bda_completi.sql`: elimina tutti i piani, svuota `alimenti` (anche i personalizzati), aggiunge 81 colonne (`parte_edibile_percentuale`, `anno`, `note` + 78 nutrienti) e reinserisce i 1109 alimenti. Sul DB di sviluppo `hexis` cancellerà 3 piani e 1 alimento personalizzato al prossimo avvio.
+- Backend: record `@Embeddable` `ComposizioneEstesa`, `Minerali`, `Zuccheri`, `AcidiGrassi`, `Amminoacidi`, `Vitamine` su `Alimento`; esposti in `AlimentoResponse`; copiati da "duplica". Frontend: tipi opzionali in `src/api/alimenti.ts`, nessuna vista.
+- `mvn clean test`: 194/194 verdi (`hexis_test` ricreato da Flyway). Dati seminati confrontati a campione con i JSON. `vue-tsc --noEmit` pulito. Aggiornati `modello-dati.md`, `api-contracts.md`, ADR 0005. Nessun commit.
+
+## [2026-11-19] query | Dati estesi alimenti solo nel DB
+
+- Su indicazione di Andrea (non mandare al frontend dati non usati) annullata la parte applicativa della voce precedente: tolti i record `@Embeddable`, i campi da `AlimentoResponse` e i tipi opzionali dal frontend. La duplicazione copia di nuovo solo i campi storici. Le 81 colonne della V33 restano, valorizzate per i BDA e mai lette dal codice.
+- Unica modifica di codice rimasta: `V33__reimporta_alimenti_bda_completi.sql`. `mvn clean test` 194/194, `vue-tsc --noEmit` pulito. Aggiornati `modello-dati.md` e `api-contracts.md`. Nessun commit.
+
+## [2026-11-19] handoff | Reimport completo alimenti BDA
+
+- `stato.md`: nuova sezione "Sessione del 19 novembre 2026", riga in "Dove siamo" e voce in cima a "Prossimo passo consigliato".
+- Aperto: riavviare il backend per applicare V33 a `hexis` (cancella 3 piani e 1 alimento personalizzato), verifica a mano di catalogo e piani, commit di V33 + JSON in `sorgenti/` + wiki. I nutrienti nuovi si espongono solo quando una vista ne avrà bisogno.
+- Nessun commit.
