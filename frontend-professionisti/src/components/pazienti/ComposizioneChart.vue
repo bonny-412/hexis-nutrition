@@ -6,6 +6,7 @@ import { CurveType } from '@unovis/ts'
 import { VisAxis, VisLine, VisScatter, VisXYContainer } from '@unovis/vue'
 import { MAX_PUNTI_GRAFICO, type Andamento } from '@/utils/andamento'
 import { formattaDataItaliana, isoATimestamp } from '@/utils/data'
+import { formattaNumero } from '@/utils/visita'
 
 const props = defineProps<{
   /** Andamento della % di grasso corporeo (asse destro). */
@@ -51,6 +52,20 @@ const tickDate = computed<number[]>(() => righe.value.map((r) => r.timestamp))
 function formattaTickData(tick: number | Date): string {
   return formattaDataItaliana(tick instanceof Date ? tick.getTime() : tick)
 }
+/**
+ * Etichetta solo sull'ultimo punto di ogni serie, con il valore reale (le linee mostrano la variazione %).
+ * All'ultima visita la serie più in alto ha l'etichetta sopra e l'altra sotto, così non si sovrappongono.
+ */
+const ultimaRiga = computed(() => righe.value[righe.value.length - 1])
+const magraSopra = computed(() => (ultimaRiga.value?.magra ?? 0) >= (ultimaRiga.value?.grasso ?? 0))
+// Confronto per data e non per identità: Unovis passa agli accessor copie dei dati.
+function etichettaMagra(d: RigaGrafico): string {
+  return d.timestamp === ultimaRiga.value?.timestamp && props.magra.ultimo !== null ? `${formattaNumero(props.magra.ultimo)} kg` : ''
+}
+function etichettaGrasso(d: RigaGrafico): string {
+  return d.timestamp === ultimaRiga.value?.timestamp && props.grasso.ultimo !== null ? `${formattaNumero(props.grasso.ultimo)}%` : ''
+}
+
 const chartConfig: ChartConfig = {
   magra: { label: 'Massa magra', color: COLORE_MAGRA },
   grasso: { label: '% Grasso corporeo', color: COLORE_GRASSO },
@@ -78,12 +93,31 @@ const chartConfig: ChartConfig = {
           <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full" :style="{ background: COLORE_GRASSO }" />% Grasso</span>
         </div>
 
-        <ChartContainer :config="chartConfig" class="mt-4 h-40 aspect-auto">
-          <VisXYContainer :data="righe" :margin="{ left: 20, right: 20 }">
+        <ChartContainer
+          :config="chartConfig"
+          class="mt-4 h-40 aspect-auto [--vis-scatter-point-label-text-font-size:11px] [--vis-scatter-point-label-text-font-weight:600]"
+        >
+          <VisXYContainer :data="righe" :margin="{ left: 28, right: 36, top: 20, bottom: 4 }">
             <VisLine :x="(d: RigaGrafico) => d.timestamp" :y="(d: RigaGrafico) => d.magra" :color="COLORE_MAGRA" :curve-type="CurveType.Linear" />
-            <VisScatter :x="(d: RigaGrafico) => d.timestamp" :y="(d: RigaGrafico) => d.magra" :color="COLORE_MAGRA" :size="8" />
+            <VisScatter
+              :x="(d: RigaGrafico) => d.timestamp"
+              :y="(d: RigaGrafico) => d.magra"
+              :color="COLORE_MAGRA"
+              :size="8"
+              :label="etichettaMagra"
+              label-color="var(--fg)"
+              :label-position="magraSopra ? 'top' : 'bottom'"
+            />
             <VisLine :x="(d: RigaGrafico) => d.timestamp" :y="(d: RigaGrafico) => d.grasso" :color="COLORE_GRASSO" :curve-type="CurveType.Linear" />
-            <VisScatter :x="(d: RigaGrafico) => d.timestamp" :y="(d: RigaGrafico) => d.grasso" :color="COLORE_GRASSO" :size="8" />
+            <VisScatter
+              :x="(d: RigaGrafico) => d.timestamp"
+              :y="(d: RigaGrafico) => d.grasso"
+              :color="COLORE_GRASSO"
+              :size="8"
+              :label="etichettaGrasso"
+              label-color="var(--fg)"
+              :label-position="magraSopra ? 'bottom' : 'top'"
+            />
             <VisAxis
               type="x"
               :tick-values="tickDate"

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Video } from '@lucide/vue'
+import { CalendarCheck, CalendarPlus, Video } from '@lucide/vue'
+import { Button } from '@/components/ui/button'
+import StatoVuoto from '@/components/StatoVuoto.vue'
 import type { Appuntamento } from '@/api/agenda'
 import { Checkbox } from '@/components/ui/checkbox'
 import AppuntamentoMenu, { type AzioneAppuntamento } from '@/components/agenda/AppuntamentoMenu.vue'
@@ -8,8 +10,13 @@ import { festivitaDelGiorno } from '@/utils/festivita'
 import { minutiDaOra } from '@/utils/agenda'
 import { barrato, classiEvento, etichettaTipo, oraFine, sottotitolo, titolo } from '@/utils/agendaStile'
 
-const props = defineProps<{ giorno: string; appuntamenti: Appuntamento[] }>()
-const emit = defineEmits<{ azione: [appuntamento: Appuntamento, azione: AzioneAppuntamento]; dettaglio: [appuntamento: Appuntamento] }>()
+const props = defineProps<{
+  giorno: string
+  appuntamenti: Appuntamento[]
+  /** Filtro Visite/Promemoria attivo: "libera" sarebbe falso, gli impegni ci sono ma sono nascosti. */
+  filtroAttivo?: boolean
+}>()
+const emit = defineEmits<{ azione: [appuntamento: Appuntamento, azione: AzioneAppuntamento]; dettaglio: [appuntamento: Appuntamento]; nuovo: [data: string] }>()
 
 const festa = computed(() => festivitaDelGiorno(props.giorno))
 
@@ -33,8 +40,11 @@ const daFare = computed(() => delGiorno.value.filter((a) => a.tipo === 'PROMEMOR
       {{ festa }}
     </h3>
 
-    <div v-if="delGiorno.length === 0" class="p-14 text-center text-(--fg3)" data-test="agenda-giornata-libera">
-      Giornata libera
+    <div v-if="delGiorno.length === 0" data-test="agenda-giornata-libera">
+      <StatoVuoto v-if="filtroAttivo" :icona="CalendarCheck" titolo="Nessun impegno di questo tipo" testo="Gli altri impegni del giorno sono nascosti dal filtro." />
+      <StatoVuoto v-else :icona="CalendarCheck" titolo="Giornata libera" testo="Nessun impegno in agenda per questo giorno.">
+        <Button @click="emit('nuovo', giorno)"><CalendarPlus :size="16" /> Nuovo appuntamento</Button>
+      </StatoVuoto>
     </div>
 
     <div v-else class="grid gap-5 p-4 lg:grid-cols-[1fr_280px]">

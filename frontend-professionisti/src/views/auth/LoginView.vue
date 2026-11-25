@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
+import AccessoLayout from '@/components/auth/AccessoLayout.vue'
 
 const email = ref('')
 const password = ref('')
@@ -58,124 +59,78 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="grid min-h-screen grid-cols-1 bg-(--bg) md:grid-cols-12">
-    <!-- HERO / LEFT PANEL (7 Colonne) -->
-    <div class="relative hidden flex-col justify-between overflow-hidden bg-(--side) p-12 text-white md:col-span-6 md:flex lg:col-span-7 xl:p-16">
-      <!-- Glow Decorativo di Sfondo -->
-      <div class="pointer-events-none absolute -left-20 -top-20 h-96 w-96 rounded-full bg-(--sage)/20 blur-3xl" />
-      <div class="pointer-events-none absolute -bottom-32 -right-32 h-120 w-120 rounded-full bg-(--sage)/10 blur-3xl" />
-
-      <!-- Top: Logo & Brand -->
-      <div class="relative z-10 flex items-center gap-3">
-        <div class="flex size-11 items-center justify-center">
-          <img src="@/assets/hexis-logo.svg" alt="Hexis" class="h-full w-full object-contain" />
-        </div>
-        <span class="font-heading text-xl font-semibold tracking-tight text-white">Hexis Nutrition</span>
-      </div>
-
-      <!-- Center: Copy Editorial -->
-      <div class="relative z-10 my-auto max-w-lg py-12">
-        <div class="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-medium text-(--side-fg) backdrop-blur-md ring-1 ring-white/15">
-          <ShieldCheck :size="14" />
-          <span>Piattaforma clinica avanzata</span>
-        </div>
-        <h2 class="font-heading text-4xl font-normal italic leading-tight text-white xl:text-5xl">
-          Il tuo studio nutrizionale, in un unico posto.
-        </h2>
-        <p class="mt-4 text-base leading-relaxed text-(--side-fg)">
-          Pazienti, piani alimentari e agenda: una suite integrata pensata per valorizzare la tua professione ogni giorno.
-        </p>
-      </div>
-
-      <!-- Bottom: Footer -->
-      <div class="relative z-10 flex items-center justify-between text-xs text-white/50">
-        <span>© 2026 Hexis Nutrition</span>
-        <span class="hover:underline cursor-pointer">Privacy Policy</span>
-      </div>
+  <AccessoLayout>
+    <div class="mb-8">
+      <h1 class="font-heading text-3xl italic text-(--fg)">Accedi</h1>
+      <p class="mt-2 text-sm text-(--fg3)">Inserisci le tue credenziali per entrare nel tuo studio</p>
     </div>
 
-    <!-- FORM PANEL (5 Colonne) -->
-    <div class="flex flex-col items-center justify-center p-6 md:col-span-6 md:p-12 lg:col-span-5">
-      <div class="w-full max-w-sm">
-        <!-- Logo Mobile -->
-        <div class="mb-8 flex items-center gap-3 md:hidden">
-          <img src="@/assets/hexis-logo.svg" alt="Hexis" class="size-10 rounded-xl bg-(--side) p-1.5" />
-          <span class="font-heading text-xl font-semibold text-(--fg)">Hexis Nutrition</span>
+    <form class="space-y-4" novalidate @submit.prevent="onSubmit">
+      <!-- Campo Email -->
+      <div class="space-y-1.5">
+        <Label for="email" class="text-[13px] font-medium text-(--fg3)">Email</Label>
+        <Input
+          id="email"
+          :model-value="email"
+          type="email"
+          :aria-invalid="!!errori.email"
+          autocomplete="username"
+          @update:model-value="onEmailInput"
+          placeholder="nome@studio.it"
+          class="h-11 rounded-xl border-(--bd) bg-(--surf) dark:bg-(--surf) px-3.5 text-sm transition-all focus-visible:ring-2 focus-visible:ring-(--green)"
+        />
+        <p v-if="errori.email" class="text-xs font-medium text-(--danger)">{{ errori.email }}</p>
+      </div>
+
+      <!-- Campo Password -->
+      <div class="space-y-1.5">
+        <div class="flex items-center justify-between">
+          <Label for="password" class="text-[13px] font-medium text-(--fg3)">Password</Label>
+          <router-link to="/password-dimenticata" class="text-xs font-semibold text-(--green) transition-colors hover:text-(--green-d)">
+            Password dimenticata?
+          </router-link>
         </div>
-
-        <div class="mb-8">
-          <h1 class="font-heading text-3xl italic text-(--fg)">Accedi</h1>
-          <p class="mt-2 text-sm text-(--fg3)">Inserisci le tue credenziali per entrare nel tuo studio</p>
-        </div>
-
-        <form class="space-y-4" novalidate @submit.prevent="onSubmit">
-          <!-- Campo Email -->
-          <div class="space-y-1.5">
-            <Label for="email" class="text-[13px] font-medium text-(--fg3)">Email</Label>
-            <Input
-              id="email"
-              :model-value="email"
-              type="email"
-              :aria-invalid="!!errori.email"
-              autocomplete="username"
-              @update:model-value="onEmailInput"
-              placeholder="nome@studio.it"
-              class="h-11 rounded-xl border-(--bd) bg-(--surf) px-3.5 text-sm transition-all focus-visible:ring-2 focus-visible:ring-(--green)"
-            />
-            <p v-if="errori.email" class="text-xs font-medium text-(--danger)">{{ errori.email }}</p>
-          </div>
-
-          <!-- Campo Password -->
-          <div class="space-y-1.5">
-            <div class="flex items-center justify-between">
-              <Label for="password" class="text-[13px] font-medium text-(--fg3)">Password</Label>
-              <router-link to="/password-dimenticata" class="text-xs font-semibold text-(--green) transition-colors hover:text-(--green-d)">
-                Password dimenticata?
-              </router-link>
-            </div>
-            <div class="relative flex items-center">
-              <Input
-                id="password"
-                :model-value="password"
-                :type="passwordVisibile ? 'text' : 'password'"
-                :aria-invalid="!!errori.password"
-                autocomplete="current-password"
-                @update:model-value="onPasswordInput"
-                placeholder="••••••••"
-                class="h-11 w-full rounded-xl border-(--bd) bg-(--surf) pl-3.5 pr-10 text-sm transition-all focus-visible:ring-2 focus-visible:ring-(--green)"
-              />
-              <button
-                type="button"
-                class="absolute right-3 text-(--fg3) transition-colors hover:text-(--fg)"
-                :aria-label="passwordVisibile ? 'Nascondi password' : 'Mostra password'"
-                @click="passwordVisibile = !passwordVisibile"
-              >
-                <EyeOff v-if="passwordVisibile" :size="18" />
-                <Eye v-else :size="18" />
-              </button>
-            </div>
-            <p v-if="errori.password" class="text-xs font-medium text-(--danger)">{{ errori.password }}</p>
-          </div>
-
-          <!-- Remember Me -->
-          <div class="flex items-center gap-2 pt-1">
-            <Checkbox id="ricordami" v-model="ricordami" class="rounded-md border-(--bd) data-[state=checked]:bg-(--green)" />
-            <Label for="ricordami" class="cursor-pointer text-xs font-medium text-(--fg2)">
-              Ricordami su questo dispositivo
-            </Label>
-          </div>
-
-          <!-- Submit Button -->
-          <Button
-            type="submit"
-            :disabled="inCorso"
-            class="mt-2 h-11 w-full rounded-xl bg-(--green) text-sm font-semibold text-(--on-green) transition-all hover:bg-(--green-d) active:not-aria-[haspopup]:translate-y-0.5"
+        <div class="relative flex items-center">
+          <Input
+            id="password"
+            :model-value="password"
+            :type="passwordVisibile ? 'text' : 'password'"
+            :aria-invalid="!!errori.password"
+            autocomplete="current-password"
+            @update:model-value="onPasswordInput"
+            placeholder="••••••••"
+            class="h-11 w-full rounded-xl border-(--bd) bg-(--surf) dark:bg-(--surf) pl-3.5 pr-10 text-sm transition-all focus-visible:ring-2 focus-visible:ring-(--green)"
+          />
+          <button
+            type="button"
+            class="absolute right-3 text-(--fg3) transition-colors hover:text-(--fg)"
+            :aria-label="passwordVisibile ? 'Nascondi password' : 'Mostra password'"
+            @click="passwordVisibile = !passwordVisibile"
           >
-            <Loader2 v-if="inCorso" :size="18" class="mr-2 animate-spin" />
-            <span>{{ inCorso ? 'Accesso in corso…' : 'Accedi' }}</span>
-          </Button>
-        </form>
+            <EyeOff v-if="passwordVisibile" :size="18" />
+            <Eye v-else :size="18" />
+          </button>
+        </div>
+        <p v-if="errori.password" class="text-xs font-medium text-(--danger)">{{ errori.password }}</p>
       </div>
-    </div>
-  </div>
+
+      <!-- Remember Me -->
+      <div class="flex items-center gap-2 pt-1">
+        <Checkbox id="ricordami" v-model="ricordami" class="rounded-md border-(--bd) data-[state=checked]:bg-(--green)" />
+        <Label for="ricordami" class="cursor-pointer text-xs font-medium text-(--fg2)">
+          Ricordami su questo dispositivo
+        </Label>
+      </div>
+
+      <!-- Submit Button -->
+      <Button
+        type="submit"
+        :disabled="inCorso"
+        class="mt-2 h-11 w-full rounded-xl bg-(--green) text-sm font-semibold text-(--on-green) transition-all hover:bg-(--green-d) active:not-aria-[haspopup]:translate-y-0.5"
+      >
+        <Loader2 v-if="inCorso" :size="18" class="mr-2 animate-spin" />
+        <span>{{ inCorso ? 'Accesso in corso…' : 'Accedi' }}</span>
+      </Button>
+    </form>
+  </AccessoLayout>
 </template>

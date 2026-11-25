@@ -117,24 +117,22 @@ describe('PazienteTabConfrontoVisite', () => {
     expect(wrapper.text()).not.toContain('78,4')
   })
 
-  it('colora ogni variazione col colore di avviso, senza distinguere tra miglioramento e peggioramento', () => {
-    const wrapper = monta([
-      visita({ id: 'v1', dataVisita: '2026-01-01', pesoKg: 80, bmi: 25 }),
-      visita({ id: 'v2', dataVisita: '2026-02-01', pesoKg: 82, bmi: 25 }),
-    ])
-    const righe = wrapper.findAll('tbody tr').filter((r) => r.text().includes('Peso (kg)') || r.text().includes('BMI'))
-    const rigaPeso = righe.find((r) => r.text().includes('Peso (kg)'))!
-    const rigaBmi = righe.find((r) => r.text().includes('BMI'))!
+  it('colora le variazioni secondo l\'obiettivo della visita B: verde verso l\'obiettivo, rosso lontano, grigio se indifferente', () => {
+    function classiVariazione(obiettivoB: Visita['obiettivo'], etichetta: string): string[] {
+      const wrapper = monta([
+        visita({ id: 'v1', dataVisita: '2026-01-01', pesoKg: 80, bmi: 25 }),
+        visita({ id: 'v2', dataVisita: '2026-02-01', pesoKg: 82, bmi: 25, obiettivo: obiettivoB }),
+      ])
+      const riga = wrapper.findAll('tbody tr').find((r) => r.text().includes(etichetta))!
+      return riga.findAll('td')[3].classes()
+    }
 
-    // Il peso aumenta (+2 kg): colore di avviso, non rosso "peggioramento".
-    const celleVariazionePeso = rigaPeso.findAll('td')
-    expect(celleVariazionePeso[3].classes()).toContain('text-(--warn-fg)')
-    expect(celleVariazionePeso[3].classes()).not.toContain('text-(--danger)')
-
-    // Il BMI non cambia: nessun colore di avviso.
-    const celleVariazioneBmi = rigaBmi.findAll('td')
-    expect(celleVariazioneBmi[3].classes()).toContain('text-(--fg3)')
-    expect(celleVariazioneBmi[3].classes()).not.toContain('text-(--warn-fg)')
+    // Il peso aumenta di 2 kg.
+    expect(classiVariazione('DIMAGRIMENTO', 'Peso (kg)')).toContain('text-(--danger)')
+    expect(classiVariazione('AUMENTO_PESO', 'Peso (kg)')).toContain('text-(--green)')
+    expect(classiVariazione('MANTENIMENTO', 'Peso (kg)')).toContain('text-(--fg3)')
+    // Il BMI non cambia: grigio anche con un obiettivo direzionale.
+    expect(classiVariazione('DIMAGRIMENTO', 'BMI')).toContain('text-(--fg3)')
   })
 
   it('mostra "—" per l\'obiettivo in riga se non è cambiato tra le due visite', () => {

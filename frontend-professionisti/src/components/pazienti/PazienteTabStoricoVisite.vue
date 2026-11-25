@@ -16,7 +16,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { ETICHETTE_CIRCONFERENZE, ETICHETTE_OBIETTIVO, formattaNumero } from '@/utils/visita'
 import { formattaDataItalianaConMese } from '@/utils/data'
-import { ChevronDown, Pencil, Trash2 } from '@lucide/vue'
+import { ChevronDown, ClipboardPlus, Pencil, Stethoscope, Trash2 } from '@lucide/vue'
+import StatoVuoto from '@/components/StatoVuoto.vue'
 import type { Visita } from '@/api/pazienti'
 
 const props = defineProps<{
@@ -153,11 +154,19 @@ const righe = computed<RigaStorico[]>(() =>
     <div v-for="n in 3" :key="n" data-test="storico-skeleton" class="h-16 animate-pulse rounded-2xl bg-(--hover)" />
   </div>
 
-  <div v-else-if="totale === 0" class="rounded-2xl border border-(--bd) bg-(--surf) p-8 text-center text-sm text-(--fg3)">
-    <h4 class="font-heading text-lg italic text-(--fg)">Nessuna visita registrata</h4>
-    <p class="mx-auto mt-1.5 max-w-sm text-sm text-(--fg3)">
-      Lo storico del paziente è vuoto. Registra la prima visita per iniziare a documentare il suo percorso.
-    </p>
+  <div v-else-if="totale === 0" class="rounded-2xl border border-(--bd) bg-(--surf)">
+    <StatoVuoto
+      livello="h4"
+      :icona="Stethoscope"
+      titolo="Nessuna visita registrata"
+      testo="Lo storico è vuoto. Registra la prima visita per iniziare a documentare il percorso del paziente."
+    >
+      <Button v-if="!archiviato" as-child>
+        <router-link :to="`/pazienti/${pazienteId}/visite/nuova`" data-test="storico-prima-visita">
+          <ClipboardPlus :size="16" /> Registra la prima visita
+        </router-link>
+      </Button>
+    </StatoVuoto>
   </div>
 
   <div v-else class="relative lg:pl-2">

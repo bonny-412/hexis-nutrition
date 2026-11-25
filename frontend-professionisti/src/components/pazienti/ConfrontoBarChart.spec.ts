@@ -1,47 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
-import { mount, type VueWrapper } from '@vue/test-utils'
+import { describe, expect, it } from 'vitest'
+import { mount } from '@vue/test-utils'
 import ConfrontoBarChart from './ConfrontoBarChart.vue'
 
-/**
- * Unovis disegna SVG reali e in jsdom fallisce (`getBBox` non esiste), quindi
- * i suoi componenti sono sostituiti da stub che dichiarano le stesse props:
- * così si può ispezionare *cosa* il componente passa al grafico (accessor x/y,
- * colore, orientamento) senza dipendere dal rendering SVG.
- */
-vi.mock('@unovis/vue', async () => {
-  const { defineComponent, h } = await import('vue')
-  const stub = (name: string) =>
-    defineComponent({
-      name,
-      props: {
-        data: { type: Array, default: undefined },
-        margin: { default: undefined },
-        x: { default: undefined },
-        y: { default: undefined },
-        color: { default: undefined },
-        orientation: { default: undefined },
-        roundedCorners: { default: undefined },
-        type: { default: undefined },
-        tickValues: { default: undefined },
-        tickFormat: { default: undefined },
-        gridLine: { default: undefined },
-        tickLine: { default: undefined },
-      },
-      setup(_props, { slots }) {
-        return () => h('div', { class: `stub-${name}` }, slots.default?.())
-      },
-    })
-
-  return {
-    VisXYContainer: stub('VisXYContainer'),
-    VisGroupedBar: stub('VisGroupedBar'),
-    VisAxis: stub('VisAxis'),
-  }
-})
-
-function vis(wrapper: VueWrapper, nome: string) {
-  return wrapper.findComponent({ name: nome })
-}
+/** Il grafico è HTML/CSS: si controllano direttamente righe, valori scritti e lunghezze delle barre. */
 
 const RIGHE = [
   { label: '% Grasso corporeo', a: 20.6, b: 16.8, unita: '%' },
@@ -49,85 +10,89 @@ const RIGHE = [
   { label: 'Non confrontabile', a: null, b: 12, unita: 'kg' },
 ]
 
-function montaConDati(righe: typeof RIGHE) {
+function monta(props: Partial<InstanceType<typeof ConfrontoBarChart>['$props']> = {}) {
   return mount(ConfrontoBarChart, {
-    props: { titolo: 'Plicometria', righe, etichettaA: '12 gen 2026', etichettaB: '18 ago 2026', colore: 'var(--chart-1)' },
-    global: { stubs: { ChartContainer: { template: '<div><slot /></div>' } } },
+    props: {
+      titolo: 'Plicometria',
+      righe: RIGHE,
+      etichettaA: '12 gen 2026',
+      etichettaB: '18 ago 2026',
+      colore: 'var(--chart-1)',
+      ...props,
+    },
   })
+}
+
+/** Le due barre di un gruppo, nell'ordine A poi B. */
+function barre(wrapper: ReturnType<typeof monta>, indiceGruppo: number) {
+  return wrapper.findAll('[data-test="confronto-gruppo"]')[indiceGruppo].findAll('[data-test="barra"]')
 }
 
 describe('ConfrontoBarChart', () => {
   it('mostra il titolo passato', () => {
-    const wrapper = mount(ConfrontoBarChart, {
-      props: { titolo: 'Plicometria', righe: [], etichettaA: 'A', etichettaB: 'B' },
-      global: { stubs: { ChartContainer: true } },
-    })
-    expect(wrapper.text()).toContain('Plicometria')
+    expect(monta({ righe: [] }).text()).toContain('Plicometria')
   })
 
-  it('mostra "Dati non disponibili" se nessuna riga ha entrambi i valori', () => {
-    const wrapper = mount(ConfrontoBarChart, {
-      props: { titolo: 'Plicometria', righe: [{ label: 'FMI', a: null, b: 4.4, unita: '' }], etichettaA: 'A', etichettaB: 'B' },
-      global: { stubs: { ChartContainer: true } },
-    })
-    expect(wrapper.text()).toContain('Dati non disponibili')
+  it('dice che non ci sono misure confrontabili se nessuna riga ha entrambi i valori', () => {
+    const wrapper = monta({ righe: [{ label: 'FMI', a: null, b: 4.4, unita: '' }] })
+
+    expect(wrapper.text()).toContain('Nessuna misura presente in entrambe le visite.')
+    expect(wrapper.find('[data-test="legenda-confronto"]').exists()).toBe(false)
   })
 
-  it('esclude dal grafico le righe con un solo lato valorizzato', () => {
-    const wrapper = montaConDati(RIGHE)
-    const dati = vis(wrapper, 'VisXYContainer').props('data') as { label: string }[]
+  it('esclude le righe con un solo lato valorizzato', () => {
+    const gruppi = monta().findAll('[data-test="confronto-gruppo"]')
 
-    expect(dati).toHaveLength(2)
-    expect(dati.map((d) => d.label)).toEqual(['% Grasso corporeo', 'Massa magra (kg)'])
+    expect(gruppi).toHaveLength(2)
+    expect(gruppi.map((g) => g.text())).toEqual([
+      expect.stringContaining('% Grasso corporeo'),
+      expect.stringContaining('Massa magra (kg)'),
+    ])
   })
 
-  it('passa a VisGroupedBar gli accessor x/y corretti', () => {
-    const wrapper = montaConDati(RIGHE)
-    const bar = vis(wrapper, 'VisGroupedBar')
-    const x = bar.props('x') as (d: unknown, i: number) => number
-    const y = bar.props('y') as ((d: { a: number, b: number }) => number)[]
+  it('in verticale scrive i valori senza unità, che sta già nell\'etichetta del parametro', () => {
+    const gruppo = monta().findAll('[data-test="confronto-gruppo"]')[1]
 
-    expect(x({}, 1)).toBe(1)
-    expect(y).toHaveLength(2)
-    expect(y[0]({ a: 20.6, b: 16.8 })).toBe(20.6)
-    expect(y[1]({ a: 20.6, b: 16.8 })).toBe(16.8)
+    expect(gruppo.text()).toContain('67,10')
+    expect(gruppo.text()).toContain('65,30')
+    expect(gruppo.text()).not.toContain('kg 65')
+    expect(gruppo.text()).not.toContain('67,10 kg')
   })
 
-  it('colora la serie A in neutro e la serie B con il colore passato', () => {
-    const wrapper = montaConDati(RIGHE)
-    const colore = vis(wrapper, 'VisGroupedBar').props('color') as (d: unknown, i: number) => string
+  it('in orizzontale scrive i valori con l\'unità', () => {
+    const gruppo = monta({ orientamento: 'orizzontale' }).findAll('[data-test="confronto-gruppo"]')[1]
 
-    expect(colore({}, 0)).toBe('var(--fg4)')
-    expect(colore({}, 1)).toBe('var(--chart-1)')
+    expect(gruppo.text()).toContain('67,10 kg')
+    expect(gruppo.text()).toContain('65,30 kg')
   })
 
-  it('usa l\'orientamento verticale di default e quello orizzontale se richiesto', () => {
-    const verticale = montaConDati(RIGHE)
-    expect(vis(verticale, 'VisGroupedBar').props('orientation')).toBe('vertical')
-    expect(vis(verticale, 'VisAxis').props('type')).toBe('x')
+  it('scala ogni coppia sul proprio massimo: il valore più grande occupa l\'altezza piena', () => {
+    const wrapper = monta()
+    const [a, b] = barre(wrapper, 0) // % grasso: 20,6 → 16,8
 
-    const orizzontale = mount(ConfrontoBarChart, {
-      props: {
-        titolo: 'Circonferenze', righe: RIGHE, etichettaA: 'A', etichettaB: 'B',
-        colore: 'var(--chart-2)', orientamento: 'orizzontale',
-      },
-      global: { stubs: { ChartContainer: { template: '<div><slot /></div>' } } },
-    })
-    expect(vis(orizzontale, 'VisGroupedBar').props('orientation')).toBe('horizontal')
-    expect(vis(orizzontale, 'VisAxis').props('type')).toBe('y')
+    // Altezza piena = 78% della colonna (il resto è per il valore scritto sopra).
+    expect(a.attributes('style')).toContain('height: 78%')
+    expect(parseFloat(b.attributes('style')!.match(/height: ([\d.]+)%/)![1])).toBeCloseTo((16.8 / 20.6) * 78, 5)
   })
 
-  it('etichetta i tick dell\'asse con il label della riga corrispondente', () => {
-    const wrapper = montaConDati(RIGHE)
-    const tickFormat = vis(wrapper, 'VisAxis').props('tickFormat') as (i: number) => string
+  it('usa per la visita A una tinta chiara del colore passato e per la B il colore pieno', () => {
+    const [a, b] = barre(monta({ colore: 'var(--chart-2)' }), 0)
 
-    expect(tickFormat(0)).toBe('% Grasso corporeo')
-    expect(tickFormat(1)).toBe('Massa magra (kg)')
+    expect(a.attributes('data-colore')).toBe('color-mix(in srgb, var(--chart-2) 32%, var(--surf))')
+    expect(b.attributes('data-colore')).toBe('var(--chart-2)')
+  })
+
+  it('usa colonne in verticale di default e barre orizzontali se richiesto', () => {
+    expect(monta().find('[data-test="confronto-verticale"]').exists()).toBe(true)
+
+    const orizzontale = monta({ orientamento: 'orizzontale' })
+    expect(orizzontale.find('[data-test="confronto-orizzontale"]').exists()).toBe(true)
+    expect(orizzontale.find('[data-test="confronto-verticale"]').exists()).toBe(false)
   })
 
   it('mostra la legenda con le etichette delle due visite quando ci sono dati', () => {
-    const wrapper = montaConDati(RIGHE)
-    expect(wrapper.text()).toContain('12 gen 2026')
-    expect(wrapper.text()).toContain('18 ago 2026')
+    const legenda = monta().find('[data-test="legenda-confronto"]')
+    expect(legenda.text()).toContain('12 gen 2026')
+    expect(legenda.text()).toContain('18 ago 2026')
   })
 })

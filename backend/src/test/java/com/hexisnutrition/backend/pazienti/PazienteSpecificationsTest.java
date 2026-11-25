@@ -66,6 +66,26 @@ class PazienteSpecificationsTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void conRicercaConfrontaLEmailSoloDallInizio() {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-spec-email@example.com", "hash", "Anna", "Bianchi"));
+        creaPaziente(professionista.getId(), "Marco", "Rossi", "marco.rossi@example.com",
+                "RSSMRC80A01H501U", LocalDate.of(1990, 1, 1), Sesso.M);
+
+        // Dall'inizio dell'email: trovato.
+        assertThat(pazienteRepository.findAll(Specification.allOf(
+                PazienteSpecifications.delProfessionista(professionista.getId()),
+                PazienteSpecifications.conRicerca("marco.ro")))).hasSize(1);
+        // Dominio o parte centrale dell'email: non basta più (prima ".com" trovava quasi tutti).
+        assertThat(pazienteRepository.findAll(Specification.allOf(
+                PazienteSpecifications.delProfessionista(professionista.getId()),
+                PazienteSpecifications.conRicerca(".com")))).isEmpty();
+        assertThat(pazienteRepository.findAll(Specification.allOf(
+                PazienteSpecifications.delProfessionista(professionista.getId()),
+                PazienteSpecifications.conRicerca("example")))).isEmpty();
+    }
+
+    @Test
     void conStatoAccountFiltraPerStato() {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-spec2@example.com", "hash", "Anna", "Bianchi"));

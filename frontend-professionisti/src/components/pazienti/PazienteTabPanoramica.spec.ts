@@ -82,7 +82,8 @@ describe('PazienteTabPanoramica', () => {
   it('mostra lo stato vuoto quando non ci sono visite', () => {
     const wrapper = monta([])
     expect(wrapper.text()).toContain('Nessuna visita registrata')
-    expect(wrapper.text()).toContain('Nessun dato clinico da mostrare. I dettagli dell\'ultima visita appariranno qui non appena registrata.')
+    expect(wrapper.text()).toContain('Peso, composizione corporea e grafici dell\'andamento compaiono qui dalla prima visita.')
+    expect(wrapper.find('[data-test="panoramica-prima-visita"]').exists()).toBe(true)
   })
 
   it('mostra i grafici di peso e bmi, e "Dati non disponibili" nella card massa grassa/magra senza plicometria', () => {
@@ -122,10 +123,10 @@ describe('PazienteTabPanoramica', () => {
     expect(conNota.text()).toContain('Lieve intolleranza al lattosio.')
   })
 
-  it('mostra sempre la card BIA come non disponibile', () => {
+  it('mostra sempre la BIA come non ancora supportata, in una riga e non in una card', () => {
     const wrapper = monta([visita()])
     expect(wrapper.text()).toContain('BIA')
-    expect(wrapper.text()).toContain('Dati non disponibili')
+    expect(wrapper.text()).toContain('la bioimpedenziometria non è ancora supportata')
   })
 
   it('mostra i dati reali di plicometria dell\'ultima visita quando presenti', () => {

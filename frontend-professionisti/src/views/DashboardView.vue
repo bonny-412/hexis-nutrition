@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import AppShell from '@/components/AppShell.vue'
-import { conteggioAttivi } from '@/api/pazienti'
+import { conteggioAttivi, cerca as cercaPazienti, type Paziente } from '@/api/pazienti'
 import { elenco as elencoAgenda, type Appuntamento } from '@/api/agenda'
 import { cerca as cercaPiani, type PianoAlimentareRigaLista } from '@/api/pianiAlimentari'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
-import { Plus, ChevronDown, UserPlus, ClipboardPlus, CalendarPlus, CalendarDays, ChevronRight, Utensils, Video } from '@lucide/vue'
+import { Plus, ChevronDown, UserPlus, ClipboardPlus, CalendarPlus, CalendarDays, CalendarX2, ChevronRight, Play, Utensils, Video } from '@lucide/vue'
+import StatoVuoto from '@/components/StatoVuoto.vue'
+import DaFareCard, { type GruppoDaFare } from '@/components/dashboard/DaFareCard.vue'
 import { useAuthStore } from '@/stores/auth'
 import { aggiungiGiorni, minutiDaOra, oggiIso } from '@/utils/agenda'
 import { eVisitaAttiva, nomePaziente } from '@/utils/agendaStile'
@@ -16,6 +18,8 @@ import { riepilogoOggi } from '@/utils/riepilogoOggi'
 /** Quanti giorni avanti guarda la lista "Prossime visite" e quante righe mostra al massimo. */
 const GIORNI_PROSSIME_VISITE = 7
 const MAX_PROSSIME_VISITE = 6
+/** Righe per gruppo nella card "Da fare": oltre compare "Vedi tutti". */
+const MAX_DA_FARE = 3
 
 const auth = useAuthStore()
 const pazientiAttivi = ref<number | null>(null)
@@ -24,7 +28,17 @@ const oggi = oggiIso()
 /** Appuntamenti da oggi ai prossimi 7 giorni: alimentano sia il riepilogo di oggi sia la lista delle prossime visite. */
 const agendaSettimana = ref<Appuntamento[] | null>(null)
 const agendaOggi = computed(() => agendaSettimana.value?.filter((a) => a.data === oggi) ?? null)
-const pianiInBozza = ref<PianoAlimentareRigaLista[] | null>(null)
+const pianiInBozza = ref<GruppoDaFare<PianoAlimentareRigaLista>>({ voci: [], totale: 0 })
+const pianiInScadenza = ref<GruppoDaFare<PianoAlimentareRigaLista>>({ voci: [], totale: 0 })
+const maiInvitati = ref<GruppoDaFare<Paziente>>({ voci: [], totale: 0 })
+const caricamentoDaFare = ref(true)
+
+/** Dopo "Invita" il paziente esce dal gruppo senza ricaricare la pagina. */
+function onInvitato(id: string) {
+  const g = maiInvitati.value
+  if (!g.voci) return
+  maiInvitati.value = { voci: g.voci.filter((p) => p.id !== id), totale: Math.max(g.totale - 1, 0) }
+}
 
 const prossimeVisite = computed(() => {
   if (!agendaSettimana.value) return null
@@ -32,7 +46,9 @@ const prossimeVisite = computed(() => {
   const minutiAdesso = adesso.getHours() * 60 + adesso.getMinutes()
   return agendaSettimana.value
     .filter((a) => eVisitaAttiva(a) && a.stato === 'PROGRAMMATA')
-    .filter((a) => a.data !== oggi || a.oraInizio === null || minutiDaOra(a.oraInizio) >= minutiAdesso)
+    // Una visita di oggi resta in lista (con "Avvia visita") finché non è finita, non solo finché non è iniziata:
+    // chi apre la Dashboard alle 10:05 deve poter avviare la visita delle 10:00.
+    .filter((a) => a.data !== oggi || a.oraInizio === null || minutiDaOra(a.oraInizio) + (a.durataMinuti ?? 60) > minutiAdesso)
     .sort((x, y) => (x.data + (x.oraInizio ?? '')).localeCompare(y.data + (y.oraInizio ?? '')))
     .slice(0, MAX_PROSSIME_VISITE)
 })
@@ -55,25 +71,44 @@ const dataOggi = new Intl.DateTimeFormat('it-IT', {
 
 const riepilogo = computed(() => (agendaOggi.value ? riepilogoOggi(agendaOggi.value) : null))
 
-onMounted(async () => {
+/** Pagina della ricerca → gruppo di "Da fare"; una risposta mancante o senza contenuto vale come errore del gruppo. */
+function gruppo<T>(esito: PromiseSettledResult<{ contenuto: T[]; totaleElementi: number } | undefined>): GruppoDaFare<T> {
+  if (esito.status !== 'fulfilled' || !esito.value?.contenuto) return { voci: null, totale: 0 }
+  return { voci: esito.value.contenuto, totale: esito.value.totaleElementi }
+}
+
+async function caricaConteggio() {
   try {
     pazientiAttivi.value = await conteggioAttivi()
   } catch {
     erroreCaricamento.value = true
   }
+}
+
+async function caricaAgenda() {
   try {
     agendaSettimana.value = await elencoAgenda(oggi, aggiungiGiorni(oggi, GIORNI_PROSSIME_VISITE))
   } catch {
     // Senza agenda il banner mostra solo il saluto: il resto della dashboard non dipende da questo.
     agendaSettimana.value = null
   }
-  try {
-    const pagina = await cercaPiani({ stato: 'BOZZA', ordinaPer: 'aggiornatoIl', direzione: 'desc', dimensione: 5 })
-    pianiInBozza.value = pagina.contenuto
-  } catch {
-    pianiInBozza.value = null
-  }
-})
+}
+
+/** Le tre liste di "Da fare" si caricano insieme; una che fallisce non blocca le altre. */
+async function caricaDaFare() {
+  const [scadenza, bozze, inviti] = await Promise.allSettled([
+    cercaPiani({ stato: 'ATTIVO', dataFineDa: oggi, dataFineA: aggiungiGiorni(oggi, 7), ordinaPer: 'dataFine', direzione: 'asc', dimensione: MAX_DA_FARE }),
+    cercaPiani({ stato: 'BOZZA', ordinaPer: 'aggiornatoIl', direzione: 'desc', dimensione: MAX_DA_FARE }),
+    cercaPazienti({ statoAccount: 'MAI_INVITATO', archiviato: false, ordinaPer: 'cognome', direzione: 'asc', dimensione: MAX_DA_FARE }),
+  ])
+  pianiInScadenza.value = gruppo(scadenza)
+  pianiInBozza.value = gruppo(bozze)
+  maiInvitati.value = gruppo(inviti)
+  caricamentoDaFare.value = false
+}
+
+// I tre blocchi sono indipendenti: si caricano in parallelo, non uno dopo l'altro.
+onMounted(() => Promise.all([caricaConteggio(), caricaAgenda(), caricaDaFare()]))
 </script>
 
 <template>
@@ -148,15 +183,23 @@ onMounted(async () => {
           <router-link to="/agenda" class="group inline-flex items-center gap-0.5 text-xs font-semibold text-(--green) transition-colors hover:text-(--green-d)">Vedi l'agenda <ChevronRight :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:translate-x-0.5" /></router-link>
         </header>
         <div v-if="prossimeVisite === null" class="px-5 pb-5 text-sm text-(--fg3)">Non è stato possibile caricare l'agenda.</div>
-        <div v-else-if="prossimeVisite.length === 0" class="px-5 pb-5 text-sm text-(--fg3)">
-          Nessuna visita nei prossimi {{ GIORNI_PROSSIME_VISITE }} giorni.
-          <router-link to="/agenda?nuovo=visita" class="font-semibold text-(--green) transition-colors hover:text-(--green-d)">Fissa un appuntamento</router-link>
-        </div>
+        <StatoVuoto
+          v-else-if="prossimeVisite.length === 0"
+          compatto
+          :icona="CalendarX2"
+          :titolo="`Nessuna visita nei prossimi ${GIORNI_PROSSIME_VISITE} giorni`"
+          testo="Le visite fissate in agenda compaiono qui."
+        >
+          <Button as-child size="sm">
+            <router-link to="/agenda?nuovo=visita" data-test="dashboard-fissa-appuntamento"><CalendarPlus :size="14" /> Fissa un appuntamento</router-link>
+          </Button>
+        </StatoVuoto>
         <ul v-else class="divide-y divide-(--div) border-t border-(--div)">
-          <li v-for="v in prossimeVisite" :key="v.id">
+          <li v-for="v in prossimeVisite" :key="v.id" class="flex items-center transition-colors hover:bg-(--hover)">
             <router-link
               :to="v.pazienteId ? `/pazienti/${v.pazienteId}` : '/agenda'"
-              class="flex items-center gap-4 px-5 py-3 transition-colors hover:bg-(--hover)"
+              class="flex min-w-0 flex-1 items-center gap-4 py-3 pl-5"
+              :class="v.data === oggi && v.pazienteId ? 'pr-2' : 'pr-5'"
             >
               <div class="w-24 shrink-0">
                 <p class="text-sm font-semibold text-(--fg)">{{ etichettaGiorno(v.data) }}</p>
@@ -170,6 +213,12 @@ onMounted(async () => {
                 <Video :size="14" /> Videoconsulto
               </span>
             </router-link>
+            <!-- Le visite di oggi si avviano da qui: stesso flusso di "Avvia visita" in agenda (l'appuntamento si conclude al salvataggio). -->
+            <Button v-if="v.data === oggi && v.pazienteId" as-child size="sm" class="mr-5 shrink-0">
+              <router-link :to="`/pazienti/${v.pazienteId}/visite/nuova?appuntamentoId=${v.id}`" data-test="dashboard-avvia-visita">
+                <Play :size="14" /> Avvia visita
+              </router-link>
+            </Button>
           </li>
         </ul>
       </section>
@@ -190,22 +239,8 @@ onMounted(async () => {
           </div>
         </div>
 
-        <section class="rounded-2xl border border-(--bd) bg-(--surf)" data-test="dashboard-piani-bozza">
-          <header class="flex items-baseline justify-between gap-3 px-5 pt-4 pb-3">
-            <h2 class="font-heading text-lg italic text-(--fg)">Piani in bozza</h2>
-            <router-link to="/piani-alimentari" class="group inline-flex items-center gap-0.5 text-xs font-semibold text-(--green) transition-colors hover:text-(--green-d)">Tutti i piani <ChevronRight :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:translate-x-0.5" /></router-link>
-          </header>
-          <div v-if="pianiInBozza === null" class="px-5 pb-5 text-sm text-(--fg3)">Non è stato possibile caricare i piani.</div>
-          <p v-else-if="pianiInBozza.length === 0" class="px-5 pb-5 text-sm text-(--fg3)">Nessun piano da completare.</p>
-          <ul v-else class="divide-y divide-(--div) border-t border-(--div)">
-            <li v-for="p in pianiInBozza" :key="p.id">
-              <router-link :to="`/piani-alimentari/${p.id}`" class="block px-5 py-2.5 transition-colors hover:bg-(--hover)">
-                <p class="truncate text-sm font-semibold text-(--fg)">{{ p.pazienteNomeCompleto }}</p>
-                <p class="truncate text-xs text-(--fg3)">{{ p.nome }}</p>
-              </router-link>
-            </li>
-          </ul>
-        </section>
+        <div v-if="caricamentoDaFare" class="h-40 animate-pulse rounded-2xl bg-(--hover)" data-test="dashboard-da-fare-skeleton" />
+        <DaFareCard v-else :in-scadenza="pianiInScadenza" :bozze="pianiInBozza" :mai-invitati="maiInvitati" @invitato="onInvitato" />
       </div>
     </div>
   </AppShell>

@@ -42,8 +42,12 @@ public class AlimentoController {
         int paginaEffettiva = Math.max(pagina, 0);
         int dimensioneEffettiva = Math.min(Math.max(dimensione, 1), 100);
         Sort.Direction direzioneSort = direzione == DirezioneOrdinamento.desc ? Sort.Direction.DESC : Sort.Direction.ASC;
-        Pageable pageable = PageRequest.of(paginaEffettiva, dimensioneEffettiva, Sort.by(direzioneSort, ordinaPer.name()));
-        CriteriRicercaAlimenti criteri = new CriteriRicercaAlimenti(ricerca, fonte);
+        // "pertinenza" non è una colonna: l'ordine lo imposta la specifica, la pagina resta senza Sort.
+        boolean perPertinenza = ordinaPer == CampoOrdinamentoAlimenti.pertinenza;
+        Pageable pageable = perPertinenza
+                ? PageRequest.of(paginaEffettiva, dimensioneEffettiva)
+                : PageRequest.of(paginaEffettiva, dimensioneEffettiva, Sort.by(direzioneSort, ordinaPer.name()));
+        CriteriRicercaAlimenti criteri = new CriteriRicercaAlimenti(ricerca, fonte, perPertinenza);
         Page<Alimento> risultato = alimentoService.cerca(professionistaId, criteri, pageable);
         return AlimentoListaPaginataResponse.da(risultato);
     }

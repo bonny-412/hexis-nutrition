@@ -201,6 +201,39 @@ class AlimentoControllerTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void ricercaPerPertinenzaMettePrimaINomiCheInizianoColTestoEUltimiIMatchSullaCategoria() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-alimenti20@example.com", "hash", "A", "A"));
+        // In ordine alfabetico sarebbero: Biscotti, Ciboxzxpert, Pane, Zxpert.
+        creaAlimento(professionista.getId(), "Biscotti secchi", "Zxpert categoria");       // solo categoria → ultimo
+        creaAlimento(professionista.getId(), "Ciboxzxpert misto", "Varie");                // testo dentro il nome
+        creaAlimento(professionista.getId(), "Pane, zxpert integrale", "Varie");           // una parola inizia col testo
+        creaAlimento(professionista.getId(), "Zxpert al forno", "Varie");                  // il nome inizia col testo
+
+        mockMvc.perform(get("/alimenti/ricerca")
+                        .param("ricerca", "zxpert")
+                        .param("ordinaPer", "pertinenza")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.contenuto[0].nome").value("Zxpert al forno"))
+                .andExpect(jsonPath("$.contenuto[1].nome").value("Pane, zxpert integrale"))
+                .andExpect(jsonPath("$.contenuto[2].nome").value("Ciboxzxpert misto"))
+                .andExpect(jsonPath("$.contenuto[3].nome").value("Biscotti secchi"));
+
+        // La paginazione segue lo stesso ordine e il conteggio resta corretto.
+        mockMvc.perform(get("/alimenti/ricerca")
+                        .param("ricerca", "zxpert")
+                        .param("ordinaPer", "pertinenza")
+                        .param("dimensione", "2")
+                        .param("pagina", "1")
+                        .header("Authorization", "Bearer " + tokenPer(professionista)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totaleElementi").value(4))
+                .andExpect(jsonPath("$.contenuto[0].nome").value("Ciboxzxpert misto"))
+                .andExpect(jsonPath("$.contenuto[1].nome").value("Biscotti secchi"));
+    }
+
+    @Test
     void creaUnAlimentoCustomRestituisce201ConBdaFalse() throws Exception {
         Professionista professionista = professionistaRepository.save(
                 new Professionista("prof-alimenti8@example.com", "hash", "A", "A"));

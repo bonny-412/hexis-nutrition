@@ -62,13 +62,15 @@ describe('PianiAlimentariListView', () => {
     )
   })
 
-  it('mostra lo stato vuoto quando non ci sono risultati', async () => {
+  it('senza filtri e senza piani mostra lo stato vuoto che invita a creare il primo piano', async () => {
     vi.mocked(api.cerca).mockResolvedValue({ contenuto: [], paginaCorrente: 0, dimensionePagina: 20, totaleElementi: 0, totalePagine: 0 })
     const router = await creaRouter()
     const wrapper = montaView(router)
     await vi.waitFor(() => expect(api.cerca).toHaveBeenCalled())
     await wrapper.vm.$nextTick()
 
-    expect(wrapper.text()).toContain('Nessun piano trovato')
+    expect(wrapper.text()).toContain('Nessun piano presente')
+    expect(wrapper.text()).not.toContain('Nessun risultato trovato')
+    expect(wrapper.findAll('a').some((a) => a.attributes('href') === '/piani-alimentari/nuovo' && a.text() === 'Nuovo piano')).toBe(true)
   })
 })

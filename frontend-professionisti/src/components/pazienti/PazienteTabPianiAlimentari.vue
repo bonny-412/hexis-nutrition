@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { avanzamentoPiano } from '@/utils/pianoAlimentare'
 import { formattaDataItalianaConMese } from '@/utils/data'
-import { Copy, Eye, Pencil } from '@lucide/vue'
+import { Copy, Eye, Pencil, Plus } from '@lucide/vue'
 
 const props = defineProps<{
   pazienteId: string
@@ -186,6 +186,12 @@ function onDuplica(piano: PianoAlimentareRigaLista) {
             {{ totalePiani > 0 ? 'Apri un piano dallo storico per attivarlo, oppure creane uno nuovo.' : 'Questo paziente non ha ancora nessun piano alimentare.' }}
           </p>
         </div>
+        <Button v-if="!archiviato" as-child>
+          <router-link :to="`/piani-alimentari/nuovo?pazienteId=${pazienteId}`" data-test="tab-piani-nuovo-piano">
+            <Plus :size="16" />
+            <span>Nuovo piano</span>
+          </router-link>
+        </Button>
       </div>
     </div>
 

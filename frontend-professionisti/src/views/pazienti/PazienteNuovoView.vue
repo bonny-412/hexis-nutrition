@@ -6,8 +6,8 @@ import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import AppShell from '@/components/AppShell.vue'
 import DatiVisitaForm from '@/components/pazienti/DatiVisitaForm.vue'
+import BarraAzioniForm from '@/components/form/BarraAzioniForm.vue'
 import { crea } from '@/api/pazienti'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -29,7 +29,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { ArrowLeft, Save, X } from '@lucide/vue'
+import { ArrowLeft } from '@lucide/vue'
 
 // Import di tutti i filtri, regex e validatori dal file esterno
 import {
@@ -357,16 +357,12 @@ async function onSubmit() {
         <DatiVisitaForm ref="datiVisitaForm" :sesso="sesso" />
       </div>
 
-      <div class="w-full flex justify-end items-center gap-2">
-        <Button type="button" data-test="btn-annulla" variant="neutral" :disabled="inCorso" class="active:not-aria-[haspopup]:translate-y-0.5" @click="onAnnullaClick">
-          <X :size="16" />
-          Annulla
-        </Button>
-        <Button type="submit" :disabled="inCorso" class="active:not-aria-[haspopup]:translate-y-0.5">
-          <Save :size="16" />
-          {{ inCorso ? 'Salvataggio…' : 'Salva paziente' }}
-        </Button>
-      </div>
+      <BarraAzioniForm
+        :modificato="formValorizzata()"
+        :in-corso="inCorso"
+        etichetta-salva="Salva paziente"
+        @annulla="onAnnullaClick"
+      />
     </form>
 
     <AlertDialog v-model:open="mostraConfermaAnnulla">

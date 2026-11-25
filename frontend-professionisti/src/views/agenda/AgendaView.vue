@@ -46,7 +46,10 @@ import { aggiungiGiorni, intervalloVisibile, oggiIso, type FiltroAgenda, type Vi
 const router = useRouter()
 const route = useRoute()
 
-const vista = ref<VistaAgenda>('SETTIMANA')
+// Da mobile la settimana mostra due giorni e mezzo da scorrere di lato: si parte dal giorno.
+const vista = ref<VistaAgenda>(
+  typeof window !== 'undefined' && window.matchMedia?.('(max-width: 767px)').matches ? 'GIORNO' : 'SETTIMANA',
+)
 const riferimento = ref(oggiIso())
 const filtro = ref<FiltroAgenda>('TUTTI')
 const appuntamenti = ref<Appuntamento[]>([])
@@ -119,11 +122,20 @@ const dialogTipo = ref<TipoAppuntamento>('VISITA_STUDIO')
 const dialogAppuntamento = ref<Appuntamento | null>(null)
 const dialogPazienteId = ref<string | null>(null)
 
+/** Data proposta dal pulsante "Nuovo appuntamento" degli stati vuoti; altrimenti il dialog usa il giorno di riferimento. */
+const dataNuovo = ref<string | null>(null)
+
 function apriCreazione(tipo: TipoAppuntamento, pazienteId: string | null = null) {
+  dataNuovo.value = null
   dialogTipo.value = tipo
   dialogAppuntamento.value = null
   dialogPazienteId.value = pazienteId
   dialogAperto.value = true
+}
+
+function nuovoDalloStatoVuoto(data: string) {
+  apriCreazione('VISITA_STUDIO')
+  dataNuovo.value = data
 }
 
 function apriModifica(a: Appuntamento) {
@@ -356,6 +368,8 @@ function titoloEliminazione(a: Appuntamento | null): string {
         :appuntamenti="appuntamentiFiltrati"
         @azione="onAzione"
         @dettaglio="apriDettaglio"
+        :filtro-attivo="filtro !== 'TUTTI'"
+        @nuovo="nuovoDalloStatoVuoto"
       />
       <AgendaSettimana
         v-else-if="vista === 'SETTIMANA'"
@@ -363,6 +377,8 @@ function titoloEliminazione(a: Appuntamento | null): string {
         :appuntamenti="appuntamentiFiltrati"
         @azione="onAzione"
         @dettaglio="apriDettaglio"
+        :filtro-attivo="filtro !== 'TUTTI'"
+        @nuovo="nuovoDalloStatoVuoto"
       />
       <AgendaMese
         v-else
@@ -384,7 +400,7 @@ function titoloEliminazione(a: Appuntamento | null): string {
       :tipo-iniziale="dialogTipo"
       :appuntamento="dialogAppuntamento"
       :paziente-id-iniziale="dialogPazienteId"
-      :data-iniziale="riferimento"
+      :data-iniziale="dataNuovo ?? riferimento"
       @salvato="onSalvato"
     />
 

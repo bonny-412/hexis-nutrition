@@ -98,8 +98,11 @@ describe('AndamentoChart', () => {
 
     expect(vis(wrapper, 'VisLine').exists()).toBe(true)
     expect(vis(wrapper, 'VisScatter').exists()).toBe(true)
-    expect(vis(wrapper, 'VisScatter').props('size')).toBe(8)
-    expect(vis(wrapper, 'VisXYContainer').props('data')).toHaveLength(1)
+    const dati = vis(wrapper, 'VisXYContainer').props('data') as unknown[]
+    expect(dati).toHaveLength(1)
+    // L'unico punto è anche l'ultimo: marker in evidenza.
+    const size = vis(wrapper, 'VisScatter').props('size') as (d: unknown) => number
+    expect(size(dati[0])).toBe(10)
   })
 
   it('posiziona i punti sull\'asse x in base alla data reale della visita', () => {

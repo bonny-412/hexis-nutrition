@@ -6,6 +6,7 @@ import AppShell from '@/components/AppShell.vue'
 import { dettaglio, invita, deArchivia, visite as caricaVisite, type Paziente, type Visita } from '@/api/pazienti'
 import { ApiError } from '@/api/client'
 import { Button } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
   AlertDialog,
@@ -26,6 +27,7 @@ import ModificaPazienteDialog from '@/components/pazienti/ModificaPazienteDialog
 import { prepareAndamento } from '@/utils/andamento'
 import { formattaDataItalianaConMese } from '@/utils/data'
 import { ETICHETTE_OBIETTIVO, formattaNumero } from '@/utils/visita'
+import { CLASSE_ESITO, esitoVariazione, type ParametroClinico } from '@/utils/obiettivo'
 import { inizialiPaziente } from '@/utils/paziente'
 import {
   ArrowLeft,
@@ -47,6 +49,8 @@ import {
   UserCheck,
   CalendarCheck,
   CalendarPlus,
+  MoreHorizontal,
+  Loader2,
 } from '@lucide/vue'
 
 const ETICHETTE_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
@@ -102,7 +106,14 @@ function onCambiaTab(valore: AcceptableValue) {
 
 const andamento = computed(() => prepareAndamento(visite.value))
 const primaVisita = computed(() => (visite.value.length > 0 ? visite.value[0] : null))
+/** L'invito si offre a chi non ha ancora attivato l'account e non è archiviato. */
+const puoInvitare = computed(() => !!paziente.value && paziente.value.statoAccount !== 'ATTIVO' && !paziente.value.archiviato)
 const ultimaVisita = computed(() => (visite.value.length > 0 ? visite.value[visite.value.length - 1] : null))
+
+/** Colore della variazione "vs prec.": verde o rosso solo se l'obiettivo dell'ultima visita dà una direzione. */
+function classeDelta(parametro: ParametroClinico, delta: number | null): string {
+  return CLASSE_ESITO[esitoVariazione(ultimaVisita.value?.obiettivo, parametro, delta)]
+}
 
 async function carica() {
   caricamento.value = true
@@ -211,14 +222,14 @@ onMounted(() => {
       <div class="flex flex-col gap-4 rounded-2xl border border-(--hero-d) bg-(--hero) px-5 py-4 text-(--on-hero) sm:flex-row sm:flex-wrap sm:items-start sm:justify-between" data-test="paziente-hero">
         <div class="flex items-start gap-4">
           <span
-            class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-heading text-2xl font-semibold select-none"
+            class="flex size-10 shrink-0 items-center justify-center rounded-xl font-heading text-lg font-semibold select-none sm:size-14 sm:rounded-2xl sm:text-2xl"
             :class="paziente.archiviato ? 'bg-(--hero-pill) text-(--danger-fixed) ring-1 ring-(--hero-pill-ring)' : 'bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring)'"
           >
             {{ inizialiPaziente(paziente.nome, paziente.cognome) }}
           </span>
           <div>
             <div class="flex flex-wrap items-center gap-2.5">
-              <h1 class="font-heading text-2xl italic text-(--on-hero)">{{ paziente.nome }} {{ paziente.cognome }}</h1>
+              <h1 class="font-heading text-xl italic text-(--on-hero) sm:text-2xl">{{ paziente.nome }} {{ paziente.cognome }}</h1>
               <Button
                 v-if="!paziente.archiviato"
                 variant="ghost"
@@ -230,31 +241,32 @@ onMounted(() => {
               >
                 <Pencil :size="14" />
               </Button>
-              <button
-                v-if="paziente.statoAccount !== 'ATTIVO' && !paziente.archiviato"
-                type="button"
-                :disabled="invitoInCorso"
-                class="rounded-full bg-(--hero-pill) px-2.5 py-0.5 text-xs font-bold text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) transition-all hover:bg-(--hero-pill-hover) active:translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-                @click="onInvita"
-              >
-                {{ paziente.statoAccount === 'MAI_INVITATO' ? 'Invita' : 'Reinvia invito' }}
-              </button>
             </div>
-            <div class="mt-1 text-sm text-(--on-hero-2) flex w-full lg:flex-wrap lg:flex-row flex-col lg:items-center">
-              <span>{{ paziente.email }}</span>
+            <div class="mt-1 text-sm text-(--on-hero-2) flex w-full lg:flex-wrap lg:flex-row flex-col lg:items-center empty:hidden">
+              <!-- Da mobile resta solo l'obiettivo: email e data d'inizio sono nel profilo, la prossima visita nel badge sotto. -->
+              <span class="hidden sm:inline">{{ paziente.email }}</span>
               <span class="hidden lg:flex mx-1"> · </span>
               <span v-if="ultimaVisita">Obiettivo attuale: {{ ETICHETTE_OBIETTIVO[ultimaVisita.obiettivo] }}</span>
               <span class="hidden lg:flex mx-1"> · </span>
-              <span v-if="primaVisita">paziente dal {{ formattaDataItalianaConMese(primaVisita.dataVisita) }}</span>
+              <span v-if="primaVisita" class="hidden sm:inline">paziente dal {{ formattaDataItalianaConMese(primaVisita.dataVisita) }}</span>
             </div>
             <div class="mt-2.5 flex flex-wrap items-center gap-2">
+              <!-- Stato dell'account e, se serve, l'invito nella stessa pillola (prima c'era anche una pillola "Invita" accanto al nome). -->
               <span
                 data-test="badge-stato-account"
-                class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold"
-                :class="CLASSI_STATO_ACCOUNT_HERO[paziente.statoAccount]"
+                class="inline-flex items-center gap-1.5 rounded-full py-1 pl-2.5 text-xs font-bold"
+                :class="[CLASSI_STATO_ACCOUNT_HERO[paziente.statoAccount], puoInvitare ? 'pr-1' : 'pr-2.5']"
               >
                 <component :is="ICONE_STATO_ACCOUNT[paziente.statoAccount]" :size="16" />
                 {{ ETICHETTE_STATO_ACCOUNT[paziente.statoAccount] }}
+                <button
+                  v-if="puoInvitare"
+                  type="button"
+                  data-test="pulsante-invita"
+                  :disabled="invitoInCorso"
+                  class="relative ml-0.5 inline-flex items-center gap-1 border-l border-current/25 px-2 underline-offset-2 transition-colors before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:underline focus-visible:rounded-full focus-visible:outline-2 focus-visible:outline-current disabled:cursor-not-allowed disabled:opacity-60"
+                  @click="onInvita"
+                ><Loader2 v-if="invitoInCorso" :size="12" class="animate-spin" aria-hidden="true" />{{ paziente.statoAccount === 'MAI_INVITATO' ? 'Invita' : 'Reinvia invito' }}</button>
               </span>
               <span
                 v-if="paziente.archiviato"
@@ -278,25 +290,41 @@ onMounted(() => {
           </div>
         </div>
 
-        <div v-if="!paziente.archiviato" class="flex flex-wrap items-center gap-2 ">
-          <Button as-child variant="hero">
+        <div v-if="!paziente.archiviato" class="flex items-center gap-2 sm:flex-wrap">
+          <!-- Da mobile un'azione principale e le altre nel menu; da 640 px i tre pulsanti. -->
+          <Button as-child variant="hero" class="hidden sm:inline-flex">
             <router-link :to="`/piani-alimentari/nuovo?pazienteId=${paziente.id}`">
               <Utensils :size="16" />
               <span>Nuovo piano</span>
             </router-link>
           </Button>
-          <Button as-child variant="hero">
+          <Button as-child variant="hero" class="hidden sm:inline-flex">
             <router-link :to="`/agenda?nuovo=visita&pazienteId=${paziente.id}`">
               <CalendarPlus :size="16" />
               <span>Fissa appuntamento</span>
             </router-link>
           </Button>
-          <Button as-child variant="accent">
+          <Button as-child variant="accent" class="flex-1 sm:flex-none">
             <router-link :to="`/pazienti/${paziente.id}/visite/nuova`">
               <ClipboardPlus :size="16" />
               <span>Nuova visita</span>
             </router-link>
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger as-child>
+              <Button variant="hero" size="icon" class="sm:hidden" aria-label="Altre azioni" data-test="paziente-altre-azioni">
+                <MoreHorizontal :size="16" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" class="w-56 p-1.5">
+              <DropdownMenuItem as-child class="cursor-pointer gap-2 px-2.5 py-1.5">
+                <router-link :to="`/piani-alimentari/nuovo?pazienteId=${paziente.id}`"><Utensils :size="16" /> Nuovo piano</router-link>
+              </DropdownMenuItem>
+              <DropdownMenuItem as-child class="cursor-pointer gap-2 px-2.5 py-1.5">
+                <router-link :to="`/agenda?nuovo=visita&pazienteId=${paziente.id}`"><CalendarPlus :size="16" /> Fissa appuntamento</router-link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div v-else class="flex flex-wrap items-center gap-2">
           <Button type="button" variant="hero" @click="confermaDeArchiviaAperta = true">
@@ -324,7 +352,7 @@ onMounted(() => {
             <p
               v-if="andamento.peso.delta !== null"
               class="flex items-center gap-0.5 text-xs font-medium"
-              :class="andamento.peso.delta < 0 ? 'text-(--green)' : andamento.peso.delta > 0 ? 'text-(--danger)' : 'text-(--fg3)'"
+              :class="classeDelta('peso', andamento.peso.delta)"
             >
               <ArrowDown v-if="andamento.peso.delta < 0" :size="12" />
               <ArrowUp v-else-if="andamento.peso.delta > 0" :size="12" />
@@ -346,7 +374,7 @@ onMounted(() => {
             <p
               v-if="andamento.bmi.delta !== null"
               class="flex items-center gap-0.5 text-xs font-medium"
-              :class="andamento.bmi.delta < 0 ? 'text-(--green)' : andamento.bmi.delta > 0 ? 'text-(--danger)' : 'text-(--fg3)'"
+              :class="classeDelta('bmi', andamento.bmi.delta)"
             >
               <ArrowDown v-if="andamento.bmi.delta < 0" :size="12" />
               <ArrowUp v-else-if="andamento.bmi.delta > 0" :size="12" />
@@ -368,7 +396,7 @@ onMounted(() => {
             <p
               v-if="andamento.percentualeGrassoCorporeo.delta !== null"
               class="flex items-center gap-0.5 text-xs font-medium"
-              :class="andamento.percentualeGrassoCorporeo.delta < 0 ? 'text-(--green)' : andamento.percentualeGrassoCorporeo.delta > 0 ? 'text-(--danger)' : 'text-(--fg3)'"
+              :class="classeDelta('percentualeGrasso', andamento.percentualeGrassoCorporeo.delta)"
             >
               <ArrowDown v-if="andamento.percentualeGrassoCorporeo.delta < 0" :size="12" />
               <ArrowUp v-else-if="andamento.percentualeGrassoCorporeo.delta > 0" :size="12" />
@@ -390,7 +418,7 @@ onMounted(() => {
             <p
               v-if="andamento.massaMagra.delta !== null"
               class="flex items-center gap-0.5 text-xs font-medium"
-              :class="andamento.massaMagra.delta < 0 ? 'text-(--danger)' : andamento.massaMagra.delta > 0 ? 'text-(--green)' : 'text-(--fg3)'"
+              :class="classeDelta('massaMagra', andamento.massaMagra.delta)"
             >
               <ArrowDown v-if="andamento.massaMagra.delta < 0" :size="12" />
               <ArrowUp v-else-if="andamento.massaMagra.delta > 0" :size="12" />
@@ -443,7 +471,12 @@ onMounted(() => {
             @eliminata="caricaAndamento"
           />
 
-          <PazienteTabConfrontoVisite v-else-if="tabAttivo === 'confronto'" :visite="visite" />
+          <PazienteTabConfrontoVisite
+            v-else-if="tabAttivo === 'confronto'"
+            :visite="visite"
+            :paziente-id="paziente.id"
+            :archiviato="paziente.archiviato"
+          />
 
           <PazienteTabPianiAlimentari
             v-else-if="tabAttivo === 'piani'"

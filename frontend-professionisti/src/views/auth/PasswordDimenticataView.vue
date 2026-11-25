@@ -5,7 +5,8 @@ import { richiediResetPassword } from '@/api/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft } from '@lucide/vue'
+import { ArrowLeft, Loader2, MailCheck } from '@lucide/vue'
+import AccessoLayout from '@/components/auth/AccessoLayout.vue'
 import { erroreEmail } from '@/utils/validators'
 
 const email = ref('')
@@ -35,33 +36,47 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-(--bg)">
-    <div class="w-full max-w-90">
-      <h1 class="font-heading text-2xl italic text-(--fg)">Password dimenticata</h1>
+  <AccessoLayout>
+    <template v-if="inviato">
+      <div class="flex flex-col items-start gap-4" role="status" data-test="reset-inviato">
+        <span class="flex size-12 items-center justify-center rounded-full bg-(--mint) text-(--green-d)" aria-hidden="true">
+          <MailCheck :size="24" />
+        </span>
+        <div>
+          <h1 class="font-heading text-3xl italic text-(--fg)">Controlla la posta</h1>
+          <p class="mt-2 text-sm text-(--fg3)">
+            Se l'indirizzo esiste, riceverai un'email con le istruzioni per reimpostare la password.
+          </p>
+        </div>
+      </div>
+    </template>
 
-      <p v-if="inviato" class="mt-4 text-sm text-(--fg2)">
-        Se l'indirizzo esiste, riceverai un'email con le istruzioni per reimpostare la password.
-      </p>
+    <template v-else>
+      <div class="mb-8">
+        <h1 class="font-heading text-3xl italic text-(--fg)">Password dimenticata</h1>
+        <p class="mt-2 text-sm text-(--fg3)">Inserisci l'email dello studio: ti mandiamo un link per sceglierne una nuova.</p>
+      </div>
 
-      <form v-else class="mt-4" novalidate @submit.prevent="onSubmit">
-        <div class="mb-5 flex flex-col gap-1.5">
-          <Label for="email" class="text-[13px] font-medium text-(--fg2)">Email*</Label>
+      <form class="space-y-4" novalidate @submit.prevent="onSubmit">
+        <div class="space-y-1.5">
+          <Label for="email" class="text-[13px] font-medium text-(--fg3)">Email</Label>
           <Input
             id="email" :model-value="email" type="email" autocomplete="username" placeholder="nome@studio.it"
-            :aria-invalid="!!errore" @update:model-value="onEmailInput"
+            :aria-invalid="!!errore" class="h-11 rounded-xl border-(--bd) bg-(--surf) dark:bg-(--surf) px-3.5 text-sm transition-all focus-visible:ring-2 focus-visible:ring-(--green)" @update:model-value="onEmailInput"
           />
           <p v-if="errore" class="text-xs font-medium text-(--danger)">{{ errore }}</p>
         </div>
 
-        <Button type="submit" :disabled="inCorso" class="w-full">
+        <Button type="submit" :disabled="inCorso" class="mt-2 h-11 w-full rounded-xl text-sm font-semibold">
+          <Loader2 v-if="inCorso" :size="18" class="animate-spin" />
           {{ inCorso ? 'Invio in corso…' : 'Invia istruzioni' }}
         </Button>
       </form>
+    </template>
 
-      <router-link to="/login" class="group mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)">
-        <ArrowLeft :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:-translate-x-0.5" />
-        <span>Torna al login</span>
-      </router-link>
-    </div>
-  </div>
+    <router-link to="/login" class="group mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)">
+      <ArrowLeft :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:-translate-x-0.5" />
+      <span>Torna al login</span>
+    </router-link>
+  </AccessoLayout>
 </template>

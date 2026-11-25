@@ -5,6 +5,7 @@ import { ChartContainer, type ChartConfig } from '@/components/ui/chart'
 import { VisAxis, VisLine, VisScatter, VisXYContainer } from '@unovis/vue'
 import { MAX_PUNTI_GRAFICO, type Andamento } from '@/utils/andamento'
 import { formattaDataItaliana, isoATimestamp } from '@/utils/data'
+import { formattaNumero } from '@/utils/visita'
 
 const props = withDefaults(
   defineProps<{
@@ -48,6 +49,18 @@ function formattaTick(tick: number | Date): string {
   return punto ? punto.etichetta : formattaDataItaliana(timestamp)
 }
 
+/** Il valore più recente è quello che si cerca: più grande, con l'unità, nel colore del testo principale. */
+// Confronto per data e non per identità: Unovis passa agli accessor copie dei dati.
+function eUltimo(d: PuntoGrafico): boolean {
+  return d.timestamp === datiGrafico.value[datiGrafico.value.length - 1]?.timestamp
+}
+function etichettaPunto(d: PuntoGrafico): string {
+  const valore = formattaNumero(d.valore, props.decimali)
+  return eUltimo(d) && props.unita ? `${valore} ${props.unita}` : valore
+}
+const colorePunto = (d: PuntoGrafico) => (eUltimo(d) ? 'var(--fg)' : 'var(--fg3)')
+const dimensionePunto = (d: PuntoGrafico) => (eUltimo(d) ? 10 : 7)
+
 const chartConfig = computed<ChartConfig>(() => ({
   valore: { label: props.titolo, color: props.colore },
 }))
@@ -67,15 +80,21 @@ const chartConfig = computed<ChartConfig>(() => ({
     <CardContent>
       <div v-if="andamento.punti.length === 0" class="text-sm text-(--fg3)">Nessun dato disponibile</div>
       <template v-else>
-        <!-- Valore attuale e variazione stanno nella riga di indicatori in cima alla scheda paziente: qui solo l'andamento. -->
-        <ChartContainer :config="chartConfig" class="h-40 aspect-auto">
-          <VisXYContainer :data="datiGrafico" :margin="{ left: 20, right: 20 }">
+        <!-- Un valore su ogni punto, l'ultimo in evidenza: la variazione rispetto alla visita precedente è negli indicatori in alto. -->
+        <ChartContainer
+          :config="chartConfig"
+          class="h-40 aspect-auto [--vis-scatter-point-label-text-font-size:11px] [--vis-scatter-point-label-text-font-weight:600]"
+        >
+          <VisXYContainer :data="datiGrafico" :margin="{ left: 28, right: 28, top: 22 }">
             <VisLine :x="(d: PuntoGrafico) => d.timestamp" :y="(d: PuntoGrafico) => d.valore" :color="colore" />
             <VisScatter
               :x="(d: PuntoGrafico) => d.timestamp"
               :y="(d: PuntoGrafico) => d.valore"
               :color="colore"
-              :size="8"
+              :size="dimensionePunto"
+              :label="etichettaPunto"
+              :label-color="colorePunto"
+              label-position="top"
             />
             <VisAxis
               type="x"

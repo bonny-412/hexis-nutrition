@@ -33,6 +33,11 @@ public class AlimentoService {
         if (criteri.ricerca() != null && !criteri.ricerca().isBlank()) {
             specifiche.add(AlimentoSpecifications.conRicerca(criteri.ricerca()));
         }
+        if (criteri.perPertinenza()) {
+            specifiche.add(criteri.ricerca() != null && !criteri.ricerca().isBlank()
+                    ? AlimentoSpecifications.ordinataPerPertinenza(criteri.ricerca())
+                    : AlimentoSpecifications.ordinataPerNome());
+        }
         if (criteri.fonte() == FonteAlimento.BDA) {
             specifiche.add(AlimentoSpecifications.soloBda());
         } else if (criteri.fonte() == FonteAlimento.PERSONALIZZATI) {

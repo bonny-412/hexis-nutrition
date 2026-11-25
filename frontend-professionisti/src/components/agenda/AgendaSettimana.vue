@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { Video } from '@lucide/vue'
+import { CalendarPlus, Video } from '@lucide/vue'
+import { Button } from '@/components/ui/button'
 import type { Appuntamento } from '@/api/agenda'
 import AppuntamentoMenu, { type AzioneAppuntamento } from '@/components/agenda/AppuntamentoMenu.vue'
 import { festivitaDelGiorno } from '@/utils/festivita'
@@ -16,8 +17,13 @@ import {
 } from '@/utils/agenda'
 import { barrato, classiEvento, eVisitaAttiva, etichettaTipo, nomePaziente, titolo } from '@/utils/agendaStile'
 
-const props = defineProps<{ riferimento: string; appuntamenti: Appuntamento[] }>()
-const emit = defineEmits<{ azione: [appuntamento: Appuntamento, azione: AzioneAppuntamento]; dettaglio: [appuntamento: Appuntamento] }>()
+const props = defineProps<{
+  riferimento: string
+  appuntamenti: Appuntamento[]
+  /** Filtro Visite/Promemoria attivo: "libera" sarebbe falso, gli impegni ci sono ma sono nascosti. */
+  filtroAttivo?: boolean
+}>()
+const emit = defineEmits<{ azione: [appuntamento: Appuntamento, azione: AzioneAppuntamento]; dettaglio: [appuntamento: Appuntamento]; nuovo: [data: string] }>()
 
 const NOMI_GIORNI = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
 const ORA_FINE_MIN = 20 * 60
@@ -73,6 +79,13 @@ const colonne = computed(() =>
   }),
 )
 
+/** Settimana senza nessun impegno: un solo messaggio in alto invece di una scritta per colonna. */
+const settimanaVuota = computed(() => colonne.value.every((c) => c.vuota))
+/** I festivi della settimana si dicono nel messaggio: "libera" da sola farebbe pensare a sette giorni lavorativi. */
+const festiviSettimana = computed(() => colonne.value.filter((c) => c.festa).length)
+/** "Nuovo appuntamento" propone oggi se la settimana lo contiene, altrimenti il primo giorno non festivo. */
+const dataNuovo = computed(() => (colonne.value.find((c) => c.eOggi) ?? colonne.value.find((c) => !c.festa) ?? colonne.value[0]).iso)
+
 const lineaAdessoPx = computed(() =>
   adessoMin.value >= ORA_ORIGINE_MIN && adessoMin.value < ORA_FINE_MIN
     ? ((adessoMin.value - ORA_ORIGINE_MIN) * PX_PER_ORA) / 60
@@ -88,6 +101,19 @@ function testoEvento(a: Appuntamento): string {
 
 <template>
   <section class="overflow-x-auto rounded-2xl border border-(--bd) bg-(--surf)" data-test="agenda-settimana">
+    <div
+      v-if="settimanaVuota"
+      class="sticky left-0 flex flex-wrap items-center justify-between gap-3 border-b border-(--bd) bg-(--soft) px-5 py-3"
+      data-test="settimana-vuota"
+    >
+      <p v-if="filtroAttivo" class="text-sm text-(--fg3)">Nessun impegno di questo tipo in questi sette giorni.</p>
+      <template v-else>
+        <p class="text-sm text-(--fg3)">
+          <span class="font-heading text-base italic text-(--fg)">Settimana libera.</span> Nessun impegno in questi sette giorni<template v-if="festiviSettimana === 1">, uno è festivo</template><template v-else-if="festiviSettimana > 1">, {{ festiviSettimana }} sono festivi</template>.
+        </p>
+        <Button size="sm" @click="emit('nuovo', dataNuovo)"><CalendarPlus :size="14" /> Nuovo appuntamento</Button>
+      </template>
+    </div>
     <div class="min-w-[880px]">
       <!-- Intestazione -->
       <div class="grid grid-cols-[48px_repeat(7,minmax(0,1fr))] border-b border-(--bd)">
@@ -149,8 +175,6 @@ function testoEvento(a: Appuntamento): string {
           :data-test="`settimana-colonna-${c.iso}`"
         >
           <div v-for="h in ORE" :key="h" class="h-[58px] border-t border-(--div)" />
-
-          <p v-if="c.vuota" class="absolute inset-x-0 top-6 text-center text-xs text-(--fg3)">Nessun impegno</p>
 
           <!-- :style solo per top/height/left/width: valori dinamici da posizioneEvento e dalle corsie (eccezione approvata); vale anche per la linea dell'ora corrente. -->
           <div

@@ -38,12 +38,18 @@ public final class PazienteSpecifications {
         return (root, query, cb) -> cb.equal(root.get("archiviato"), archiviato);
     }
 
+    /**
+     * Nome, cognome e codice fiscale combaciano in qualunque punto; l'email solo dall'inizio:
+     * cercando ".com" o "gmail" combacerebbero quasi tutti i pazienti, cercando "mario" si trova ancora mario.rossi@...
+     */
     public static Specification<Paziente> conRicerca(String ricerca) {
-        String pattern = "%" + ricerca.toLowerCase() + "%";
+        String minuscolo = ricerca.toLowerCase();
+        String pattern = "%" + minuscolo + "%";
+        String inizio = minuscolo + "%";
         return (root, query, cb) -> cb.or(
                 cb.like(cb.lower(root.get("nome")), pattern),
                 cb.like(cb.lower(root.get("cognome")), pattern),
-                cb.like(cb.lower(root.get("email")), pattern),
+                cb.like(cb.lower(root.get("email")), inizio),
                 cb.like(cb.lower(root.get("codiceFiscale")), pattern));
     }
 

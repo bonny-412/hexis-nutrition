@@ -46,30 +46,15 @@ watch(modo, (valore) => {
   if (valore === 'cerca') focusRicerca()
 })
 
-/** Prima i nomi che iniziano con la ricerca, poi quelli che la contengono, infine i match sulla sola categoria. */
-function punteggio(alimento: Alimento, testo: string): number {
-  const nome = alimento.nome.toLocaleLowerCase('it-IT')
-  if (nome.startsWith(testo)) return 0
-  if (nome.split(/[\s,(]+/).some((parola) => parola.startsWith(testo))) return 1
-  if (nome.includes(testo)) return 2
-  return 3
-}
-
 async function eseguiRicerca(testo: string) {
   const ricerca = testo.trim()
   if (!ricerca) {
     risultati.value = []
     return
   }
-  // Il server ordina per nome e include i match sulla categoria ("pasta per pane e pizza"): chiediamo
-  // una pagina ampia e riordiniamo qui per pertinenza. Andrebbe spostato nel backend (ordinamento per rilevanza).
-  const pagina = await cercaAlimenti({ ricerca, dimensione: 100 })
-  const minuscolo = ricerca.toLocaleLowerCase('it-IT')
+  // Il server ordina per pertinenza: prima i nomi che iniziano col testo, ultimi i match sulla sola categoria.
+  const pagina = await cercaAlimenti({ ricerca, ordinaPer: 'pertinenza', dimensione: 30 })
   risultati.value = pagina.contenuto
-    .map((alimento, indice) => ({ alimento, indice, punti: punteggio(alimento, minuscolo) }))
-    .sort((a, b) => a.punti - b.punti || a.indice - b.indice)
-    .slice(0, 30)
-    .map((r) => r.alimento)
 }
 
 function kcalPer100g(alimento: Alimento): string {

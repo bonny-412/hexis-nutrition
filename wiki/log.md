@@ -726,3 +726,73 @@ Dettaglio in [stato](stato.md#sessione-del-15-novembre-2026--agenda-implementata
 - `stato.md`: sezione del 25 novembre aggiornata (aperti residui, dati di prova da eliminare, nota sul watcher di Vite) e "Prossimo passo consigliato" riscritto: commit, pulizia dati di prova, poi barra azioni fissa, grafici della scheda paziente, stati vuoti/Dashboard, mobile, pagine di accesso.
 - `docs/ui-review-2026-11-25.md`: aperti ripuliti, nuovo ordine consigliato (§6) e riepilogo di quanto fatto dopo la prima stesura (§7).
 - Verifiche finali: backend `mvn test` 194/194 (dopo l'aggiunta dei campi dei piani), frontend `vue-tsc --noEmit` pulito, `vitest` 289/296 (7 falliti noti e preesistenti). Tutto in staging, nessun commit.
+
+## [2026-11-25] query | Lime desaturato in scuro: scartato
+
+- Valutato con la skill frontend-design: il lime resta `#C7F36B` anche in scuro (solo segnali piccoli e pulsante `accent` sui blocchi hero). Decisione in ADR 0009; aperti tolti da `stato.md` e `docs/ui-review-2026-11-25.md`. Nessun codice toccato, nessun commit.
+
+## [2026-11-25] handoff | Barra azioni fissa nei form lunghi
+
+- Nuovo `components/form/BarraAzioniForm.vue`: pillola flottante `rounded-2xl` con bordo e ombra, `sticky` in fondo al `<main>`, "Modifiche non salvate" con punto lime alla prima modifica, "Annulla"/"Salva" con etichette e `data-test` invariati. Usata in nuovo paziente, visita ed editor piano (non in sola lettura). Prima versione a fascia piena, poi resa flottante e arrotondata su richiesta di Andrea.
+- Design e piano: `docs/superpowers/specs/2026-11-25-barra-azioni-form-design.md`, `docs/superpowers/plans/2026-11-25-barra-azioni-form.md`. ADR 0009 aggiornata.
+- Verifiche: provata in Chrome (chiaro, scuro, 390 px via iframe) sui tre form; `vue-tsc --noEmit` pulito; `vitest` 289/296 (7 falliti noti). Nessun test nuovo. In staging, nessun commit.
+
+## [2026-11-25] handoff | Grafici della scheda paziente
+
+- `utils/obiettivo.ts`: verso "buono" di ogni parametro per obiettivo (tabella approvata da Andrea). Indicatori della scheda e colonna Variazione della tabella del Confronto ora verdi/rossi solo se l'obiettivo dà una direzione, grigi altrimenti (prima: peso giù sempre verde, tabella sempre ocra).
+- Panoramica: valore su ogni punto dei grafici Peso e BMI, ultimo punto più grande e con unità; Massa magra e % grasso con il valore reale sull'ultimo punto.
+- Confronto visite: provato un grafico a barre divergenti delle variazioni, scartato da Andrea. `ConfrontoBarChart.vue` ridisegnato in HTML/CSS (A in tinta chiara, B pieno, valori sulle barre, scala per parametro).
+- Verifiche: Chrome chiaro/scuro/390 px, obiettivi Mantenimento, Dimagrimento e Aumento peso (questi due simulati solo nel browser, nessun dato cambiato). `vue-tsc` pulito; `vitest` 289/296: 6 falliti in `ConfrontoBarChart.spec.ts` (testa la vecchia implementazione Unovis, da riscrivere) + 1 noto. In staging, nessun commit.
+
+## [2026-11-25] handoff | Spec di ConfrontoBarChart riscritto
+
+- `ConfrontoBarChart.spec.ts` riscritto su richiesta di Andrea per la versione HTML/CSS: 9 test (titolo, messaggio senza misure, righe a un lato escluse, valori senza unità in verticale e con unità in orizzontale, scala per coppia, tinta di A e colore di B, orientamento, legenda). Aggiunti `data-test="barra"` e `data-colore` alle barre del componente.
+- `vue-tsc` pulito; `vitest` 296/297, resta solo il fallito noto di `PianiAlimentariListView.spec.ts`. In staging, nessun commit.
+
+## [2026-11-25] handoff | Suite frontend tutta verde
+
+- `PianiAlimentariListView.spec.ts`: il test dello stato vuoto cercava "Nessun piano trovato", testo vecchio; la pagina senza filtri mostra "Nessun piano presente" con il pulsante "Nuovo piano" (con filtri: "Nessun risultato trovato"). Allineato il test, pagina invariata.
+- `vitest` 297/297 verde per la prima volta da agosto; `stato.md` e review aggiornati. In staging, nessun commit.
+
+## [2026-11-25] handoff | Chiusura seconda parte: barra azioni, grafici, suite verde
+
+- `stato.md`: nuova sezione "Sessione del 25 novembre 2026 (seconda parte)" (decisioni: lime invariato, verso dei parametri per obiettivo, confronto A/B senza colori per obiettivo; fatto; non verificato), riga in "Dove siamo" e nuova voce in cima a "Prossimo passo consigliato".
+- Aperti: commit di tutto lo staging, eliminazione dei dati di prova di Beatrice De Luca; poi stati vuoti e Dashboard, mobile (agenda Giorno, scheda paziente compatta), pagine di accesso, piccoli (titolo conferme, "Invita" doppione, card BIA, command palette ".com", pertinenza alimenti nel backend, anteprima % grasso e BIA nella visita).
+- Stato finale: `vue-tsc` pulito, `vitest` 297/297. Nessun commit.
+
+## [2026-11-25] handoff | Stati vuoti e Dashboard orientata alle azioni
+
+- Brainstorming (con frontend-design) → design breve → piano → executing-plans inline su `master` (nessun worktree: lo staging di oggi non sarebbe stato incluso; nessun commit; nessun test nuovo per preferenza di Andrea).
+- Nuovi `components/StatoVuoto.vue` e `components/dashboard/DaFareCard.vue`; modificati Dashboard, 4 tab della scheda paziente, `AgendaSettimana`, `AgendaGiorno`, `AgendaView`; adeguati 2 test ai nuovi testi.
+- Revisione indipendente (Opus): corretti 2 Important ("Avvia visita" spariva all'ora di inizio; "libera" mostrato con un filtro attivo). Minor rimandati: settimana di soli festivi mostra "Settimana libera"; "Nuovo appuntamento" dalla settimana propone il giorno di riferimento e non oggi; titolo di `StatoVuoto` è un `<p>` e non un heading; Dashboard carica i blocchi in sequenza; una risposta `undefined` di `cerca` blocca la card (succede solo con mock incompleti).
+- Verifiche: `vue-tsc` pulito, `vitest` 297/297, Chrome chiaro/scuro/390 px. In staging, nessun commit.
+
+## [2026-11-25] handoff | Minor della revisione su stati vuoti e Dashboard
+
+- Corretti su richiesta di Andrea i 5 Minor: titolo di `StatoVuoto` ora è un heading (prop `livello`, `h4` nelle tab della scheda paziente); Dashboard carica conteggio, agenda e "Da fare" in parallelo e tratta una risposta senza contenuto come errore del gruppo; striscia "Settimana libera" che dice quanti giorni sono festivi; "Nuovo appuntamento" dagli stati vuoti propone oggi se la settimana lo contiene, altrimenti il primo giorno non festivo (dalla vista Giorno, quel giorno).
+- Verifiche: `vue-tsc` pulito, `vitest` 297/297, Chrome (settimana 21-27 dicembre: "2 sono festivi", dialog su 21 dic; Dashboard carica). In staging, nessun commit.
+
+## [2026-11-25] handoff | Mobile e pagine di accesso
+
+- Brainstorming e frontend-design → design breve → piano → esecuzione inline su `master` (nessun commit, nessun test nuovo). Spec e piano: `docs/superpowers/specs|plans/2026-11-25-mobile-e-accesso*`.
+- Agenda in vista Giorno da mobile; testata del paziente compatta da mobile con menu "⋯"; dati clinici prima del profilo; stato account + invito in un'unica pillola; `AccessoLayout.vue` per le tre pagine di accesso; regola `:-webkit-autofill`; import mancante di `ShieldCheck` corretto.
+- Revisione indipendente (Opus): corretti 1 Important (autocompletamento scavalcato al focus, fondo diverso in scuro) e 5 Minor. Rimandati: area di tocco di "Invita" nella pillola (~24 px); colori `white/*` del pannello di accesso non a token; `h2` del pannello prima dell'`h1` della pagina; vista dell'agenda decisa solo all'apertura.
+- Verifiche: `vue-tsc` pulito, `vitest` 297/297; Chrome a 390 px (scuro) e desktop: reset, agenda, scheda paziente; password dimenticata con un indirizzo inesistente (nessuna email). Autocompletamento reale non verificabile da automazione. In staging, nessun commit.
+
+## [2026-11-25] handoff | Piccoli della review e minori rimandati
+
+- Frontend: titolo delle conferme (`AlertDialogTitle`) in Fraunces corsivo 20 px come i dialog; BIA nella Panoramica come riga sottile invece di una card da un terzo di riga (gli altri segnaposto BIA restano, i test li richiedono); "Invita" nella pillola con area di tocco più ampia e `Loader2` durante l'invio; pannello di accesso con token (`--on-hero`, `--side-fg`, `--side-act-bg`, `--side-bd`) al posto dei bianchi e motto come `<p>` invece di `<h2>`; dialog "Aggiungi alimento" che chiede `ordinaPer=pertinenza` al server (via il riordino nel browser).
+- Backend: `ordinaPer=pertinenza` su `GET /alimenti/ricerca` (`AlimentoSpecifications.ordinataPerPertinenza`, pagina senza `Sort`); ricerca pazienti con email che combacia solo dall'inizio (la command palette non trova più tutti con ".com"). `api-contracts.md` aggiornato. Nessun test nuovo (da decidere con Andrea).
+- Dati di prova di Beatrice De Luca: restano, decisione di Andrea.
+- Verifiche: `mvn test` 196/196 (con i due test nuovi), `vue-tsc` pulito, `vitest` 297/297 (adeguato il test della BIA nella Panoramica); Chrome per titolo delle conferme, riga BIA e pannello di accesso. **Da provare dopo il riavvio del backend**: palette con ".com", "Aggiungi alimento" con "pasta". In staging, nessun commit.
+
+## [2026-11-25] handoff | Test per pertinenza alimenti e ricerca per email
+
+- Su richiesta di Andrea: `AlimentoControllerTest.ricercaPerPertinenzaMettePrimaINomiCheInizianoColTestoEUltimiIMatchSullaCategoria` (ordine a 4 livelli e paginazione con conteggio) e `PazienteSpecificationsTest.conRicercaConfrontaLEmailSoloDallInizio` (prefisso sì, ".com" e "example" no). Scritti dopo l'implementazione: con il codice precedente fallirebbero (ordine alfabetico; email confrontata in qualunque punto), ma non sono stati eseguiti contro di esso.
+- `mvn test` 196/196. In staging, nessun commit.
+
+## [2026-11-25] handoff | Fine giornata: sezione 6 della revisione chiusa
+
+- `stato.md`: riga in "Dove siamo" e nuova voce in cima a "Prossimo passo consigliato" (commit, riavvio backend e prove a mano, aperti di prodotto, nuovo giro di revisione).
+- Stato finale: backend `mvn test` 196/196, frontend `vue-tsc` pulito e `vitest` 297/297; 54 file in staging; nessun commit.
+- Subito dopo: nuovo giro di revisione completo in Chrome con frontend-design più una revisione indipendente del codice UI da un secondo agente.

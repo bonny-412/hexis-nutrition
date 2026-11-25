@@ -7,6 +7,8 @@ import { ApiError } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ArrowLeft, Loader2 } from '@lucide/vue'
+import AccessoLayout from '@/components/auth/AccessoLayout.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -69,32 +71,41 @@ async function onSubmit() {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-(--bg)">
-    <form class="w-full max-w-90" novalidate @submit.prevent="onSubmit">
-      <h1 class="font-heading text-2xl italic text-(--fg)">Imposta una nuova password</h1>
+  <AccessoLayout>
+    <div class="mb-8">
+      <h1 class="font-heading text-3xl italic text-(--fg)">Imposta una nuova password</h1>
+      <p class="mt-2 text-sm text-(--fg3)">La userai da ora in poi per accedere allo studio.</p>
+    </div>
 
-      <div class="mb-3.5 mt-4 flex flex-col gap-1.5">
-        <Label for="nuova-password" class="text-[13px] font-medium text-(--fg2)">Nuova password*</Label>
+    <form class="space-y-4" novalidate @submit.prevent="onSubmit">
+      <div class="space-y-1.5">
+        <Label for="nuova-password" class="text-[13px] font-medium text-(--fg3)">Nuova password</Label>
         <Input
           id="nuova-password" :model-value="nuovaPassword" type="password" autocomplete="new-password"
-          :aria-invalid="!!errori.nuovaPassword" @update:model-value="onNuovaPasswordInput"
+          :aria-invalid="!!errori.nuovaPassword" class="h-11 rounded-xl border-(--bd) bg-(--surf) dark:bg-(--surf) px-3.5 text-sm transition-all focus-visible:ring-2 focus-visible:ring-(--green)" @update:model-value="onNuovaPasswordInput"
         />
         <p v-if="errori.nuovaPassword" class="text-xs font-medium text-(--danger)">{{ errori.nuovaPassword }}</p>
         <p v-else class="text-xs text-(--fg3)">Almeno 8 caratteri.</p>
       </div>
 
-      <div class="mb-5 flex flex-col gap-1.5">
-        <Label for="conferma-password" class="text-[13px] font-medium text-(--fg2)">Conferma password*</Label>
+      <div class="space-y-1.5">
+        <Label for="conferma-password" class="text-[13px] font-medium text-(--fg3)">Conferma password</Label>
         <Input
           id="conferma-password" :model-value="conferma" type="password" autocomplete="new-password"
-          :aria-invalid="!!errori.conferma" @update:model-value="onConfermaInput"
+          :aria-invalid="!!errori.conferma" class="h-11 rounded-xl border-(--bd) bg-(--surf) dark:bg-(--surf) px-3.5 text-sm transition-all focus-visible:ring-2 focus-visible:ring-(--green)" @update:model-value="onConfermaInput"
         />
         <p v-if="errori.conferma" class="text-xs font-medium text-(--danger)">{{ errori.conferma }}</p>
       </div>
 
-      <Button type="submit" :disabled="inCorso" class="w-full">
+      <Button type="submit" :disabled="inCorso" class="mt-2 h-11 w-full rounded-xl text-sm font-semibold">
+        <Loader2 v-if="inCorso" :size="18" class="animate-spin" />
         {{ inCorso ? 'Salvataggio…' : 'Imposta password' }}
       </Button>
     </form>
-  </div>
+
+    <router-link to="/login" class="group mt-6 inline-flex items-center gap-1.5 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)">
+      <ArrowLeft :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:-translate-x-0.5" />
+      <span>Torna al login</span>
+    </router-link>
+  </AccessoLayout>
 </template>

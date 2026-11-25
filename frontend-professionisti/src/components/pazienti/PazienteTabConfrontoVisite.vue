@@ -6,8 +6,17 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { ETICHETTE_CIRCONFERENZE, ETICHETTE_OBIETTIVO, formattaNumero } from '@/utils/visita'
 import { formattaDataItalianaConMese } from '@/utils/data'
 import ConfrontoBarChart from './ConfrontoBarChart.vue'
+import { Button } from '@/components/ui/button'
+import StatoVuoto from '@/components/StatoVuoto.vue'
+import { ClipboardPlus, GitCompareArrows } from '@lucide/vue'
+import { CLASSE_ESITO, esitoVariazione, type ParametroClinico } from '@/utils/obiettivo'
 
-const props = defineProps<{ visite: Visita[] }>()
+const props = defineProps<{
+  visite: Visita[]
+  /** Per il pulsante "Nuova visita" dello stato vuoto: senza (o con paziente archiviato) il pulsante non compare. */
+  pazienteId?: string
+  archiviato?: boolean
+}>()
 
 const idxA = ref(0)
 const idxB = ref(Math.max(props.visite.length - 1, 0))
@@ -25,6 +34,7 @@ const visitaB = computed<Visita | undefined>(() => props.visite[idxB.value])
 
 interface Riga {
   label: string
+  parametro: ParametroClinico
   a: number | null
   b: number | null
   unita: string
@@ -40,8 +50,8 @@ function righeConVariazione(righe: Riga[]) {
 }
 
 const righePeso = computed<Riga[]>(() => [
-  { label: 'Peso (kg)', a: visitaA.value?.pesoKg ?? null, b: visitaB.value?.pesoKg ?? null, unita: 'kg' },
-  { label: 'BMI', a: visitaA.value?.bmi ?? null, b: visitaB.value?.bmi ?? null, unita: '', decimali: 1 },
+  { label: 'Peso (kg)', parametro: 'peso', a: visitaA.value?.pesoKg ?? null, b: visitaB.value?.pesoKg ?? null, unita: 'kg' },
+  { label: 'BMI', parametro: 'bmi', a: visitaA.value?.bmi ?? null, b: visitaB.value?.bmi ?? null, unita: '', decimali: 1 },
 ])
 
 const rigaObiettivo = computed(() => ({
@@ -53,16 +63,17 @@ const rigaObiettivo = computed(() => ({
 const haPlicometria = computed(() => !!visitaA.value?.plicometria || !!visitaB.value?.plicometria)
 
 const righePlicometria = computed<Riga[]>(() => [
-  { label: '% Grasso corporeo', a: visitaA.value?.plicometria?.percentualeGrassoCorporeo ?? null, b: visitaB.value?.plicometria?.percentualeGrassoCorporeo ?? null, unita: '%' },
-  { label: 'Massa grassa (kg)', a: visitaA.value?.plicometria?.massaGrassaKg ?? null, b: visitaB.value?.plicometria?.massaGrassaKg ?? null, unita: 'kg' },
-  { label: 'Massa magra (kg)', a: visitaA.value?.plicometria?.massaMagraKg ?? null, b: visitaB.value?.plicometria?.massaMagraKg ?? null, unita: 'kg' },
-  { label: 'FMI', a: visitaA.value?.plicometria?.fmi ?? null, b: visitaB.value?.plicometria?.fmi ?? null, unita: '' },
-  { label: 'FFMI', a: visitaA.value?.plicometria?.ffmi ?? null, b: visitaB.value?.plicometria?.ffmi ?? null, unita: '' },
+  { label: '% Grasso corporeo', parametro: 'percentualeGrasso', a: visitaA.value?.plicometria?.percentualeGrassoCorporeo ?? null, b: visitaB.value?.plicometria?.percentualeGrassoCorporeo ?? null, unita: '%' },
+  { label: 'Massa grassa (kg)', parametro: 'massaGrassa', a: visitaA.value?.plicometria?.massaGrassaKg ?? null, b: visitaB.value?.plicometria?.massaGrassaKg ?? null, unita: 'kg' },
+  { label: 'Massa magra (kg)', parametro: 'massaMagra', a: visitaA.value?.plicometria?.massaMagraKg ?? null, b: visitaB.value?.plicometria?.massaMagraKg ?? null, unita: 'kg' },
+  { label: 'FMI', parametro: 'fmi', a: visitaA.value?.plicometria?.fmi ?? null, b: visitaB.value?.plicometria?.fmi ?? null, unita: '' },
+  { label: 'FFMI', parametro: 'ffmi', a: visitaA.value?.plicometria?.ffmi ?? null, b: visitaB.value?.plicometria?.ffmi ?? null, unita: '' },
 ])
 
 const righeCirconferenze = computed<Riga[]>(() =>
   (Object.keys(ETICHETTE_CIRCONFERENZE) as Array<keyof Visita['circonferenze']>).map((chiave) => ({
     label: ETICHETTE_CIRCONFERENZE[chiave],
+    parametro: chiave,
     a: visitaA.value?.circonferenze[chiave] ?? null,
     b: visitaB.value?.circonferenze[chiave] ?? null,
     unita: 'cm',
@@ -70,6 +81,11 @@ const righeCirconferenze = computed<Riga[]>(() =>
 )
 
 const haCirconferenze = computed(() => righeCirconferenze.value.some((r) => r.a !== null || r.b !== null))
+
+/** Colore della variazione in tabella: verde/rosso secondo l'obiettivo della visita B, grigio se indifferente. */
+function classeVariazione(r: Riga & { variazione: number | null }): string {
+  return CLASSE_ESITO[esitoVariazione(visitaB.value?.obiettivo, r.parametro, r.variazione)]
+}
 
 function formattaCella(valore: number | null, unita: string, decimali?: number): string {
   return valore === null ? '—' : `${formattaNumero(valore, decimali)}${unita ? ' ' + unita : ''}`
@@ -83,11 +99,19 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
 </script>
 
 <template>
-  <div v-if="visite.length < 2" class="rounded-2xl border border-(--bd) bg-(--surf) p-8 text-center text-sm text-(--fg3)">
-    <h4 class="font-heading text-lg italic text-(--fg)">Nessun confronto disponibile</h4>
-    <p class="mx-auto mt-1.5 max-w-sm text-sm text-(--fg3)">
-      Servono almeno due visite per confrontare i progressi.
-    </p>
+  <div v-if="visite.length < 2" class="rounded-2xl border border-(--bd) bg-(--surf)">
+    <StatoVuoto
+      livello="h4"
+      :icona="GitCompareArrows"
+      titolo="Nessun confronto disponibile"
+      testo="Servono almeno due visite per confrontare i progressi."
+    >
+      <Button v-if="pazienteId && !archiviato" as-child>
+        <router-link :to="`/pazienti/${pazienteId}/visite/nuova`" data-test="confronto-nuova-visita">
+          <ClipboardPlus :size="16" /> Nuova visita
+        </router-link>
+      </Button>
+    </StatoVuoto>
   </div>
 
   <div v-else class="space-y-5">
@@ -157,7 +181,7 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
               <td class="px-3 py-2.5 text-right tabular-nums">{{ formattaCella(r.b, r.unita, r.decimali) }}</td>
               <td
                 class="px-5 py-2.5 text-right font-bold"
-                :class="!r.variazione ? 'text-(--fg3)' : 'text-(--warn-fg)'"
+                :class="classeVariazione(r)"
               >
                 {{ formattaVariazione(r.variazione, r.unita, r.decimali) }}
               </td>
@@ -176,7 +200,7 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
                 <td class="px-3 py-2.5 text-right tabular-nums">{{ formattaCella(r.b, r.unita, r.decimali) }}</td>
                 <td
                   class="px-5 py-2.5 text-right font-bold"
-                  :class="!r.variazione ? 'text-(--fg3)' : 'text-(--warn-fg)'"
+                  :class="classeVariazione(r)"
                 >
                   {{ formattaVariazione(r.variazione, r.unita, r.decimali) }}
                 </td>
@@ -191,7 +215,7 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
                 <td class="px-3 py-2.5 text-right tabular-nums">{{ formattaCella(r.b, r.unita, r.decimali) }}</td>
                 <td
                   class="px-5 py-2.5 text-right font-bold"
-                  :class="!r.variazione ? 'text-(--fg3)' : 'text-(--warn-fg)'"
+                  :class="classeVariazione(r)"
                 >
                   {{ formattaVariazione(r.variazione, r.unita, r.decimali) }}
                 </td>

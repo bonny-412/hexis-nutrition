@@ -21,7 +21,7 @@ export interface Alimento {
 export interface CriteriRicercaAlimenti {
   pagina?: number
   dimensione?: number
-  ordinaPer?: 'nome'
+  ordinaPer?: 'nome' | 'pertinenza'
   direzione?: 'asc' | 'desc'
   ricerca?: string
   fonte?: 'TUTTI' | 'BDA' | 'PERSONALIZZATI'

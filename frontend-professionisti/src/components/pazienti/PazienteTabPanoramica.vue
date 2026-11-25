@@ -4,7 +4,9 @@ import type { Paziente, Visita } from '@/api/pazienti'
 import type { AndamentoPaziente } from '@/utils/andamento'
 import { ETICHETTE_CIRCONFERENZE, formattaNumero } from '@/utils/visita'
 import { calcolaEta, formattaDataItalianaEstesa } from '@/utils/data'
-import { User, Mail, Phone, Smartphone, Briefcase, Stethoscope, Fingerprint, Cake, StickyNote, Pill } from '@lucide/vue'
+import { User, Mail, Phone, Smartphone, Briefcase, Stethoscope, Fingerprint, Cake, StickyNote, Pill, ClipboardPlus } from '@lucide/vue'
+import { Button } from '@/components/ui/button'
+import StatoVuoto from '@/components/StatoVuoto.vue'
 import AndamentoChart from './AndamentoChart.vue'
 import ComposizioneChart from './ComposizioneChart.vue'
 
@@ -51,8 +53,8 @@ const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) 
 <template>
   <div class="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
     <!-- Colonna principale: andamento clinico, indipendente dai dati anagrafici -->
-    <!-- Su schermi piccoli il profilo (colonna laterale) precede queste card: vedi order-* qui e sull'aside. -->
-    <div class="order-2 space-y-4 xl:order-1">
+    <!-- I dati clinici vengono prima del profilo a ogni larghezza: da mobile il profilo scende in fondo. -->
+    <div class="space-y-4">
       <div v-if="erroreVisite" class="rounded-2xl border border-(--bd) bg-(--surf) p-6 text-xs font-medium text-(--danger)">
         Non è stato possibile caricare lo storico delle visite.
       </div>
@@ -61,11 +63,19 @@ const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) 
         <div v-for="n in 3" :key="n" data-test="andamento-chart-skeleton" class="h-48 animate-pulse rounded-xl bg-(--hover)" />
       </div>
 
-      <div v-else-if="visite.length === 0" class="rounded-2xl border border-(--bd) bg-(--surf) p-8 text-center text-sm text-(--fg3)">
-        <h4 class="font-heading text-lg italic text-(--fg)">Nessuna visita registrata</h4>
-        <p class="mx-auto mt-1.5 max-w-sm text-sm text-(--fg3)">
-          Nessun dato clinico da mostrare. I dettagli dell'ultima visita appariranno qui non appena registrata.
-        </p>
+      <div v-else-if="visite.length === 0" class="rounded-2xl border border-(--bd) bg-(--surf)">
+        <StatoVuoto
+      livello="h4"
+          :icona="Stethoscope"
+          titolo="Nessuna visita registrata"
+          testo="Peso, composizione corporea e grafici dell'andamento compaiono qui dalla prima visita."
+        >
+          <Button v-if="!paziente.archiviato" as-child>
+            <router-link :to="`/pazienti/${paziente.id}/visite/nuova`" data-test="panoramica-prima-visita">
+              <ClipboardPlus :size="16" /> Registra la prima visita
+            </router-link>
+          </Button>
+        </StatoVuoto>
       </div>
 
       <div v-else class="space-y-4">
@@ -84,11 +94,7 @@ const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) 
           <ComposizioneChart :grasso="andamento.percentualeGrassoCorporeo" :magra="andamento.massaMagra" />
       </div>
 
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <div class="rounded-2xl border border-(--bd) bg-(--surf) p-5">
-          <h4 class="font-heading text-base italic text-(--fg)">BIA</h4>
-          <p class="mt-3 text-sm text-(--fg3)">Dati non disponibili: la bioimpedenziometria non è ancora supportata.</p>
-        </div>
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 
         <div class="rounded-2xl border border-(--bd) bg-(--surf) p-5">
           <h4 class="font-heading text-base italic text-(--fg)">Plicometria</h4>
@@ -128,11 +134,15 @@ const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) 
           <p v-else class="mt-3 text-sm text-(--fg3)">Nessuna circonferenza registrata per l'ultima visita.</p>
         </div>
       </div>
+      <!-- La BIA non è ancora supportata: una riga, non una card vuota accanto ai dati veri. -->
+      <p class="rounded-xl border border-dashed border-(--bd2) px-4 py-2.5 text-xs text-(--fg3)">
+        <span class="font-semibold text-(--fg2)">BIA</span> · la bioimpedenziometria non è ancora supportata.
+      </p>
     </div>
     </div>
 
     <!-- Colonna laterale: profilo del paziente, indipendente dalle visite -->
-    <aside class="order-1 rounded-2xl border border-(--bd) bg-(--surf) p-6 xl:order-2">
+    <aside class="rounded-2xl border border-(--bd) bg-(--surf) p-6">
       <div class="mb-5 flex items-center gap-3">
         <div>
           <h3 class="font-heading text-lg italic text-(--fg)">Profilo</h3>

@@ -84,7 +84,8 @@ describe('PazienteTabStoricoVisite', () => {
   it('mostra un messaggio quando non ci sono visite', async () => {
     const wrapper = await monta([])
     expect(wrapper.text()).toContain('Nessuna visita registrata')
-    expect(wrapper.text()).toContain('Lo storico del paziente è vuoto. Registra la prima visita per iniziare a documentare il suo percorso.')
+    expect(wrapper.text()).toContain('Lo storico è vuoto. Registra la prima visita per iniziare a documentare il percorso del paziente.')
+    expect(wrapper.find('[data-test="storico-prima-visita"]').exists()).toBe(true)
   })
 
   it('elenca le visite dalla più recente, con obiettivo e delta rispetto alla precedente', async () => {

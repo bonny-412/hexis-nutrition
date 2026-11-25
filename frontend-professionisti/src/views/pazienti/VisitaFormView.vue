@@ -20,6 +20,7 @@ import { cerca as cercaPiani, noteDelPiano } from '@/api/pianiAlimentari'
 import { pianiNellIntervallo, type PianoConNote } from '@/utils/pianoAlimentare'
 import { ApiError } from '@/api/client'
 import { Button } from '@/components/ui/button'
+import BarraAzioniForm from '@/components/form/BarraAzioniForm.vue'
 import {
   AlertDialog,
   AlertDialogContent,
@@ -30,7 +31,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { ArrowLeft, History, Save } from '@lucide/vue'
+import { ArrowLeft, History } from '@lucide/vue'
 import { formattaDataItalianaConMese } from '@/utils/data'
 import { formattaNumero } from '@/utils/visita'
 
@@ -296,15 +297,12 @@ async function onSubmit() {
           />
         </div>
 
-        <div class="w-full flex justify-end items-center gap-2">
-          <Button type="button" data-test="btn-annulla" variant="neutral" :disabled="inCorso" @click="onAnnullaClick">
-            Annulla
-          </Button>
-          <Button type="submit" :disabled="inCorso">
-            <Save :size="16" />
-            {{ inCorso ? 'Salvataggio…' : 'Salva visita' }}
-          </Button>
-        </div>
+        <BarraAzioniForm
+          :modificato="datiVisitaForm?.modificato() ?? false"
+          :in-corso="inCorso"
+          etichetta-salva="Salva visita"
+          @annulla="onAnnullaClick"
+        />
       </form>
     </template>
     </div>

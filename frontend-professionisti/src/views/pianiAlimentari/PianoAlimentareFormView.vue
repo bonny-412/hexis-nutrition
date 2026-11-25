@@ -7,6 +7,7 @@ import AppShell from '@/components/AppShell.vue'
 import SelezionaPazienteCombobox from '@/components/pazienti/SelezionaPazienteCombobox.vue'
 import AggiungiAlimentoDialog from '@/components/pianiAlimentari/AggiungiAlimentoDialog.vue'
 import { Button } from '@/components/ui/button'
+import BarraAzioniForm from '@/components/form/BarraAzioniForm.vue'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -32,7 +33,7 @@ import {
   erroreDataInizioPiano, erroreDataFinePiano, erroreNumeroDecimaleObbligatorio,
 } from '@/utils/validators'
 import { formattaDataItalianaConMese } from '@/utils/data'
-import { ArrowLeft, CalendarRange, MoreHorizontal, Trash2, Pencil, Plus, X, Save, Printer, CircleCheck, Copy, StickyNote } from '@lucide/vue'
+import { ArrowLeft, CalendarRange, MoreHorizontal, Trash2, Pencil, Plus, X, Printer, CircleCheck, Copy, StickyNote } from '@lucide/vue'
 import PianoNoteSheet from '@/components/pianiAlimentari/PianoNoteSheet.vue'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { nomeAlimentoLeggibile } from '@/utils/testo'
@@ -1711,14 +1712,17 @@ function stampaPdf() {
         </fieldset>
       </div>
 
-      <div v-if="!solaLettura" class="flex w-full items-center justify-end gap-2 print:hidden">
-        <Button type="button" variant="neutral" data-test="annulla-modifiche" :disabled="salvataggioInCorso" @click="annulla">
-          Annulla
-        </Button>
-        <Button :disabled="salvataggioInCorso || !nome.trim()" @click="salva">
-          <Save :size="16" /> {{ salvataggioInCorso ? 'Salvataggio…' : 'Salva' }}
-        </Button>
-      </div>
+      <BarraAzioniForm
+        v-if="!solaLettura"
+        :modificato="modificato"
+        :in-corso="salvataggioInCorso"
+        etichetta-salva="Salva"
+        :salva-disabilitato="!nome.trim()"
+        tipo-salva="button"
+        data-test-annulla="annulla-modifiche"
+        @annulla="annulla"
+        @salva="salva"
+      />
       </template>
     </div>
 
