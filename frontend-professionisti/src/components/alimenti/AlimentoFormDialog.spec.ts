@@ -89,7 +89,7 @@ describe('AlimentoFormDialog', () => {
 
     const quantita = document.querySelector('#alimento-quantita') as HTMLInputElement
     expect(quantita.value).toBe('30')
-    expect(document.body.textContent).toContain('Valori nutrizionali · per 30 g')
+    expect(document.body.textContent).toContain('Valori nutrizionali per 30 g')
   })
 
   it('non invia la richiesta e mostra gli errori sotto i campi obbligatori vuoti', async () => {

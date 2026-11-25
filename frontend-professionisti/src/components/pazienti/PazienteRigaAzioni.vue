@@ -24,6 +24,8 @@ import { ArchiveRestore, CalendarPlus, ClipboardPlus, FolderOpen, MoreHorizontal
 const props = defineProps<{
   paziente: Paziente
   mostraArchiviati: boolean
+  // Nelle schede tutta la scheda apre già la cartella: il pulsante sarebbe un doppione.
+  senzaApriCartella?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -56,9 +58,9 @@ function etichettaAzione(paziente: Paziente) {
 
 <template>
   <div class="flex items-center justify-end gap-1">
-    <Button as-child variant="ghost" size="icon" aria-label="Apri cartella" title="Apri cartella">
+    <Button v-if="!senzaApriCartella" as-child variant="ghost" size="icon" aria-label="Apri cartella" title="Apri cartella">
       <router-link :to="`/pazienti/${paziente.id}`">
-        <FolderOpen :size="15" />
+        <FolderOpen :size="16" />
       </router-link>
     </Button>
 
@@ -74,7 +76,7 @@ function etichettaAzione(paziente: Paziente) {
     <DropdownMenu>
       <DropdownMenuTrigger as-child>
         <Button type="button" variant="ghost" size="icon" aria-label="Altre opzioni" title="Altre opzioni">
-          <MoreHorizontal :size="15" />
+          <MoreHorizontal :size="16" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" class="w-52">

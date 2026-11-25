@@ -20,7 +20,10 @@ export const buttonVariants = cva(
         neutral: 'bg-card text-foreground border-border [a]:hover:bg-muted hover:bg-muted aria-expanded:bg-muted',
         'destructive-ghost': 'text-destructive hover:bg-destructive/10 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 hover:text-destructive dark:hover:bg-destructive/20 aria-expanded:bg-destructive/10',
         'ghost-primary': 'text-(--green) hover:bg-(--mint) hover:text-(--green-d) dark:hover:bg-(--mint)/20 aria-expanded:bg-(--mint)',
-        'destructive-neutral': 'bg-destructive/10 text-destructive border-border hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/20 dark:hover:bg-destructive/30 focus-visible:border-destructive/40',
+        // Sui blocchi petrolio (hero): pillola secondaria e azione principale lime, una per blocco.
+        hero: 'border-transparent bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) hover:bg-(--hero-pill-hover) aria-expanded:bg-(--hero-pill-hover)',
+        accent: 'bg-(--lime) text-(--on-lime) hover:bg-(--lime-d) aria-expanded:bg-(--lime-d)',
+        'destructive-neutral':'bg-destructive/10 text-destructive border-border hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/20 dark:hover:bg-destructive/30 focus-visible:border-destructive/40',
       },
       size: {
         'default': 'h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',

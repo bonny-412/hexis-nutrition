@@ -133,7 +133,7 @@ describe('PazienteTabConfrontoVisite', () => {
 
     // Il BMI non cambia: nessun colore di avviso.
     const celleVariazioneBmi = rigaBmi.findAll('td')
-    expect(celleVariazioneBmi[3].classes()).toContain('text-(--fg4)')
+    expect(celleVariazioneBmi[3].classes()).toContain('text-(--fg3)')
     expect(celleVariazioneBmi[3].classes()).not.toContain('text-(--warn-fg)')
   })
 

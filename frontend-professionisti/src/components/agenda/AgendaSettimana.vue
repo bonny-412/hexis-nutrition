@@ -100,7 +100,7 @@ function testoEvento(a: Appuntamento): string {
           :data-test="`settimana-intestazione-${c.iso}`"
         >
           <div class="flex items-center gap-2">
-            <span class="text-[10.5px] font-bold uppercase tracking-widest" :class="c.eOggi ? 'text-(--green-d)' : 'text-(--fg4)'">
+            <span class="text-[10.5px] font-bold uppercase tracking-widest" :class="c.eOggi ? 'text-(--green-d)' : 'text-(--fg3)'">
               {{ c.nome }}
             </span>
             <span
@@ -137,7 +137,7 @@ function testoEvento(a: Appuntamento): string {
       <!-- Griglia oraria -->
       <div class="grid grid-cols-[48px_repeat(7,minmax(0,1fr))]">
         <div>
-          <div v-for="h in ORE" :key="h" class="h-[58px] pr-2 pt-0.5 text-right text-[10.5px] font-semibold text-(--fg4)">
+          <div v-for="h in ORE" :key="h" class="h-[58px] pr-2 pt-0.5 text-right text-[10.5px] font-semibold text-(--fg3)">
             {{ String(h).padStart(2, '0') }}:00
           </div>
         </div>
@@ -150,7 +150,7 @@ function testoEvento(a: Appuntamento): string {
         >
           <div v-for="h in ORE" :key="h" class="h-[58px] border-t border-(--div)" />
 
-          <p v-if="c.vuota" class="absolute inset-x-0 top-6 text-center text-xs text-(--fg4)">Nessun impegno</p>
+          <p v-if="c.vuota" class="absolute inset-x-0 top-6 text-center text-xs text-(--fg3)">Nessun impegno</p>
 
           <!-- :style solo per top/height/left/width: valori dinamici da posizioneEvento e dalle corsie (eccezione approvata); vale anche per la linea dell'ora corrente. -->
           <div
@@ -168,10 +168,10 @@ function testoEvento(a: Appuntamento): string {
             @click="emit('dettaglio', e.a)"
           >
             <div class="flex items-center gap-1 pr-5 text-[10.5px] font-bold leading-tight text-(--fg)" :class="{ 'line-through': barrato(e.a) }">
-              <Video v-if="e.a.tipo === 'VIDEOCONSULTO'" :size="11" class="flex-none" />
+              <Video v-if="e.a.tipo === 'VIDEOCONSULTO'" :size="12" class="flex-none" />
               <span class="truncate">{{ e.a.oraInizio }} {{ titolo(e.a) }}</span>
             </div>
-            <div v-if="e.a.stato === 'ANNULLATA'" class="truncate text-[10px] font-bold uppercase tracking-wide text-(--danger)">Annullata</div>
+            <div v-if="e.a.stato === 'ANNULLATA'" class="truncate text-xs font-medium text-(--danger)">Annullata</div>
             <div class="absolute right-0 top-0 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100" @click.stop>
               <AppuntamentoMenu :appuntamento="e.a" @azione="(azione) => emit('azione', e.a, azione)" />
             </div>

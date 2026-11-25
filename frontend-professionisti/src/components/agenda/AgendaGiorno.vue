@@ -57,7 +57,7 @@ const daFare = computed(() => delGiorno.value.filter((a) => a.tipo === 'PROMEMOR
             <div v-if="sottotitolo(a)" class="truncate text-xs text-(--fg3)">{{ sottotitolo(a) }}</div>
           </div>
           <span class="flex flex-none items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-(--fg3)">
-            <Video v-if="a.tipo === 'VIDEOCONSULTO'" :size="13" />
+            <Video v-if="a.tipo === 'VIDEOCONSULTO'" :size="14" />
             {{ etichettaTipo(a) }}
           </span>
           <span @click.stop>
@@ -78,7 +78,7 @@ const daFare = computed(() => delGiorno.value.filter((a) => a.tipo === 'PROMEMOR
                 @update:model-value="emit('azione', a, a.fatto ? 'DA_FARE' : 'FATTO')"
               />
             </span>
-            <span class="min-w-0 flex-1 truncate text-sm text-(--fg)" :class="{ 'text-(--fg4) line-through': a.fatto }">
+            <span class="min-w-0 flex-1 truncate text-sm text-(--fg)" :class="{ 'text-(--fg3) line-through': a.fatto }">
               {{ titolo(a) }}
             </span>
             <span @click.stop>

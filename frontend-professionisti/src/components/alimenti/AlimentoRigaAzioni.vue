@@ -48,7 +48,7 @@ function confermaEliminazione() {
     <DropdownMenu>
       <DropdownMenuTrigger as-child>
         <Button type="button" variant="ghost" size="icon" aria-label="Altre opzioni" title="Altre opzioni">
-          <MoreHorizontal :size="15" />
+          <MoreHorizontal :size="16" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" class="w-52">

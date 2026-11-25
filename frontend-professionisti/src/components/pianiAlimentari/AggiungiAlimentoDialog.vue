@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { ref, watch, onUnmounted } from 'vue'
+import { ref, watch, nextTick, onUnmounted } from 'vue'
 import { cerca as cercaAlimenti, type Alimento } from '@/api/alimenti'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { nomeAlimentoLeggibile } from '@/utils/testo'
+import { formattaNumero } from '@/utils/visita'
 import {
   filtraDecimaleItaliano, numeroItaliano, numeroItalianoOpzionale,
   erroreNomeAlimento, erroreNumeroDecimaleObbligatorio, erroreNumeroDecimale, bloccaTastoNonNumerico,
@@ -34,13 +35,45 @@ const query = ref('')
 const risultati = ref<Alimento[]>([])
 let debounceHandle: ReturnType<typeof setTimeout> | undefined
 
+const inputCerca = ref<{ $el: HTMLInputElement } | null>(null)
+
+function focusRicerca(evento?: Event) {
+  evento?.preventDefault()
+  nextTick(() => inputCerca.value?.$el?.focus())
+}
+
+watch(modo, (valore) => {
+  if (valore === 'cerca') focusRicerca()
+})
+
+/** Prima i nomi che iniziano con la ricerca, poi quelli che la contengono, infine i match sulla sola categoria. */
+function punteggio(alimento: Alimento, testo: string): number {
+  const nome = alimento.nome.toLocaleLowerCase('it-IT')
+  if (nome.startsWith(testo)) return 0
+  if (nome.split(/[\s,(]+/).some((parola) => parola.startsWith(testo))) return 1
+  if (nome.includes(testo)) return 2
+  return 3
+}
+
 async function eseguiRicerca(testo: string) {
-  if (!testo.trim()) {
+  const ricerca = testo.trim()
+  if (!ricerca) {
     risultati.value = []
     return
   }
-  const pagina = await cercaAlimenti({ ricerca: testo.trim(), dimensione: 20 })
+  // Il server ordina per nome e include i match sulla categoria ("pasta per pane e pizza"): chiediamo
+  // una pagina ampia e riordiniamo qui per pertinenza. Andrebbe spostato nel backend (ordinamento per rilevanza).
+  const pagina = await cercaAlimenti({ ricerca, dimensione: 100 })
+  const minuscolo = ricerca.toLocaleLowerCase('it-IT')
   risultati.value = pagina.contenuto
+    .map((alimento, indice) => ({ alimento, indice, punti: punteggio(alimento, minuscolo) }))
+    .sort((a, b) => a.punti - b.punti || a.indice - b.indice)
+    .slice(0, 30)
+    .map((r) => r.alimento)
+}
+
+function kcalPer100g(alimento: Alimento): string {
+  return formattaNumero((alimento.kcal * 100) / alimento.quantitaG, 0)
 }
 
 watch(query, (valore) => {
@@ -141,7 +174,8 @@ function aggiungiManuale() {
 
 <template>
   <Dialog :open="props.open" @update:open="(v) => !v && chiudi()">
-    <DialogContent class="sm:max-w-lg">
+    <!-- Ancorato in alto invece che centrato: con i risultati che arrivano il dialog non deve saltare. -->
+    <DialogContent class="top-[10vh] translate-y-0 sm:max-w-lg" @open-auto-focus="focusRicerca">
       <DialogHeader>
         <DialogTitle>Aggiungi alimento</DialogTitle>
       </DialogHeader>
@@ -166,8 +200,11 @@ function aggiungiManuale() {
       </div>
 
       <div v-if="modo === 'cerca'" class="flex flex-col gap-3">
-        <Input v-model="query" placeholder="Cerca per nome o categoria…" />
-        <div class="flex max-h-70 flex-col gap-1 overflow-y-auto">
+        <Input ref="inputCerca" v-model="query" autocomplete="off" placeholder="Cerca per nome o categoria…" />
+        <div class="flex h-80 flex-col gap-1 overflow-y-auto">
+          <p v-if="!query.trim()" class="p-4 text-center text-sm text-(--fg3)">
+            Scrivi il nome di un alimento, per esempio «pasta» o «yogurt».
+          </p>
           <button
             v-for="risultato in risultati"
             :key="risultato.id"
@@ -179,7 +216,7 @@ function aggiungiManuale() {
               <span class="text-sm font-semibold text-(--fg)">{{ nomeAlimentoLeggibile(risultato.nome) }}</span>
               <span class="text-xs text-(--fg3)">{{ risultato.categoria }}</span>
             </span>
-            <span class="whitespace-nowrap text-xs font-bold text-(--fg3)">{{ risultato.kcal }} kcal/100g</span>
+            <span class="whitespace-nowrap text-xs font-bold tabular-nums text-(--fg3)">{{ kcalPer100g(risultato) }} kcal/100 g</span>
           </button>
           <p v-if="query.trim() && risultati.length === 0" class="p-4 text-center text-sm text-(--fg3)">
             Nessun alimento trovato.
@@ -189,107 +226,108 @@ function aggiungiManuale() {
 
       <div v-else class="flex flex-col gap-3">
         <label class="flex flex-col gap-1">
-          <span class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Nome alimento</span>
+          <span class="text-[13px] font-medium text-(--fg2)">Nome alimento</span>
           <Input data-test="manuale-nome" v-model="manualeNome" placeholder="Es. Insalata mista condita" :aria-invalid="!!errori.nome" />
-          <span v-if="errori.nome" class="text-xs text-(--danger)">{{ errori.nome }}</span>
+          <span v-if="errori.nome" class="text-xs font-medium text-(--danger)">{{ errori.nome }}</span>
         </label>
         <div class="grid grid-cols-2 gap-3">
           <label class="flex flex-col gap-1">
-            <span class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Grammi</span>
+            <span class="text-[13px] font-medium text-(--fg2)">Grammi</span>
             <Input
               data-test="manuale-grammi" type="text" inputmode="decimal" placeholder="Es. 100"
               :model-value="manualeGrammi" :aria-invalid="!!errori.grammi" @keydown="bloccaTastoNonNumerico"
               @update:model-value="(v) => { manualeGrammi = filtraDecimaleItaliano(String(v)); errori.grammi = undefined }"
             />
-            <span v-if="errori.grammi" class="text-xs text-(--danger)">{{ errori.grammi }}</span>
+            <span v-if="errori.grammi" class="text-xs font-medium text-(--danger)">{{ errori.grammi }}</span>
           </label>
           <label class="flex flex-col gap-1">
-            <span class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Kcal</span>
+            <span class="text-[13px] font-medium text-(--fg2)">Kcal</span>
             <Input
               data-test="manuale-kcal" type="text" inputmode="decimal" placeholder="Es. 372"
               :model-value="manualeKcal" :aria-invalid="!!errori.kcal" @keydown="bloccaTastoNonNumerico"
               @update:model-value="(v) => { manualeKcal = filtraDecimaleItaliano(String(v)); errori.kcal = undefined }"
             />
-            <span v-if="errori.kcal" class="text-xs text-(--danger)">{{ errori.kcal }}</span>
+            <span v-if="errori.kcal" class="text-xs font-medium text-(--danger)">{{ errori.kcal }}</span>
           </label>
           <label class="flex flex-col gap-1">
-            <span class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Proteine (g)</span>
+            <span class="text-[13px] font-medium text-(--fg2)">Proteine (g)</span>
             <Input
               data-test="manuale-proteine" type="text" inputmode="decimal" placeholder="Es. 12,90"
               :model-value="manualeProteine" :aria-invalid="!!errori.proteine" @keydown="bloccaTastoNonNumerico"
               @update:model-value="(v) => { manualeProteine = filtraDecimaleItaliano(String(v)); errori.proteine = undefined }"
             />
-            <span v-if="errori.proteine" class="text-xs text-(--danger)">{{ errori.proteine }}</span>
+            <span v-if="errori.proteine" class="text-xs font-medium text-(--danger)">{{ errori.proteine }}</span>
           </label>
           <label class="flex flex-col gap-1">
-            <span class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Carboidrati (g)</span>
+            <span class="text-[13px] font-medium text-(--fg2)">Carboidrati (g)</span>
             <Input
               data-test="manuale-carboidrati" type="text" inputmode="decimal" placeholder="Es. 65"
               :model-value="manualeCarboidrati" :aria-invalid="!!errori.carboidrati" @keydown="bloccaTastoNonNumerico"
               @update:model-value="(v) => { manualeCarboidrati = filtraDecimaleItaliano(String(v)); errori.carboidrati = undefined }"
             />
-            <span v-if="errori.carboidrati" class="text-xs text-(--danger)">{{ errori.carboidrati }}</span>
+            <span v-if="errori.carboidrati" class="text-xs font-medium text-(--danger)">{{ errori.carboidrati }}</span>
           </label>
           <label class="flex flex-col gap-1">
-            <span class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Grassi (g)</span>
+            <span class="text-[13px] font-medium text-(--fg2)">Grassi (g)</span>
             <Input
               data-test="manuale-grassi" type="text" inputmode="decimal" placeholder="Es. 6,50"
               :model-value="manualeGrassi" :aria-invalid="!!errori.grassi" @keydown="bloccaTastoNonNumerico"
               @update:model-value="(v) => { manualeGrassi = filtraDecimaleItaliano(String(v)); errori.grassi = undefined }"
             />
-            <span v-if="errori.grassi" class="text-xs text-(--danger)">{{ errori.grassi }}</span>
+            <span v-if="errori.grassi" class="text-xs font-medium text-(--danger)">{{ errori.grassi }}</span>
           </label>
           <label class="flex flex-col gap-1">
-            <span class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Zuccheri (g)</span>
+            <span class="text-[13px] font-medium text-(--fg2)">Zuccheri (g)</span>
             <Input
               type="text" inputmode="decimal" placeholder="Es. 1,10"
               :model-value="manualeZuccheri" :aria-invalid="!!errori.zuccheri" @keydown="bloccaTastoNonNumerico"
               @update:model-value="(v) => { manualeZuccheri = filtraDecimaleItaliano(String(v)); errori.zuccheri = undefined }"
             />
-            <span v-if="errori.zuccheri" class="text-xs text-(--danger)">{{ errori.zuccheri }}</span>
+            <span v-if="errori.zuccheri" class="text-xs font-medium text-(--danger)">{{ errori.zuccheri }}</span>
           </label>
           <label class="flex flex-col gap-1">
-            <span class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Fibre (g)</span>
+            <span class="text-[13px] font-medium text-(--fg2)">Fibre (g)</span>
             <Input
               type="text" inputmode="decimal" placeholder="Es. 2"
               :model-value="manualeFibre" :aria-invalid="!!errori.fibre" @keydown="bloccaTastoNonNumerico"
               @update:model-value="(v) => { manualeFibre = filtraDecimaleItaliano(String(v)); errori.fibre = undefined }"
             />
-            <span v-if="errori.fibre" class="text-xs text-(--danger)">{{ errori.fibre }}</span>
+            <span v-if="errori.fibre" class="text-xs font-medium text-(--danger)">{{ errori.fibre }}</span>
           </label>
           <label class="flex flex-col gap-1">
-            <span class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Ferro (mg)</span>
+            <span class="text-[13px] font-medium text-(--fg2)">Ferro (mg)</span>
             <Input
               type="text" inputmode="decimal" placeholder="Es. 3,50"
               :model-value="manualeFerro" :aria-invalid="!!errori.ferro" @keydown="bloccaTastoNonNumerico"
               @update:model-value="(v) => { manualeFerro = filtraDecimaleItaliano(String(v)); errori.ferro = undefined }"
             />
-            <span v-if="errori.ferro" class="text-xs text-(--danger)">{{ errori.ferro }}</span>
+            <span v-if="errori.ferro" class="text-xs font-medium text-(--danger)">{{ errori.ferro }}</span>
           </label>
           <label class="flex flex-col gap-1">
-            <span class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Calcio (mg)</span>
+            <span class="text-[13px] font-medium text-(--fg2)">Calcio (mg)</span>
             <Input
               type="text" inputmode="decimal" placeholder="Es. 50"
               :model-value="manualeCalcio" :aria-invalid="!!errori.calcio" @keydown="bloccaTastoNonNumerico"
               @update:model-value="(v) => { manualeCalcio = filtraDecimaleItaliano(String(v)); errori.calcio = undefined }"
             />
-            <span v-if="errori.calcio" class="text-xs text-(--danger)">{{ errori.calcio }}</span>
+            <span v-if="errori.calcio" class="text-xs font-medium text-(--danger)">{{ errori.calcio }}</span>
           </label>
           <label class="flex flex-col gap-1">
-            <span class="text-xs font-bold uppercase tracking-wide text-(--fg3)">Acqua (g)</span>
+            <span class="text-[13px] font-medium text-(--fg2)">Acqua (g)</span>
             <Input
               type="text" inputmode="decimal" placeholder="Es. 60"
               :model-value="manualeAcqua" :aria-invalid="!!errori.acqua" @keydown="bloccaTastoNonNumerico"
               @update:model-value="(v) => { manualeAcqua = filtraDecimaleItaliano(String(v)); errori.acqua = undefined }"
             />
-            <span v-if="errori.acqua" class="text-xs text-(--danger)">{{ errori.acqua }}</span>
+            <span v-if="errori.acqua" class="text-xs font-medium text-(--danger)">{{ errori.acqua }}</span>
           </label>
         </div>
-        <p class="text-xs text-(--fg4)">Valori per 100 g.</p>
+        <p class="text-xs text-(--fg3)">Valori per 100 g.</p>
       </div>
 
-      <DialogFooter v-if="modo === 'manuale'">
-        <Button data-test="aggiungi-manuale" class="w-full" @click="aggiungiManuale">Aggiungi al pasto</Button>
+      <DialogFooter v-if="modo === 'manuale'" class="flex items-center gap-2.5">
+        <Button type="button" variant="neutral" @click="chiudi">Annulla</Button>
+        <Button data-test="aggiungi-manuale" @click="aggiungiManuale">Aggiungi al pasto</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>

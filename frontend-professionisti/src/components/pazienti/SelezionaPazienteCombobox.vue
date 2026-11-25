@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverAnchor } from '@/components/ui/popover'
 import { X } from '@lucide/vue'
+import { classiAvatarPaziente, inizialiPaziente } from '@/utils/paziente'
 
 defineProps<{ modelValue: Paziente | null }>()
 const emit = defineEmits<{ 'update:modelValue': [paziente: Paziente | null] }>()
@@ -14,6 +15,26 @@ const risultati = ref<Paziente[]>([])
 const ricercaInCorso = ref(false)
 const erroreRicerca = ref(false)
 const popoverAperto = ref(false)
+// Con il campo vuoto si propongono i pazienti visti più di recente: di solito si cerca uno di loro.
+const recenti = ref<Paziente[]>([])
+const mostraRecenti = ref(false)
+
+async function apriRecenti() {
+  if (testoRicerca.value.trim()) return
+  try {
+    if (recenti.value.length === 0) {
+      const pagina = await cerca({ ordinaPer: 'dataUltimaVisita', direzione: 'desc', dimensione: 20, archiviato: false })
+      // In PostgreSQL l'ordine decrescente mette prima i pazienti senza visite: si scartano qui.
+      recenti.value = pagina.contenuto.filter((p) => p.dataUltimaVisita).slice(0, 6)
+    }
+    if (recenti.value.length > 0 && !testoRicerca.value.trim()) {
+      mostraRecenti.value = true
+      popoverAperto.value = true
+    }
+  } catch {
+    // senza suggerimenti si cerca comunque scrivendo
+  }
+}
 
 let debounceHandle: ReturnType<typeof setTimeout> | undefined
 
@@ -23,6 +44,7 @@ async function eseguiRicerca(testo: string) {
     popoverAperto.value = false
     return
   }
+  mostraRecenti.value = false
   ricercaInCorso.value = true
   erroreRicerca.value = false
   try {
@@ -71,7 +93,7 @@ function cambiaSelezione() {
         <p class="font-heading text-lg italic text-(--fg)">{{ modelValue.nome }} {{ modelValue.cognome }}</p>
         <p class="text-xs text-(--fg3)">{{ modelValue.email }}</p>
       </div>
-      <Button type="button" variant="outline" size="sm" @click="cambiaSelezione">
+      <Button type="button" variant="neutral" size="sm" @click="cambiaSelezione">
         <X :size="14" />
         Cambia paziente
       </Button>
@@ -85,23 +107,34 @@ function cambiaSelezione() {
           :model-value="testoRicerca"
           @update:model-value="onInput"
           type="text"
-          placeholder="Cerca paziente per nome, email o codice fiscale…"
+          autocomplete="off" placeholder="Cerca paziente per nome, email o codice fiscale…"
+          @focus="apriRecenti"
+          @click="apriRecenti"
         />
       </PopoverAnchor>
       <PopoverContent class="w-(--reka-popper-anchor-width) p-1" @open-auto-focus.prevent>
-        <p v-if="ricercaInCorso" class="px-3 py-2 text-xs text-(--fg3)">Ricerca in corso…</p>
+        <p v-if="mostraRecenti" class="px-3 pb-1 pt-2 text-xs font-medium text-(--fg3)">Visite più recenti</p>
+        <p v-else-if="ricercaInCorso" class="px-3 py-2 text-xs text-(--fg3)">Ricerca in corso…</p>
         <p v-else-if="erroreRicerca" class="px-3 py-2 text-xs text-(--danger)">Ricerca non riuscita, riprova.</p>
         <p v-else-if="risultati.length === 0" class="px-3 py-2 text-xs text-(--fg3)">Nessun paziente trovato.</p>
         <button
-          v-for="paziente in risultati"
+          v-for="paziente in (mostraRecenti ? recenti : risultati)"
           :key="paziente.id"
           type="button"
           data-test="risultato-paziente"
-          class="flex w-full flex-col items-start rounded-lg px-3 py-2 text-left hover:bg-(--hover)"
+          class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left hover:bg-(--hover)"
           @click="seleziona(paziente)"
         >
-          <span class="text-sm font-semibold text-(--fg)">{{ paziente.nome }} {{ paziente.cognome }}</span>
-          <span class="text-xs text-(--fg3)">{{ paziente.email }}</span>
+          <span
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+            :class="classiAvatarPaziente(paziente)"
+          >
+            {{ inizialiPaziente(paziente.nome, paziente.cognome) }}
+          </span>
+          <span class="flex flex-col">
+            <span class="text-sm font-semibold text-(--fg)">{{ paziente.nome }} {{ paziente.cognome }}</span>
+            <span class="text-xs text-(--fg3)">{{ paziente.email }}</span>
+          </span>
         </button>
       </PopoverContent>
     </Popover>

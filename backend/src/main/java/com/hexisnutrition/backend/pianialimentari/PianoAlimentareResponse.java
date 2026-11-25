@@ -9,6 +9,9 @@ public record PianoAlimentareResponse(
         UUID id,
         UUID pazienteId,
         String pazienteNomeCompleto,
+        // Separati per le iniziali dell'avatar: dal nome completo non si distingue un nome doppio da un cognome composto.
+        String pazienteNome,
+        String pazienteCognome,
         String nome,
         ModalitaPiano modalita,
         StatoPianoVisualizzato stato,

@@ -16,6 +16,12 @@ import { DatePicker } from '@/components/ui/date-picker'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { Plus, ArrowUp, ArrowDown, ArrowUpDown, ChevronRight } from '@lucide/vue'
 import { formattaDataItalianaConMese } from '@/utils/data'
+import { inizialiPaziente } from '@/utils/paziente'
+import { useVistaLista } from '@/composables/useVistaLista'
+import VistaListaToggle from '@/components/liste/VistaListaToggle.vue'
+import OrdinamentoSchede from '@/components/liste/OrdinamentoSchede.vue'
+
+const { vista, classiTabella, classiSchede } = useVistaLista('piani')
 
 type CampoOrdinamento = NonNullable<CriteriRicercaPianiAlimentari['ordinaPer']>
 
@@ -45,13 +51,7 @@ const CLASSI_STATO: Record<StatoPiano, string> = {
   CONCLUSO: 'bg-(--hover) text-(--fg3)',
 }
 
-// Stesso avatar a iniziali della lista pazienti (PazientiListView.vue), colorato come il badge di stato del piano.
-function inizialiPaziente(nomeCompleto: string): string {
-  const parti = nomeCompleto.trim().split(/\s+/)
-  const prima = parti[0]?.[0] ?? ''
-  const ultima = parti.length > 1 ? parti[parti.length - 1][0] : ''
-  return `${prima}${ultima}`.toUpperCase()
-}
+// Stesso avatar a iniziali della lista pazienti, colorato come il badge di stato del piano.
 
 const router = useRouter()
 
@@ -149,6 +149,18 @@ function ordina(campo: CampoOrdinamento) {
   pagina.value = 0
 }
 
+const OPZIONI_ORDINAMENTO: { valore: CampoOrdinamento; etichetta: string }[] = [
+  { valore: 'nome', etichetta: 'Nome del piano' },
+  { valore: 'dataInizio', etichetta: 'Inizio' },
+  { valore: 'dataFine', etichetta: 'Scadenza' },
+]
+
+function impostaOrdinamento(campo: CampoOrdinamento | undefined, nuovaDirezione: 'asc' | 'desc') {
+  ordinaPer.value = campo
+  direzione.value = nuovaDirezione
+  pagina.value = 0
+}
+
 function iconaOrdinamento(campo: CampoOrdinamento) {
   if (ordinaPer.value !== campo) return ArrowUpDown
   return direzione.value === 'asc' ? ArrowUp : ArrowDown
@@ -209,7 +221,7 @@ const conteggioTesto = computed(() => {
 
 <template>
   <AppShell>
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 class="font-heading text-3xl italic text-(--fg)">Piani alimentari</h1>
         <p class="mt-1 text-sm text-(--fg3)">Gestisci i piani alimentari dei tuoi pazienti.</p>
@@ -221,7 +233,7 @@ const conteggioTesto = computed(() => {
 
     <section class="mb-3.5 rounded-2xl border border-(--bd) bg-(--surf) p-3.5">
       <div class="flex flex-wrap items-center gap-2.5">
-        <Input v-model="ricercaInput" type="search" placeholder="Cerca paziente o piano…" class="min-w-70 flex-1" />
+        <Input v-model="ricercaInput" type="search" autocomplete="off" placeholder="Cerca paziente o piano…" class="min-w-70 flex-1" />
         <div class="flex flex-wrap gap-1.5">
           <button
             v-for="chip in CHIP_STATI" :key="chip.valore" type="button" :data-test="`chip-stato-${chip.valore}`"
@@ -253,19 +265,19 @@ const conteggioTesto = computed(() => {
 
       <div v-if="filtriAvanzatiAperti" class="mt-3 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] items-end gap-2.5">
         <div class="flex flex-col gap-1.5">
-          <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Data inizio da</Label>
+          <Label class="text-xs font-medium text-(--fg3)">Data inizio da</Label>
           <DatePicker id="data-inizio-da" :model-value="dataInizioDa" :max="dataInizioA" @update:model-value="(v) => cambiaData('dataInizioDa', v)" />
         </div>
         <div class="flex flex-col gap-1.5">
-          <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Data inizio a</Label>
+          <Label class="text-xs font-medium text-(--fg3)">Data inizio a</Label>
           <DatePicker id="data-inizio-a" :model-value="dataInizioA" :min="dataInizioDa" @update:model-value="(v) => cambiaData('dataInizioA', v)" />
         </div>
         <div class="flex flex-col gap-1.5">
-          <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Data scadenza da</Label>
+          <Label class="text-xs font-medium text-(--fg3)">Data scadenza da</Label>
           <DatePicker id="data-fine-da" :model-value="dataFineDa" :max="dataFineA" @update:model-value="(v) => cambiaData('dataFineDa', v)" />
         </div>
         <div class="flex flex-col gap-1.5">
-          <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Data scadenza a</Label>
+          <Label class="text-xs font-medium text-(--fg3)">Data scadenza a</Label>
           <DatePicker id="data-fine-a" :model-value="dataFineA" :min="dataFineDa" @update:model-value="(v) => cambiaData('dataFineA', v)" />
         </div>
         <button
@@ -278,10 +290,21 @@ const conteggioTesto = computed(() => {
       </div>
     </section>
 
+    <div v-if="paginaDati && paginaDati.contenuto.length > 0" class="mb-3 flex items-center justify-end gap-2">
+      <OrdinamentoSchede
+        :class="classiSchede()"
+        :opzioni="OPZIONI_ORDINAMENTO"
+        :ordina-per="ordinaPer"
+        :direzione="direzione"
+        @cambia="impostaOrdinamento"
+      />
+      <VistaListaToggle v-model="vista" />
+    </div>
+
     <section class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)">
       <div v-if="errore" class="flex flex-col items-center gap-3 p-14 text-center">
         <p class="text-(--danger)">Non è stato possibile caricare i piani.</p>
-        <Button type="button" variant="outline" @click="carica">Riprova</Button>
+        <Button type="button" variant="neutral" @click="carica">Riprova</Button>
       </div>
 
       <div v-else-if="caricamentoIniziale" class="flex flex-col gap-2 p-4">
@@ -289,32 +312,88 @@ const conteggioTesto = computed(() => {
       </div>
 
       <template v-else-if="paginaDati && paginaDati.contenuto.length > 0">
-        <div class="overflow-x-auto" :class="{ 'pointer-events-none opacity-60': aggiornamentoInCorso }">
+        <!-- Schede: sempre su mobile, su desktop se scelte con l'interruttore. -->
+        <ul
+          data-test="schede-piani"
+          class="grid grid-cols-1 gap-3 bg-(--bg) p-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4"
+          :class="[classiSchede(), { 'pointer-events-none opacity-60': aggiornamentoInCorso }]"
+        >
+          <li
+            v-for="riga in paginaDati.contenuto"
+            :key="riga.id"
+            class="relative flex flex-col gap-3 rounded-xl border border-(--bd) bg-(--surf) p-4 transition-colors hover:border-(--sage)"
+          >
+            <div class="flex items-start gap-3">
+              <span class="flex h-10 w-10 flex-none items-center justify-center rounded-full text-sm font-semibold" :class="CLASSI_STATO[riga.stato]">
+                {{ inizialiPaziente(riga.pazienteNome ?? '', riga.pazienteCognome ?? '') || '—' }}
+              </span>
+              <div class="min-w-0 flex-1">
+                <!-- Il link copre tutta la scheda; il menu azioni sta sopra (z-10) e resta cliccabile. -->
+                <router-link
+                  :to="`/piani-alimentari/${riga.id}`"
+                  class="block truncate font-semibold text-(--fg) after:absolute after:inset-0 after:rounded-xl hover:text-(--green)"
+                >
+                  {{ riga.nome }}
+                </router-link>
+                <div class="truncate text-xs text-(--fg3)">{{ riga.pazienteNomeCompleto }}</div>
+              </div>
+              <div class="relative z-10 -mr-1 -mt-1">
+                <PianoAlimentareRigaAzioni :riga="riga" senza-apri-piano @attiva="onAttiva" @duplica="onDuplica" @elimina="onElimina" />
+              </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <Badge :class="CLASSI_STATO[riga.stato]">{{ ETICHETTE_STATO[riga.stato] }}</Badge>
+              <span class="text-xs text-(--fg3)">{{ ETICHETTE_MODALITA[riga.modalita] }}</span>
+            </div>
+            <dl class="grid grid-cols-3 gap-x-3 border-t border-(--div) pt-3 text-xs">
+              <div>
+                <dt class="text-(--fg3)">Obiettivo</dt>
+                <dd class="font-semibold text-(--fg)">
+                  <template v-if="riga.obiettivoKcal">{{ riga.obiettivoKcal }} kcal</template>
+                  <span v-else class="font-normal text-(--fg3)">—</span>
+                </dd>
+              </div>
+              <div>
+                <dt class="text-(--fg3)">Inizio</dt>
+                <dd class="font-semibold text-(--fg)">{{ formattaDataItalianaConMese(riga.dataInizio) }}</dd>
+              </div>
+              <div>
+                <dt class="text-(--fg3)">Scadenza</dt>
+                <dd class="font-semibold text-(--fg)">
+                  <template v-if="riga.dataFine">{{ formattaDataItalianaConMese(riga.dataFine) }}</template>
+                  <span v-else class="font-normal text-(--fg3)">—</span>
+                </dd>
+              </div>
+            </dl>
+          </li>
+        </ul>
+
+        <div class="overflow-x-auto" :class="[classiTabella(), { 'pointer-events-none opacity-60': aggiornamentoInCorso }]">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead class="text-(--fg4)">Paziente</TableHead>
+                <TableHead class="text-(--fg3)">Paziente</TableHead>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 text-(--fg4)" @click="ordina('nome')">
+                  <button type="button" class="flex items-center gap-1 text-(--fg3)" @click="ordina('nome')">
                     Piano
                     <component :is="iconaOrdinamento('nome')" :size="12" :class="ordinaPer === 'nome' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
-                <TableHead class="text-(--fg4)">Stato</TableHead>
-                <TableHead class="text-(--fg4)">Obiettivo</TableHead>
+                <TableHead class="text-(--fg3)">Stato</TableHead>
+                <TableHead class="text-(--fg3)">Obiettivo</TableHead>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 text-(--fg4)" @click="ordina('dataInizio')">
+                  <button type="button" class="flex items-center gap-1 text-(--fg3)" @click="ordina('dataInizio')">
                     Inizio
                     <component :is="iconaOrdinamento('dataInizio')" :size="12" :class="ordinaPer === 'dataInizio' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 text-(--fg4)" @click="ordina('dataFine')">
+                  <button type="button" class="flex items-center gap-1 text-(--fg3)" @click="ordina('dataFine')">
                     Scadenza
                     <component :is="iconaOrdinamento('dataFine')" :size="12" :class="ordinaPer === 'dataFine' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
-                <TableHead class="text-right text-(--fg4)">Azioni</TableHead>
+                <TableHead class="text-right text-(--fg3)">Azioni</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -322,24 +401,24 @@ const conteggioTesto = computed(() => {
                 <TableCell>
                   <div class="flex items-center gap-2.5">
                     <span class="flex h-9 w-9 flex-none items-center justify-center rounded-full text-[13px] font-semibold" :class="CLASSI_STATO[riga.stato]">
-                      {{ inizialiPaziente(riga.pazienteNomeCompleto) }}
+                      {{ inizialiPaziente(riga.pazienteNome ?? '', riga.pazienteCognome ?? '') || '—' }}
                     </span>
                     <span class="font-semibold text-(--fg)">{{ riga.pazienteNomeCompleto }}</span>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div class="font-semibold text-(--fg)">{{ riga.nome }}</div>
-                  <div class="text-xs text-(--fg4)">{{ ETICHETTE_MODALITA[riga.modalita] }}</div>
+                  <div class="text-xs text-(--fg3)">{{ ETICHETTE_MODALITA[riga.modalita] }}</div>
                 </TableCell>
                 <TableCell><Badge :class="CLASSI_STATO[riga.stato]">{{ ETICHETTE_STATO[riga.stato] }}</Badge></TableCell>
                 <TableCell>
                   <span v-if="riga.obiettivoKcal" class="font-semibold text-(--fg)">{{ riga.obiettivoKcal }} kcal</span>
-                  <span v-else class="text-(--fg4)">—</span>
+                  <span v-else class="text-(--fg3)">—</span>
                 </TableCell>
                 <TableCell class="font-semibold text-(--fg)">{{ formattaDataItalianaConMese(riga.dataInizio) }}</TableCell>
                 <TableCell>
                   <span v-if="riga.dataFine" class="font-semibold text-(--fg)">{{ formattaDataItalianaConMese(riga.dataFine) }}</span>
-                  <span v-else class="text-(--fg4)">—</span>
+                  <span v-else class="text-(--fg3)">—</span>
                 </TableCell>
                 <TableCell class="text-right">
                   <PianoAlimentareRigaAzioni :riga="riga" @attiva="onAttiva" @duplica="onDuplica" @elimina="onElimina" />
@@ -358,7 +437,7 @@ const conteggioTesto = computed(() => {
       <div v-else class="flex flex-col items-center gap-2 p-16 text-center">
         <p class="font-bold">Nessun risultato trovato</p>
         <p class="text-xs text-muted-foreground max-w-xs">Prova a modificare o resettare i filtri applicati.</p>
-        <Button type="button" variant="outline" @click="pulisciFiltri">Pulisci filtri</Button>
+        <Button type="button" variant="neutral" @click="pulisciFiltri">Pulisci filtri</Button>
       </div>
 
       <div v-if="paginaDati && !errore" class="flex items-center justify-between gap-3 border-t border-(--div) bg-(--soft) px-4.5 py-3">

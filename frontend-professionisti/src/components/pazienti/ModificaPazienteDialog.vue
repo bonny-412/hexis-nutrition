@@ -183,7 +183,7 @@ async function onSubmit() {
       note: note.value || undefined,
       trattamenti: trattamenti.value || undefined,
     })
-    toast.success('Dati anagrafici aggiornati con successo.')
+    toast.success('Dati anagrafici aggiornati.')
     emit('aggiornato', aggiornato)
     emit('update:open', false)
   } catch {
@@ -302,7 +302,10 @@ async function onSubmit() {
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter class="flex items-center gap-2.5">
+          <Button type="button" variant="neutral" :disabled="inCorso" @click="emit('update:open', false)">
+            Annulla
+          </Button>
           <Button type="submit" :disabled="inCorso">
             <Save :size="16" />
             {{ inCorso ? 'Salvataggio…' : 'Salva modifiche' }}

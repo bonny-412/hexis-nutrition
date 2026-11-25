@@ -94,7 +94,7 @@ onMounted(async () => {
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
-          <Button as-child class="bg-(--lime) text-(--on-lime) hover:bg-(--lime-d)">
+          <Button as-child variant="accent">
             <router-link to="/agenda" data-test="dashboard-apri-agenda">
               <CalendarDays :size="16" />
               Apri l'agenda
@@ -103,7 +103,7 @@ onMounted(async () => {
 
           <DropdownMenu>
             <DropdownMenuTrigger as-child>
-              <Button class="group border-transparent bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) transition-all hover:bg-(--hero-pill-hover) aria-expanded:bg-(--hero-pill-hover)">
+              <Button variant="hero" class="group">
                 <Plus :size="16" />
                 Crea nuovo
                 <ChevronDown :size="14" class="transition-transform duration-200 group-data-[state=open]:rotate-180" />
@@ -147,7 +147,7 @@ onMounted(async () => {
           <h2 class="font-heading text-lg italic text-(--fg)">Prossime visite</h2>
           <router-link to="/agenda" class="group inline-flex items-center gap-0.5 text-xs font-semibold text-(--green) transition-colors hover:text-(--green-d)">Vedi l'agenda <ChevronRight :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:translate-x-0.5" /></router-link>
         </header>
-        <div v-if="prossimeVisite === null" class="px-5 pb-5 text-sm text-(--fg4)">Non è stato possibile caricare l'agenda.</div>
+        <div v-if="prossimeVisite === null" class="px-5 pb-5 text-sm text-(--fg3)">Non è stato possibile caricare l'agenda.</div>
         <div v-else-if="prossimeVisite.length === 0" class="px-5 pb-5 text-sm text-(--fg3)">
           Nessuna visita nei prossimi {{ GIORNI_PROSSIME_VISITE }} giorni.
           <router-link to="/agenda?nuovo=visita" class="font-semibold text-(--green) transition-colors hover:text-(--green-d)">Fissa un appuntamento</router-link>
@@ -195,7 +195,7 @@ onMounted(async () => {
             <h2 class="font-heading text-lg italic text-(--fg)">Piani in bozza</h2>
             <router-link to="/piani-alimentari" class="group inline-flex items-center gap-0.5 text-xs font-semibold text-(--green) transition-colors hover:text-(--green-d)">Tutti i piani <ChevronRight :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:translate-x-0.5" /></router-link>
           </header>
-          <div v-if="pianiInBozza === null" class="px-5 pb-5 text-sm text-(--fg4)">Non è stato possibile caricare i piani.</div>
+          <div v-if="pianiInBozza === null" class="px-5 pb-5 text-sm text-(--fg3)">Non è stato possibile caricare i piani.</div>
           <p v-else-if="pianiInBozza.length === 0" class="px-5 pb-5 text-sm text-(--fg3)">Nessun piano da completare.</p>
           <ul v-else class="divide-y divide-(--div) border-t border-(--div)">
             <li v-for="p in pianiInBozza" :key="p.id">

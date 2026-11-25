@@ -33,7 +33,7 @@
   --hero-d: #06675F;
   --hero-track: rgba(10, 45, 42, 0.38);
   --on-hero: #FFFFFF;
-  --on-hero-2: #EAF6F4;
+  --on-hero-2: #F2FAF8; /* 4,6:1 sul petrolio (prima #EAF6F4, 4,4:1) */
   --on-hero-warn: #FFF4C9;
   /* Pillole e pulsanti secondari dentro i blocchi hero: bianchi pieni in chiaro, vetro traslucido in scuro. */
   --hero-pill: #FFFFFF;
@@ -56,6 +56,10 @@
 
   /* Sidebar: variante "Scura tenue", vedi Opzioni Dashboard nei mockup */
   --side: #183C3A;
+
+  /* Barre di scorrimento: petrolio chiaro, più deciso al passaggio */
+  --scroll-thumb: #A9D6CF;
+  --scroll-thumb-hover: #4FB3A7;
   --side-bd: rgba(199, 243, 107, 0.16);
   --side-fg: rgba(228, 242, 238, 0.80);
   --side-fg2: rgba(228, 242, 238, 0.50);
@@ -99,20 +103,20 @@
      della pagina (come l'isola scura del tema chiaro), un solo petrolio per primari e blocchi hero,
      lime unico segnale acceso. */
 
-  /* Superfici */
+  /* Superfici (2026-11-25): card e bordi alzati, prima card e pagina erano a 1,08:1 e si confondevano */
   --bg: #0B1413;
-  --surf: #121D1C;
-  --bd: #213230;
-  --bd2: #293B38;
-  --div: #1A2826;
-  --soft: #152220;
-  --hover: #1A2927;
+  --surf: #16231F;
+  --bd: #2C403C;
+  --bd2: #344A46;
+  --div: #203230;
+  --soft: #1A2926;
+  --hover: #1E2E2B;
 
   /* Testi */
   --fg: #E4EDEB;
   --fg2: #A7B9B5;
   --fg3: #879B97;
-  --fg4: #6B807C;
+  --fg4: #7A8F8B; /* 4,7:1 sulle card (prima 4,1:1) */
 
   /* Petrolio: schiarito per il contrasto, testo scuro sopra */
   --green: #3DBFAE;
@@ -160,7 +164,11 @@
 
   /* Sidebar */
   --side: #060E0D;
-  --side-bd: rgba(255, 255, 255, 0.06);
+
+  /* Barre di scorrimento */
+  --scroll-thumb: #2E5A54;
+  --scroll-thumb-hover: #3DBFAE;
+  --side-bd: #263935; /* bordo visibile: la sidebar è quasi del colore della pagina */
   --side-fg: rgba(228, 237, 235, 0.78);
   --side-fg2: rgba(228, 237, 235, 0.45);
   --side-act-bg: rgba(61, 191, 174, 0.14);
@@ -252,5 +260,32 @@
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
+  }
+
+  /* Barre di scorrimento colorate in tutta l'app (2026-11-25). Chrome ≥ 121 e Firefox usano
+     scrollbar-color; i ::-webkit-scrollbar servono a Safari e ai Chrome più vecchi (dove ci sono
+     entrambi, scrollbar-color vince). Le barre nascoste apposta ([scrollbar-width:none]) restano tali. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) transparent;
+  }
+  *:hover {
+    scrollbar-color: var(--scroll-thumb-hover) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-color: var(--scroll-thumb);
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scroll-thumb-hover);
   }
 }

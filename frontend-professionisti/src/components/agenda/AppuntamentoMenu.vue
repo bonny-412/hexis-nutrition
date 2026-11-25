@@ -50,7 +50,7 @@ const eBlocco = computed(() => props.appuntamento.tipo === 'BLOCCO')
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
       <Button type="button" variant="ghost" size="icon-sm" aria-label="Azioni appuntamento" title="Azioni" data-test="appuntamento-menu">
-        <MoreHorizontal :size="15" />
+        <MoreHorizontal :size="16" />
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" class="w-56">

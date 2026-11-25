@@ -179,7 +179,8 @@ public class PianoAlimentareService {
         }
 
         return new PianoAlimentareResponse(piano.getId(), piano.getPazienteId(),
-                paziente.getNome() + " " + paziente.getCognome(), piano.getNome(), piano.getModalita(),
+                paziente.getNome() + " " + paziente.getCognome(), paziente.getNome(), paziente.getCognome(),
+                piano.getNome(), piano.getModalita(),
                 piano.statoEffettivo(), piano.getDataInizio(), piano.getDataFine(), piano.getObiettivoKcal(),
                 piano.getObiettivoKcalSuggerito(), piano.getBmrCalcolato(), piano.getTdeeCalcolato(),
                 piano.getFormulaBmrUsata(), piano.isSottoSogliaSicurezza(), pasti, giorniMacroTarget, esempi);

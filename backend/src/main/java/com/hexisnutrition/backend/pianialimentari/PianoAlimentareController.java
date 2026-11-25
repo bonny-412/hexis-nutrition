@@ -62,12 +62,18 @@ public class PianoAlimentareController {
         var pazientiPerId = pazienteRepository.findAllById(
                 paginaRisultati.getContent().stream().map(PianoAlimentare::getPazienteId).distinct().toList()).stream()
                 .collect(java.util.stream.Collectors.toMap(com.hexisnutrition.backend.pazienti.Paziente::getId,
-                        p -> p.getNome() + " " + p.getCognome()));
+                        p -> p));
 
         var contenuto = paginaRisultati.getContent().stream()
-                .map(p -> new PianoAlimentareRigaListaResponse(p.getId(),
-                        pazientiPerId.getOrDefault(p.getPazienteId(), "—"), p.getNome(), p.statoEffettivo(),
-                        p.getObiettivoKcal(), p.getModalita(), p.getDataInizio(), p.getDataFine()))
+                .map(p -> {
+                    var paziente = pazientiPerId.get(p.getPazienteId());
+                    String nome = paziente != null ? paziente.getNome() : null;
+                    String cognome = paziente != null ? paziente.getCognome() : null;
+                    String nomeCompleto = paziente != null ? nome + " " + cognome : "—";
+                    return new PianoAlimentareRigaListaResponse(p.getId(), nomeCompleto, nome, cognome,
+                            p.getNome(), p.statoEffettivo(), p.getObiettivoKcal(), p.getModalita(),
+                            p.getDataInizio(), p.getDataFine());
+                })
                 .toList();
 
         return new PianoAlimentareListaPaginataResponse(contenuto, paginaRisultati.getNumber(),

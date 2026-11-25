@@ -135,12 +135,12 @@ function onDuplica(piano: PianoAlimentareRigaLista) {
             </div>
           </div>
           <div class="flex flex-wrap gap-2">
-            <Button v-if="!archiviato" class="border-transparent bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) hover:bg-(--hero-pill-hover)" @click="onDuplica(pianoAttivo)">
-              <Copy :size="15" />
+            <Button v-if="!archiviato" variant="hero" @click="onDuplica(pianoAttivo)">
+              <Copy :size="16" />
               <span>Duplica</span>
             </Button>
-            <Button as-child class="bg-(--lime) text-(--on-lime) hover:bg-(--lime-d)">
-              <router-link :to="linkPiano(pianoAttivo)"><Pencil :size="15" /> Apri piano</router-link>
+            <Button as-child variant="accent">
+              <router-link :to="linkPiano(pianoAttivo)"><Pencil :size="16" /> Apri piano</router-link>
             </Button>
           </div>
         </div>
@@ -172,7 +172,7 @@ function onDuplica(piano: PianoAlimentareRigaLista) {
         </div>
         <Button v-if="!archiviato" as-child>
           <router-link :to="linkPiano(bozzaRecente)">
-            <Pencil :size="15" />
+            <Pencil :size="16" />
             <span>Modifica</span>
           </router-link>
         </Button>
@@ -194,10 +194,10 @@ function onDuplica(piano: PianoAlimentareRigaLista) {
       <Table class="min-w-150" :class="aggiornamentoInCorso ? 'opacity-60' : ''">
         <TableHeader>
           <TableRow class="bg-(--soft)">
-            <TableHead class="text-(--fg4)">Piano</TableHead>
-            <TableHead class="text-(--fg4)">Tipo</TableHead>
-            <TableHead class="text-(--fg4)">Periodo</TableHead>
-            <TableHead class="text-right text-(--fg4)">Target</TableHead>
+            <TableHead class="text-(--fg3)">Piano</TableHead>
+            <TableHead class="text-(--fg3)">Tipo</TableHead>
+            <TableHead class="text-(--fg3)">Periodo</TableHead>
+            <TableHead class="text-right text-(--fg3)">Target</TableHead>
             <TableHead class="w-20" />
           </TableRow>
         </TableHeader>
@@ -209,7 +209,7 @@ function onDuplica(piano: PianoAlimentareRigaLista) {
             <TableCell class="text-right tabular-nums text-(--fg2)">{{ target(piano) }}</TableCell>
             <TableCell class="text-right">
               <Button variant="neutral" size="icon-sm" as-child>
-                <router-link :to="linkPiano(piano)" aria-label="Apri piano" title="Apri piano"><Eye :size="15" /></router-link>
+                <router-link :to="linkPiano(piano)" aria-label="Apri piano" title="Apri piano"><Eye :size="16" /></router-link>
               </Button>
             </TableCell>
           </TableRow>

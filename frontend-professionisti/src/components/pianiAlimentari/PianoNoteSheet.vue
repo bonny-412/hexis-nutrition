@@ -107,11 +107,11 @@ async function confermaElimina() {
       <div class="flex flex-col gap-5 px-4 pb-6">
         <form v-if="modificabile" class="flex flex-col gap-3" data-test="modulo-nota" @submit.prevent="aggiungi">
           <div class="flex flex-col gap-1.5">
-            <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)" for="nota-data">Data</Label>
+            <Label class="text-xs font-medium text-(--fg3)" for="nota-data">Data</Label>
             <DatePicker id="nota-data" digitabile v-model="data" />
           </div>
           <div class="flex flex-col gap-1.5">
-            <Label class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)" for="nota-testo">Nota</Label>
+            <Label class="text-xs font-medium text-(--fg3)" for="nota-testo">Nota</Label>
             <Textarea
               id="nota-testo" v-model="testo" data-test="nota-testo" rows="4" maxlength="5000"
               placeholder="Cosa è cambiato rispetto al piano…" class="resize-y text-sm"
@@ -134,11 +134,11 @@ async function confermaElimina() {
             <div class="mb-1.5 flex items-start justify-between gap-2">
               <p class="text-xs font-bold text-(--fg)">{{ formattaDataItalianaConMese(nota.data) }}</p>
               <Button
-                v-if="modificabile" type="button" variant="destructive-ghost" size="icon-xs"
+                v-if="modificabile" type="button" variant="destructive-ghost" size="icon-sm"
                 data-test="elimina-nota" aria-label="Elimina nota" title="Elimina nota"
                 @click="notaDaEliminare = nota"
               >
-                <Trash2 :size="13" />
+                <Trash2 :size="14" />
               </Button>
             </div>
             <p class="whitespace-pre-wrap text-sm text-(--fg2)">{{ nota.testo }}</p>

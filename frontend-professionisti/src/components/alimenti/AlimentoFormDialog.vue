@@ -321,7 +321,7 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
           </div>
 
           <div>
-            <div class="mb-2 text-xs font-bold uppercase tracking-wide text-(--fg3)">Valori nutrizionali · per {{ quantitaG || 100 }} g</div>
+            <div class="mb-2 text-[13px] font-semibold text-(--fg2)">Valori nutrizionali per {{ quantitaG || 100 }} g</div>
             <div class="grid gap-2.5 sm:grid-cols-2">
               <div v-for="campo in CAMPI_NUTRIENTI" :key="campo.chiave" class="flex flex-col gap-1.5">
                 <Label :for="campo.id" class="text-xs text-(--fg2)">{{ campo.etichetta }}{{ campo.obbligatorio ? '*' : '' }}</Label>
@@ -336,7 +336,7 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
                     :aria-invalid="!!errori[campo.chiave]"
                     class="border-0 px-0 shadow-none focus-visible:ring-0"
                   />
-                  <span class="text-xs text-(--fg4)">{{ campo.unita }}</span>
+                  <span class="text-xs text-(--fg3)">{{ campo.unita }}</span>
                 </div>
                 <p v-if="errori[campo.chiave]" class="text-xs font-medium text-(--danger)">{{ errori[campo.chiave] }}</p>
               </div>
@@ -351,11 +351,14 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
           <Button
             v-if="modo === 'edit'"
             type="button"
-            variant="ghost"
-            class="mr-auto text-(--danger) hover:text-(--danger)"
+            variant="destructive-ghost"
+            class="mr-auto"
             @click="confermaEliminaAperta = true"
           >
             <Trash2 :size="16" /> Elimina
+          </Button>
+          <Button v-if="modo !== 'view'" type="button" variant="neutral" :disabled="inCorso" @click="emit('update:open', false)">
+            Annulla
           </Button>
           <Button v-if="modo !== 'view'" type="submit" :disabled="inCorso">
             <Save :size="16" />

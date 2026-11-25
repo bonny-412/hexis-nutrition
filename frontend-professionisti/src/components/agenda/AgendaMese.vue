@@ -36,7 +36,7 @@ const celle = computed(() => {
 <template>
   <section class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)" data-test="agenda-mese">
     <div class="grid grid-cols-7 border-b border-(--bd)">
-      <div v-for="nome in NOMI_GIORNI" :key="nome" class="px-2.5 py-2 text-[10.5px] font-bold uppercase tracking-widest text-(--fg4)">
+      <div v-for="nome in NOMI_GIORNI" :key="nome" class="px-2.5 py-2 text-[10.5px] font-bold uppercase tracking-widest text-(--fg3)">
         {{ nome }}
       </div>
     </div>

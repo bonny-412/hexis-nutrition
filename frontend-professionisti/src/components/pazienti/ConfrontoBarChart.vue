@@ -92,7 +92,7 @@ const chartConfig = computed<ChartConfig>(() => ({
       </div>
     </CardHeader>
     <CardContent>
-      <div v-if="punti.length === 0" class="text-sm text-(--fg4)">Dati non disponibili</div>
+      <div v-if="punti.length === 0" class="text-sm text-(--fg3)">Dati non disponibili</div>
       <ChartContainer v-else :config="chartConfig" class="aspect-auto" :style="{ height: `${altezzaPx}px` }">
         <VisXYContainer :data="punti" :margin="orizzontale ? { left: 96, right: 12 } : { left: 8, right: 8 }">
           <VisGroupedBar

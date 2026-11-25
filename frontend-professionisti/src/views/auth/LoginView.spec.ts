@@ -11,6 +11,12 @@ vi.mock('vue-sonner', () => ({
   toast: { error: vi.fn(), success: vi.fn() },
 }))
 
+// Il form valida i campi prima di chiamare l'API: i test sugli errori del server li compilano.
+async function compilaCredenziali(wrapper: ReturnType<typeof mount>) {
+  await wrapper.find('input[type="email"]').setValue('anna@studio.it')
+  await wrapper.find('input[type="password"]').setValue('password123')
+}
+
 function creaRouterDiTest() {
   return createRouter({
     history: createMemoryHistory(),
@@ -52,6 +58,7 @@ describe('LoginView', () => {
     const auth = useAuthStore()
     vi.mocked(auth.login).mockRejectedValue(new ApiError(401, 'Credenziali non valide'))
 
+    await compilaCredenziali(wrapper)
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
@@ -71,6 +78,7 @@ describe('LoginView', () => {
     const auth = useAuthStore()
     vi.mocked(auth.login).mockRejectedValue(new Error('network down'))
 
+    await compilaCredenziali(wrapper)
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
@@ -82,6 +90,7 @@ describe('LoginView', () => {
     const auth = useAuthStore()
     vi.mocked(auth.login).mockRejectedValue(new ApiError(403, 'Accesso riservato ai professionisti'))
 
+    await compilaCredenziali(wrapper)
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 

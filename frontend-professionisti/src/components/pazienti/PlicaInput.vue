@@ -73,6 +73,8 @@ function onTriplaChange(valore: boolean | 'indeterminate') {
     misura2.value = ''
     misura3.value = ''
   } else {
+    // Il valore già scritto diventa la prima misura invece di andare perso.
+    misura1.value = props.modelValue
     emit('update:modelValue', '')
   }
 }

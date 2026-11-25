@@ -180,14 +180,14 @@ const righe = computed<RigaStorico[]>(() =>
         >
           <div class="flex min-w-24 flex-col gap-0.5">
             <span class="text-sm font-bold text-(--fg)">{{ formattaDataItalianaConMese(riga.visita.dataVisita) }}</span>
-            <span class="text-xs text-(--fg4)">{{ riga.rel }}</span>
+            <span class="text-xs text-(--fg3)">{{ riga.rel }}</span>
           </div>
 
           <Badge class="bg-(--mint) text-(--green-d)">{{ ETICHETTE_OBIETTIVO[riga.visita.obiettivo] }}</Badge>
 
           <div class="flex flex-1 flex-wrap gap-6">
             <div class="flex flex-col gap-0.5">
-              <span class="font-heading text-lg text-(--fg)">{{ formattaNumero(riga.visita.pesoKg) }} <span class="text-xs font-sans text-(--fg4)">kg</span></span>
+              <span class="font-heading text-lg text-(--fg)">{{ formattaNumero(riga.visita.pesoKg) }} <span class="text-xs font-sans text-(--fg3)">kg</span></span>
               <span
                 v-if="riga.deltaPeso !== null"
                 class="text-xs font-bold"
@@ -195,15 +195,15 @@ const righe = computed<RigaStorico[]>(() =>
               >
                 {{ riga.deltaPeso > 0 ? '+' : '' }}{{ formattaNumero(riga.deltaPeso) }} kg
               </span>
-              <span v-else class="text-xs text-(--fg4)">Prima visita</span>
+              <span v-else class="text-xs text-(--fg3)">Prima visita</span>
             </div>
 
             <div v-if="riga.visita.bmi !== null" class="flex flex-col gap-0.5">
-              <span class="font-heading text-lg text-(--fg)">{{ formattaNumero(riga.visita.bmi, 1) }} <span class="text-xs font-sans text-(--fg4)">BMI</span></span>
+              <span class="font-heading text-lg text-(--fg)">{{ formattaNumero(riga.visita.bmi, 1) }} <span class="text-xs font-sans text-(--fg3)">BMI</span></span>
             </div>
 
             <div v-if="riga.visita.plicometria" class="flex flex-col gap-0.5">
-              <span class="font-heading text-lg text-(--fg)">{{ formattaNumero(riga.visita.plicometria.percentualeGrassoCorporeo) }}% <span class="text-xs font-sans text-(--fg4)">massa grassa</span></span>
+              <span class="font-heading text-lg text-(--fg)">{{ formattaNumero(riga.visita.plicometria.percentualeGrassoCorporeo) }}% <span class="text-xs font-sans text-(--fg3)">massa grassa</span></span>
               <span
                 v-if="riga.deltaMg !== null"
                 class="text-xs font-bold"
@@ -220,17 +220,16 @@ const righe = computed<RigaStorico[]>(() =>
         <div v-if="idAperto === riga.visita.id" data-test="storico-dettaglio" class="border-t border-(--div) px-5 pb-5 pt-4">
           <div v-if="!archiviato" class="mb-4 flex justify-end gap-2">
             <Button as-child variant="neutral" size="sm">
-              <router-link :to="`/pazienti/${pazienteId}/visite/${riga.visita.id}/modifica`"><Pencil :size="15" />Modifica visita</router-link>
+              <router-link :to="`/pazienti/${pazienteId}/visite/${riga.visita.id}/modifica`"><Pencil :size="16" />Modifica visita</router-link>
             </Button>
             <Button
               type="button"
               variant="destructive-neutral"
               size="sm"
               data-test="elimina-visita"
-              class="text-(--danger)"
               @click="chiediConferma(riga.visita)"
             >
-              <Trash2 :size="15" />
+              <Trash2 :size="16" />
               Elimina visita
             </Button>
           </div>
@@ -247,7 +246,7 @@ const righe = computed<RigaStorico[]>(() =>
 
             <div class="rounded-xl bg-(--soft) p-4">
               <h5 class="text-xs font-semibold text-(--fg3)">BIA</h5>
-              <p class="mt-2 text-xs text-(--fg4)">Dati non disponibili.</p>
+              <p class="mt-2 text-xs text-(--fg3)">Dati non disponibili.</p>
             </div>
 
             <div class="rounded-xl bg-(--soft) p-4">
@@ -257,7 +256,7 @@ const righe = computed<RigaStorico[]>(() =>
                 <div class="flex items-center justify-between"><dt class="text-(--fg2)">Massa grassa</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.plicometria.massaGrassaKg) }} kg</dd></div>
                 <div class="flex items-center justify-between"><dt class="text-(--fg2)">Massa magra</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.plicometria.massaMagraKg) }} kg</dd></div>
               </dl>
-              <p v-else class="mt-2 text-xs text-(--fg4)">Nessuna plicometria registrata.</p>
+              <p v-else class="mt-2 text-xs text-(--fg3)">Nessuna plicometria registrata.</p>
             </div>
 
             <div class="rounded-xl bg-(--soft) p-4">
@@ -268,7 +267,7 @@ const righe = computed<RigaStorico[]>(() =>
                   <dd class="font-semibold text-(--fg)">{{ c.valore !== null ? `${formattaNumero(c.valore)} cm` : '—' }}</dd>
                 </div>
               </dl>
-              <p v-else class="mt-2 text-xs text-(--fg4)">Nessuna circonferenza registrata.</p>
+              <p v-else class="mt-2 text-xs text-(--fg3)">Nessuna circonferenza registrata.</p>
             </div>
           </div>
         </div>
@@ -278,7 +277,7 @@ const righe = computed<RigaStorico[]>(() =>
     <div v-if="visiteRimanenti > 0" class="relative mt-3.5 flex justify-center lg:pl-11">
       <Button type="button" variant="neutral" data-test="carica-altre-visite" :disabled="caricamentoAltre" @click="caricaAltre">
         {{ caricamentoAltre ? 'Caricamento…' : 'Carica altre visite' }}
-        <span class="text-(--fg4)">({{ visiteRimanenti }} {{ visiteRimanenti === 1 ? 'rimanente' : 'rimanenti' }})</span>
+        <span class="text-(--fg3)">({{ visiteRimanenti }} {{ visiteRimanenti === 1 ? 'rimanente' : 'rimanenti' }})</span>
       </Button>
     </div>
   </div>

@@ -65,7 +65,7 @@ const chartConfig = computed<ChartConfig>(() => ({
       </CardTitle>
     </CardHeader>
     <CardContent>
-      <div v-if="andamento.punti.length === 0" class="text-sm text-(--fg4)">Nessun dato disponibile</div>
+      <div v-if="andamento.punti.length === 0" class="text-sm text-(--fg3)">Nessun dato disponibile</div>
       <template v-else>
         <!-- Valore attuale e variazione stanno nella riga di indicatori in cima alla scheda paziente: qui solo l'andamento. -->
         <ChartContainer :config="chartConfig" class="h-40 aspect-auto">

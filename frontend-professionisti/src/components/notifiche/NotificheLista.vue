@@ -62,7 +62,7 @@ async function apri(n: Notifica) {
           :data-test="`notifica-${n.id}`"
           @click="apri(n)"
         >
-          <component :is="n.tipo === 'PROMEMORIA' ? StickyNote : n.tipo === 'VIDEOCONSULTO' ? Video : CalendarClock" :size="15" class="mt-0.5 flex-none text-(--fg3)" />
+          <component :is="n.tipo === 'PROMEMORIA' ? StickyNote : n.tipo === 'VIDEOCONSULTO' ? Video : CalendarClock" :size="16" class="mt-0.5 flex-none text-(--fg3)" />
           <span class="min-w-0 flex-1">
             <span class="block truncate text-[13px] font-semibold text-(--fg)">{{ titolo(n) }}</span>
             <span v-if="sottotitolo(n)" class="block truncate text-xs text-(--fg3)">{{ sottotitolo(n) }}</span>

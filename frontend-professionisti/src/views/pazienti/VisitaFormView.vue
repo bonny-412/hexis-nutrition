@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { scorriAlPrimoErrore } from '@/utils/form'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -202,17 +203,20 @@ function confermaAnnulla() {
 async function onSubmit() {
   if (!paziente.value) return
   const valido = datiVisitaForm.value?.valida() ?? false
-  if (!valido) return
+  if (!valido) {
+    scorriAlPrimoErrore()
+    return
+  }
 
   inCorso.value = true
   try {
     const dati = datiVisitaForm.value!.ottieniDati()
     if (modalitaModifica.value && visitaId) {
       await aggiornaVisita(paziente.value.id, visitaId, dati)
-      toast.success('Visita aggiornata con successo.')
+      toast.success('Visita aggiornata.')
     } else {
       await creaVisita(paziente.value.id, dati, appuntamentoId)
-      toast.success('Visita registrata con successo.')
+      toast.success('Visita registrata.')
     }
     router.push(`/pazienti/${paziente.value.id}`)
   } catch (errore) {
@@ -254,7 +258,7 @@ async function onSubmit() {
         :class="riepilogoAperto && 'border-(--green) bg-(--mint) text-(--green-d) hover:bg-(--mint)'"
         @click="riepilogoAperto = !riepilogoAperto"
       >
-        <History :size="15" />
+        <History :size="16" />
         Riepilogo precedente
       </Button>
     </div>

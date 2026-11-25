@@ -68,7 +68,7 @@ function esegui(azione: AzioneAppuntamento) {
       <template v-if="a">
         <DialogHeader>
           <!-- Promemoria e fasce bloccate hanno un titolo fisso: il loro testo compare solo nel corpo, non due volte. -->
-          <p v-if="eVisita" class="text-[11px] font-bold uppercase tracking-wide text-(--fg3)" data-test="dettaglio-tipo">{{ etichettaTipo(a) }}</p>
+          <p v-if="eVisita" class="text-xs font-semibold text-(--fg3)" data-test="dettaglio-tipo">{{ etichettaTipo(a) }}</p>
           <DialogTitle class="font-heading text-xl italic" data-test="dettaglio-titolo">{{ titoloDialog }}</DialogTitle>
           <DialogDescription class="sr-only">Dettaglio dell'impegno selezionato in agenda.</DialogDescription>
         </DialogHeader>
@@ -90,7 +90,7 @@ function esegui(azione: AzioneAppuntamento) {
             <dt class="text-[13px] font-medium text-(--fg2)">Link del videoconsulto</dt>
             <dd class="mt-0.5 break-all" data-test="dettaglio-link">
               <a v-if="linkSicuro" :href="linkSicuro" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-(--green) underline">
-                <Video :size="13" /> {{ a.linkVideo }}
+                <Video :size="14" /> {{ a.linkVideo }}
               </a>
               <span v-else class="text-(--fg)">{{ a.linkVideo }}</span>
             </dd>
@@ -105,14 +105,14 @@ function esegui(azione: AzioneAppuntamento) {
           <Button v-if="a.pazienteId" type="button" variant="neutral" data-test="dettaglio-apri-cartella" @click="esegui('APRI_CARTELLA')"><FolderOpen /> Apri scheda paziente</Button>
 
           <template v-if="eProgrammata">
-            <Button type="button" variant="destructive-neutral" class="text-(--danger)" data-test="dettaglio-annulla" @click="esegui('ANNULLA')"><XCircle /> Annulla visita</Button>
+            <Button type="button" variant="destructive-neutral" data-test="dettaglio-annulla" @click="esegui('ANNULLA')"><XCircle /> Annulla visita</Button>
             <Button v-if="a.linkVideo" type="button" variant="neutral" data-test="dettaglio-apri-video" @click="esegui('APRI_VIDEO')"><Video /> Apri videoconsulto</Button>
             <Button type="button" variant="neutral" data-test="dettaglio-modifica" @click="esegui('MODIFICA')"><CalendarClock /> Sposta / Modifica</Button>
             <Button type="button" data-test="dettaglio-avvia-visita" @click="esegui('AVVIA_VISITA')"><Play /> Avvia visita</Button>
           </template>
 
           <template v-else-if="ePromemoria">
-            <Button type="button" variant="destructive-neutral" class="text-(--danger)" data-test="dettaglio-elimina" @click="esegui('ELIMINA')"><Trash2 /> Elimina</Button>
+            <Button type="button" variant="destructive-neutral" data-test="dettaglio-elimina" @click="esegui('ELIMINA')"><Trash2 /> Elimina</Button>
             <Button type="button" variant="neutral" data-test="dettaglio-sposta-domani" @click="esegui('SPOSTA_DOMANI')"><CalendarPlus /> Sposta a domani</Button>
             <Button type="button" variant="neutral" data-test="dettaglio-modifica" @click="esegui('MODIFICA')"><Pencil /> Modifica</Button>
             <Button v-if="!a.fatto" type="button" data-test="dettaglio-fatto" @click="esegui('FATTO')"><Check /> Segna come fatto</Button>
@@ -120,7 +120,7 @@ function esegui(azione: AzioneAppuntamento) {
           </template>
 
           <template v-else-if="eBlocco">
-            <Button type="button" variant="destructive-neutral" class="text-(--danger)" data-test="dettaglio-elimina" @click="esegui('ELIMINA')"><Trash2 /> Elimina</Button>
+            <Button type="button" variant="destructive-neutral" data-test="dettaglio-elimina" @click="esegui('ELIMINA')"><Trash2 /> Elimina</Button>
             <Button type="button" data-test="dettaglio-modifica" @click="esegui('MODIFICA')"><Pencil /> Modifica</Button>
           </template>
         </DialogFooter>

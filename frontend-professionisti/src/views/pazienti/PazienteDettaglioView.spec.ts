@@ -115,7 +115,7 @@ describe('PazienteDettaglioView', () => {
 
     expect(pazientiApi.invita).toHaveBeenCalledWith('1')
     expect(wrapper.text()).toContain('Invitato')
-    expect(toast.success).toHaveBeenCalledWith('Invito inviato con successo.')
+    expect(toast.success).toHaveBeenCalledWith('Invito inviato.')
   })
 
   it('mostra un errore se l\'invito fallisce e non aggiorna lo stato del paziente (nessun optimistic update)', async () => {

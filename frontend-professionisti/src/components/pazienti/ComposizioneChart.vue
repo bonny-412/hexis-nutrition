@@ -69,10 +69,10 @@ const chartConfig: ChartConfig = {
       </CardTitle>
     </CardHeader>
     <CardContent>
-      <div v-if="tickDate.length === 0" class="text-sm text-(--fg4)">Dati non disponibili</div>
+      <div v-if="tickDate.length === 0" class="text-sm text-(--fg3)">Dati non disponibili</div>
       <template v-else>
         <!-- Valori attuali e variazioni stanno nella riga di indicatori in cima alla scheda paziente. -->
-        <p class="text-xs text-(--fg4)">Variazione % rispetto alla prima visita mostrata</p>
+        <p class="text-xs text-(--fg3)">Variazione % rispetto alla prima visita mostrata</p>
         <div class="mt-1.5 flex items-center gap-4 text-xs text-(--fg3)">
           <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full" :style="{ background: COLORE_MAGRA }" />Massa magra (kg)</span>
           <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full" :style="{ background: COLORE_GRASSO }" />% Grasso</span>

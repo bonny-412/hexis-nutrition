@@ -55,6 +55,8 @@ export interface PianoAlimentare {
   id: string
   pazienteId: string
   pazienteNomeCompleto: string
+  pazienteNome: string
+  pazienteCognome: string
   nome: string
   modalita: ModalitaPiano
   stato: StatoPiano
@@ -148,6 +150,9 @@ export interface CriteriRicercaPianiAlimentari {
 export interface PianoAlimentareRigaLista {
   id: string
   pazienteNomeCompleto: string
+  // null solo se il paziente non esiste più (il nome completo è allora "—").
+  pazienteNome: string | null
+  pazienteCognome: string | null
   nome: string
   stato: StatoPiano
   obiettivoKcal: number | null

@@ -693,3 +693,36 @@ Dettaglio in [stato](stato.md#sessione-del-15-novembre-2026--agenda-implementata
 - `stato.md`: nuova sezione "Sessione del 19 novembre 2026", riga in "Dove siamo" e voce in cima a "Prossimo passo consigliato".
 - Aperto: riavviare il backend per applicare V33 a `hexis` (cancella 3 piani e 1 alimento personalizzato), verifica a mano di catalogo e piani, commit di V33 + JSON in `sorgenti/` + wiki. I nutrienti nuovi si espongono solo quando una vista ne avrà bisogno.
 - Nessun commit.
+
+## [2026-11-25] handoff | Revisione UI in Chrome, liste a schede, contrasti, editor piano
+
+- Giro completo di `frontend-professionisti` in Chrome (chiaro, scuro, mobile a 390 px con iframe nella stessa origine). Report e lavoro rimanente in `docs/ui-review-2026-11-25.md`.
+- Fatto: utility condivisa per iniziali e colori avatar; `pazienteNome`/`pazienteCognome` nelle risposte dei piani (backend, `mvn test` 194/194, `api-contracts.md` aggiornato); virgola e unità in Alimenti; dialog "Aggiungi alimento" (focus, posizione, pertinenza, nomi BDA); titoli e footer dei dialog uniformi; BMI come valore calcolato; maiuscole residue tolte; icone su 4 misure; toast coerenti; errori sotto il campo nelle pagine di accesso; liste Pazienti e Piani a schede (mobile sempre, interruttore su desktop) e Alimenti a righe su mobile; contrasti dei due temi (`--fg4` solo non-testo in chiaro, superfici e bordi alzati in scuro); varianti `hero`/`accent` del `Button`, `outline` → `neutral`, `aria-label` sui pulsanti solo icona, pulsanti "aggiungi" con icona `Plus`.
+- Editor piano provato con dati veri: corretti obiettivo kcal vuoto (barre a 0%), scroll al primo errore su "Salva", obiettivo nella tessera Energia, unità in tabella, matita del pasto, pulsanti di rimozione più grandi, X degli esempi visibile da touch, tab di modalità da mobile. Resta aperto il ridisegno degli esempi e la tabella del pasto da mobile.
+- ADR 0009 aggiornata con le regole nuove (contrasti, pulsanti, icone, dialog, liste). `stato.md`: nuova sezione e voce in cima a "Prossimo passo consigliato".
+- Verifiche: `vue-tsc --noEmit` pulito, `vitest` 289/296 (7 falliti noti e preesistenti). Bozza di prova salvata nel DB `hexis` per Beatrice De Luca. Riavviare il backend. Nessun commit.
+
+## [2026-11-25] handoff | Esempi intercambiabili ridisegnati, tabella del pasto da mobile
+
+- Esempi: sezione per categoria con conteggio, schede bianche "Esempio N" (nome predefinito cambiato lato frontend; il backend crea ancora gli esempi con il nome della categoria, ma il primo salvataggio li sostituisce), kcal per alimento e totali kcal/macro per scheda, eliminazione nel menu "⋯", "Nuovo esempio" come scheda tratteggiata nella griglia.
+- Pasto: sotto 768 px righe compatte al posto della tabella (X sempre a portata, macro sotto); da 768 px resta la tabella.
+- Verifiche: `vue-tsc --noEmit` pulito, `vitest` 289/296 (7 falliti noti). Provato in Chrome su desktop e a 390 px. Nessun commit.
+
+## [2026-11-25] handoff | Editor piano (punto 1) ed editor visita provato con dati
+
+- Piano: riepilogo e giorni sticky, pallini dei pasti tolti, margine allineato, intestazione mobile, Macros con controllo kcal↔macro, "Duplica pasto" e "Copia negli altri giorni", scelta paziente con pazienti recenti, `autocomplete="off"` sui campi di ricerca. Data di fine dalla prossima visita già presente.
+- Visita: provata con dati (visita salvata per Beatrice De Luca). Corretti scroll al primo errore (`utils/form.ts`, anche in nuovo paziente e piano), tripla misurazione che conserva il valore, esempi delle circonferenze.
+- Il watcher di Vite si è bloccato a metà: le ultime modifiche non sono state viste in Chrome. Riavviare `npm run dev` e ricontrollare.
+- Verifiche: `vue-tsc --noEmit` pulito, `vitest` 289/296 (7 falliti noti). Nessun commit.
+
+## [2026-11-25] handoff | Verifiche dopo il riavvio di Vite, barre di scorrimento
+
+- Dopo il riavvio di `npm run dev` verificati in Chrome: scroll al primo errore (con focus), tripla misurazione che conserva il valore, esempi delle circonferenze, titolo e tab del piano da mobile.
+- Barre di scorrimento colorate in tutta l'app (token `--scroll-thumb`, `main.css`), provate in chiaro e scuro. ADR 0009 aggiornata.
+- Nessun commit.
+
+## [2026-11-25] handoff | Chiusura sessione revisione UI
+
+- `stato.md`: sezione del 25 novembre aggiornata (aperti residui, dati di prova da eliminare, nota sul watcher di Vite) e "Prossimo passo consigliato" riscritto: commit, pulizia dati di prova, poi barra azioni fissa, grafici della scheda paziente, stati vuoti/Dashboard, mobile, pagine di accesso.
+- `docs/ui-review-2026-11-25.md`: aperti ripuliti, nuovo ordine consigliato (§6) e riepilogo di quanto fatto dopo la prima stesura (§7).
+- Verifiche finali: backend `mvn test` 194/194 (dopo l'aggiunta dei campi dei piani), frontend `vue-tsc --noEmit` pulito, `vitest` 289/296 (7 falliti noti e preesistenti). Tutto in staging, nessun commit.

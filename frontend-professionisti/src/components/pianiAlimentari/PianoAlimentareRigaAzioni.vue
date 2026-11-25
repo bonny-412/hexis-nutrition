@@ -23,6 +23,8 @@ import DropdownMenuSeparator from '../ui/dropdown-menu/DropdownMenuSeparator.vue
 
 const props = defineProps<{
   riga: PianoAlimentareRigaLista
+  // Nelle schede tutta la scheda apre già il piano: il pulsante sarebbe un doppione.
+  senzaApriPiano?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -41,9 +43,9 @@ function confermaElimina() {
 
 <template>
   <div class="flex items-center justify-end gap-1">
-    <Button as-child variant="ghost" size="icon" aria-label="Apri piano" title="Apri piano" @click.stop>
+    <Button v-if="!senzaApriPiano" as-child variant="ghost" size="icon" aria-label="Apri piano" title="Apri piano" @click.stop>
       <router-link :to="`/piani-alimentari/${riga.id}`">
-        <FolderOpen :size="15" />
+        <FolderOpen :size="16" />
       </router-link>
     </Button>
 
@@ -53,7 +55,7 @@ function confermaElimina() {
           type="button" variant="ghost" size="icon" data-test="opzioni-piano"
           aria-label="Altre opzioni" title="Altre opzioni" @click.stop
         >
-          <MoreHorizontal :size="15" />
+          <MoreHorizontal :size="16" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" class="w-52">

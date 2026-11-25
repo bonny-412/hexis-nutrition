@@ -45,11 +45,11 @@ function sposta(direzione: 1 | -1) {
 <template>
   <div class="flex flex-wrap items-center gap-3">
     <div class="flex items-center gap-1.5">
-      <Button type="button" variant="outline" size="icon" aria-label="Periodo precedente" data-test="agenda-precedente" @click="sposta(-1)">
+      <Button type="button" variant="neutral" size="icon" aria-label="Periodo precedente" data-test="agenda-precedente" @click="sposta(-1)">
         <ChevronLeft :size="16" />
       </Button>
-      <Button type="button" variant="outline" data-test="agenda-oggi" @click="emit('update:riferimento', oggiIso())">Oggi</Button>
-      <Button type="button" variant="outline" size="icon" aria-label="Periodo successivo" data-test="agenda-successivo" @click="sposta(1)">
+      <Button type="button" variant="neutral" data-test="agenda-oggi" @click="emit('update:riferimento', oggiIso())">Oggi</Button>
+      <Button type="button" variant="neutral" size="icon" aria-label="Periodo successivo" data-test="agenda-successivo" @click="sposta(1)">
         <ChevronRight :size="16" />
       </Button>
     </div>

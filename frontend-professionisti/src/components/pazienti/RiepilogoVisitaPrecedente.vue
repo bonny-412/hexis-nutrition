@@ -110,7 +110,7 @@ function periodoPiano(piano: PianoAlimentareRigaLista): string {
     <header class="flex flex-none items-start justify-between gap-3 border-b border-(--div) px-4 py-3.5">
       <div>
         <h2 class="font-heading font-semibold italic text-xl text-(--fg)">Riepilogo precedente</h2>
-        <p class="text-xs text-(--fg4)">Sola lettura</p>
+        <p class="text-xs text-(--fg3)">Sola lettura</p>
       </div>
       <Button type="button" variant="ghost" size="icon-sm" data-test="chiudi-riepilogo" aria-label="Chiudi" title="Chiudi" @click="$emit('chiudi')">
         <X :size="16" />
@@ -127,7 +127,7 @@ function periodoPiano(piano: PianoAlimentareRigaLista): string {
         </div>
 
         <div v-for="blocco in blocchi" :key="blocco.titolo" data-test="blocco-visita" class="rounded-xl bg-(--soft) p-3">
-          <p class="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-(--fg4)">{{ blocco.titolo }}</p>
+          <p class="mb-1.5 text-xs font-medium text-(--fg3)">{{ blocco.titolo }}</p>
           <dl class="flex flex-col gap-1">
             <div v-for="riga in blocco.righe" :key="riga.etichetta" class="flex items-baseline justify-between gap-3 text-xs">
               <dt class="text-(--fg3)">{{ riga.etichetta }}</dt>
@@ -137,7 +137,7 @@ function periodoPiano(piano: PianoAlimentareRigaLista): string {
         </div>
 
         <div v-if="visita.note" data-test="note-visita" class="rounded-xl border border-(--bd) p-3">
-          <p class="mb-1 text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Note della visita</p>
+          <p class="mb-1 text-xs font-medium text-(--fg3)">Note della visita</p>
           <p class="whitespace-pre-wrap text-xs text-(--fg2)">{{ visita.note }}</p>
         </div>
       </section>
@@ -159,7 +159,7 @@ function periodoPiano(piano: PianoAlimentareRigaLista): string {
         </div>
       </section>
 
-      <p v-else-if="noteInCaricamento" class="text-xs text-(--fg4)">Caricamento note…</p>
+      <p v-else-if="noteInCaricamento" class="text-xs text-(--fg3)">Caricamento note…</p>
     </div>
   </aside>
 </template>

@@ -3,7 +3,7 @@ title: 0009 - Palette "Verde petrolio + Lime"
 tags: [adr, ui, palette, frontend]
 stato: in-discussione
 creato: 2026-11-16
-aggiornato: 2026-11-16
+aggiornato: 2026-11-25
 fonti: [../../frontend-professionisti/src/assets/main.css, ../stato.md, ../log.md]
 ---
 
@@ -31,6 +31,16 @@ Il dietologo che userà l'app ha scelto, da una conversazione con ChatGPT, la pa
 - **Ombre** (2026-11-16): nessuna ombra sulle card dentro la pagina, basta il bordo (`--bd`). L'ombra resta solo su ciò che sta sopra la pagina: dialog, sheet, menu, select, popover, command palette, tooltip dei grafici, pannello "visita precedente" aperto da mobile.
 - **Pressione dei pulsanti azione**: tutti i `Button` scendono di 2 px al click (`active:translate-y-0.5` nella base di `buttonVariants`, anche per i trigger dei menu); la variante `link` (pulsante testo) no. Prima era 1 px ed escluso dai trigger dei menu, tranne "Crea nuovo" in Dashboard.
 - **Link "Torna indietro"**: grigi (`--fg3`), petrolio all'hover, testo 12 px con `ArrowLeft` da 14 px che scorre di 2 px a sinistra all'hover (`motion-safe`). Stesso stile in scheda paziente, nuovo paziente, visita, piano e "Password dimenticata" (prima usava il carattere `←`).
+
+- **Revisione del 2026-11-25** (vedi [`docs/ui-review-2026-11-25.md`](../../docs/ui-review-2026-11-25.md)):
+  - *Contrasti, chiaro*: `--fg4` (3,4:1) non si usa più per testo che porta informazione: quel testo è `--fg3`; `--fg4` resta per icone, placeholder, separatori. `--on-hero-2` `#EAF6F4` → `#F2FAF8` (4,6:1).
+  - *Contrasti, scuro*: superfici alzate perché card e pagina erano a 1,08:1 (`--surf` `#16231F`, `--soft` `#1A2926`, `--hover` `#1E2E2B`, `--div` `#203230`, `--bd` `#2C403C`, `--bd2` `#344A46`); `--fg4` `#7A8F8B` (4,7:1); `--side-bd` `#263935` per rendere visibile il bordo della sidebar.
+  - *Pulsanti*: varianti `hero` (pillola sui blocchi petrolio) e `accent` (lime, azione principale del blocco) nel componente `Button`, mai più classi scritte a mano; `outline` non si usa, il secondario è `neutral`; le azioni distruttive usano solo le varianti `destructive-*`; i pulsanti solo icona hanno sempre `aria-label`; i pulsanti "aggiungi" dentro le card sono tratteggiati con icona `Plus` (mai il carattere "+").
+  - *Icone*: quattro misure, 12 · 14 · 16 · 18 px (più 20/40 per gli stati vuoti).
+  - *Dialog*: titolo in Fraunces corsivo 20 px (base di `DialogTitle`); i dialog con form hanno sempre "Annulla" accanto all'azione.
+  - *Barre di scorrimento*: sottili e colorate in tutta l'app con i token `--scroll-thumb` / `--scroll-thumb-hover` (petrolio chiaro in chiaro, petrolio scuro in scuro); nascondibili localmente con `[scrollbar-width:none]`.
+  - *Form lunghi*: un salvataggio bloccato dalla validazione porta in vista il primo errore (`utils/form.ts`).
+  - *Liste*: Pazienti e Piani a schede sotto 768 px, interruttore "Tabella / Schede" su desktop; l'avatar della scheda mantiene il colore del badge di stato.
 
 ## Aperto
 

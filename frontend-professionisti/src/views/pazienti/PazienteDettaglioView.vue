@@ -26,6 +26,7 @@ import ModificaPazienteDialog from '@/components/pazienti/ModificaPazienteDialog
 import { prepareAndamento } from '@/utils/andamento'
 import { formattaDataItalianaConMese } from '@/utils/data'
 import { ETICHETTE_OBIETTIVO, formattaNumero } from '@/utils/visita'
+import { inizialiPaziente } from '@/utils/paziente'
 import {
   ArrowLeft,
   ArrowUp,
@@ -138,7 +139,7 @@ async function onInvita() {
   try {
     await invita(paziente.value.id)
     paziente.value.statoAccount = 'INVITATO'
-    toast.success('Invito inviato con successo.')
+    toast.success('Invito inviato.')
   } catch {
     toast.error("Non è stato possibile inviare l'invito.")
   } finally {
@@ -187,7 +188,7 @@ onMounted(() => {
       <AlertCircle :size="40" class="text-(--danger) mb-3" />
       <h2 class="font-heading text-xl italic text-(--fg)">Errore di caricamento</h2>
       <p class="mt-1 text-sm text-(--fg3)">{{ erroreCaricamento }}</p>
-      <Button variant="outline" size="sm" class="mt-4" @click="carica">Riprova</Button>
+      <Button variant="neutral" size="sm" class="mt-4" @click="carica">Riprova</Button>
     </div>
 
     <!-- Skeleton Loading -->
@@ -213,7 +214,7 @@ onMounted(() => {
             class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-heading text-2xl font-semibold select-none"
             :class="paziente.archiviato ? 'bg-(--hero-pill) text-(--danger-fixed) ring-1 ring-(--hero-pill-ring)' : 'bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring)'"
           >
-            {{ paziente.nome[0] }}{{ paziente.cognome[0] }}
+            {{ inizialiPaziente(paziente.nome, paziente.cognome) }}
           </span>
           <div>
             <div class="flex flex-wrap items-center gap-2.5">
@@ -278,28 +279,28 @@ onMounted(() => {
         </div>
 
         <div v-if="!paziente.archiviato" class="flex flex-wrap items-center gap-2 ">
-          <Button as-child class="border-transparent bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) hover:bg-(--hero-pill-hover)">
+          <Button as-child variant="hero">
             <router-link :to="`/piani-alimentari/nuovo?pazienteId=${paziente.id}`">
-              <Utensils :size="15" />
+              <Utensils :size="16" />
               <span>Nuovo piano</span>
             </router-link>
           </Button>
-          <Button as-child class="border-transparent bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) hover:bg-(--hero-pill-hover)">
+          <Button as-child variant="hero">
             <router-link :to="`/agenda?nuovo=visita&pazienteId=${paziente.id}`">
-              <CalendarPlus :size="15" />
+              <CalendarPlus :size="16" />
               <span>Fissa appuntamento</span>
             </router-link>
           </Button>
-          <Button as-child class="bg-(--lime) text-(--on-lime) hover:bg-(--lime-d)">
+          <Button as-child variant="accent">
             <router-link :to="`/pazienti/${paziente.id}/visite/nuova`">
-              <ClipboardPlus :size="15" />
+              <ClipboardPlus :size="16" />
               <span>Nuova visita</span>
             </router-link>
           </Button>
         </div>
         <div v-else class="flex flex-wrap items-center gap-2">
-          <Button type="button" class="border-transparent bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) hover:bg-(--hero-pill-hover)" @click="confermaDeArchiviaAperta = true">
-            <ArchiveRestore :size="15" />
+          <Button type="button" variant="hero" @click="confermaDeArchiviaAperta = true">
+            <ArchiveRestore :size="16" />
             <span>De-archivia paziente</span>
           </Button>
         </div>
@@ -325,8 +326,8 @@ onMounted(() => {
               class="flex items-center gap-0.5 text-xs font-medium"
               :class="andamento.peso.delta < 0 ? 'text-(--green)' : andamento.peso.delta > 0 ? 'text-(--danger)' : 'text-(--fg3)'"
             >
-              <ArrowDown v-if="andamento.peso.delta < 0" :size="11" />
-              <ArrowUp v-else-if="andamento.peso.delta > 0" :size="11" />
+              <ArrowDown v-if="andamento.peso.delta < 0" :size="12" />
+              <ArrowUp v-else-if="andamento.peso.delta > 0" :size="12" />
               {{ formattaNumero(Math.abs(andamento.peso.delta)) }} kg vs prec.
             </p>
           </template>
@@ -347,8 +348,8 @@ onMounted(() => {
               class="flex items-center gap-0.5 text-xs font-medium"
               :class="andamento.bmi.delta < 0 ? 'text-(--green)' : andamento.bmi.delta > 0 ? 'text-(--danger)' : 'text-(--fg3)'"
             >
-              <ArrowDown v-if="andamento.bmi.delta < 0" :size="11" />
-              <ArrowUp v-else-if="andamento.bmi.delta > 0" :size="11" />
+              <ArrowDown v-if="andamento.bmi.delta < 0" :size="12" />
+              <ArrowUp v-else-if="andamento.bmi.delta > 0" :size="12" />
               {{ formattaNumero(Math.abs(andamento.bmi.delta), 1) }} vs prec.
             </p>
           </template>
@@ -369,8 +370,8 @@ onMounted(() => {
               class="flex items-center gap-0.5 text-xs font-medium"
               :class="andamento.percentualeGrassoCorporeo.delta < 0 ? 'text-(--green)' : andamento.percentualeGrassoCorporeo.delta > 0 ? 'text-(--danger)' : 'text-(--fg3)'"
             >
-              <ArrowDown v-if="andamento.percentualeGrassoCorporeo.delta < 0" :size="11" />
-              <ArrowUp v-else-if="andamento.percentualeGrassoCorporeo.delta > 0" :size="11" />
+              <ArrowDown v-if="andamento.percentualeGrassoCorporeo.delta < 0" :size="12" />
+              <ArrowUp v-else-if="andamento.percentualeGrassoCorporeo.delta > 0" :size="12" />
               {{ formattaNumero(Math.abs(andamento.percentualeGrassoCorporeo.delta)) }} pt vs prec.
             </p>
           </template>
@@ -391,8 +392,8 @@ onMounted(() => {
               class="flex items-center gap-0.5 text-xs font-medium"
               :class="andamento.massaMagra.delta < 0 ? 'text-(--danger)' : andamento.massaMagra.delta > 0 ? 'text-(--green)' : 'text-(--fg3)'"
             >
-              <ArrowDown v-if="andamento.massaMagra.delta < 0" :size="11" />
-              <ArrowUp v-else-if="andamento.massaMagra.delta > 0" :size="11" />
+              <ArrowDown v-if="andamento.massaMagra.delta < 0" :size="12" />
+              <ArrowUp v-else-if="andamento.massaMagra.delta > 0" :size="12" />
               {{ formattaNumero(Math.abs(andamento.massaMagra.delta)) }} kg vs prec.
             </p>
           </template>

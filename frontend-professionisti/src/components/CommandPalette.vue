@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { Search, UserPlus, ClipboardPlus, CalendarPlus, CalendarOff, StickyNote, Apple, Utensils } from '@lucide/vue'
 import { Input } from '@/components/ui/input'
 import { cerca, type Paziente } from '@/api/pazienti'
+import { classiAvatarPaziente, inizialiPaziente } from '@/utils/paziente'
 
 interface AzionePalette {
   id: string
@@ -120,9 +121,6 @@ function vediTuttiRisultati() {
   router.push({ path: '/pazienti', query: { ricerca: query } })
 }
 
-function inizialiPaziente(paziente: Paziente) {
-  return `${paziente.nome[0]}${paziente.cognome[0]}`
-}
 </script>
 
 <template>
@@ -130,7 +128,7 @@ function inizialiPaziente(paziente: Paziente) {
     type="button"
     aria-label="Cerca ovunque"
     data-test="command-palette-trigger"
-    class="flex items-center gap-2.5 rounded-lg border border-(--bd2) bg-(--surf) px-3 py-2 text-(--fg4) transition-colors hover:border-(--sage)"
+    class="flex items-center gap-2.5 rounded-lg border border-(--bd2) bg-(--surf) px-3 py-2 text-(--fg3) transition-colors hover:border-(--sage)"
     @click="apri"
   >
     <Search :size="14" />
@@ -154,7 +152,7 @@ function inizialiPaziente(paziente: Paziente) {
             ref="inputRef"
             v-model="testo"
             type="text"
-            placeholder="Cerca pazienti o un'azione…"
+            autocomplete="off" placeholder="Cerca pazienti o un'azione…"
             class="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
           />
           <kbd class="rounded-md border border-(--bd2) px-1.5 py-0.5 text-[10px] font-semibold text-(--fg3)">Esc</kbd>
@@ -162,7 +160,7 @@ function inizialiPaziente(paziente: Paziente) {
 
         <div class="max-h-80 overflow-y-auto p-2">
           <div v-if="azioniFiltrate.length > 0">
-            <div class="px-2.5 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Azioni</div>
+            <div class="px-2.5 pb-1 pt-2 text-xs font-medium text-(--fg3)">Azioni</div>
             <button
               v-for="azione in azioniFiltrate"
               :key="azione.id"
@@ -172,14 +170,14 @@ function inizialiPaziente(paziente: Paziente) {
               @click="selezionaAzione(azione)"
             >
               <span class="flex h-6 w-6 items-center justify-center rounded-md bg-(--mint) text-(--green-d)">
-                <component :is="azione.icona" :size="13" />
+                <component :is="azione.icona" :size="14" />
               </span>
               {{ azione.etichetta }}
             </button>
           </div>
 
           <div v-if="pazientiRisultati.length > 0" class="mt-1">
-            <div class="px-2.5 pb-1 pt-2 text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Pazienti</div>
+            <div class="px-2.5 pb-1 pt-2 text-xs font-medium text-(--fg3)">Pazienti</div>
             <button
               v-for="paziente in pazientiRisultati"
               :key="paziente.id"
@@ -187,8 +185,11 @@ function inizialiPaziente(paziente: Paziente) {
               class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-(--fg) transition-colors hover:bg-(--soft)"
               @click="selezionaPaziente(paziente)"
             >
-              <span class="flex h-6 w-6 items-center justify-center rounded-md bg-(--mint) text-[10px] font-bold text-(--green-d)">
-                {{ inizialiPaziente(paziente) }}
+              <span
+                class="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold"
+                :class="classiAvatarPaziente(paziente)"
+              >
+                {{ inizialiPaziente(paziente.nome, paziente.cognome) }}
               </span>
               {{ paziente.nome }} {{ paziente.cognome }}
             </button>

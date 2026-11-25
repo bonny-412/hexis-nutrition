@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { Plus, ArrowUp, ArrowDown, ArrowUpDown } from '@lucide/vue'
 import { nomeAlimentoLeggibile } from '@/utils/testo'
+import { formattaNumero } from '@/utils/visita'
 
 type CampoOrdinamento = NonNullable<CriteriRicercaAlimenti['ordinaPer']>
 
@@ -177,7 +178,7 @@ const conteggioTesto = computed(() => {
 
 <template>
   <AppShell>
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 class="font-heading text-3xl italic text-(--fg)">Alimenti</h1>
         <p class="mt-1 text-sm text-(--fg3)">Banca Dati Alimenti in sola lettura e i tuoi alimenti personalizzati, in un'unica tabella.</p>
@@ -189,7 +190,7 @@ const conteggioTesto = computed(() => {
 
     <section class="mb-3.5 rounded-2xl border border-(--bd) bg-(--surf) p-3.5">
       <div class="flex flex-wrap items-center gap-2.5">
-        <Input v-model="ricercaInput" type="search" placeholder="Cerca alimento o categoria…" class="min-w-70 flex-1" />
+        <Input v-model="ricercaInput" type="search" autocomplete="off" placeholder="Cerca alimento o categoria…" class="min-w-70 flex-1" />
         <div class="flex flex-wrap gap-1.5">
           <button
             v-for="chip in chipFonte"
@@ -210,7 +211,7 @@ const conteggioTesto = computed(() => {
     <section class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)">
       <div v-if="errore" class="flex flex-col items-center gap-3 p-14 text-center">
         <p class="text-(--danger)">Non è stato possibile caricare gli alimenti.</p>
-        <Button type="button" variant="outline" @click="carica">Riprova</Button>
+        <Button type="button" variant="neutral" @click="carica">Riprova</Button>
       </div>
 
       <div v-else-if="caricamentoIniziale" class="flex flex-col gap-2 p-4">
@@ -218,22 +219,60 @@ const conteggioTesto = computed(() => {
       </div>
 
       <template v-else-if="paginaDati && paginaDati.contenuto.length > 0">
-        <div class="overflow-x-auto" :class="{ 'pointer-events-none opacity-60': aggiornamentoInCorso }">
+        <!-- Mobile: righe compatte con kcal in evidenza; su desktop la tabella, adatta a confrontare numeri in colonna. -->
+        <ul
+          data-test="righe-alimenti-mobile"
+          class="divide-y divide-(--div) md:hidden"
+          :class="{ 'pointer-events-none opacity-60': aggiornamentoInCorso }"
+        >
+          <li v-for="alimento in paginaDati.contenuto" :key="alimento.id" class="relative flex items-start gap-3 px-4 py-3">
+            <div class="min-w-0 flex-1">
+              <button
+                type="button"
+                class="block w-full truncate text-left font-semibold text-(--fg) after:absolute after:inset-0"
+                @click="apriDettaglio(alimento)"
+              >
+                {{ nomeAlimentoLeggibile(alimento.nome) }}
+              </button>
+              <div class="truncate text-xs text-(--fg3)">
+                <span
+                  class="mr-1 rounded px-1.5 py-px text-[10.5px] font-bold"
+                  :class="alimento.bda ? 'bg-(--mint) text-(--green-d)' : 'bg-(--warn-bg) text-(--warn-fg)'"
+                >{{ alimento.bda ? 'BDA' : 'Personalizzato' }}</span>
+                {{ alimento.categoria }}
+              </div>
+              <div class="mt-1 flex gap-3 text-xs tabular-nums text-(--fg2)">
+                <span>Prot. {{ formattaNumero(alimento.proteineG, 1) }} g</span>
+                <span>Carb. {{ formattaNumero(alimento.carboidratiG, 1) }} g</span>
+                <span>Grassi {{ formattaNumero(alimento.grassiG, 1) }} g</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="font-semibold tabular-nums text-(--fg)">{{ formattaNumero(alimento.kcal, 0) }}</div>
+              <div class="text-[11px] text-(--fg3)">kcal<template v-if="!alimento.bda"> / {{ alimento.quantitaG.toFixed(0) }} g</template></div>
+            </div>
+            <div class="relative z-10 -mr-2">
+              <AlimentoRigaAzioni :alimento="alimento" @apri="apriDettaglio" @elimina="onEliminato" />
+            </div>
+          </li>
+        </ul>
+
+        <div class="hidden overflow-x-auto md:block" :class="{ 'pointer-events-none opacity-60': aggiornamentoInCorso }">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 text-(--fg4)" @click="ordina('nome')">
+                  <button type="button" class="flex items-center gap-1 text-(--fg3)" @click="ordina('nome')">
                     Alimento
                     <component :is="iconaOrdinamento('nome')" :size="12" :class="ordinaPer === 'nome' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </button>
                 </TableHead>
-                <TableHead class="text-(--fg4)">Fonte</TableHead>
-                <TableHead class="text-right text-(--fg4)">kcal</TableHead>
-                <TableHead class="text-right text-(--fg4)">Prot.</TableHead>
-                <TableHead class="text-right text-(--fg4)">Carb.</TableHead>
-                <TableHead class="text-right text-(--fg4)">Grassi</TableHead>
-                <TableHead class="text-right text-(--fg4)">Azioni</TableHead>
+                <TableHead class="text-(--fg3)">Fonte</TableHead>
+                <TableHead class="text-right text-(--fg3)">kcal</TableHead>
+                <TableHead class="text-right text-(--fg3)">Prot. g</TableHead>
+                <TableHead class="text-right text-(--fg3)">Carb. g</TableHead>
+                <TableHead class="text-right text-(--fg3)">Grassi g</TableHead>
+                <TableHead class="text-right text-(--fg3)">Azioni</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -259,10 +298,10 @@ const conteggioTesto = computed(() => {
                     {{ alimento.bda ? 'BDA' : 'PERSONALIZZATO' }}
                   </span>
                 </TableCell>
-                <TableCell class="text-right font-semibold tabular-nums">{{ alimento.kcal.toFixed(0) }}</TableCell>
-                <TableCell class="text-right text-(--fg2) tabular-nums">{{ alimento.proteineG.toFixed(1) }}</TableCell>
-                <TableCell class="text-right text-(--fg2) tabular-nums">{{ alimento.carboidratiG.toFixed(1) }}</TableCell>
-                <TableCell class="text-right text-(--fg2) tabular-nums">{{ alimento.grassiG.toFixed(1) }}</TableCell>
+                <TableCell class="text-right font-semibold tabular-nums">{{ formattaNumero(alimento.kcal, 0) }}</TableCell>
+                <TableCell class="text-right text-(--fg2) tabular-nums">{{ formattaNumero(alimento.proteineG, 1) }}</TableCell>
+                <TableCell class="text-right text-(--fg2) tabular-nums">{{ formattaNumero(alimento.carboidratiG, 1) }}</TableCell>
+                <TableCell class="text-right text-(--fg2) tabular-nums">{{ formattaNumero(alimento.grassiG, 1) }}</TableCell>
                 <TableCell class="text-right" @click.stop>
                   <AlimentoRigaAzioni :alimento="alimento" @apri="apriDettaglio" @elimina="onEliminato" />
                 </TableCell>
@@ -275,7 +314,7 @@ const conteggioTesto = computed(() => {
       <div v-else class="flex flex-col items-center gap-2 p-16 text-center">
         <p class="font-bold">Nessun alimento trovato</p>
         <p class="max-w-xs text-xs text-muted-foreground">Prova a modificare la ricerca o i filtri.</p>
-        <Button type="button" variant="outline" @click="pulisciFiltri">Pulisci filtri</Button>
+        <Button type="button" variant="neutral" @click="pulisciFiltri">Pulisci filtri</Button>
       </div>
 
       <div v-if="paginaDati && !errore" class="flex items-center justify-between gap-3 border-t border-(--div) bg-(--soft) px-4.5 py-3">

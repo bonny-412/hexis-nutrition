@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { scorriAlPrimoErrore } from '@/utils/form'
 import { computed, nextTick, ref, type Ref } from 'vue'
 import type { AcceptableValue } from 'reka-ui'
 import { useRouter } from 'vue-router'
@@ -193,7 +194,10 @@ function validaCampi(): boolean {
 async function onSubmit() {
   const campiValidi = validaCampi()
   const visitaValida = datiVisitaForm.value?.valida() ?? false
-  if (!campiValidi || !visitaValida) return
+  if (!campiValidi || !visitaValida) {
+    scorriAlPrimoErrore()
+    return
+  }
 
   inCorso.value = true
   try {
@@ -213,7 +217,7 @@ async function onSubmit() {
       trattamenti: trattamenti.value || undefined,
       visita: datiVisitaForm.value!.ottieniDati(),
     })
-    toast.success('Paziente creato con successo.')
+    toast.success('Paziente creato.')
     router.push(`/pazienti/${paziente.id}`)
   } catch {
     toast.error('Non è stato possibile creare il paziente. Controlla i dati e riprova.')

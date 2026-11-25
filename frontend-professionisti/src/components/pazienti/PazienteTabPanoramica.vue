@@ -87,7 +87,7 @@ const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) 
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <div class="rounded-2xl border border-(--bd) bg-(--surf) p-5">
           <h4 class="font-heading text-base italic text-(--fg)">BIA</h4>
-          <p class="mt-3 text-sm text-(--fg4)">Dati non disponibili: la bioimpedenziometria non è ancora supportata.</p>
+          <p class="mt-3 text-sm text-(--fg3)">Dati non disponibili: la bioimpedenziometria non è ancora supportata.</p>
         </div>
 
         <div class="rounded-2xl border border-(--bd) bg-(--surf) p-5">
@@ -114,7 +114,7 @@ const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) 
               <dd class="font-semibold text-(--fg)">{{ formattaNumero(ultimaVisita.plicometria.ffmi) }}</dd>
             </div>
           </dl>
-          <p v-else class="mt-3 text-sm text-(--fg4)">Nessuna plicometria registrata per l'ultima visita.</p>
+          <p v-else class="mt-3 text-sm text-(--fg3)">Nessuna plicometria registrata per l'ultima visita.</p>
         </div>
 
         <div class="rounded-2xl border border-(--bd) bg-(--surf) p-5">
@@ -125,7 +125,7 @@ const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) 
               <dd class="font-semibold text-(--fg)">{{ c.valore !== null ? `${formattaNumero(c.valore)} cm` : '—' }}</dd>
             </div>
           </dl>
-          <p v-else class="mt-3 text-sm text-(--fg4)">Nessuna circonferenza registrata per l'ultima visita.</p>
+          <p v-else class="mt-3 text-sm text-(--fg3)">Nessuna circonferenza registrata per l'ultima visita.</p>
         </div>
       </div>
     </div>
@@ -142,17 +142,17 @@ const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) 
 
       <dl class="space-y-3.5 text-sm">
         <div class="flex items-center gap-3">
-          <Fingerprint :size="15" class="shrink-0 text-(--fg4)" />
+          <Fingerprint :size="16" class="shrink-0 text-(--fg4)" />
           <div class="min-w-0 flex-1">
-            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Codice Fiscale</dt>
+            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg3)">Codice Fiscale</dt>
             <dd class="truncate font-mono font-medium uppercase text-(--fg)">{{ paziente.codiceFiscale }}</dd>
           </div>
         </div>
 
         <div class="flex items-center gap-3">
-          <Cake :size="15" class="shrink-0 text-(--fg4)" />
+          <Cake :size="16" class="shrink-0 text-(--fg4)" />
           <div class="min-w-0 flex-1">
-            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Data di Nascita</dt>
+            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg3)">Data di Nascita</dt>
             <dd class="font-medium text-(--fg)">
               {{ paziente.dataNascita ? formattaDataItalianaEstesa(paziente.dataNascita) : '—' }}
               <span v-if="eta !== null" class="text-xs text-(--fg3)">({{ eta }} anni)</span>
@@ -161,17 +161,17 @@ const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) 
         </div>
 
         <div class="flex items-center gap-3">
-          <User :size="15" class="shrink-0 text-(--fg4)" />
+          <User :size="16" class="shrink-0 text-(--fg4)" />
           <div class="min-w-0 flex-1">
-            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Sesso</dt>
+            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg3)">Sesso</dt>
             <dd class="font-medium text-(--fg)">{{ ETICHETTE_SESSO[paziente.sesso] ?? paziente.sesso }}</dd>
           </div>
         </div>
 
         <div class="flex items-center gap-3">
-          <Mail :size="15" class="shrink-0 text-(--fg4)" />
+          <Mail :size="16" class="shrink-0 text-(--fg4)" />
           <div class="min-w-0 flex-1">
-            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Email</dt>
+            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg3)">Email</dt>
             <dd class="truncate">
               <a
                 :href="`mailto:${paziente.email}`"
@@ -184,9 +184,9 @@ const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) 
         </div>
 
         <div class="flex items-center gap-3">
-          <Phone :size="15" class="shrink-0 text-(--fg4)" />
+          <Phone :size="16" class="shrink-0 text-(--fg4)" />
           <div class="min-w-0 flex-1">
-            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Telefono</dt>
+            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg3)">Telefono</dt>
             <dd>
               <a
                 v-if="paziente.telefono"
@@ -201,9 +201,9 @@ const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) 
         </div>
 
         <div class="flex items-center gap-3">
-          <Smartphone :size="15" class="shrink-0 text-(--fg4)" />
+          <Smartphone :size="16" class="shrink-0 text-(--fg4)" />
           <div class="min-w-0 flex-1">
-            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Cellulare</dt>
+            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg3)">Cellulare</dt>
             <dd>
               <a
                 v-if="paziente.cellulare"
@@ -218,9 +218,9 @@ const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) 
         </div>
 
         <div class="flex items-center gap-3">
-          <Briefcase :size="15" class="shrink-0 text-(--fg4)" />
+          <Briefcase :size="16" class="shrink-0 text-(--fg4)" />
           <div class="min-w-0 flex-1">
-            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Occupazione</dt>
+            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg3)">Occupazione</dt>
             <dd class="font-medium text-(--fg)">
               {{ paziente.lavoro ?? '—' }}
               <span v-if="paziente.stileDiVita" class="text-xs text-(--fg3)">· {{ ETICHETTE_STILE_DI_VITA[paziente.stileDiVita] }}</span>
@@ -229,9 +229,9 @@ const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) 
         </div>
 
         <div class="flex items-center gap-3">
-          <Stethoscope :size="15" class="shrink-0 text-(--fg4)" />
+          <Stethoscope :size="16" class="shrink-0 text-(--fg4)" />
           <div class="min-w-0 flex-1">
-            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Medico di riferimento</dt>
+            <dt class="text-[10px] font-bold uppercase tracking-wide text-(--fg3)">Medico di riferimento</dt>
             <dd class="font-medium text-(--fg)">
               {{ paziente.medicoRiferimento ?? '—' }}
             </dd>
@@ -240,15 +240,15 @@ const haCirconferenze = computed(() => circonferenzeUltimaVisita.value.some((c) 
       </dl>
 
       <div class="mt-5 flex gap-2.5 rounded-xl bg-(--soft) border-l-2 border-(--sage) p-3.5">
-        <StickyNote :size="15" class="mt-0.5 shrink-0 text-(--fg4)" />
-        <p class="text-sm" :class="paziente.note ? 'text-(--fg2)' : 'italic text-(--fg4)'">
+        <StickyNote :size="16" class="mt-0.5 shrink-0 text-(--fg4)" />
+        <p class="text-sm" :class="paziente.note ? 'text-(--fg2)' : 'italic text-(--fg3)'">
           {{ paziente.note || 'Nessuna storia inserita per questo paziente.' }}
         </p>
       </div>
 
       <div class="mt-3 flex gap-2.5 rounded-xl bg-(--soft) border-l-2 border-(--sage) p-3.5">
-        <Pill :size="15" class="mt-0.5 shrink-0 text-(--fg4)" />
-        <p class="text-sm" :class="paziente.trattamenti ? 'text-(--fg2)' : 'italic text-(--fg4)'">
+        <Pill :size="16" class="mt-0.5 shrink-0 text-(--fg4)" />
+        <p class="text-sm" :class="paziente.trattamenti ? 'text-(--fg2)' : 'italic text-(--fg3)'">
           {{ paziente.trattamenti || 'Nessun trattamento o terapia inserito per questo paziente.' }}
         </p>
       </div>

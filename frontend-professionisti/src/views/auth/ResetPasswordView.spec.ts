@@ -33,7 +33,7 @@ describe('ResetPasswordView', () => {
     await wrapper.findAll('input[type="password"]')[1].setValue('altra1234')
     await wrapper.find('form').trigger('submit')
 
-    expect(toast.error).toHaveBeenCalledWith('Le due password non coincidono.')
+    expect(wrapper.text()).toContain('Le due password non coincidono.')
     expect(authApi.resetPassword).not.toHaveBeenCalled()
   })
 

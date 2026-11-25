@@ -103,7 +103,7 @@ describe('PazienteNuovoView', () => {
       },
     })
     expect(router.currentRoute.value.path).toBe('/pazienti/42')
-    expect(toast.success).toHaveBeenCalledWith('Paziente creato con successo.')
+    expect(toast.success).toHaveBeenCalledWith('Paziente creato.')
   })
 
   it('invia tutte le circonferenze della visita con i valori corretti nei rispettivi campi', async () => {

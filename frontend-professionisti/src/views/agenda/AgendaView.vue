@@ -94,7 +94,7 @@ function apriLinkVideo(link: string) {
     url = null
   }
   if (!url || (url.protocol !== 'http:' && url.protocol !== 'https:')) {
-    toast.error('Link del videoconsulto non valido')
+    toast.error('Link del videoconsulto non valido.')
     return
   }
   window.open(url.href, '_blank', 'noopener,noreferrer')
@@ -284,10 +284,10 @@ async function confermaElimina() {
   if (!a) return
   try {
     await elimina(a.id)
-    toast.success('Elemento eliminato.')
+    toast.success(a.tipo === 'PROMEMORIA' ? 'Promemoria eliminato.' : 'Fascia bloccata eliminata.')
     await carica()
   } catch {
-    toast.error('Non è stato possibile eliminare l\'elemento.')
+    toast.error(a.tipo === 'PROMEMORIA' ? 'Non è stato possibile eliminare il promemoria.' : 'Non è stato possibile eliminare la fascia bloccata.')
   }
 }
 
@@ -310,7 +310,7 @@ function titoloEliminazione(a: Appuntamento | null): string {
 
 <template>
   <AppShell>
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 class="font-heading text-3xl italic text-(--fg)">Agenda</h1>
         <p class="mt-1 text-sm text-(--fg3)">Visite, videoconsulti, promemoria e fasce bloccate dello studio.</p>
@@ -342,7 +342,7 @@ function titoloEliminazione(a: Appuntamento | null): string {
 
     <div v-if="errore" class="flex flex-col items-center gap-3 rounded-2xl border border-(--bd) bg-(--surf) p-14 text-center">
       <p class="text-(--danger)">Non è stato possibile caricare l'agenda.</p>
-      <Button type="button" variant="outline" @click="carica">Riprova</Button>
+      <Button type="button" variant="neutral" @click="carica">Riprova</Button>
     </div>
 
     <div v-else-if="caricamento && appuntamenti.length === 0" class="rounded-2xl border border-(--bd) bg-(--surf) p-14 text-center text-(--fg3)">

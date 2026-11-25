@@ -98,7 +98,7 @@ async function onLogout() {
               <span class="text-[11.5px] font-bold text-(--fg)">
                 {{ auth.professionista?.nome }} {{ auth.professionista?.cognome }}
               </span>
-              <span class="text-[10px] text-(--fg4)">Professionista</span>
+              <span class="text-[10px] text-(--fg3)">Professionista</span>
             </span>
             <ChevronDown
               :size="14"
@@ -109,7 +109,7 @@ async function onLogout() {
         <DropdownMenuContent align="end" class="w-56">
           <DropdownMenuLabel class="font-normal">
             <div class="text-xs font-bold text-(--fg)">{{ auth.professionista?.nome }} {{ auth.professionista?.cognome }}</div>
-            <div class="mt-0.5 text-[11px] font-normal text-(--fg4)">{{ auth.professionista?.email }}</div>
+            <div class="mt-0.5 text-[11px] font-normal text-(--fg3)">{{ auth.professionista?.email }}</div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuCheckboxItem

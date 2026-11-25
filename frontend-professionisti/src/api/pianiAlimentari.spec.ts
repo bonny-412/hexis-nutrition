@@ -5,7 +5,7 @@ import { crea, dettaglio, aggiorna, attiva, elimina, cerca } from './pianiAlimen
 vi.mock('./client', () => ({ apiRequest: vi.fn() }))
 
 const pianoEsempio = {
-  id: '1', pazienteId: 'p1', pazienteNomeCompleto: 'Mario Bianchi', nome: 'Fase 1', modalita: 'PASTI',
+  id: '1', pazienteId: 'p1', pazienteNomeCompleto: 'Mario Bianchi', pazienteNome: 'Mario', pazienteCognome: 'Bianchi', nome: 'Fase 1', modalita: 'PASTI',
   stato: 'BOZZA', dataInizio: '2026-09-12', dataFine: null, obiettivoKcal: 2400, obiettivoKcalSuggerito: 2400,
   bmrCalcolato: 1700, tdeeCalcolato: 2400, formulaBmrUsata: 'MIFFLIN_ST_JEOR', sottoSogliaSicurezza: false,
   pasti: [], giorniMacroTarget: [], esempi: [],

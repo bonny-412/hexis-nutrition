@@ -10,7 +10,7 @@ vi.mock('@/api/pianiAlimentari')
 vi.mock('@/api/pazienti')
 
 const pianoVuoto = {
-  id: 'piano1', pazienteId: 'p1', pazienteNomeCompleto: 'Mario Bianchi', nome: 'Ipertrofia · fase 1',
+  id: 'piano1', pazienteId: 'p1', pazienteNomeCompleto: 'Mario Bianchi', pazienteNome: 'Mario', pazienteCognome: 'Bianchi', nome: 'Ipertrofia · fase 1',
   modalita: 'PASTI', stato: 'BOZZA', dataInizio: '2026-09-12', dataFine: '2026-12-12',
   obiettivoKcal: 2800, obiettivoKcalSuggerito: 2800, bmrCalcolato: 1806.45, tdeeCalcolato: 2800,
   formulaBmrUsata: 'MIFFLIN_ST_JEOR', sottoSogliaSicurezza: false,

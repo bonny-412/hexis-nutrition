@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { scorriAlPrimoErrore } from '@/utils/form'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -31,10 +32,11 @@ import {
   erroreDataInizioPiano, erroreDataFinePiano, erroreNumeroDecimaleObbligatorio,
 } from '@/utils/validators'
 import { formattaDataItalianaConMese } from '@/utils/data'
-import { ArrowLeft, MoreHorizontal, Trash2, Pencil, X, Save, Printer, CircleCheck, Copy, StickyNote } from '@lucide/vue'
+import { ArrowLeft, CalendarRange, MoreHorizontal, Trash2, Pencil, Plus, X, Save, Printer, CircleCheck, Copy, StickyNote } from '@lucide/vue'
 import PianoNoteSheet from '@/components/pianiAlimentari/PianoNoteSheet.vue'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { nomeAlimentoLeggibile } from '@/utils/testo'
+import { inizialiPaziente } from '@/utils/paziente'
 
 function oggiIso(): string {
   const oggi = new Date()
@@ -48,15 +50,6 @@ const ETICHETTA_MODALITA: Record<ModalitaPiano, string> = {
   PASTI: 'Piano con pasti',
   MACRO: 'Macros',
   ESEMPI: 'Esempi intercambiabili',
-}
-
-const COLORE_TIPO_PASTO: Record<TipoPasto, string> = {
-  COLAZIONE: 'var(--chart-3)',
-  SPUNTINO_MATTINA: 'var(--chart-2)',
-  PRANZO: 'var(--chart-1)',
-  SPUNTINO_POMERIGGIO: 'var(--chart-3)',
-  CENA: 'var(--chart-4)',
-  ALTRO: 'var(--fg4)',
 }
 
 // Stima locale delle calorie giornaliere suggerite, prima ancora che il piano esista sul
@@ -181,7 +174,7 @@ const statoPagina = computed<StatoPagina>(() => piano.value?.stato ?? 'BOZZA')
 const BADGE_STATO: Record<StatoPagina, { etichetta: string; classi: string }> = {
   BOZZA: { etichetta: 'Bozza', classi: 'bg-(--warn-bg) text-(--warn-fg)' },
   ATTIVO: { etichetta: 'Attivo', classi: 'bg-(--mint) text-(--green-d)' },
-  CONCLUSO: { etichetta: 'Concluso', classi: 'bg-(--danger)/10 text-(--danger)' },
+  CONCLUSO: { etichetta: 'Concluso', classi: 'bg-(--hover) text-(--fg3)' },
 }
 
 const testoRiquadroSolaLettura = computed(() => {
@@ -215,18 +208,16 @@ function onNotaAggiunta(nuova: NotaPiano) {
 function onNotaEliminata(notaId: string) {
   note.value = note.value.filter((n) => n.id !== notaId)
 }
-/** Iniziali di nome e cognome (prima e ultima parola), come negli avatar delle liste. */
-function inizialiPaziente(nomeCompleto: string): string {
-  const parti = nomeCompleto.trim().split(/\s+/)
-  const prima = parti[0]?.[0] ?? ''
-  const ultima = parti.length > 1 ? parti[parti.length - 1][0] : ''
-  return `${prima}${ultima}`.toUpperCase()
-}
-
 const idPazienteVisualizzato = computed(() => piano.value?.pazienteId ?? pazienteSelezionato.value?.id ?? null)
 const nomePazienteVisualizzato = computed(() => {
   if (piano.value) return piano.value.pazienteNomeCompleto
   if (pazienteSelezionato.value) return `${pazienteSelezionato.value.nome} ${pazienteSelezionato.value.cognome}`
+  return ''
+})
+// Iniziali come negli avatar delle liste (prima lettera di nome e di cognome).
+const inizialiPazienteVisualizzato = computed(() => {
+  if (piano.value) return inizialiPaziente(piano.value.pazienteNome, piano.value.pazienteCognome)
+  if (pazienteSelezionato.value) return inizialiPaziente(pazienteSelezionato.value.nome, pazienteSelezionato.value.cognome)
   return ''
 })
 
@@ -294,6 +285,17 @@ watch(pazienteSelezionato, async (paziente) => {
   }
   const ultimaVisita = await caricaUltimaVisita(paziente.id)
   ultimaVisitaSelezionato.value = ultimaVisita
+  // Obiettivo precompilato con il valore suggerito, come fa il backend alla creazione della bozza.
+  // Prima compariva solo come placeholder: il campo sembrava pieno ma era vuoto (barra Energia ferma
+  // a 0% e "obbligatorio" al salvataggio). Non è una modifica dell'utente: la pagina resta "pulita".
+  if (ultimaVisita && !obiettivoKcalInput.value) {
+    const suggerito = calcolaSuggerimentoTdee(paziente, ultimaVisita)
+    if (suggerito) {
+      const eraPulitoObiettivo = !modificato.value
+      obiettivoKcalInput.value = String(Math.round(suggerito.kcal))
+      if (eraPulitoObiettivo) fissaBase()
+    }
+  }
   if (!ultimaVisita || nomeDaCopia.value) return
 
   const etichetta = ETICHETTE_OBIETTIVO[ultimaVisita.obiettivo]
@@ -453,19 +455,21 @@ interface EsempioLocale {
 }
 const esempiLocali = ref<EsempioLocale[]>([])
 
-const CATEGORIE_ESEMPI: { tipo: TipoPasto; etichetta: string; colore: string }[] = [
-  { tipo: 'COLAZIONE', etichetta: 'Colazione', colore: COLORE_TIPO_PASTO.COLAZIONE },
-  { tipo: 'SPUNTINO_MATTINA', etichetta: 'Spuntino mattina', colore: COLORE_TIPO_PASTO.SPUNTINO_MATTINA },
-  { tipo: 'PRANZO', etichetta: 'Pranzo', colore: COLORE_TIPO_PASTO.PRANZO },
-  { tipo: 'SPUNTINO_POMERIGGIO', etichetta: 'Spuntino pomeriggio', colore: COLORE_TIPO_PASTO.SPUNTINO_POMERIGGIO },
-  { tipo: 'CENA', etichetta: 'Cena', colore: COLORE_TIPO_PASTO.CENA },
+const CATEGORIE_ESEMPI: { tipo: TipoPasto; etichetta: string }[] = [
+  { tipo: 'COLAZIONE', etichetta: 'Colazione' },
+  { tipo: 'SPUNTINO_MATTINA', etichetta: 'Spuntino mattina' },
+  { tipo: 'PRANZO', etichetta: 'Pranzo' },
+  { tipo: 'SPUNTINO_POMERIGGIO', etichetta: 'Spuntino pomeriggio' },
+  { tipo: 'CENA', etichetta: 'Cena' },
 ]
 
 // Stesso motivo del template dei pasti: un esempio "segnaposto" per categoria, come genera
 // PianoAlimentareService.creaBozza() per una bozza ESEMPI appena creata.
 function esempiTemplate(): EsempioLocale[] {
   return CATEGORIE_ESEMPI.map((c) => ({
-    clientId: crypto.randomUUID(), tipoPasto: c.tipo, nome: c.etichetta, nota: null, righe: [],
+    // "Esempio 1" e non il nome della categoria: dentro la sezione "Colazione" un esempio chiamato
+    // "Colazione" ripeteva il titolo e non distingueva un esempio dall'altro.
+    clientId: crypto.randomUUID(), tipoPasto: c.tipo, nome: 'Esempio 1', nota: null, righe: [],
   }))
 }
 esempiLocali.value = esempiTemplate()
@@ -525,9 +529,20 @@ function esempiPerCategoria(tipo: TipoPasto) {
   return esempiLocali.value.filter((e) => e.tipoPasto === tipo)
 }
 
-function aggiungiEsempio(tipo: TipoPasto, etichetta: string) {
+function aggiungiEsempio(tipo: TipoPasto) {
   const numero = esempiPerCategoria(tipo).length + 1
-  esempiLocali.value.push({ clientId: crypto.randomUUID(), tipoPasto: tipo, nome: `${etichetta} ${numero}`, nota: null, righe: [] })
+  esempiLocali.value.push({ clientId: crypto.randomUUID(), tipoPasto: tipo, nome: `Esempio ${numero}`, nota: null, righe: [] })
+}
+
+/** Totali di un esempio: servono a confrontare a colpo d'occhio esempi intercambiabili tra loro. */
+function totaliEsempio(esempio: EsempioLocale) {
+  return esempio.righe.reduce(
+    (t, r) => {
+      const m = macroRiga(r)
+      return { kcal: t.kcal + m.kcal, proteine: t.proteine + m.proteine, carboidrati: t.carboidrati + m.carboidrati, grassi: t.grassi + m.grassi }
+    },
+    { kcal: 0, proteine: 0, carboidrati: 0, grassi: 0 },
+  )
 }
 function rimuoviEsempio(clientId: string) {
   esempiLocali.value = esempiLocali.value.filter((e) => e.clientId !== clientId)
@@ -668,6 +683,21 @@ const macroDelGiornoSelezionato = computed(() =>
   giorniMacroLocali.value.find((g) => g.giornoSettimana === giornoSelezionato.value),
 )
 
+// Kcal che risultano dai macro inseriti (4/4/9 kcal per grammo), per accorgersi se non tornano con
+// le kcal del giorno: "incoerente" oltre il 5% di scarto. Null finché non c'è almeno un macro.
+const coerenzaMacroGiorno = computed(() => {
+  const g = macroDelGiornoSelezionato.value
+  if (!g) return null
+  const p = numeroItalianoOpzionale(g.proteineTarget) ?? 0
+  const c = numeroItalianoOpzionale(g.carboidratiTarget) ?? 0
+  const gr = numeroItalianoOpzionale(g.grassiTarget) ?? 0
+  if (!p && !c && !gr) return null
+  const daMacro = Math.round(p * 4 + c * 4 + gr * 9)
+  const kcal = numeroItalianoOpzionale(g.kcalTarget)
+  const incoerente = !!kcal && Math.abs(daMacro - kcal) / kcal > 0.05
+  return { daMacro, incoerente }
+})
+
 function applicaMacroATuttiIGiorni() {
   const corrente = macroDelGiornoSelezionato.value
   if (!corrente) return
@@ -741,10 +771,10 @@ const macroCardsGiorno = computed(() => {
   return [
     // "Energia" è l'unica tessera piena (petrolio, barra lime): è il numero a cui tutto il resto si riferisce.
     // Il rosso non si usa per le proteine: qui non segnala un errore.
-    { label: 'Energia', hero: true, val: Math.round(t.kcal), unit: 'kcal', pct: percentuale(t.kcal, obiettivo), barColor: 'var(--lime)', valFg: 'var(--on-hero)' },
-    { label: 'Proteine', hero: false, val: Math.round(t.proteine), unit: 'g', pct: percentuale(t.proteine, targetProteine), barColor: 'var(--chart-1)', valFg: 'var(--fg)' },
-    { label: 'Carboidrati', hero: false, val: Math.round(t.carboidrati), unit: 'g', pct: percentuale(t.carboidrati, targetCarboidrati), barColor: 'var(--chart-3)', valFg: 'var(--fg)' },
-    { label: 'Grassi', hero: false, val: Math.round(t.grassi), unit: 'g', pct: percentuale(t.grassi, targetGrassi), barColor: 'var(--chart-2)', valFg: 'var(--fg)' },
+    { label: 'Energia', hero: true, val: Math.round(t.kcal), unit: 'kcal', target: obiettivo, pct: percentuale(t.kcal, obiettivo), barColor: 'var(--lime)', valFg: 'var(--on-hero)' },
+    { label: 'Proteine', hero: false, val: Math.round(t.proteine), unit: 'g', target: targetProteine, pct: percentuale(t.proteine, targetProteine), barColor: 'var(--chart-1)', valFg: 'var(--fg)' },
+    { label: 'Carboidrati', hero: false, val: Math.round(t.carboidrati), unit: 'g', target: targetCarboidrati, pct: percentuale(t.carboidrati, targetCarboidrati), barColor: 'var(--chart-3)', valFg: 'var(--fg)' },
+    { label: 'Grassi', hero: false, val: Math.round(t.grassi), unit: 'g', target: targetGrassi, pct: percentuale(t.grassi, targetGrassi), barColor: 'var(--chart-2)', valFg: 'var(--fg)' },
   ]
 })
 
@@ -771,6 +801,55 @@ function aggiungiPasto() {
 }
 function rimuoviPasto(clientId: string) {
   pastiLocali.value = pastiLocali.value.filter((p) => p.clientId !== clientId)
+}
+
+function copiaRighe(righe: RigaLocale[]): RigaLocale[] {
+  return righe.map((r) => ({ ...r, clientId: crypto.randomUUID() }))
+}
+
+/** Copia del pasto nello stesso giorno, subito dopo l'originale. */
+function duplicaPasto(clientId: string) {
+  const indice = pastiLocali.value.findIndex((p) => p.clientId === clientId)
+  if (indice < 0) return
+  const originale = pastiLocali.value[indice]
+  pastiLocali.value.splice(indice + 1, 0, {
+    ...originale, clientId: crypto.randomUUID(), nome: `${originale.nome} (copia)`, righe: copiaRighe(originale.righe),
+  })
+}
+
+// "Copia negli altri giorni": negli altri sei giorni il pasto corrispondente (stesso tipo; per i
+// pasti extra, stesso nome) prende gli alimenti e la nota di questo; se manca, viene aggiunto.
+// Se in qualche giorno quel pasto ha già alimenti si chiede conferma, perché verrebbero sostituiti.
+function pastoCorrispondente(origine: PastoLocale, giorno: GiornoSettimana) {
+  return pastiLocali.value.find((p) =>
+    p.giornoSettimana === giorno && (origine.tipo === 'ALTRO' ? p.nome === origine.nome : p.tipo === origine.tipo),
+  )
+}
+const copiaPendente = ref<string | null>(null)
+function chiediCopiaNegliAltriGiorni(clientId: string) {
+  const origine = pastiLocali.value.find((p) => p.clientId === clientId)
+  if (!origine) return
+  const sovrascrive = GIORNI.some((g) =>
+    g.chiave !== origine.giornoSettimana && (pastoCorrispondente(origine, g.chiave)?.righe.length ?? 0) > 0,
+  )
+  if (sovrascrive) copiaPendente.value = clientId
+  else copiaNegliAltriGiorni(clientId)
+}
+function copiaNegliAltriGiorni(clientId: string) {
+  copiaPendente.value = null
+  const origine = pastiLocali.value.find((p) => p.clientId === clientId)
+  if (!origine) return
+  for (const g of GIORNI) {
+    if (g.chiave === origine.giornoSettimana) continue
+    const destinazione = pastoCorrispondente(origine, g.chiave)
+    if (destinazione) {
+      destinazione.righe = copiaRighe(origine.righe)
+      destinazione.nota = origine.nota
+    } else {
+      pastiLocali.value.push({ ...origine, clientId: crypto.randomUUID(), giornoSettimana: g.chiave, righe: copiaRighe(origine.righe) })
+    }
+  }
+  toast.success(`Copiato negli altri giorni: ${origine.nome}.`)
 }
 
 // Rimuovere un pasto/esempio con alimenti già inseriti richiede conferma (si perderebbero
@@ -871,7 +950,11 @@ function validaCampi(): boolean {
   assegna('obiettivoKcal', erroreNumeroDecimaleObbligatorio(obiettivoKcalInput.value))
 
   errori.value = nuoviErrori
-  return Object.keys(nuoviErrori).length === 0
+  const valido = Object.keys(nuoviErrori).length === 0
+  // I campi validati stanno in cima alla pagina e "Salva" in fondo: senza questo, il clic sembrava
+  // non fare nulla. Si porta in vista il primo campo con errore.
+  if (!valido) scorriAlPrimoErrore()
+  return valido
 }
 
 async function salva(): Promise<boolean> {
@@ -990,7 +1073,7 @@ function stampaPdf() {
     <div v-if="caricamento" class="p-6 text-sm text-(--fg3)">Caricamento…</div>
     <div v-else-if="erroreCaricamento" class="p-6 text-sm text-(--danger)">{{ erroreCaricamento }}</div>
 
-    <div v-else class="flex flex-col gap-4 p-6">
+    <div v-else class="flex flex-col gap-4">
       <router-link
         :to="linkIndietro"
         data-test="link-indietro"
@@ -1008,8 +1091,8 @@ function stampaPdf() {
       </div>
 
       <template v-else>
-        <div class="flex flex-col lg:flex-row items-end lg:justify-between gap-4 print:hidden">
-          <div>
+        <div class="flex items-start justify-between gap-4 print:hidden lg:items-end">
+          <div class="min-w-0">
             <router-link
               v-if="idPazienteVisualizzato"
               :to="`/pazienti/${idPazienteVisualizzato}`"
@@ -1021,18 +1104,18 @@ function stampaPdf() {
                 class="flex h-8 w-8 flex-none items-center justify-center rounded-full font-heading text-xs font-bold"
                 :class="BADGE_STATO[statoPagina].classi"
               >
-                {{ inizialiPaziente(nomePazienteVisualizzato) }}
+                {{ inizialiPazienteVisualizzato }}
               </span>
               <span class="text-sm font-semibold text-(--fg)">{{ nomePazienteVisualizzato }}</span>
             </router-link>
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
               <div class="flex min-w-0 max-w-full items-center gap-2">
-                <Input v-model="nome" :readonly="solaLettura" class="w-auto max-w-full field-sizing-content font-heading! text-3xl! italic! text-(--fg)! border-0 p-0" />
+                <Input v-model="nome" :readonly="solaLettura" class="w-auto max-w-full field-sizing-content font-heading! text-2xl! sm:text-3xl! italic! text-(--fg)! border-0 p-0" />
                 <Pencil v-if="!solaLettura" :size="16" class="shrink-0 text-(--fg4)" />
               </div>
               <span
                 data-test="badge-stato" :data-stato="statoPagina"
-                class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide"
+                class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
                 :class="BADGE_STATO[statoPagina].classi"
               >
                 <span class="h-1.5 w-1.5 rounded-full bg-current" />
@@ -1041,9 +1124,9 @@ function stampaPdf() {
             </div>
             <p v-if="sottotitolo" class="mt-1 text-sm text-(--fg3)">{{ sottotitolo }}</p>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex shrink-0 items-center gap-2">
             <Button v-if="piano && statoPagina !== 'BOZZA'" type="button" variant="neutral" data-test="apri-note" @click="noteAperte = true">
-              <StickyNote :size="15" />
+              <StickyNote :size="16" />
               Note
               <span data-test="contatore-note" class="rounded-full bg-(--hover) px-1.5 text-[11px] font-bold text-(--fg3)">{{ note.length }}</span>
             </Button>
@@ -1090,12 +1173,13 @@ function stampaPdf() {
           </button>
         </div>
 
-        <div v-if="modalitaModificabile" class="flex w-fit gap-2 rounded-xl border border-(--bd2) p-1 print:hidden">
+        <!-- Su mobile resta su una riga e scorre di lato (senza barra visibile) invece di andare a capo voce per voce. -->
+        <div v-if="modalitaModificabile" class="flex w-fit max-w-full gap-2 overflow-x-auto rounded-xl border border-(--bd2) p-1 [scrollbar-width:none] print:hidden">
           <button
             v-for="opzione in (['PASTI', 'MACRO', 'ESEMPI'] as ModalitaPiano[])"
             :key="opzione"
             type="button"
-            class="rounded-lg px-3 py-2 text-sm font-bold"
+            class="shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-bold"
             :class="modalitaScelta === opzione ? 'bg-(--surf) text-(--green)' : 'text-(--fg3)'"
             @click="selezionaModalita(opzione)"
           >
@@ -1108,17 +1192,17 @@ function stampaPdf() {
         <fieldset :disabled="solaLettura" class="contents">
         <div class="flex flex-wrap items-start justify-start lg:justify-center gap-3 lg:gap-6 rounded-2xl border border-(--sage) bg-(--mint) p-4 print:hidden">
           <div class="flex flex-col gap-1">
-            <span class="text-[10px] font-bold uppercase tracking-wide text-(--green)">Data di partenza*</span>
+            <span class="text-xs font-medium text-(--green)">Data di partenza*</span>
             <DatePicker
               v-if="!piano" id="data-inizio" digitabile :model-value="dataInizioInput" @update:model-value="onDataInizioChange"
               class="border-(--sage) dark:border-(--sage) bg-(--surf) dark:bg-(--surf) hover:bg-(--surf) dark:hover:bg-(--surf) aria-expanded:bg-(--surf) dark:aria-expanded:bg-(--surf) text-base font-semibold"
             />
             <span v-else class="font-heading text-lg font-semibold text-(--fg)">{{ formattaDataItalianaConMese(piano.dataInizio) }}</span>
-            <p v-if="errori.dataInizio" class="text-xs font-medium text-(--danger)">{{ errori.dataInizio }}</p>
+            <p v-if="errori.dataInizio" data-errore class="text-xs font-medium text-(--danger)">{{ errori.dataInizio }}</p>
           </div>
           <div class="hidden h-8 w-px bg-(--sage) sm:block" />
           <div class="flex flex-col gap-1">
-            <span class="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wide text-(--green)">
+            <span class="flex items-center gap-1.5 text-xs font-medium text-(--green)">
               Obiettivo giornaliero*
               <span
                 data-test="obiettivo-kcal-info"
@@ -1138,125 +1222,156 @@ function stampaPdf() {
               />
               <span class="text-xs font-semibold text-(--green)">kcal/giorno</span>
             </span>
-            <p v-if="errori.obiettivoKcal" class="text-xs font-medium text-(--danger)">{{ errori.obiettivoKcal }}</p>
+            <p v-if="errori.obiettivoKcal" data-errore class="text-xs font-medium text-(--danger)">{{ errori.obiettivoKcal }}</p>
           </div>
           <div class="hidden h-8 w-px bg-(--sage) sm:block" />
           <div class="flex flex-col gap-1">
-            <span class="text-[10px] font-bold uppercase tracking-wide text-(--green)">Fine piano*</span>
+            <span class="text-xs font-medium text-(--green)">Fine piano*</span>
             <DatePicker
               id="data-fine" digitabile :model-value="dataFineInput" @update:model-value="onDataFineChange"
               class="border-(--sage) dark:border-(--sage) bg-(--surf) dark:bg-(--surf) hover:bg-(--surf) dark:hover:bg-(--surf) aria-expanded:bg-(--surf) dark:aria-expanded:bg-(--surf) text-base font-semibold"
             />
-            <p v-if="errori.dataFine" class="text-xs font-medium text-(--danger)">{{ errori.dataFine }}</p>
+            <p v-if="errori.dataFine" data-errore class="text-xs font-medium text-(--danger)">{{ errori.dataFine }}</p>
           </div>
         </div>
 
-        <div v-if="modalitaAttiva === 'ESEMPI'" class="flex flex-col gap-4">
-          <div class="grid grid-cols-[repeat(auto-fit,minmax(340px,1fr))] items-start gap-5">
-            <div
-              v-for="categoria in CATEGORIE_ESEMPI"
-              :key="categoria.tipo"
-              class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)"
-            >
-              <!-- Header della colonna categoria -->
-              <div class="flex items-center gap-2 border-b border-(--div) bg-(--soft) px-5 py-4">
-                <span class="h-2.5 w-2.5 flex-none rounded-full" :style="{ background: categoria.colore }" />
-                <p class="font-heading text-base font-semibold text-(--fg)">{{ categoria.etichetta }}</p>
-              </div>
+        <!-- Esempi intercambiabili (ridisegno 2026-11-25): una sezione per categoria con titolo e numero
+             di esempi; ogni esempio è una scheda bianca "Esempio N" con i totali in fondo, così gli
+             esempi della stessa categoria si confrontano a colpo d'occhio. Prima: grigio su grigio,
+             tre contenitori annidati, titolo uguale alla categoria e nessuna kcal. -->
+        <div v-if="modalitaAttiva === 'ESEMPI'" class="flex flex-col gap-8">
+          <section
+            v-for="categoria in CATEGORIE_ESEMPI"
+            :key="categoria.tipo"
+            :data-test="`sezione-esempi-${categoria.tipo}`"
+          >
+            <div class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+              <h3 class="font-heading text-lg italic text-(--fg)">{{ categoria.etichetta }}</h3>
+              <span class="text-xs text-(--fg3)">
+                {{ esempiPerCategoria(categoria.tipo).length === 1 ? '1 esempio' : `${esempiPerCategoria(categoria.tipo).length} esempi` }}
+              </span>
+            </div>
 
-              <!-- Contenuto della categoria -->
-              <div class="flex flex-col gap-4 p-4">
-                <!-- Card Esempio -->
-                <div
-                  v-for="esempio in esempiPerCategoria(categoria.tipo)"
-                  :key="esempio.clientId"
-                  data-test="card-esempio"
-                  class="rounded-xl border border-(--bd) bg-(--bg) p-4 transition-colors hover:border-(--bd2)"
-                >
-                  <!-- Header dell'esempio (Nome ed Eliminazione) -->
-                  <div class="mb-3 flex items-center justify-between gap-2 border-b border-(--div)/50 pb-3">
-                    <div class="flex min-w-0 flex-1 items-center gap-1.5">
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <article
+                v-for="esempio in esempiPerCategoria(categoria.tipo)"
+                :key="esempio.clientId"
+                data-test="card-esempio"
+                class="flex flex-col rounded-xl border border-(--bd) bg-(--surf)"
+              >
+                <!-- Titolo dell'esempio, modificabile, e menu -->
+                <div class="flex items-center gap-2 px-4 pb-2 pt-3">
+                  <div class="flex min-w-0 flex-1 items-center gap-1.5">
+                    <Input
+                      v-model="esempio.nome"
+                      :readonly="solaLettura"
+                      aria-label="Nome dell'esempio"
+                      class="w-auto max-w-full min-w-0 field-sizing-content border-0 bg-transparent p-0 text-sm! font-semibold text-(--fg) focus-visible:ring-0"
+                    />
+                    <Pencil v-if="!solaLettura" :size="12" class="shrink-0 text-(--fg4)" />
+                  </div>
+                  <DropdownMenu v-if="!solaLettura">
+                    <DropdownMenuTrigger as-child>
+                      <Button type="button" variant="ghost" size="icon-sm" aria-label="Opzioni esempio" title="Opzioni esempio">
+                        <MoreHorizontal :size="16" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        variant="destructive" class="cursor-pointer text-(--danger) focus:text-(--danger)"
+                        data-test="rimuovi-esempio"
+                        @click="chiediRimuoviEsempio(esempio.clientId)"
+                      >
+                        <Trash2 />
+                        Elimina esempio
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <!-- Alimenti: nome, grammi e kcal della riga -->
+                <ul v-if="esempio.righe.length" class="divide-y divide-(--div) border-t border-(--div)">
+                  <li v-for="riga in esempio.righe" :key="riga.clientId" class="flex items-center gap-2 px-4 py-2">
+                    <span class="min-w-0 flex-1 truncate text-sm text-(--fg)">{{ nomeAlimentoLeggibile(riga.nome) }}</span>
+                    <span class="flex shrink-0 items-center gap-1">
                       <Input
-                        v-model="esempio.nome"
-                        class="min-w-0 border-0 bg-transparent p-0 text-sm font-bold text-(--fg) focus-visible:ring-0"
+                        type="text" inputmode="decimal" class="h-7 w-14 text-right text-xs"
+                        :readonly="solaLettura"
+                        :aria-label="`Grammi di ${nomeAlimentoLeggibile(riga.nome)}`"
+                        :model-value="grammiVisualizzati(riga)" @keydown="bloccaTastoNonNumerico"
+                        @update:model-value="(v) => onGrammiInputEsempio(esempio.clientId, riga.clientId, v)"
                       />
-                      <Pencil v-if="!solaLettura" :size="12" class="shrink-0 text-(--fg4)" />
-                    </div>
-
-                    <!-- Tasto modifica / elimina esempio -->
+                      <span class="text-xs text-(--fg3)">g</span>
+                    </span>
+                    <span class="w-14 shrink-0 text-right text-xs tabular-nums text-(--fg3)">{{ Math.round(macroRiga(riga).kcal) }} kcal</span>
                     <Button
                       v-if="!solaLettura"
                       type="button"
                       variant="destructive-ghost"
-                      size="icon-xs"
-                      title="Rimuovi esempio"
-                      @click="chiediRimuoviEsempio(esempio.clientId)"
+                      size="icon-sm" aria-label="Rimuovi alimento" title="Rimuovi alimento"
+                      class="-mr-1.5"
+                      @click="rimuoviRigaEsempio(esempio.clientId, riga.clientId)"
                     >
-                      <Trash2 :size="13" />
+                      <X :size="14" />
                     </Button>
-                  </div>
+                  </li>
+                </ul>
 
-                  <!-- Lista righe/alimenti dell'esempio -->
-                  <div v-if="esempio.righe.length" class="mb-3 flex flex-col gap-2">
-                    <div
-                      v-for="riga in esempio.righe"
-                      :key="riga.clientId"
-                      class="group flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-xs transition-colors hover:bg-(--soft)"
-                    >
-                      <span class="min-w-0 flex-1 truncate font-medium text-(--fg2)">{{ nomeAlimentoLeggibile(riga.nome) }}</span>
-                      <span class="flex shrink-0 items-center gap-1">
-                        <Input
-                          type="text" inputmode="decimal" class="h-7 w-16 text-right text-xs"
-                          :model-value="grammiVisualizzati(riga)" @keydown="bloccaTastoNonNumerico"
-                          @update:model-value="(v) => onGrammiInputEsempio(esempio.clientId, riga.clientId, v)"
-                        />
-                        <span class="font-semibold text-(--fg3)">g</span>
-                      </span>
-                      <Button
-                        v-if="!solaLettura"
-                        type="button"
-                        variant="destructive-ghost"
-                        size="icon-xs"
-                        class="opacity-0 group-hover:opacity-100 transition-opacity"
-                        @click="rimuoviRigaEsempio(esempio.clientId, riga.clientId)"
-                      >
-                        <X :size="12" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  <!-- Aggiungi alimento all'esempio -->
+                <div v-if="!solaLettura" class="px-4 py-3" :class="{ 'border-t border-(--div)': esempio.righe.length }">
                   <button
-                    v-if="!solaLettura"
-                    class="text-xs font-semibold text-(--green) transition-colors hover:text-(--green)/80"
+                    type="button"
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-(--bd2) px-3 py-1.5 text-xs font-semibold text-(--fg3) transition-colors hover:border-(--green) hover:text-(--green-d)"
                     @click="apriAggiungiAlimentoEsempio(esempio.clientId)"
                   >
-                    + Aggiungi alimento
+                    <Plus :size="14" />
+                    Aggiungi alimento
                   </button>
+                </div>
 
-                  <!-- Nota dell'esempio -->
+                <!-- Nota -->
+                <div class="flex items-start gap-2 border-t border-(--div) px-4 py-2">
+                  <span class="whitespace-nowrap pt-px text-xs font-medium text-(--fg3)">Nota:</span>
                   <Textarea
                     data-test="esempio-nota"
                     :model-value="esempio.nota ?? ''"
                     @update:model-value="(v) => (esempio.nota = String(v).trim() ? String(v) : null)"
                     rows="1"
                     placeholder="Sostituti, varianti…"
-                    class="mt-2.5 min-h-0 resize-none border-0 bg-transparent p-0 text-xs italic text-(--fg2) shadow-none focus-visible:ring-0"
+                    class="min-h-0 resize-none border-0 bg-transparent p-0 text-xs italic text-(--fg2) shadow-none focus-visible:ring-0"
                   />
                 </div>
 
-                <!-- Pulsante crea nuovo esempio -->
-                <button
-                  v-if="!solaLettura"
-                  :data-test="`nuovo-esempio-${categoria.tipo}`"
-                  class="flex w-full items-center justify-center rounded-xl border border-dashed border-(--bd2) py-2.5 text-xs font-semibold text-(--fg3) transition-colors hover:border-(--green) hover:bg-(--mint)/30 hover:text-(--green-d)"
-                  @click="aggiungiEsempio(categoria.tipo, categoria.etichetta)"
+                <!-- Totali: il dato per confrontare gli esempi tra loro -->
+                <div
+                  data-test="totali-esempio"
+                  class="mt-auto flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-b-xl border-t border-(--div) bg-(--soft) px-4 py-2.5 text-xs tabular-nums text-(--fg3)"
                 >
-                  + Nuovo esempio
-                </button>
-              </div>
+                  <span><span class="font-heading text-base font-semibold text-(--fg)">{{ Math.round(totaliEsempio(esempio).kcal) }}</span> kcal</span>
+                  <span>Prot. {{ Math.round(totaliEsempio(esempio).proteine) }} g</span>
+                  <span>Carb. {{ Math.round(totaliEsempio(esempio).carboidrati) }} g</span>
+                  <span>Grassi {{ Math.round(totaliEsempio(esempio).grassi) }} g</span>
+                </div>
+              </article>
+
+              <!-- "Nuovo esempio" come scheda tratteggiata dove comparirà il nuovo esempio. -->
+              <button
+                v-if="!solaLettura"
+                type="button"
+                :data-test="`nuovo-esempio-${categoria.tipo}`"
+                class="flex min-h-16 flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed md:min-h-32 border-(--bd2) text-sm font-semibold text-(--fg3) transition-colors hover:border-(--green) hover:text-(--green-d)"
+                @click="aggiungiEsempio(categoria.tipo)"
+              >
+                <Plus :size="18" />
+                Nuovo esempio
+              </button>
+              <p
+                v-else-if="esempiPerCategoria(categoria.tipo).length === 0"
+                class="rounded-xl border border-dashed border-(--bd2) px-4 py-6 text-center text-sm text-(--fg3)"
+              >
+                Nessun esempio per {{ categoria.etichetta.toLowerCase() }}.
+              </p>
             </div>
-          </div>
+          </section>
         </div>
 
         </fieldset>
@@ -1307,12 +1422,12 @@ function stampaPdf() {
 
           <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <label class="flex flex-col gap-1.5">
-              <span class="text-[11px] font-bold uppercase tracking-wider text-(--fg4)">Kcal</span>
+              <span class="text-xs font-medium text-(--fg3)">Kcal</span>
               <Input
                 data-test="macro-target-kcal" 
                 type="text" 
                 inputmode="decimal"
-                placeholder="0"
+                placeholder="—"
                 :model-value="macroDelGiornoSelezionato.kcalTarget" 
                 @keydown="bloccaTastoNonNumerico"
                 @update:model-value="(v) => (macroDelGiornoSelezionato!.kcalTarget = filtraDecimaleItaliano(String(v)))"
@@ -1320,11 +1435,11 @@ function stampaPdf() {
             </label>
 
             <label class="flex flex-col gap-1.5">
-              <span class="text-[11px] font-bold uppercase tracking-wider text-(--fg4)">Proteine (g)</span>
+              <span class="text-xs font-medium text-(--fg3)">Proteine (g)</span>
               <Input
                 type="text" 
                 inputmode="decimal"
-                placeholder="0"
+                placeholder="—"
                 :model-value="macroDelGiornoSelezionato.proteineTarget" 
                 @keydown="bloccaTastoNonNumerico"
                 @update:model-value="(v) => (macroDelGiornoSelezionato!.proteineTarget = filtraDecimaleItaliano(String(v)))"
@@ -1332,11 +1447,11 @@ function stampaPdf() {
             </label>
 
             <label class="flex flex-col gap-1.5">
-              <span class="text-[11px] font-bold uppercase tracking-wider text-(--fg4)">Carboidrati (g)</span>
+              <span class="text-xs font-medium text-(--fg3)">Carboidrati (g)</span>
               <Input
                 type="text" 
                 inputmode="decimal"
-                placeholder="0"
+                placeholder="—"
                 :model-value="macroDelGiornoSelezionato.carboidratiTarget" 
                 @keydown="bloccaTastoNonNumerico"
                 @update:model-value="(v) => (macroDelGiornoSelezionato!.carboidratiTarget = filtraDecimaleItaliano(String(v)))"
@@ -1344,11 +1459,11 @@ function stampaPdf() {
             </label>
 
             <label class="flex flex-col gap-1.5">
-              <span class="text-[11px] font-bold uppercase tracking-wider text-(--fg4)">Grassi (g)</span>
+              <span class="text-xs font-medium text-(--fg3)">Grassi (g)</span>
               <Input
                 type="text" 
                 inputmode="decimal"
-                placeholder="0"
+                placeholder="—"
                 :model-value="macroDelGiornoSelezionato.grassiTarget" 
                 @keydown="bloccaTastoNonNumerico"
                 @update:model-value="(v) => (macroDelGiornoSelezionato!.grassiTarget = filtraDecimaleItaliano(String(v)))"
@@ -1356,8 +1471,17 @@ function stampaPdf() {
             </label>
           </div>
 
+          <p
+            v-if="coerenzaMacroGiorno"
+            data-test="coerenza-macro"
+            class="mt-2 text-xs"
+            :class="coerenzaMacroGiorno.incoerente ? 'text-(--warn-fg)' : 'text-(--fg3)'"
+          >
+            I macro corrispondono a {{ coerenzaMacroGiorno.daMacro.toLocaleString('it-IT') }} kcal<template v-if="coerenzaMacroGiorno.incoerente">: non tornano con le kcal del giorno.</template><template v-else>.</template>
+          </p>
+
           <label class="mt-4 flex flex-col gap-1.5">
-            <span class="text-[11px] font-bold uppercase tracking-wider text-(--fg4)">Nota</span>
+            <span class="text-xs font-medium text-(--fg3)">Nota</span>
             <Textarea
               data-test="macro-target-nota"
               :model-value="macroDelGiornoSelezionato.nota ?? ''"
@@ -1378,7 +1502,7 @@ function stampaPdf() {
           </NativeSelectOption>
         </NativeSelect>
 
-        <div class="hidden overflow-hidden rounded-xl border border-(--bd) bg-(--surf) sm:block divide-y divide-(--div)">
+        <div class="hidden overflow-hidden rounded-xl border border-(--bd) bg-(--surf) sm:sticky sm:top-0 sm:block divide-y divide-(--div) print:static">
           <button
             v-for="giorno in GIORNI"
             :key="giorno.chiave"
@@ -1396,15 +1520,17 @@ function stampaPdf() {
 
         <fieldset :disabled="solaLettura" class="contents">
         <div class="flex flex-col gap-3">
-          <div class="grid grid-cols-2 gap-2 sm:grid-cols-4" data-test="macro-card-giorno">
+          <!-- Sempre visibili mentre si scorre tra i pasti: è il riscontro che serve mentre si compone il giorno. -->
+          <div class="sticky top-0 z-10 -mx-1 -mt-1 grid grid-cols-2 gap-2 bg-(--bg) px-1 pb-1 pt-1 sm:grid-cols-4 print:static" data-test="macro-card-giorno">
             <div
               v-for="m in macroCardsGiorno" :key="m.label"
               class="rounded-xl border p-3"
               :class="m.hero ? 'border-(--hero-d) bg-(--hero)' : 'border-(--bd) bg-(--surf)'"
             >
-              <p class="text-[10px] font-bold uppercase tracking-wide" :class="m.hero ? 'text-(--on-hero-2)' : 'text-(--fg3)'">{{ m.label }}</p>
+              <p class="text-xs font-medium" :class="m.hero ? 'text-(--on-hero-2)' : 'text-(--fg3)'">{{ m.label }}</p>
               <p class="font-heading text-lg font-semibold" :style="{ color: m.valFg }">
-                {{ m.val }}<span class="ml-0.5 text-xs font-normal" :class="m.hero ? 'text-(--on-hero-2)' : 'text-(--fg4)'">{{ m.unit }}</span>
+                {{ m.val }}<span class="ml-0.5 text-xs font-normal" :class="m.hero ? 'text-(--on-hero-2)' : 'text-(--fg3)'">{{ m.unit }}</span>
+                <span v-if="m.hero && m.target > 0" class="ml-1 text-xs font-normal" :class="m.hero ? 'text-(--on-hero-2)' : 'text-(--fg3)'">di {{ Math.round(m.target) }}</span>
               </p>
               <div class="mt-2 h-1 overflow-hidden rounded-full" :class="m.hero ? 'bg-(--hero-track)' : 'bg-(--div)'">
                 <div class="h-full rounded-full" :style="{ width: m.pct + '%', background: m.barColor }" />
@@ -1413,9 +1539,9 @@ function stampaPdf() {
           </div>
           <div class="grid grid-cols-3 gap-2 sm:grid-cols-5">
             <div v-for="m in macroCardsPiccole" :key="m.label" class="rounded-xl border border-(--bd) bg-(--surf) p-3">
-              <p class="text-[10px] font-bold uppercase tracking-wide text-(--fg3)">{{ m.label }}</p>
+              <p class="text-xs font-medium text-(--fg3)">{{ m.label }}</p>
               <p class="font-heading text-base font-semibold text-(--fg)">
-                {{ m.val }}<span class="ml-0.5 text-xs font-normal text-(--fg4)">{{ m.unit }}</span>
+                {{ m.val }}<span class="ml-0.5 text-xs font-normal text-(--fg3)">{{ m.unit }}</span>
               </p>
             </div>
           </div>
@@ -1428,10 +1554,12 @@ function stampaPdf() {
             <!-- Header pasto con angoli superiori protetti e bordo inferiore -->
             <div class="flex items-center justify-between gap-3 border-b border-(--div) bg-(--soft) px-4 py-3">
               <div class="flex min-w-0 flex-1 items-center gap-2">
-                <span class="h-2 w-2 flex-none rounded-full" :style="{ background: COLORE_TIPO_PASTO[pasto.tipo] }" />
+                <!-- Largo quanto il testo: la matita resta accanto al nome invece di finire vicino alle kcal. -->
                 <Input
                   v-model="pasto.nome"
-                  class="min-w-0 border-0 bg-transparent p-0 font-heading text-sm! font-semibold text-(--fg) focus-visible:ring-0"
+                  :readonly="solaLettura"
+                  aria-label="Nome del pasto"
+                  class="w-auto max-w-full min-w-0 field-sizing-content border-0 bg-transparent p-0 font-heading text-sm! font-semibold text-(--fg) focus-visible:ring-0"
                 />
                 <Pencil v-if="!solaLettura" :size="12" class="shrink-0 text-(--fg4)" />
               </div>
@@ -1440,10 +1568,19 @@ function stampaPdf() {
                 <DropdownMenu v-if="!solaLettura">
                   <DropdownMenuTrigger as-child>
                     <Button type="button" variant="ghost" size="icon-sm" aria-label="Opzioni pasto" title="Opzioni pasto">
-                      <MoreHorizontal :size="15" />
+                      <MoreHorizontal :size="16" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem data-test="duplica-pasto" class="cursor-pointer" @click="duplicaPasto(pasto.clientId)">
+                      <Copy />
+                      Duplica pasto
+                    </DropdownMenuItem>
+                    <DropdownMenuItem data-test="copia-pasto-altri-giorni" class="cursor-pointer" @click="chiediCopiaNegliAltriGiorni(pasto.clientId)">
+                      <CalendarRange />
+                      Copia negli altri giorni
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
                       variant="destructive" class="cursor-pointer text-(--danger) focus:text-(--danger)"
                       @click="chiediRimuoviPasto(pasto.clientId)"
@@ -1456,22 +1593,54 @@ function stampaPdf() {
               </div>
             </div>
 
-            <!-- Tabella Alimenti -->
-            <div v-if="pasto.righe.length" class="overflow-x-auto">
+            <!-- Mobile: righe compatte invece della tabella, che scorreva di lato lasciando fuori la X. -->
+            <ul v-if="pasto.righe.length" data-test="righe-pasto-mobile" class="divide-y divide-(--div) md:hidden">
+              <li v-for="riga in pasto.righe" :key="riga.clientId" class="px-4 py-2.5">
+                <div class="flex items-center gap-2">
+                  <span class="min-w-0 flex-1 truncate text-sm font-semibold text-(--fg)">{{ nomeAlimentoLeggibile(riga.nome) }}</span>
+                  <span class="flex shrink-0 items-center gap-1">
+                    <Input
+                      type="text" inputmode="decimal" class="h-7 w-14 text-right text-xs"
+                      :readonly="solaLettura"
+                      :aria-label="`Grammi di ${nomeAlimentoLeggibile(riga.nome)}`"
+                      :model-value="grammiVisualizzati(riga)" @keydown="bloccaTastoNonNumerico"
+                      @update:model-value="(v) => onGrammiInput(pasto.clientId, riga.clientId, v)"
+                    />
+                    <span class="text-xs text-(--fg3)">g</span>
+                  </span>
+                  <Button
+                    v-if="!solaLettura" variant="destructive-ghost" size="icon-sm" class="-mr-1.5"
+                    aria-label="Rimuovi alimento" title="Rimuovi alimento"
+                    @click="rimuoviRiga(pasto.clientId, riga.clientId)"
+                  >
+                    <X :size="14" />
+                  </Button>
+                </div>
+                <div class="mt-1 flex flex-wrap gap-x-3 text-xs tabular-nums text-(--fg3)">
+                  <span class="font-semibold text-(--fg)">{{ Math.round(macroRiga(riga).kcal) }} kcal</span>
+                  <span>Prot. {{ Math.round(macroRiga(riga).proteine) }} g</span>
+                  <span>Carb. {{ Math.round(macroRiga(riga).carboidrati) }} g</span>
+                  <span>Grassi {{ Math.round(macroRiga(riga).grassi) }} g</span>
+                </div>
+              </li>
+            </ul>
+
+            <!-- Tabella Alimenti (da 768 px) -->
+            <div v-if="pasto.righe.length" class="hidden overflow-x-auto md:block">
               <table class="w-full min-w-185">
                 <thead>
                   <tr class="border-b border-(--div)/50 bg-(--surf)/50">
-                    <th class="px-4 pb-1.5 pt-2 text-left text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Alimento</th>
-                    <th class="w-20 px-2 pb-1.5 pt-2 text-right text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Qtà</th>
-                    <th class="px-2 pb-1.5 pt-2 text-right text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Kcal</th>
-                    <th class="px-2 pb-1.5 pt-2 text-right text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Prot.</th>
-                    <th class="px-2 pb-1.5 pt-2 text-right text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Gras.</th>
-                    <th class="px-2 pb-1.5 pt-2 text-right text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Carb.</th>
-                    <th class="px-2 pb-1.5 pt-2 text-right text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Zucc.</th>
-                    <th class="px-2 pb-1.5 pt-2 text-right text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Fibra</th>
-                    <th class="px-2 pb-1.5 pt-2 text-right text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Ferro</th>
-                    <th class="px-4 pb-1.5 pt-2 text-right text-[10px] font-bold uppercase tracking-wide text-(--fg4)">Calcio</th>
-                    <th class="w-8"></th>
+                    <th class="px-4 pb-1.5 pt-2 text-left text-xs font-medium text-(--fg3)">Alimento</th>
+                    <th class="w-20 px-2 pb-1.5 pt-2 text-right text-xs font-medium text-(--fg3)">Qtà g</th>
+                    <th class="px-2 pb-1.5 pt-2 text-right text-xs font-medium text-(--fg3)">Kcal</th>
+                    <th class="px-2 pb-1.5 pt-2 text-right text-xs font-medium text-(--fg3)">Prot. g</th>
+                    <th class="px-2 pb-1.5 pt-2 text-right text-xs font-medium text-(--fg3)">Gras. g</th>
+                    <th class="px-2 pb-1.5 pt-2 text-right text-xs font-medium text-(--fg3)">Carb. g</th>
+                    <th class="px-2 pb-1.5 pt-2 text-right text-xs font-medium text-(--fg3)">Zucc. g</th>
+                    <th class="px-2 pb-1.5 pt-2 text-right text-xs font-medium text-(--fg3)">Fibra g</th>
+                    <th class="px-2 pb-1.5 pt-2 text-right text-xs font-medium text-(--fg3)">Ferro mg</th>
+                    <th class="px-4 pb-1.5 pt-2 text-right text-xs font-medium text-(--fg3)">Calcio mg</th>
+                    <th class="w-10"></th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-(--div)">
@@ -1493,8 +1662,8 @@ function stampaPdf() {
                     <td class="p-2 text-right text-xs text-(--fg2)">{{ Math.round(macroRiga(riga).ferro) }}</td>
                     <td class="p-2 pr-4 text-right text-xs text-(--fg2)">{{ Math.round(macroRiga(riga).calcio) }}</td>
                     <td class="p-2 text-center">
-                      <Button v-if="!solaLettura" variant="destructive-ghost" size="icon-xs" @click="rimuoviRiga(pasto.clientId, riga.clientId)">
-                        <X :size="12" />
+                      <Button v-if="!solaLettura" variant="destructive-ghost" size="icon-sm" aria-label="Rimuovi alimento" title="Rimuovi alimento" @click="rimuoviRiga(pasto.clientId, riga.clientId)">
+                        <X :size="14" />
                       </Button>
                     </td>
                   </tr>
@@ -1506,16 +1675,18 @@ function stampaPdf() {
             <div v-if="!solaLettura" class="p-3">
               <button
                 data-test="apri-aggiungi-alimento"
-                class="rounded-lg border border-dashed border-(--bd2) px-3 py-1.5 text-xs font-medium text-(--fg3) transition-colors hover:border-(--green) hover:text-(--green)"
+                type="button"
+                class="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-(--bd2) px-3 py-1.5 text-xs font-semibold text-(--fg3) transition-colors hover:border-(--green) hover:text-(--green-d)"
                 @click="apriAggiungiAlimento(pasto.clientId)"
               >
-                + Aggiungi alimento
+                <Plus :size="14" />
+                Aggiungi alimento
               </button>
             </div>
 
             <!-- Note a piè di card -->
             <div class="flex items-center gap-2 border-t border-(--div) bg-(--soft)/40 px-4 py-2">
-              <span class="whitespace-nowrap text-[10px] font-medium uppercase tracking-wide text-(--fg4)">Nota:</span>
+              <span class="whitespace-nowrap text-xs font-medium text-(--fg3)">Nota:</span>
               <Textarea
                 :model-value="pasto.nota ?? ''"
                 @update:model-value="(v) => (pasto.nota = String(v).trim() ? String(v) : null)"
@@ -1529,10 +1700,12 @@ function stampaPdf() {
           <button
             v-if="!solaLettura"
             data-test="aggiungi-pasto"
-            class="rounded-xl border border-dashed border-(--bd2) bg-(--surf) px-4 py-3 text-sm font-bold text-(--fg2) transition-colors hover:border-(--green) hover:text-(--green)"
+            type="button"
+            class="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-(--bd2) bg-(--surf) py-3 text-sm font-semibold text-(--fg3) transition-colors hover:border-(--green) hover:text-(--green-d)"
             @click="aggiungiPasto"
           >
-            + Aggiungi pasto
+            <Plus :size="16" />
+            Aggiungi pasto
           </button>
         </div>
         </fieldset>
@@ -1604,6 +1777,23 @@ function stampaPdf() {
           <AlertDialogCancel @click="annullaCambioModalita" variant="neutral">Annulla</AlertDialogCancel>
           <AlertDialogAction data-test="conferma-cambio-modalita" class="bg-(--danger) hover:bg-(--danger-d)" @click="confermaCambioModalita">
             Cambia modalità
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <AlertDialog :open="copiaPendente !== null" @update:open="(v) => { if (!v) copiaPendente = null }">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Copiare il pasto negli altri giorni?</AlertDialogTitle>
+          <AlertDialogDescription>
+            In alcuni giorni questo pasto ha già degli alimenti: verranno sostituiti con quelli di {{ GIORNI.find((g) => g.chiave === giornoSelezionato)?.etichetta.toLowerCase() }}.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel variant="neutral" @click="copiaPendente = null">Annulla</AlertDialogCancel>
+          <AlertDialogAction data-test="conferma-copia-pasto" @click="copiaNegliAltriGiorni(copiaPendente!)">
+            Copia e sostituisci
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -98,7 +98,7 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
           <NativeSelectOption v-for="(v, i) in visite" :key="v.id" :value="i">{{ formattaDataItalianaConMese(v.dataVisita) }}</NativeSelectOption>
         </NativeSelect>
       </label>
-      <span class="mb-1.5 text-(--fg4)">→</span>
+      <span class="mb-1.5 text-(--fg3)">→</span>
       <label class="flex flex-col gap-1.5">
         <Label class="text-[13px] font-medium text-(--fg2)">Visita B</Label>
         <NativeSelect v-model="idxB" class="[&_select]:bg-(--surf)">
@@ -147,7 +147,7 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
               <td class="px-5 py-2.5 font-semibold text-(--fg2)">Obiettivo</td>
               <td class="px-3 py-2.5 text-right">{{ rigaObiettivo.a }}</td>
               <td class="px-3 py-2.5 text-right">{{ rigaObiettivo.b }}</td>
-              <td class="px-5 py-2.5 text-right font-bold" :class="rigaObiettivo.invariato ? 'text-(--fg4)' : 'text-(--warn-fg)'">
+              <td class="px-5 py-2.5 text-right font-bold" :class="rigaObiettivo.invariato ? 'text-(--fg3)' : 'text-(--warn-fg)'">
                 {{ rigaObiettivo.invariato ? '—' : 'Cambiato' }}
               </td>
             </tr>
@@ -157,7 +157,7 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
               <td class="px-3 py-2.5 text-right tabular-nums">{{ formattaCella(r.b, r.unita, r.decimali) }}</td>
               <td
                 class="px-5 py-2.5 text-right font-bold"
-                :class="!r.variazione ? 'text-(--fg4)' : 'text-(--warn-fg)'"
+                :class="!r.variazione ? 'text-(--fg3)' : 'text-(--warn-fg)'"
               >
                 {{ formattaVariazione(r.variazione, r.unita, r.decimali) }}
               </td>
@@ -165,7 +165,7 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
 
             <tr><td colspan="4" class="border-t border-(--div) bg-(--soft)/50 px-5 py-2 text-xs font-semibold text-(--fg3)">BIA</td></tr>
             <tr class="border-t">
-              <td colspan="4" class="px-5 py-2.5 text-(--fg4)">Dati non disponibili: la bioimpedenziometria non è ancora supportata.</td>
+              <td colspan="4" class="px-5 py-2.5 text-(--fg3)">Dati non disponibili: la bioimpedenziometria non è ancora supportata.</td>
             </tr>
 
             <template v-if="haPlicometria">
@@ -176,7 +176,7 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
                 <td class="px-3 py-2.5 text-right tabular-nums">{{ formattaCella(r.b, r.unita, r.decimali) }}</td>
                 <td
                   class="px-5 py-2.5 text-right font-bold"
-                  :class="!r.variazione ? 'text-(--fg4)' : 'text-(--warn-fg)'"
+                  :class="!r.variazione ? 'text-(--fg3)' : 'text-(--warn-fg)'"
                 >
                   {{ formattaVariazione(r.variazione, r.unita, r.decimali) }}
                 </td>
@@ -191,7 +191,7 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
                 <td class="px-3 py-2.5 text-right tabular-nums">{{ formattaCella(r.b, r.unita, r.decimali) }}</td>
                 <td
                   class="px-5 py-2.5 text-right font-bold"
-                  :class="!r.variazione ? 'text-(--fg4)' : 'text-(--warn-fg)'"
+                  :class="!r.variazione ? 'text-(--fg3)' : 'text-(--warn-fg)'"
                 >
                   {{ formattaVariazione(r.variazione, r.unita, r.decimali) }}
                 </td>
