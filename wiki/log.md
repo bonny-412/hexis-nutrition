@@ -796,3 +796,14 @@ Dettaglio in [stato](stato.md#sessione-del-15-novembre-2026--agenda-implementata
 - `stato.md`: riga in "Dove siamo" e nuova voce in cima a "Prossimo passo consigliato" (commit, riavvio backend e prove a mano, aperti di prodotto, nuovo giro di revisione).
 - Stato finale: backend `mvn test` 196/196, frontend `vue-tsc` pulito e `vitest` 297/297; 54 file in staging; nessun commit.
 - Subito dopo: nuovo giro di revisione completo in Chrome con frontend-design più una revisione indipendente del codice UI da un secondo agente.
+
+## [2026-11-25] query | Secondo giro di revisione UI
+
+- Giro visivo in Chrome (Claude) più revisione indipendente del codice UI (Opus), entrambi con frontend-design. Report: `docs/ui-review-2026-11-25-giro2.md`.
+- Verdetto: coerente in buona parte, moderna sì, accattivante con misura, chiara quasi. Primi da fare: togliere "Chat"/"Analytics" dalla barra laterale, glossario delle azioni, conferme distruttive, doppione "Invita" nella lista pazienti, stati vuoti delle liste, "Comprimi" che non resta.
+- Nessun codice modificato.
+
+## [2026-11-25] handoff | Chiusura chat
+
+- Andrea ha committato il lavoro della giornata (`cb8d482`). Restano in staging solo `docs/ui-review-2026-11-25-giro2.md`, `wiki/log.md` e `wiki/stato.md`.
+- Prossima sessione: riavviare il backend e provare a mano palette con ".com", "Aggiungi alimento" con "pasta" e autocompletamento al login; poi i punti del secondo giro di revisione in ordine (voci "Chat"/"Analytics", glossario delle azioni, conferme distruttive, doppione "Invita" nella lista pazienti, stati vuoti delle liste, "Comprimi"). Regole: frontend-design per la UI, percorso superpowers, revisione indipendente, mai commit.
