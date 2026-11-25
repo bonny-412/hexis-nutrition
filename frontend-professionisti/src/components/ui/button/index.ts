@@ -23,7 +23,7 @@ export const buttonVariants = cva(
         // Sui blocchi petrolio (hero): pillola secondaria e azione principale lime, una per blocco.
         hero: 'border-transparent bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) hover:bg-(--hero-pill-hover) aria-expanded:bg-(--hero-pill-hover)',
         accent: 'bg-(--lime) text-(--on-lime) hover:bg-(--lime-d) aria-expanded:bg-(--lime-d)',
-        'destructive-neutral':'bg-destructive/10 text-destructive border-border hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/20 dark:hover:bg-destructive/30 focus-visible:border-destructive/40',
+        'destructive-neutral': 'border-border bg-card text-destructive hover:bg-destructive/10 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:hover:bg-destructive/15 dark:focus-visible:ring-destructive/40',
       },
       size: {
         'default': 'h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',

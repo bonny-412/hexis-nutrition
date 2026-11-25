@@ -65,7 +65,7 @@ function confermaElimina() {
         </DropdownMenuItem>
         <DropdownMenuItem data-test="duplica-piano" class="cursor-pointer" @click="emit('duplica', riga)">
           <Copy />
-          Duplica
+          Duplica piano
         </DropdownMenuItem>
         <DropdownMenuSeparator v-if="riga.stato === 'BOZZA'" />
         <DropdownMenuItem
@@ -87,8 +87,8 @@ function confermaElimina() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-elimina-piano" class="bg-(--danger) hover:bg-(--danger-d)" @click="confermaElimina">
-            Elimina
+          <AlertDialogAction data-test="conferma-elimina-piano" variant="destructive" @click="confermaElimina">
+            Elimina piano
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

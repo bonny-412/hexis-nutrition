@@ -9,7 +9,10 @@ import AlimentoFormDialog from '@/components/alimenti/AlimentoFormDialog.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
-import { Plus, ArrowUp, ArrowDown, ArrowUpDown } from '@lucide/vue'
+import { Apple, Plus, ArrowUp, ArrowDown, ArrowUpDown, SearchX } from '@lucide/vue'
+import StatoVuoto from '@/components/StatoVuoto.vue'
+import ErroreLista from '@/components/liste/ErroreLista.vue'
+import CaricamentoLista from '@/components/liste/CaricamentoLista.vue'
 import { nomeAlimentoLeggibile } from '@/utils/testo'
 import { formattaNumero } from '@/utils/visita'
 
@@ -24,6 +27,7 @@ const chipFonte: { valore: NonNullable<CriteriRicercaAlimenti['fonte']>; etichet
 const ricercaInput = ref('')
 const ricercaEffettiva = ref('')
 const fonte = ref<NonNullable<CriteriRicercaAlimenti['fonte']>>('TUTTI')
+const filtriAttivi = computed(() => ricercaEffettiva.value.trim() !== '' || fonte.value !== 'TUTTI')
 const pagina = ref(0)
 const ordinaPer = ref<CampoOrdinamento | undefined>(undefined)
 const direzione = ref<'asc' | 'desc'>('asc')
@@ -190,7 +194,7 @@ const conteggioTesto = computed(() => {
 
     <section class="mb-3.5 rounded-2xl border border-(--bd) bg-(--surf) p-3.5">
       <div class="flex flex-wrap items-center gap-2.5">
-        <Input v-model="ricercaInput" type="search" autocomplete="off" placeholder="Cerca alimento o categoria…" class="min-w-70 flex-1" />
+        <Input v-model="ricercaInput" type="search" autocomplete="off" aria-label="Cerca alimento o categoria" placeholder="Cerca alimento o categoria…" class="min-w-70 flex-1" />
         <div class="flex flex-wrap gap-1.5">
           <button
             v-for="chip in chipFonte"
@@ -209,14 +213,8 @@ const conteggioTesto = computed(() => {
     </section>
 
     <section class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)">
-      <div v-if="errore" class="flex flex-col items-center gap-3 p-14 text-center">
-        <p class="text-(--danger)">Non è stato possibile caricare gli alimenti.</p>
-        <Button type="button" variant="neutral" @click="carica">Riprova</Button>
-      </div>
-
-      <div v-else-if="caricamentoIniziale" class="flex flex-col gap-2 p-4">
-        <div v-for="n in 6" :key="n" class="h-9 animate-pulse rounded-lg bg-(--hover)" />
-      </div>
+      <ErroreLista v-if="errore" messaggio="Non è stato possibile caricare gli alimenti." @riprova="carica" />
+      <CaricamentoLista v-else-if="caricamentoIniziale" etichetta="Caricamento gli alimenti" />
 
       <template v-else-if="paginaDati && paginaDati.contenuto.length > 0">
         <!-- Mobile: righe compatte con kcal in evidenza; su desktop la tabella, adatta a confrontare numeri in colonna. -->
@@ -311,11 +309,12 @@ const conteggioTesto = computed(() => {
         </div>
       </template>
 
-      <div v-else class="flex flex-col items-center gap-2 p-16 text-center">
-        <p class="font-bold">Nessun alimento trovato</p>
-        <p class="max-w-xs text-xs text-muted-foreground">Prova a modificare la ricerca o i filtri.</p>
+      <StatoVuoto v-else-if="filtriAttivi" :icona="SearchX" titolo="Nessun alimento trovato" testo="Prova a modificare la ricerca o i filtri." livello="h2">
         <Button type="button" variant="neutral" @click="pulisciFiltri">Pulisci filtri</Button>
-      </div>
+      </StatoVuoto>
+      <StatoVuoto v-else :icona="Apple" titolo="Nessun alimento trovato" testo="Puoi aggiungere un alimento personalizzato." livello="h2">
+        <Button type="button" @click="apriCreazione">Nuovo alimento</Button>
+      </StatoVuoto>
 
       <div v-if="paginaDati && !errore" class="flex items-center justify-between gap-3 border-t border-(--div) bg-(--soft) px-4.5 py-3">
         <span class="text-xs text-(--fg3)">{{ conteggioTesto }}</span>

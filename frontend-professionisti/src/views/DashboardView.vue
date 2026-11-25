@@ -25,6 +25,7 @@ const auth = useAuthStore()
 const pazientiAttivi = ref<number | null>(null)
 const erroreCaricamento = ref(false)
 const oggi = oggiIso()
+const fineFinestraScadenze = aggiungiGiorni(oggi, 7)
 /** Appuntamenti da oggi ai prossimi 7 giorni: alimentano sia il riepilogo di oggi sia la lista delle prossime visite. */
 const agendaSettimana = ref<Appuntamento[] | null>(null)
 const agendaOggi = computed(() => agendaSettimana.value?.filter((a) => a.data === oggi) ?? null)
@@ -97,7 +98,7 @@ async function caricaAgenda() {
 /** Le tre liste di "Da fare" si caricano insieme; una che fallisce non blocca le altre. */
 async function caricaDaFare() {
   const [scadenza, bozze, inviti] = await Promise.allSettled([
-    cercaPiani({ stato: 'ATTIVO', dataFineDa: oggi, dataFineA: aggiungiGiorni(oggi, 7), ordinaPer: 'dataFine', direzione: 'asc', dimensione: MAX_DA_FARE }),
+    cercaPiani({ stato: 'ATTIVO', dataFineDa: oggi, dataFineA: fineFinestraScadenze, ordinaPer: 'dataFine', direzione: 'asc', dimensione: MAX_DA_FARE }),
     cercaPiani({ stato: 'BOZZA', ordinaPer: 'aggiornatoIl', direzione: 'desc', dimensione: MAX_DA_FARE }),
     cercaPazienti({ statoAccount: 'MAI_INVITATO', archiviato: false, ordinaPer: 'cognome', direzione: 'asc', dimensione: MAX_DA_FARE }),
   ])
@@ -166,7 +167,7 @@ onMounted(() => Promise.all([caricaConteggio(), caricaAgenda(), caricaDaFare()])
               <DropdownMenuItem as-child class="gap-2 px-2.5 py-1.5 cursor-pointer">
                 <router-link to="/piani-alimentari/nuovo">
                   <Utensils :size="16" />
-                  Nuovo piano alimentare
+                  Nuovo piano
                 </router-link>
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -191,7 +192,7 @@ onMounted(() => Promise.all([caricaConteggio(), caricaAgenda(), caricaDaFare()])
           testo="Le visite fissate in agenda compaiono qui."
         >
           <Button as-child size="sm">
-            <router-link to="/agenda?nuovo=visita" data-test="dashboard-fissa-appuntamento"><CalendarPlus :size="14" /> Fissa un appuntamento</router-link>
+            <router-link to="/agenda?nuovo=visita" data-test="dashboard-fissa-appuntamento"><CalendarPlus :size="14" /> Nuovo appuntamento</router-link>
           </Button>
         </StatoVuoto>
         <ul v-else class="divide-y divide-(--div) border-t border-(--div)">
@@ -240,7 +241,7 @@ onMounted(() => Promise.all([caricaConteggio(), caricaAgenda(), caricaDaFare()])
         </div>
 
         <div v-if="caricamentoDaFare" class="h-40 animate-pulse rounded-2xl bg-(--hover)" data-test="dashboard-da-fare-skeleton" />
-        <DaFareCard v-else :in-scadenza="pianiInScadenza" :bozze="pianiInBozza" :mai-invitati="maiInvitati" @invitato="onInvitato" />
+        <DaFareCard v-else :in-scadenza="pianiInScadenza" :bozze="pianiInBozza" :mai-invitati="maiInvitati" :oggi="oggi" :fine-finestra-scadenze="fineFinestraScadenze" @invitato="onInvitato" />
       </div>
     </div>
   </AppShell>

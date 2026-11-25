@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui'
 import { toast } from 'vue-sonner'
 import { invita, type Paziente } from '@/api/pazienti'
 import type { PianoAlimentareRigaLista } from '@/api/pianiAlimentari'
 import { Button } from '@/components/ui/button'
 import StatoVuoto from '@/components/StatoVuoto.vue'
-import { CircleCheck, ChevronRight, Mail, Pencil, RefreshCw } from '@lucide/vue'
-import { aggiungiGiorni, oggiIso } from '@/utils/agenda'
+import { CircleCheck, ChevronRight, Copy, Mail, Pencil } from '@lucide/vue'
+import { aggiungiGiorni } from '@/utils/agenda'
 import { formattaDataItalianaConMese } from '@/utils/data'
 
 /** Una lista per gruppo (null se il caricamento è fallito) con il totale reale, per "Vedi tutti". */
@@ -19,16 +20,16 @@ const props = defineProps<{
   inScadenza: GruppoDaFare<PianoAlimentareRigaLista>
   bozze: GruppoDaFare<PianoAlimentareRigaLista>
   maiInvitati: GruppoDaFare<Paziente>
+  oggi: string
+  fineFinestraScadenze: string
 }>()
 
 const emit = defineEmits<{ invitato: [id: string] }>()
 
-const oggi = oggiIso()
-
 function quandoScade(dataFine: string | null): string {
   if (!dataFine) return ''
-  if (dataFine === oggi) return 'Scade oggi'
-  if (dataFine === aggiungiGiorni(oggi, 1)) return 'Scade domani'
+  if (dataFine === props.oggi) return 'Scade oggi'
+  if (dataFine === aggiungiGiorni(props.oggi, 1)) return 'Scade domani'
   return `Scade il ${formattaDataItalianaConMese(dataFine)}`
 }
 
@@ -37,6 +38,13 @@ const tuttoFallito = computed(() => [props.inScadenza, props.bozze, props.maiInv
 const nienteInSospeso = computed(
   () => !caricamentoFallito.value && [props.inScadenza, props.bozze, props.maiInvitati].every((g) => g.voci!.length === 0),
 )
+
+const categorie = computed(() => [
+  { id: 'scadenze', nome: 'Scadenze', gruppo: props.inScadenza },
+  { id: 'bozze', nome: 'Bozze', gruppo: props.bozze },
+  { id: 'inviti', nome: 'Inviti', gruppo: props.maiInvitati },
+])
+const categoriaIniziale = computed(() => categorie.value.find(({ gruppo }) => gruppo.voci?.length)?.id ?? 'scadenze')
 
 /** Pazienti per cui l'invio dell'invito è in corso: il pulsante resta disabilitato fino alla risposta. */
 const invioInCorso = ref(new Set<string>())
@@ -72,14 +80,24 @@ async function onInvita(p: Paziente) {
       testo="Nessun piano in scadenza o in bozza, tutti i pazienti sono stati invitati."
     />
 
-    <div v-else class="pb-2">
-      <!-- 1. Piani attivi che scadono entro una settimana -->
-      <div v-if="inScadenza.voci?.length" data-test="da-fare-scadenza">
-        <h3 class="flex items-center justify-between px-5 pt-3 pb-1 text-xs font-semibold text-(--fg3)">
-          Piani in scadenza
-          <span class="tabular-nums">{{ inScadenza.totale }}</span>
-        </h3>
-        <ul>
+    <TabsRoot v-else :default-value="categoriaIniziale" class="px-2 pb-3 pt-2">
+      <TabsList aria-label="Categorie Da fare" class="mx-2 flex flex-nowrap gap-1 overflow-x-auto rounded-xl border border-(--bd) bg-(--soft) p-1">
+        <TabsTrigger
+          v-for="{ id, nome, gruppo } in categorie"
+          :key="id"
+          :value="id"
+          class="tab-attivita flex grow shrink-0 cursor-pointer items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1.5 py-2 text-xs font-semibold text-(--fg3) focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--green-d)"
+        >
+          {{ nome }}
+          <span v-if="gruppo.voci !== null" class="conteggio shrink-0 rounded-full bg-(--surf) px-1.5 tabular-nums">{{ gruppo.totale }}</span>
+          <span v-else class="sr-only">Caricamento non riuscito</span>
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="scadenze" data-test="da-fare-scadenza" class="pt-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--green-d)">
+        <p v-if="inScadenza.voci === null" class="px-3 py-4 text-sm text-(--fg3)">Non è stato possibile caricare i piani in scadenza.</p>
+        <p v-else-if="!inScadenza.voci.length" class="px-3 py-4 text-sm text-(--fg3)">Nessun piano in scadenza.</p>
+        <ul v-else>
           <li v-for="p in inScadenza.voci" :key="p.id" class="flex items-center gap-3 px-5 py-2">
             <router-link :to="`/piani-alimentari/${p.id}`" class="min-w-0 flex-1 group">
               <p class="truncate text-sm font-semibold text-(--fg) group-hover:text-(--green)">{{ p.pazienteNomeCompleto }}</p>
@@ -87,25 +105,22 @@ async function onInvita(p: Paziente) {
             </router-link>
             <Button as-child size="sm" variant="neutral" class="shrink-0">
               <router-link :to="`/piani-alimentari/nuovo?duplicaDa=${p.id}`" data-test="da-fare-rinnova">
-                <RefreshCw :size="14" /> Rinnova
+                <Copy :size="14" /> Duplica piano
               </router-link>
             </Button>
           </li>
         </ul>
         <router-link
-          v-if="inScadenza.totale > inScadenza.voci.length"
-          to="/piani-alimentari"
+          v-if="inScadenza.voci && inScadenza.totale > inScadenza.voci.length"
+          :to="{ name: 'piani-alimentari', query: { stato: 'ATTIVO', dataFineDa: oggi, dataFineA: fineFinestraScadenze } }"
           class="group mx-5 inline-flex items-center gap-0.5 text-xs font-semibold text-(--green) hover:text-(--green-d)"
         >Vedi tutti <ChevronRight :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:translate-x-0.5" /></router-link>
-      </div>
+      </TabsContent>
 
-      <!-- 2. Piani in bozza -->
-      <div v-if="bozze.voci?.length" data-test="da-fare-bozze">
-        <h3 class="flex items-center justify-between px-5 pt-3 pb-1 text-xs font-semibold text-(--fg3)">
-          Piani in bozza
-          <span class="tabular-nums">{{ bozze.totale }}</span>
-        </h3>
-        <ul>
+      <TabsContent value="bozze" data-test="da-fare-bozze" class="pt-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--green-d)">
+        <p v-if="bozze.voci === null" class="px-3 py-4 text-sm text-(--fg3)">Non è stato possibile caricare le bozze.</p>
+        <p v-else-if="!bozze.voci.length" class="px-3 py-4 text-sm text-(--fg3)">Nessun piano in bozza.</p>
+        <ul v-else>
           <li v-for="p in bozze.voci" :key="p.id" class="flex items-center gap-3 px-5 py-2">
             <div class="min-w-0 flex-1">
               <p class="truncate text-sm font-semibold text-(--fg)">{{ p.pazienteNomeCompleto }}</p>
@@ -119,19 +134,16 @@ async function onInvita(p: Paziente) {
           </li>
         </ul>
         <router-link
-          v-if="bozze.totale > bozze.voci.length"
-          to="/piani-alimentari"
+          v-if="bozze.voci && bozze.totale > bozze.voci.length"
+          :to="{ name: 'piani-alimentari', query: { stato: 'BOZZA' } }"
           class="group mx-5 inline-flex items-center gap-0.5 text-xs font-semibold text-(--green) hover:text-(--green-d)"
         >Vedi tutti <ChevronRight :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:translate-x-0.5" /></router-link>
-      </div>
+      </TabsContent>
 
-      <!-- 3. Pazienti mai invitati all'app -->
-      <div v-if="maiInvitati.voci?.length" data-test="da-fare-inviti">
-        <h3 class="flex items-center justify-between px-5 pt-3 pb-1 text-xs font-semibold text-(--fg3)">
-          Mai invitati
-          <span class="tabular-nums">{{ maiInvitati.totale }}</span>
-        </h3>
-        <ul>
+      <TabsContent value="inviti" data-test="da-fare-inviti" class="pt-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--green-d)">
+        <p v-if="maiInvitati.voci === null" class="px-3 py-4 text-sm text-(--fg3)">Non è stato possibile caricare i pazienti da invitare.</p>
+        <p v-else-if="!maiInvitati.voci.length" class="px-3 py-4 text-sm text-(--fg3)">Tutti i pazienti sono stati invitati.</p>
+        <ul v-else>
           <li v-for="p in maiInvitati.voci" :key="p.id" class="flex items-center gap-3 px-5 py-2">
             <router-link :to="`/pazienti/${p.id}`" class="min-w-0 flex-1 group">
               <p class="truncate text-sm font-semibold text-(--fg) group-hover:text-(--green)">{{ p.nome }} {{ p.cognome }}</p>
@@ -150,13 +162,35 @@ async function onInvita(p: Paziente) {
           </li>
         </ul>
         <router-link
-          v-if="maiInvitati.totale > maiInvitati.voci.length"
-          to="/pazienti"
+          v-if="maiInvitati.voci && maiInvitati.totale > maiInvitati.voci.length"
+          :to="{ name: 'pazienti', query: { statoAccount: 'MAI_INVITATO' } }"
           class="group mx-5 inline-flex items-center gap-0.5 text-xs font-semibold text-(--green) hover:text-(--green-d)"
         >Vedi tutti <ChevronRight :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:translate-x-0.5" /></router-link>
-      </div>
+      </TabsContent>
 
       <p v-if="caricamentoFallito" class="px-5 pt-3 text-xs text-(--fg3)">Alcune attività non sono state caricate.</p>
-    </div>
+    </TabsRoot>
   </section>
 </template>
+
+<style scoped>
+.tab-attivita[aria-selected='true'] {
+  background-color: var(--green);
+  color: var(--on-green);
+}
+
+.tab-attivita[aria-selected='true'] .conteggio {
+  color: var(--green-d);
+}
+
+.tab-attivita[aria-selected='true']:focus-visible {
+  outline-color: var(--on-green);
+}
+
+@media (hover: hover) {
+  .tab-attivita[aria-selected='false']:hover {
+    background-color: var(--hover);
+    color: var(--fg);
+  }
+}
+</style>

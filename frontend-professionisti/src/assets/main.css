@@ -19,7 +19,7 @@
   --fg: #183C3A;
   --fg2: #4A6663;
   --fg3: #5A7673;
-  --fg4: #77918D;
+  --fg4: #596F6C;
   --green: #087F74;
   --green-d: #06675F;
   --on-green: #FFFFFF;
@@ -289,6 +289,21 @@
     background-color: var(--scroll-thumb-hover);
   }
 
+}
+
+:is([data-slot="dialog-footer"], [data-slot="alert-dialog-footer"]):has(> :nth-child(2):last-child) {
+  flex-wrap: nowrap;
+}
+
+:is([data-slot="dialog-footer"], [data-slot="alert-dialog-footer"]):has(> :nth-child(2):last-child) > * {
+  flex-shrink: 1;
+  min-width: 0;
+  height: auto;
+  min-height: 2rem;
+  padding-block: 0.25rem;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
 }
 
 /* Riempimento automatico di Chrome: niente fondo azzurro, i campi restano nei colori dell'app (chiaro e scuro).

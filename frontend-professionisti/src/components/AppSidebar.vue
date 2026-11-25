@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { RouterLink, useRoute } from 'vue-router'
 import { LayoutGrid, Calendar, Users, MessageSquare, BarChart3, Apple, PanelLeftOpen, PanelLeftClose, Utensils } from '@lucide/vue'
-import { ref } from 'vue';
 import { useNotificheStore } from '@/stores/notifiche'
 
 const notifiche = useNotificheStore()
 const props = withDefaults(defineProps<{ class?: string }>(), { class: '' })
 
-const isCollapsed = ref(false)
+const isCollapsed = defineModel<boolean>('compressed', { default: false })
 
 const toggleSidebar = () => {
   isCollapsed.value = !isCollapsed.value
@@ -44,6 +43,10 @@ const route = useRoute()
           v-for="voce in voci"
           :key="voce.nome"
           :to="voce.routeName ? { name: voce.routeName } : undefined"
+          :aria-label="voce.nome === 'Agenda' && notifiche.nonVisteInAgenda > 0
+            ? 'Agenda, nuove notifiche'
+            : isCollapsed && voce.routeName ? voce.nome : undefined"
+          :title="isCollapsed && voce.routeName ? voce.nome : undefined"
           class="relative flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium transition-colors"
           :class="[
             isCollapsed ? 'justify-center px-0' : '',
@@ -60,7 +63,7 @@ const route = useRoute()
             v-if="voce.nome === 'Agenda' && notifiche.nonVisteInAgenda > 0"
             class="size-2 flex-none rounded-full bg-(--lime)"
             :class="isCollapsed ? 'absolute right-2 top-1.5' : 'ml-auto'"
-            aria-label="Nuove notifiche in agenda"
+            :aria-hidden="true"
             data-test="sidebar-agenda-puntino"
           />
         </component>
@@ -73,6 +76,7 @@ const route = useRoute()
         <RouterLink
             :to="{ name: 'alimenti' }"
             :title="isCollapsed ? 'Alimenti' : undefined"
+            :aria-label="isCollapsed ? 'Alimenti' : undefined"
             class="relative flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium transition-colors"
             :class="[
               isCollapsed ? 'justify-center px-0' : '',
@@ -89,6 +93,7 @@ const route = useRoute()
         type="button"
         @click="toggleSidebar"
         :title="isCollapsed ? 'Espandi sidebar' : 'Rimpicciolisci sidebar'"
+        :aria-label="isCollapsed ? 'Espandi sidebar' : 'Comprimi sidebar'"
         class="hidden items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium text-(--side-fg2) transition-colors hover:bg-(--side-act-bg) hover:text-white lg:flex"
         :class="{ 'lg:justify-center lg:px-0': isCollapsed }"
       >

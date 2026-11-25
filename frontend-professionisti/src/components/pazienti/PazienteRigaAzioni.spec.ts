@@ -39,26 +39,6 @@ async function apriMenu(wrapper: Awaited<ReturnType<typeof montaComponente>>) {
 }
 
 describe('PazienteRigaAzioni', () => {
-  it('mostra il bottone Invita per un paziente mai invitato', async () => {
-    const wrapper = await montaComponente(pazienteEsempio)
-    expect(wrapper.text()).toContain('Invita')
-    wrapper.unmount()
-  })
-
-  it('emette invita al click del bottone', async () => {
-    const wrapper = await montaComponente(pazienteEsempio)
-    const pulsante = wrapper.findAll('button').find((b) => b.text() === 'Invita')
-    await pulsante?.trigger('click')
-    expect(wrapper.emitted('invita')).toEqual([[pazienteEsempio]])
-    wrapper.unmount()
-  })
-
-  it('non mostra il bottone Invita in vista archiviati', async () => {
-    const wrapper = await montaComponente({ ...pazienteEsempio, archiviato: true }, true)
-    expect(wrapper.text()).not.toContain('Invita')
-    wrapper.unmount()
-  })
-
   it('apre il menu e collega "Nuova visita" alla pagina di creazione per il paziente', async () => {
     const wrapper = await montaComponente(pazienteEsempio)
     await apriMenu(wrapper)
@@ -77,6 +57,7 @@ describe('PazienteRigaAzioni', () => {
 
     expect(wrapper.emitted('archivia')).toBeUndefined()
     expect(document.body.textContent).toContain('Archiviare Luca Verdi?')
+    expect(document.querySelector('[data-test="conferma-conferma"]')?.textContent?.trim()).toBe('Archivia paziente')
     wrapper.unmount()
   })
 
@@ -92,11 +73,13 @@ describe('PazienteRigaAzioni', () => {
     wrapper.unmount()
   })
 
-  it('mostra "De-archivia paziente" ed emette deArchivia in vista archiviati', async () => {
+  it('mostra "Ripristina paziente" ed emette deArchivia in vista archiviati', async () => {
     const pazienteArchiviato = { ...pazienteEsempio, archiviato: true }
     const wrapper = await montaComponente(pazienteArchiviato, true)
     await apriMenu(wrapper)
-    document.querySelector<HTMLElement>('[data-test="menu-de-archivia"]')?.click()
+    const azione = document.querySelector<HTMLElement>('[data-test="menu-de-archivia"]')
+    expect(azione?.textContent?.trim()).toBe('Ripristina paziente')
+    azione?.click()
     await flushPromises()
     document.querySelector<HTMLElement>('[data-test="conferma-conferma"]')?.click()
     await flushPromises()

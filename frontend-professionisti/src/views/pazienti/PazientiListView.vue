@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, type Component } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { AcceptableValue } from 'reka-ui'
 import { toast } from 'vue-sonner'
@@ -14,6 +14,7 @@ import {
   type CriteriRicercaPazienti,
 } from '@/api/pazienti'
 import PazienteRigaAzioni from '@/components/pazienti/PazienteRigaAzioni.vue'
+import PazienteStatoAccount from '@/components/pazienti/PazienteStatoAccount.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -21,10 +22,13 @@ import { Label } from '@/components/ui/label'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
-import { ChevronRight, ArrowUp, ArrowDown, ArrowUpDown, UserPlus, MailX, MailCheck, UserCheck } from '@lucide/vue'
+import { ChevronRight, ArrowUp, ArrowDown, ArrowUpDown, UserPlus, SearchX, Users } from '@lucide/vue'
+import StatoVuoto from '@/components/StatoVuoto.vue'
+import ErroreLista from '@/components/liste/ErroreLista.vue'
+import CaricamentoLista from '@/components/liste/CaricamentoLista.vue'
 import { formattaDataItalianaConMese, isoATimestamp } from '@/utils/data'
 import { ETICHETTE_OBIETTIVO } from '@/utils/visita'
-import { CLASSI_STATO_ACCOUNT, classiAvatarPaziente, inizialiPaziente } from '@/utils/paziente'
+import { classiAvatarPaziente, inizialiPaziente } from '@/utils/paziente'
 import { useVistaLista } from '@/composables/useVistaLista'
 import VistaListaToggle from '@/components/liste/VistaListaToggle.vue'
 import OrdinamentoSchede from '@/components/liste/OrdinamentoSchede.vue'
@@ -46,19 +50,6 @@ const chipStatoAccount: { valore: 'TUTTI' | Paziente['statoAccount']; etichetta:
   { valore: 'INVITATO', etichetta: 'Invitato' },
   { valore: 'ATTIVO', etichetta: 'Attivo' },
 ]
-
-const ETICHETTE_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
-  MAI_INVITATO: 'Mai invitato',
-  INVITATO: 'Invitato',
-  ATTIVO: 'Attivo',
-}
-
-const ICONE_STATO_ACCOUNT: Record<Paziente['statoAccount'], Component> = {
-  MAI_INVITATO: MailX,
-  INVITATO: MailCheck,
-  ATTIVO: UserCheck,
-}
-
 
 const CLASSE_TESTO_STATO_PIANO: Record<NonNullable<Paziente['pianoStato']>, string> = {
   BOZZA: 'text-(--fg4)',
@@ -125,7 +116,7 @@ const paginaDati = ref<PaginaPazienti | null>(null)
 const caricamentoIniziale = ref(true)
 const aggiornamentoInCorso = ref(false)
 const errore = ref(false)
-const invitoInCorsoId = ref<string | null>(null)
+const invitiInCorso = reactive(new Set<string>())
 
 let debounceHandle: ReturnType<typeof setTimeout> | undefined
 
@@ -186,6 +177,15 @@ async function carica() {
   }
 }
 
+const route = useRoute()
+const router = useRouter()
+
+watch(() => route.query.statoAccount, (statoQuery) => {
+  statoAccount.value = chipStatoAccount.find((chip) => chip.valore === statoQuery)?.valore ?? 'TUTTI'
+  mostraArchiviati.value = false
+  pagina.value = 0
+}, { immediate: true })
+
 watch(
   [ricercaEffettiva, statoAccount, obiettivo, dataUltimaVisitaDa, dataUltimaVisitaA, prossimaVisitaEntro, mostraArchiviati, pagina, ordinaPer, direzione],
   carica,
@@ -193,8 +193,6 @@ watch(
 
 onMounted(carica)
 
-const route = useRoute()
-const router = useRouter()
 watch(
   () => route.query.ricerca,
   (ricercaQuery) => {
@@ -271,6 +269,9 @@ function pulisciFiltri() {
   prossimaVisitaEntro.value = 'TUTTE'
   mostraArchiviati.value = false
   pagina.value = 0
+  if (route.query.statoAccount) {
+    void router.replace({ query: { ...route.query, statoAccount: undefined } })
+  }
 }
 
 function paginaPrecedente() {
@@ -282,7 +283,8 @@ function paginaSuccessiva() {
 }
 
 async function onInvita(paziente: Paziente) {
-  invitoInCorsoId.value = paziente.id
+  if (invitiInCorso.has(paziente.id)) return
+  invitiInCorso.add(paziente.id)
   try {
     await invita(paziente.id)
     paziente.statoAccount = 'INVITATO'
@@ -290,7 +292,7 @@ async function onInvita(paziente: Paziente) {
   } catch {
     toast.error('Non è stato possibile inviare l\'invito.')
   } finally {
-    invitoInCorsoId.value = null
+    invitiInCorso.delete(paziente.id)
   }
 }
 
@@ -341,6 +343,7 @@ const conteggioTesto = computed(() => {
         <Input
           v-model="ricercaInput"
           type="search"
+          aria-label="Filtra per nome, email o codice fiscale"
           autocomplete="off" placeholder="Filtra per nome, email o codice fiscale…"
           class="min-w-70 flex-1"
         />
@@ -349,6 +352,7 @@ const conteggioTesto = computed(() => {
             v-for="chip in chipStatoAccount"
             :key="chip.valore"
             type="button"
+            :aria-pressed="statoAccount === chip.valore"
             class="rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
             :class="statoAccount === chip.valore
               ? 'border-(--sage) bg-(--mint) text-(--green-d)'
@@ -414,8 +418,8 @@ const conteggioTesto = computed(() => {
             :aria-checked="mostraArchiviati"
             class="rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
             :class="mostraArchiviati
-              ? 'border-(--danger) bg-(--danger)/10 text-(--danger)'
-              : 'border-(--bd2) bg-(--surf) text-(--fg2) hover:border-(--danger) hover:text-(--danger)'"
+              ? 'border-(--bd2) bg-(--soft) text-(--fg)'
+              : 'border-(--bd2) bg-(--surf) text-(--fg2) hover:bg-(--soft) hover:text-(--fg)'"
             @click="onMostraArchiviatiChange(!mostraArchiviati)"
           >
             Mostra pazienti archiviati
@@ -443,14 +447,8 @@ const conteggioTesto = computed(() => {
     </div>
 
     <section class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)">
-      <div v-if="errore" class="flex flex-col items-center gap-3 p-14 text-center">
-        <p class="text-(--danger)">Non è stato possibile caricare i pazienti.</p>
-        <Button type="button" variant="neutral" @click="carica">Riprova</Button>
-      </div>
-
-      <div v-else-if="caricamentoIniziale" class="flex flex-col gap-2 p-4">
-        <div v-for="n in 6" :key="n" class="h-9 animate-pulse rounded-lg bg-(--hover)" />
-      </div>
+      <ErroreLista v-if="errore" messaggio="Non è stato possibile caricare i pazienti." @riprova="carica" />
+      <CaricamentoLista v-else-if="caricamentoIniziale" etichetta="Caricamento i pazienti" />
 
       <template v-else-if="paginaDati && paginaDati.contenuto.length > 0">
         <!-- Schede: sempre su mobile, su desktop se scelte con l'interruttore. -->
@@ -472,7 +470,7 @@ const conteggioTesto = computed(() => {
                 {{ inizialiPaziente(paziente.nome, paziente.cognome) }}
               </span>
               <div class="min-w-0 flex-1">
-                <!-- Il link copre tutta la scheda; il menu azioni sta sopra (z-10) e resta cliccabile. -->
+              <!-- Il link copre tutta la scheda; i controlli con z-10 restano cliccabili. -->
                 <router-link
                   :to="`/pazienti/${paziente.id}`"
                   class="block truncate font-semibold text-(--fg) after:absolute after:inset-0 after:rounded-xl hover:text-(--green)"
@@ -483,16 +481,18 @@ const conteggioTesto = computed(() => {
               </div>
             </div>
             <div class="flex items-center justify-between gap-2">
-              <Badge :class="CLASSI_STATO_ACCOUNT[paziente.statoAccount]">
-                <component :is="ICONE_STATO_ACCOUNT[paziente.statoAccount]" />
-                {{ ETICHETTE_STATO_ACCOUNT[paziente.statoAccount] }}
-              </Badge>
+              <PazienteStatoAccount
+                class="[&>button]:z-10"
+                :paziente="paziente"
+                :sola-lettura="mostraArchiviati"
+                :invito-in-corso="invitiInCorso.has(paziente.id)"
+                @invita="onInvita(paziente)"
+              />
               <div class="relative z-10 -my-1 -mr-1">
                 <PazienteRigaAzioni
                   :paziente="paziente"
                   :mostra-archiviati="mostraArchiviati"
                   senza-apri-cartella
-                  @invita="onInvita"
                   @archivia="onArchivia"
                   @de-archivia="onDeArchivia"
                 />
@@ -615,16 +615,17 @@ const conteggioTesto = computed(() => {
                   <span v-else class="text-(--fg3)">—</span>
                 </TableCell>
                 <TableCell>
-                  <Badge :class="CLASSI_STATO_ACCOUNT[paziente.statoAccount]">
-                    <component :is="ICONE_STATO_ACCOUNT[paziente.statoAccount]" />
-                    {{ ETICHETTE_STATO_ACCOUNT[paziente.statoAccount] }}
-                  </Badge>
+                  <PazienteStatoAccount
+                    :paziente="paziente"
+                    :sola-lettura="mostraArchiviati"
+                    :invito-in-corso="invitiInCorso.has(paziente.id)"
+                    @invita="onInvita(paziente)"
+                  />
                 </TableCell>
                 <TableCell class="text-right">
                   <PazienteRigaAzioni
                     :paziente="paziente"
                     :mostra-archiviati="mostraArchiviati"
-                    @invita="onInvita"
                     @archivia="onArchivia"
                     @de-archivia="onDeArchivia"
                   />
@@ -635,16 +636,12 @@ const conteggioTesto = computed(() => {
         </div>
       </template>
 
-      <div v-else-if="!filtriAttivi" class="flex flex-col items-center gap-2 p-16 text-center">
-        <p class="font-heading text-lg italic">Nessun paziente presente</p>
-        <p class="text-xs text-muted-foreground max-w-xs">Inizia aggiungendo il primo paziente per consultare la sua scheda o invitarlo.</p>
+      <StatoVuoto v-else-if="!filtriAttivi" :icona="Users" titolo="Nessun paziente presente" testo="Inizia aggiungendo il primo paziente per consultare la sua scheda o invitarlo." livello="h2">
         <Button as-child class="active:not-aria-[haspopup]:translate-y-0.5"><router-link to="/pazienti/nuovo">Nuovo paziente</router-link></Button>
-      </div>
-      <div v-else class="flex flex-col items-center gap-2 p-16 text-center">
-        <p class="font-bold">Nessun risultato trovato</p>
-        <p class="text-xs text-muted-foreground max-w-xs">Prova a modificare o resettare i filtri applicati.</p>
+      </StatoVuoto>
+      <StatoVuoto v-else :icona="SearchX" titolo="Nessun risultato trovato" testo="Prova a modificare o resettare i filtri applicati." livello="h2">
         <Button type="button" variant="neutral" @click="pulisciFiltri">Pulisci filtri</Button>
-      </div>
+      </StatoVuoto>
 
       <div v-if="paginaDati && !errore" class="flex items-center justify-between gap-3 border-t border-(--div) bg-(--soft) px-4.5 py-3">
         <span class="text-xs text-(--fg3)">{{ conteggioTesto }}</span>

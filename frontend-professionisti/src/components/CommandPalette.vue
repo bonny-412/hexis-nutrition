@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, useId } from 'vue'
 import { useRouter } from 'vue-router'
-import { Search, UserPlus, ClipboardPlus, CalendarPlus, CalendarOff, StickyNote, Apple, Utensils } from '@lucide/vue'
+import { FocusScope } from 'reka-ui'
+import { Search, SearchX, UserPlus, ClipboardPlus, CalendarPlus, CalendarOff, StickyNote, Apple, Utensils } from '@lucide/vue'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import { cerca, type Paziente } from '@/api/pazienti'
 import { classiAvatarPaziente, inizialiPaziente } from '@/utils/paziente'
 
 interface AzionePalette {
   id: string
   etichetta: string
+  alias?: string
   icona: typeof Search
   href?: string
   disabilitata?: boolean
@@ -20,7 +23,7 @@ const AZIONI: AzionePalette[] = [
   { id: 'nuovo-promemoria', etichetta: 'Nuovo promemoria', icona: StickyNote, href: '/agenda?nuovo=promemoria' },
   { id: 'blocca-fascia-oraria', etichetta: 'Blocca fascia oraria', icona: CalendarOff, href: '/agenda?nuovo=blocco' },
   { id: 'nuova-visita', etichetta: 'Nuova visita', icona: ClipboardPlus, href: '/pazienti/visite/nuova' },
-  { id: 'nuovo-piano-alimentare', etichetta: 'Nuovo piano alimentare', icona: Utensils, href: '/piani-alimentari/nuovo' },
+  { id: 'nuovo-piano-alimentare', etichetta: 'Nuovo piano', alias: 'nuovo piano alimentare', icona: Utensils, href: '/piani-alimentari/nuovo' },
   { id: 'nuovo-alimento', etichetta: 'Nuovo alimento', icona: Apple, href: '/alimenti?azione=nuovo' },
 ]
 
@@ -28,81 +31,114 @@ const router = useRouter()
 
 const aperta = ref(false)
 const testo = ref('')
-const inputRef = ref<InstanceType<typeof Input> | null>(null)
+const idRisultati = useId()
+const listaRisultati = ref<HTMLElement | null>(null)
+const idSelezionato = ref<string>()
 
 const pazientiRisultati = ref<Paziente[]>([])
 const pazientiTotale = ref(0)
 const ricercaInCorso = ref(false)
-
-let debounceHandle: ReturnType<typeof setTimeout> | undefined
+const erroreRicerca = ref(false)
+const tentativoRicerca = ref(0)
+const idCampoRicerca = useId()
 
 const testoNormalizzato = computed(() => testo.value.trim().toLowerCase())
 
 const azioniFiltrate = computed(() =>
-  AZIONI.filter((azione) => azione.etichetta.toLowerCase().includes(testoNormalizzato.value)),
+  AZIONI.filter((azione) =>
+    (azione.alias ?? azione.etichetta).toLowerCase().includes(testoNormalizzato.value),
+  ),
 )
 
 const nessunRisultato = computed(
   () =>
     testoNormalizzato.value !== '' &&
     !ricercaInCorso.value &&
+    !erroreRicerca.value &&
     azioniFiltrate.value.length === 0 &&
     pazientiRisultati.value.length === 0,
 )
 
-watch(testo, (valore) => {
-  clearTimeout(debounceHandle)
+watch([testo, aperta, tentativoRicerca], ([valore, visibile], _, onCleanup) => {
+  idSelezionato.value = undefined
+  erroreRicerca.value = false
+  pazientiRisultati.value = []
+  pazientiTotale.value = 0
   const query = valore.trim()
-  if (query === '') {
-    pazientiRisultati.value = []
-    pazientiTotale.value = 0
-    ricercaInCorso.value = false
-    return
-  }
-  ricercaInCorso.value = true
-  debounceHandle = setTimeout(async () => {
+  ricercaInCorso.value = visibile && query !== ''
+  if (!ricercaInCorso.value) return
+
+  let annullata = false
+  const timer = setTimeout(async () => {
     try {
       const risultato = await cerca({ ricerca: query, dimensione: 5, archiviato: false })
+      if (annullata) return
       pazientiRisultati.value = risultato.contenuto
       pazientiTotale.value = risultato.totaleElementi
     } catch {
-      pazientiRisultati.value = []
-      pazientiTotale.value = 0
+      if (annullata) return
+      erroreRicerca.value = true
     } finally {
-      ricercaInCorso.value = false
+      if (!annullata) ricercaInCorso.value = false
     }
   }, 300)
-})
+  onCleanup(() => {
+    annullata = true
+    clearTimeout(timer)
+  })
+}, { flush: 'sync' })
 
 function apri() {
-  aperta.value = true
   testo.value = ''
-  pazientiRisultati.value = []
-  pazientiTotale.value = 0
-  ricercaInCorso.value = false
-  nextTick(() => inputRef.value?.$el?.focus())
+  aperta.value = true
 }
 
 function chiudi() {
   aperta.value = false
-  clearTimeout(debounceHandle)
+}
+
+function riprovaRicerca() {
+  document.getElementById(idCampoRicerca)?.focus()
+  tentativoRicerca.value++
+}
+
+function navigaRisultati(evento: KeyboardEvent) {
+  if (evento.isComposing || !['ArrowDown', 'ArrowUp', 'Enter'].includes(evento.key)) return
+
+  const opzioni = Array.from(listaRisultati.value?.querySelectorAll<HTMLButtonElement>('[role="option"]:not(:disabled)') ?? [])
+  if (!opzioni.length) return
+
+  const indice = opzioni.findIndex((opzione) => opzione.id === idSelezionato.value)
+  if (evento.key === 'Enter') {
+    if (indice >= 0) {
+      evento.preventDefault()
+      opzioni[indice]?.click()
+    }
+    return
+  }
+
+  evento.preventDefault()
+  const passo = evento.key === 'ArrowDown' ? 1 : -1
+  const partenza = indice < 0 && passo < 0 ? 0 : indice
+  const opzione = opzioni[(partenza + passo + opzioni.length) % opzioni.length]
+  idSelezionato.value = opzione?.id
+  opzione?.scrollIntoView?.({ block: 'nearest' })
 }
 
 function onKeydown(evento: KeyboardEvent) {
+  if (evento.defaultPrevented || evento.isComposing) return
   if ((evento.metaKey || evento.ctrlKey) && evento.key.toLowerCase() === 'k') {
     evento.preventDefault()
     if (aperta.value) chiudi()
     else apri()
   } else if (evento.key === 'Escape' && aperta.value) {
+    evento.preventDefault()
     chiudi()
   }
 }
 
 onMounted(() => document.addEventListener('keydown', onKeydown))
-onUnmounted(() => {
-  document.removeEventListener('keydown', onKeydown)
-  clearTimeout(debounceHandle)
-})
+onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 
 function selezionaAzione(azione: AzionePalette) {
   if (azione.disabilitata || !azione.href) return
@@ -142,31 +178,54 @@ function vediTuttiRisultati() {
       class="fixed inset-0 z-60 flex items-start justify-center bg-black/30 px-4 pt-24 backdrop-blur-[2px]"
       @click="chiudi"
     >
-      <div
+      <FocusScope
+        trapped
+        loop
+        role="dialog"
+        aria-modal="true"
+        aria-label="Cerca ovunque"
         class="w-full max-w-130 overflow-hidden rounded-2xl border border-(--bd) bg-(--surf) shadow-2xl"
         @click.stop
       >
         <div class="flex items-center gap-2.5 border-b border-(--div) px-4 py-3.5">
           <Search :size="16" class="text-(--fg3)" />
           <Input
-            ref="inputRef"
+            :id="idCampoRicerca"
             v-model="testo"
             type="text"
+            role="combobox"
+            aria-label="Cerca pazienti o un'azione"
+            aria-autocomplete="list"
+            aria-expanded="true"
+            :aria-controls="idRisultati"
+            :aria-activedescendant="idSelezionato"
+            @keydown="navigaRisultati"
             autocomplete="off" placeholder="Cerca pazienti o un'azione…"
             class="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
           />
-          <kbd class="rounded-md border border-(--bd2) px-1.5 py-0.5 text-[10px] font-semibold text-(--fg3)">Esc</kbd>
+          <button
+            type="button"
+            aria-label="Chiudi ricerca"
+            class="rounded-md border border-(--bd2) px-1.5 py-0.5 text-[10px] font-semibold text-(--fg3)"
+            @click="chiudi"
+          >
+            <kbd>Esc</kbd>
+          </button>
         </div>
 
-        <div class="max-h-80 overflow-y-auto p-2">
-          <div v-if="azioniFiltrate.length > 0">
-            <div class="px-2.5 pb-1 pt-2 text-xs font-medium text-(--fg3)">Azioni</div>
+        <div :id="idRisultati" ref="listaRisultati" role="listbox" aria-label="Risultati di ricerca" class="max-h-80 overflow-y-auto p-2">
+          <div v-if="azioniFiltrate.length > 0" role="group" aria-label="Azioni">
+            <div aria-hidden="true" class="px-2.5 pb-1 pt-2 text-xs font-medium text-(--fg3)">Azioni</div>
             <button
               v-for="azione in azioniFiltrate"
               :key="azione.id"
+              :id="`${idRisultati}-azione-${azione.id}`"
+              role="option"
+              tabindex="-1"
+              :aria-selected="idSelezionato === `${idRisultati}-azione-${azione.id}`"
               type="button"
               :disabled="azione.disabilitata"
-              class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-(--fg) transition-colors hover:bg-(--soft) disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+              class="risultato flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-(--fg) transition-colors disabled:cursor-not-allowed disabled:opacity-40"
               @click="selezionaAzione(azione)"
             >
               <span class="flex h-6 w-6 items-center justify-center rounded-md bg-(--mint) text-(--green-d)">
@@ -176,13 +235,17 @@ function vediTuttiRisultati() {
             </button>
           </div>
 
-          <div v-if="pazientiRisultati.length > 0" class="mt-1">
-            <div class="px-2.5 pb-1 pt-2 text-xs font-medium text-(--fg3)">Pazienti</div>
+          <div v-if="pazientiRisultati.length > 0" role="group" aria-label="Pazienti" class="mt-1">
+            <div aria-hidden="true" class="px-2.5 pb-1 pt-2 text-xs font-medium text-(--fg3)">Pazienti</div>
             <button
               v-for="paziente in pazientiRisultati"
               :key="paziente.id"
+              :id="`${idRisultati}-paziente-${paziente.id}`"
+              role="option"
+              tabindex="-1"
+              :aria-selected="idSelezionato === `${idRisultati}-paziente-${paziente.id}`"
               type="button"
-              class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-(--fg) transition-colors hover:bg-(--soft)"
+              class="risultato flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm text-(--fg) transition-colors"
               @click="selezionaPaziente(paziente)"
             >
               <span
@@ -195,19 +258,51 @@ function vediTuttiRisultati() {
             </button>
             <button
               v-if="pazientiTotale > pazientiRisultati.length"
+              :id="`${idRisultati}-tutti`"
+              role="option"
+              tabindex="-1"
+              :aria-selected="idSelezionato === `${idRisultati}-tutti`"
               type="button"
-              class="w-full rounded-lg px-2.5 py-2 text-left text-xs font-semibold text-(--green) transition-colors hover:bg-(--soft)"
+              class="risultato w-full rounded-lg px-2.5 py-2 text-left text-xs font-semibold text-(--green) transition-colors"
               @click="vediTuttiRisultati"
             >
               Vedi tutti i risultati ({{ pazientiTotale }})
             </button>
           </div>
 
-          <div v-if="nessunRisultato" class="p-6 text-center text-xs text-(--fg3)">
-            Nessun risultato per «{{ testo.trim() }}»
-          </div>
         </div>
-      </div>
+        <div role="status">
+          <p v-if="ricercaInCorso" class="px-6 pb-6 pt-2 text-center text-xs text-(--fg3)">Ricerca pazienti in corso…</p>
+          <p v-else-if="erroreRicerca" class="px-6 pt-2 text-center text-xs text-(--danger)">
+            Non è stato possibile cercare i pazienti.
+          </p>
+          <p v-else-if="nessunRisultato" class="flex items-center justify-center gap-2 px-6 pb-6 pt-2 text-center text-xs text-(--fg3)">
+            <SearchX :size="16" class="shrink-0" aria-hidden="true" />
+            <span>Nessun risultato per «{{ testo.trim() }}»</span>
+          </p>
+        </div>
+        <div v-if="erroreRicerca" class="flex justify-center px-6 pb-4 pt-2">
+          <Button type="button" variant="neutral" size="sm" @click="riprovaRicerca">Riprova</Button>
+        </div>
+      </FocusScope>
     </div>
   </Teleport>
 </template>
+
+<style scoped>
+.risultato:not(:disabled) {
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .risultato:enabled[aria-selected='false']:hover {
+    background-color: var(--mint);
+    box-shadow: inset 0 0 0 1px var(--sage);
+  }
+}
+
+.risultato[aria-selected='true'] {
+  background-color: color-mix(in srgb, var(--mint), var(--sage) 22%);
+  box-shadow: inset 3px 0 var(--green-d), inset 0 0 0 1px var(--sage);
+}
+</style>

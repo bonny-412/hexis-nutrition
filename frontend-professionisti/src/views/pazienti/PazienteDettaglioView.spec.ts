@@ -232,8 +232,8 @@ describe('PazienteDettaglioView', () => {
       mockStorico()
       const wrapper = await montaConPaziente()
 
-      const tabStorico = wrapper.findAll('button').find((b) => b.text() === 'Storico visite')
-      await tabStorico?.trigger('click')
+      const tabStorico = wrapper.findAll('[role="tab"]').find((b) => b.text() === 'Storico visite')
+      await tabStorico?.trigger('keydown', { key: 'Enter' })
       await flushPromises()
 
       const righe = wrapper.findAll('[data-test="storico-riga"]')
@@ -246,8 +246,8 @@ describe('PazienteDettaglioView', () => {
       vi.mocked(pazientiApi.visite).mockResolvedValue(dueVisite())
       const wrapper = await montaConPaziente()
 
-      const tabConfronto = wrapper.findAll('button').find((b) => b.text() === 'Confronto visite')
-      await tabConfronto?.trigger('click')
+      const tabConfronto = wrapper.findAll('[role="tab"]').find((b) => b.text() === 'Confronto visite')
+      await tabConfronto?.trigger('keydown', { key: 'Enter' })
 
       // Nessuna circonferenza registrata in questa fixture: la sezione resta nascosta, non mostrata vuota.
       expect(wrapper.text()).not.toContain('Circonferenze')
@@ -259,8 +259,8 @@ describe('PazienteDettaglioView', () => {
       vi.mocked(pianiApi.cerca).mockResolvedValue({ contenuto: [], paginaCorrente: 0, dimensionePagina: 100, totaleElementi: 0, totalePagine: 0 })
       const wrapper = await montaConPaziente()
 
-      const tabPiani = wrapper.findAll('button').find((b) => b.text() === 'Piani alimentari')
-      await tabPiani?.trigger('click')
+      const tabPiani = wrapper.findAll('[role="tab"]').find((b) => b.text() === 'Piani alimentari')
+      await tabPiani?.trigger('keydown', { key: 'Enter' })
 
       await flushPromises()
 

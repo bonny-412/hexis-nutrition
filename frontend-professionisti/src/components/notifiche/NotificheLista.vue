@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { BellRing, CalendarClock, StickyNote, Video } from '@lucide/vue'
+import { Bell, BellRing, CalendarClock, StickyNote, Video } from '@lucide/vue'
 import type { Notifica } from '@/api/notifiche'
 import { Button } from '@/components/ui/button'
+import StatoVuoto from '@/components/StatoVuoto.vue'
 import { useNotificheStore } from '@/stores/notifiche'
 import { attivaPush, statoPush, type StatoPush } from '@/utils/push'
 
@@ -49,9 +50,7 @@ async function apri(n: Notifica) {
       Questo browser non supporta le notifiche push: vedrai gli avvisi solo qui, con Hexis aperto.
     </p>
 
-    <p v-if="store.notifiche.length === 0" class="px-1 py-4 text-center text-xs text-(--fg3)" data-test="notifiche-vuote">
-      Nessuna notifica
-    </p>
+    <StatoVuoto v-if="store.notifiche.length === 0" :icona="Bell" titolo="Nessuna notifica" compatto />
 
     <ul v-else class="flex max-h-80 flex-col gap-1 overflow-y-auto">
       <li v-for="n in store.notifiche" :key="n.id">

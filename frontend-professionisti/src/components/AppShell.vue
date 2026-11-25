@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useSessionStorage } from '@vueuse/core'
 import AppSidebar from './AppSidebar.vue'
 import AppHeader from './AppHeader.vue'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 
 const sidebarAperta = ref(false)
+const sidebarCompressa = useSessionStorage('hexis-sidebar-compressa', false, { flush: 'sync' })
 </script>
 
 <template>
   <div class="flex h-screen overflow-hidden bg-(--bg)">
-    <AppSidebar class="m-[14px_0_14px_14px] hidden rounded-[18px] border border-(--side-bd) lg:flex" />
+    <AppSidebar v-model:compressed="sidebarCompressa" class="m-[14px_0_14px_14px] hidden rounded-[18px] border border-(--side-bd) lg:flex" />
 
     <Sheet v-model:open="sidebarAperta">
       <SheetContent

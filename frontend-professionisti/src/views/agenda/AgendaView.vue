@@ -412,7 +412,7 @@ function titoloEliminazione(a: Appuntamento | null): string {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel variant="neutral">Indietro</AlertDialogCancel>
-          <AlertDialogAction class="bg-(--danger) hover:bg-(--danger-d)" data-test="conferma-annulla-appuntamento" @click="confermaAnnulla">
+          <AlertDialogAction variant="destructive" data-test="conferma-annulla-appuntamento" @click="confermaAnnulla">
             Annulla appuntamento
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -427,8 +427,8 @@ function titoloEliminazione(a: Appuntamento | null): string {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
-          <AlertDialogAction class="bg-(--danger) hover:bg-(--danger-d)" data-test="conferma-elimina-appuntamento" @click="confermaElimina">
-            Elimina
+          <AlertDialogAction variant="destructive" data-test="conferma-elimina-appuntamento" @click="confermaElimina">
+            {{ daEliminare?.tipo === 'PROMEMORIA' ? 'Elimina promemoria' : 'Elimina fascia bloccata' }}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

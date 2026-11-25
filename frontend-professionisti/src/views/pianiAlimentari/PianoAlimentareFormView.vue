@@ -1144,7 +1144,7 @@ function stampaPdf() {
                 </DropdownMenuItem>
                 <DropdownMenuItem data-test="duplica-piano" class="cursor-pointer" @click="duplicaPiano">
                   <Copy />
-                  Duplica come nuovo piano
+                  Duplica piano
                 </DropdownMenuItem>
                 <DropdownMenuItem data-test="stampa-pdf" class="cursor-pointer" @click="stampaPdf">
                   <Printer />
@@ -1193,18 +1193,21 @@ function stampaPdf() {
         <fieldset :disabled="solaLettura" class="contents">
         <div class="flex flex-wrap items-start justify-start lg:justify-center gap-3 lg:gap-6 rounded-2xl border border-(--sage) bg-(--mint) p-4 print:hidden">
           <div class="flex flex-col gap-1">
-            <span class="text-xs font-medium text-(--green)">Data di partenza*</span>
+            <label v-if="!piano" for="data-inizio" class="text-xs font-medium text-(--green-d)">Data di partenza*</label>
+            <span v-else class="text-xs font-medium text-(--green-d)">Data di partenza</span>
             <DatePicker
               v-if="!piano" id="data-inizio" digitabile :model-value="dataInizioInput" @update:model-value="onDataInizioChange"
+              :aria-invalid="!!errori.dataInizio"
+              :aria-describedby="errori.dataInizio ? 'piano-errore-data-inizio' : undefined"
               class="border-(--sage) dark:border-(--sage) bg-(--surf) dark:bg-(--surf) hover:bg-(--surf) dark:hover:bg-(--surf) aria-expanded:bg-(--surf) dark:aria-expanded:bg-(--surf) text-base font-semibold"
             />
             <span v-else class="font-heading text-lg font-semibold text-(--fg)">{{ formattaDataItalianaConMese(piano.dataInizio) }}</span>
-            <p v-if="errori.dataInizio" data-errore class="text-xs font-medium text-(--danger)">{{ errori.dataInizio }}</p>
+            <p v-if="errori.dataInizio" id="piano-errore-data-inizio" data-errore class="text-xs font-medium text-(--danger)">{{ errori.dataInizio }}</p>
           </div>
           <div class="hidden h-8 w-px bg-(--sage) sm:block" />
           <div class="flex flex-col gap-1">
-            <span class="flex items-center gap-1.5 text-xs font-medium text-(--green)">
-              Obiettivo giornaliero*
+            <span class="flex items-center gap-1.5 text-xs font-medium text-(--green-d)">
+              <label for="obiettivo-kcal">Obiettivo giornaliero*</label>
               <span
                 data-test="obiettivo-kcal-info"
                 :title="titleObiettivoKcal"
@@ -1213,26 +1216,29 @@ function stampaPdf() {
             </span>
             <span class="flex items-center gap-2">
               <Input
+                id="obiettivo-kcal"
                 data-test="obiettivo-kcal-input"
                 type="text" inputmode="decimal" class="w-24 border-(--sage) bg-(--surf) text-base font-semibold"
                 :model-value="obiettivoKcalInput"
                 :placeholder="suggerimentoObiettivo ? String(suggerimentoObiettivo.kcal) : undefined"
-                :aria-invalid="!!errori.obiettivoKcal"
+                :aria-invalid="!!errori.obiettivoKcal" :aria-describedby="errori.obiettivoKcal ? 'piano-errore-obiettivoKcal' : undefined"
                 @keydown="bloccaTastoNonNumerico"
                 @update:model-value="onObiettivoKcalInput"
               />
-              <span class="text-xs font-semibold text-(--green)">kcal/giorno</span>
+              <span class="text-xs font-semibold text-(--green-d)">kcal/giorno</span>
             </span>
-            <p v-if="errori.obiettivoKcal" data-errore class="text-xs font-medium text-(--danger)">{{ errori.obiettivoKcal }}</p>
+            <p id="piano-errore-obiettivoKcal" v-if="errori.obiettivoKcal" data-errore class="text-xs font-medium text-(--danger)">{{ errori.obiettivoKcal }}</p>
           </div>
           <div class="hidden h-8 w-px bg-(--sage) sm:block" />
           <div class="flex flex-col gap-1">
-            <span class="text-xs font-medium text-(--green)">Fine piano*</span>
+            <label for="data-fine" class="text-xs font-medium text-(--green-d)">Fine piano*</label>
             <DatePicker
               id="data-fine" digitabile :model-value="dataFineInput" @update:model-value="onDataFineChange"
+              :aria-invalid="!!errori.dataFine"
+              :aria-describedby="errori.dataFine ? 'piano-errore-data-fine' : undefined"
               class="border-(--sage) dark:border-(--sage) bg-(--surf) dark:bg-(--surf) hover:bg-(--surf) dark:hover:bg-(--surf) aria-expanded:bg-(--surf) dark:aria-expanded:bg-(--surf) text-base font-semibold"
             />
-            <p v-if="errori.dataFine" data-errore class="text-xs font-medium text-(--danger)">{{ errori.dataFine }}</p>
+            <p v-if="errori.dataFine" id="piano-errore-data-fine" data-errore class="text-xs font-medium text-(--danger)">{{ errori.dataFine }}</p>
           </div>
         </div>
 
@@ -1762,8 +1768,8 @@ function stampaPdf() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-elimina-piano" class="bg-(--danger) hover:bg-(--danger-d)" @click="confermaElimina">
-            Elimina
+          <AlertDialogAction data-test="conferma-elimina-piano" variant="destructive" @click="confermaElimina">
+            Elimina piano
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -1779,7 +1785,7 @@ function stampaPdf() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel @click="annullaCambioModalita" variant="neutral">Annulla</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-cambio-modalita" class="bg-(--danger) hover:bg-(--danger-d)" @click="confermaCambioModalita">
+          <AlertDialogAction data-test="conferma-cambio-modalita" variant="destructive" @click="confermaCambioModalita">
             Cambia modalità
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -1796,7 +1802,7 @@ function stampaPdf() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel variant="neutral" @click="copiaPendente = null">Annulla</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-copia-pasto" @click="copiaNegliAltriGiorni(copiaPendente!)">
+          <AlertDialogAction data-test="conferma-copia-pasto" variant="destructive" @click="copiaNegliAltriGiorni(copiaPendente!)">
             Copia e sostituisci
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -1811,8 +1817,8 @@ function stampaPdf() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel @click="rimozionePendente = null" variant="neutral">Annulla</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-rimuovi-elemento" class="bg-(--danger) hover:bg-(--danger-d)" @click="confermaRimozione">
-            Rimuovi
+          <AlertDialogAction data-test="conferma-rimuovi-elemento" variant="destructive" @click="confermaRimozione">
+            {{ rimozionePendente?.tipo === 'pasto' ? 'Rimuovi pasto' : 'Rimuovi esempio' }}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

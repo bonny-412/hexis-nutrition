@@ -256,12 +256,14 @@ function costruisciRichiestaBase(): AppuntamentoRichiesta {
 }
 
 async function invia(richiesta: AppuntamentoRichiesta, conferma: boolean) {
+  const appuntamento = props.appuntamento
   inCorso.value = true
   try {
-    const salvato = props.appuntamento
-      ? await aggiorna(props.appuntamento.id, richiesta, conferma)
+    const salvato = appuntamento
+      ? await aggiorna(appuntamento.id, richiesta, conferma)
       : await crea(richiesta, conferma)
-    toast.success(props.appuntamento ? 'Appuntamento aggiornato.' : 'Appuntamento creato.')
+    const evento = richiesta.tipo === 'PROMEMORIA' ? 'Promemoria' : 'Appuntamento'
+    toast.success(`${evento} ${appuntamento ? 'aggiornato' : 'creato'}.`)
     emit('salvato', salvato)
     emit('update:aperto', false)
   } catch (errore) {
@@ -299,6 +301,14 @@ function onDialogOpen(valore: boolean) {
   else richiediChiusura()
 }
 
+function onOpenAutoFocus(evento: Event) {
+  if (!ePromemoria.value || !(evento.target instanceof HTMLElement)) return
+  const titoloDialog = evento.target.querySelector<HTMLElement>('[data-test="appuntamento-titolo"]')
+  if (!titoloDialog) return
+  evento.preventDefault()
+  titoloDialog.focus()
+}
+
 function esciSenzaSalvare() {
   emit('update:aperto', false)
 }
@@ -323,9 +333,9 @@ function etichettaConflitto(c: Appuntamento): string {
 
 <template>
   <Dialog :open="aperto" @update:open="onDialogOpen">
-    <DialogContent class="sm:max-w-lg" data-test="appuntamento-dialog">
+    <DialogContent class="sm:max-w-lg" data-test="appuntamento-dialog" @open-auto-focus="onOpenAutoFocus">
       <DialogHeader>
-        <DialogTitle class="font-heading text-xl italic">{{ titolo }}</DialogTitle>
+        <DialogTitle :tabindex="ePromemoria ? -1 : undefined" class="font-heading text-xl italic outline-none" data-test="appuntamento-titolo">{{ titolo }}</DialogTitle>
         <DialogDescription class="sr-only">Compila i campi e salva per aggiornare l'agenda.</DialogDescription>
       </DialogHeader>
 
@@ -345,18 +355,18 @@ function etichettaConflitto(c: Appuntamento): string {
           </div>
 
           <div v-if="eVisita || ePromemoria" class="flex flex-col gap-1.5">
-            <Label class="text-[13px] font-medium text-(--fg2)">
+            <Label for="appuntamento-paziente" class="text-[13px] font-medium text-(--fg2)">
               Paziente{{ eVisita ? '*' : ' (facoltativo)' }}
             </Label>
-            <SelezionaPazienteCombobox v-model="paziente" />
-            <p v-if="errori.paziente" class="text-xs font-medium text-(--danger)">{{ errori.paziente }}</p>
+            <SelezionaPazienteCombobox id="appuntamento-paziente" v-model="paziente" :aria-invalid="!!errori.paziente" :aria-describedby="errori.paziente ? 'appuntamento-errore-paziente' : undefined" />
+            <p v-if="errori.paziente" id="appuntamento-errore-paziente" class="text-xs font-medium text-(--danger)">{{ errori.paziente }}</p>
           </div>
 
           <div class="grid gap-3 sm:grid-cols-2">
             <div class="flex flex-col gap-1.5">
               <Label for="appuntamento-data" class="text-[13px] font-medium text-(--fg2)">Data*</Label>
-              <DatePicker id="appuntamento-data" v-model="data" digitabile class="w-full" />
-              <p v-if="errori.data" class="text-xs font-medium text-(--danger)">{{ errori.data }}</p>
+              <DatePicker id="appuntamento-data" v-model="data" digitabile class="w-full" :aria-invalid="!!errori.data" :aria-describedby="errori.data ? 'appuntamento-errore-data' : undefined" />
+              <p v-if="errori.data" id="appuntamento-errore-data" class="text-xs font-medium text-(--danger)">{{ errori.data }}</p>
             </div>
             <div class="flex flex-col gap-1.5">
               <Label for="appuntamento-ora" class="text-[13px] font-medium text-(--fg2)">
@@ -367,10 +377,10 @@ function etichettaConflitto(c: Appuntamento): string {
                 v-model="ora"
                 min="07:00"
                 max="20:00"
-                :aria-invalid="!!errori.ora"
+                :aria-invalid="!!errori.ora" :aria-describedby="errori.ora ? 'appuntamento-errore-ora' : undefined"
                 data-test="appuntamento-ora"
               />
-              <p v-if="errori.ora" class="text-xs font-medium text-(--danger)">{{ errori.ora }}</p>
+              <p id="appuntamento-errore-ora" v-if="errori.ora" class="text-xs font-medium text-(--danger)">{{ errori.ora }}</p>
             </div>
           </div>
 
@@ -394,11 +404,11 @@ function etichettaConflitto(c: Appuntamento): string {
               id="appuntamento-testo"
               v-model="testo"
               rows="3"
-              :aria-invalid="!!errori.testo"
+              :aria-invalid="!!errori.testo" :aria-describedby="errori.testo ? 'appuntamento-errore-testo' : undefined"
               :placeholder="ePromemoria ? 'Es. Richiamare per i risultati delle analisi' : eBlocco ? 'Es. Pausa pranzo' : 'Es. Controllo mensile'"
               data-test="appuntamento-testo"
             />
-            <p v-if="errori.testo" class="text-xs font-medium text-(--danger)">{{ errori.testo }}</p>
+            <p id="appuntamento-errore-testo" v-if="errori.testo" class="text-xs font-medium text-(--danger)">{{ errori.testo }}</p>
           </div>
 
           <div v-if="sezioneNotifica" class="flex flex-col gap-3 rounded-lg border border-(--bd) p-3" data-test="appuntamento-notifica-sezione">
@@ -426,11 +436,11 @@ function etichettaConflitto(c: Appuntamento): string {
               v-model="link"
               type="text"
               inputmode="url"
-              :aria-invalid="!!errori.link"
+              :aria-invalid="!!errori.link" :aria-describedby="errori.link ? 'appuntamento-errore-link' : undefined"
               placeholder="https://"
               data-test="appuntamento-link"
             />
-            <p v-if="errori.link" class="text-xs font-medium text-(--danger)">{{ errori.link }}</p>
+            <p id="appuntamento-errore-link" v-if="errori.link" class="text-xs font-medium text-(--danger)">{{ errori.link }}</p>
           </div>
         </div>
 

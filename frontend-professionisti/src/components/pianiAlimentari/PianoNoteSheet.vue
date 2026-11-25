@@ -156,8 +156,8 @@ async function confermaElimina() {
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
-        <AlertDialogAction data-test="conferma-elimina-nota" class="bg-(--danger) hover:bg-(--danger-d)" @click="confermaElimina">
-          Elimina
+        <AlertDialogAction data-test="conferma-elimina-nota" variant="destructive" @click="confermaElimina">
+          Elimina nota
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>

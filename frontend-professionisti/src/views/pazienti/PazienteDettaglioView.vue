@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, type Component } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
 import AppShell from '@/components/AppShell.vue'
@@ -19,10 +19,12 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
 import type { AcceptableValue } from 'reka-ui'
+import { TabsContent, TabsList, TabsRoot, TabsTrigger } from 'reka-ui'
 import PazienteTabPanoramica from '@/components/pazienti/PazienteTabPanoramica.vue'
 import PazienteTabStoricoVisite from '@/components/pazienti/PazienteTabStoricoVisite.vue'
 import PazienteTabConfrontoVisite from '@/components/pazienti/PazienteTabConfrontoVisite.vue'
 import PazienteTabPianiAlimentari from '@/components/pazienti/PazienteTabPianiAlimentari.vue'
+import PazienteStatoAccount from '@/components/pazienti/PazienteStatoAccount.vue'
 import ModificaPazienteDialog from '@/components/pazienti/ModificaPazienteDialog.vue'
 import { prepareAndamento } from '@/utils/andamento'
 import { formattaDataItalianaConMese } from '@/utils/data'
@@ -44,33 +46,10 @@ import {
   Utensils,
   Archive,
   ArchiveRestore,
-  MailX,
-  MailCheck,
-  UserCheck,
   CalendarCheck,
   CalendarPlus,
   MoreHorizontal,
-  Loader2,
 } from '@lucide/vue'
-
-const ETICHETTE_STATO_ACCOUNT: Record<Paziente['statoAccount'], string> = {
-  MAI_INVITATO: 'Mai invitato',
-  INVITATO: 'Invitato',
-  ATTIVO: 'Attivo',
-}
-
-const ICONE_STATO_ACCOUNT: Record<Paziente['statoAccount'], Component> = {
-  MAI_INVITATO: MailX,
-  INVITATO: MailCheck,
-  ATTIVO: UserCheck,
-}
-
-// Sul fondo petrolio dell'intestazione le pillole sono piene e chiare: leggibili in chiaro e in scuro.
-const CLASSI_STATO_ACCOUNT_HERO: Record<Paziente['statoAccount'], string> = {
-  MAI_INVITATO: 'bg-(--hero-pill) text-(--danger-fixed) ring-1 ring-(--hero-pill-ring)',
-  INVITATO: 'bg-(--warn-bg) text-(--warn-fg)',
-  ATTIVO: 'bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring)',
-}
 
 const TAB_DEFS = [
   { id: 'panoramica', label: 'Panoramica' },
@@ -106,8 +85,6 @@ function onCambiaTab(valore: AcceptableValue) {
 
 const andamento = computed(() => prepareAndamento(visite.value))
 const primaVisita = computed(() => (visite.value.length > 0 ? visite.value[0] : null))
-/** L'invito si offre a chi non ha ancora attivato l'account e non è archiviato. */
-const puoInvitare = computed(() => !!paziente.value && paziente.value.statoAccount !== 'ATTIVO' && !paziente.value.archiviato)
 const ultimaVisita = computed(() => (visite.value.length > 0 ? visite.value[visite.value.length - 1] : null))
 
 /** Colore della variazione "vs prec.": verde o rosso solo se l'obiettivo dell'ultima visita dà una direzione. */
@@ -251,23 +228,7 @@ onMounted(() => {
               <span v-if="primaVisita" class="hidden sm:inline">paziente dal {{ formattaDataItalianaConMese(primaVisita.dataVisita) }}</span>
             </div>
             <div class="mt-2.5 flex flex-wrap items-center gap-2">
-              <!-- Stato dell'account e, se serve, l'invito nella stessa pillola (prima c'era anche una pillola "Invita" accanto al nome). -->
-              <span
-                data-test="badge-stato-account"
-                class="inline-flex items-center gap-1.5 rounded-full py-1 pl-2.5 text-xs font-bold"
-                :class="[CLASSI_STATO_ACCOUNT_HERO[paziente.statoAccount], puoInvitare ? 'pr-1' : 'pr-2.5']"
-              >
-                <component :is="ICONE_STATO_ACCOUNT[paziente.statoAccount]" :size="16" />
-                {{ ETICHETTE_STATO_ACCOUNT[paziente.statoAccount] }}
-                <button
-                  v-if="puoInvitare"
-                  type="button"
-                  data-test="pulsante-invita"
-                  :disabled="invitoInCorso"
-                  class="relative ml-0.5 inline-flex items-center gap-1 border-l border-current/25 px-2 underline-offset-2 transition-colors before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:underline focus-visible:rounded-full focus-visible:outline-2 focus-visible:outline-current disabled:cursor-not-allowed disabled:opacity-60"
-                  @click="onInvita"
-                ><Loader2 v-if="invitoInCorso" :size="12" class="animate-spin" aria-hidden="true" />{{ paziente.statoAccount === 'MAI_INVITATO' ? 'Invita' : 'Reinvia invito' }}</button>
-              </span>
+              <PazienteStatoAccount :paziente="paziente" hero :invito-in-corso="invitoInCorso" @invita="onInvita" />
               <span
                 v-if="paziente.archiviato"
                 class="inline-flex items-center gap-1.5 rounded-full bg-(--hero-pill) px-2.5 py-1 text-xs font-bold text-(--danger-fixed) ring-1 ring-(--hero-pill-ring)"
@@ -301,7 +262,7 @@ onMounted(() => {
           <Button as-child variant="hero" class="hidden sm:inline-flex">
             <router-link :to="`/agenda?nuovo=visita&pazienteId=${paziente.id}`">
               <CalendarPlus :size="16" />
-              <span>Fissa appuntamento</span>
+              <span>Nuovo appuntamento</span>
             </router-link>
           </Button>
           <Button as-child variant="accent" class="flex-1 sm:flex-none">
@@ -321,7 +282,7 @@ onMounted(() => {
                 <router-link :to="`/piani-alimentari/nuovo?pazienteId=${paziente.id}`"><Utensils :size="16" /> Nuovo piano</router-link>
               </DropdownMenuItem>
               <DropdownMenuItem as-child class="cursor-pointer gap-2 px-2.5 py-1.5">
-                <router-link :to="`/agenda?nuovo=visita&pazienteId=${paziente.id}`"><CalendarPlus :size="16" /> Fissa appuntamento</router-link>
+                <router-link :to="`/agenda?nuovo=visita&pazienteId=${paziente.id}`"><CalendarPlus :size="16" /> Nuovo appuntamento</router-link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -329,7 +290,7 @@ onMounted(() => {
         <div v-else class="flex flex-wrap items-center gap-2">
           <Button type="button" variant="hero" @click="confermaDeArchiviaAperta = true">
             <ArchiveRestore :size="16" />
-            <span>De-archivia paziente</span>
+            <span>Ripristina paziente</span>
           </Button>
         </div>
       </div>
@@ -429,10 +390,10 @@ onMounted(() => {
       </div>
 
       <!-- 3. SEZIONE CLINICA A TAB -->
-      <div>
+      <TabsRoot :model-value="tabAttivo" @update:model-value="onCambiaTab">
         <!-- Selettore per schermi piccoli -->
         <Select :model-value="tabAttivo" @update:model-value="onCambiaTab">
-          <SelectTrigger id="sezione-clinica-tab" class="w-full lg:hidden">
+          <SelectTrigger id="sezione-clinica-tab" aria-label="Sezione clinica" class="w-full lg:hidden">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -441,50 +402,50 @@ onMounted(() => {
         </Select>
 
         <!-- Barra a tab per schermi grandi -->
-        <div class="hidden gap-1 overflow-x-auto border-b border-(--bd) lg:flex">
-          <button
+        <TabsList aria-label="Sezioni cliniche" class="hidden gap-1 overflow-x-auto border-b border-(--bd) lg:flex">
+          <TabsTrigger
             v-for="tab in TAB_DEFS"
             :key="tab.id"
-            type="button"
-            class="shrink-0 border-b-2 px-1 py-2.5 mr-5 text-sm font-bold transition-colors"
-            :class="tabAttivo === tab.id ? 'border-(--green) text-(--green)' : 'border-transparent text-(--fg3) hover:text-(--fg2)'"
-            @click="tabAttivo = tab.id"
+            :value="tab.id"
+            class="mr-5 shrink-0 border-b-2 border-transparent px-1 py-2.5 text-sm font-bold text-(--fg3) transition-colors hover:text-(--fg) focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--green-d) data-[state=active]:border-(--green-d) data-[state=active]:text-(--green-d)"
           >
             {{ tab.label }}
-          </button>
-        </div>
+          </TabsTrigger>
+        </TabsList>
 
-        <div class="mt-5">
+        <TabsContent value="panoramica" class="mt-5 focus-visible:outline-2 focus-visible:outline-(--green-d)">
           <PazienteTabPanoramica
-            v-if="tabAttivo === 'panoramica'"
             :paziente="paziente"
             :visite-in-caricamento="visiteInCaricamento"
             :errore-visite="erroreVisite"
             :visite="visite"
             :andamento="andamento"
           />
+        </TabsContent>
 
+        <TabsContent value="storico" class="mt-5 focus-visible:outline-2 focus-visible:outline-(--green-d)">
           <PazienteTabStoricoVisite
-            v-else-if="tabAttivo === 'storico'"
             :paziente-id="paziente.id"
             :archiviato="paziente.archiviato"
             @eliminata="caricaAndamento"
           />
+        </TabsContent>
 
+        <TabsContent value="confronto" class="mt-5 focus-visible:outline-2 focus-visible:outline-(--green-d)">
           <PazienteTabConfrontoVisite
-            v-else-if="tabAttivo === 'confronto'"
             :visite="visite"
             :paziente-id="paziente.id"
             :archiviato="paziente.archiviato"
           />
+        </TabsContent>
 
+        <TabsContent value="piani" class="mt-5 focus-visible:outline-2 focus-visible:outline-(--green-d)">
           <PazienteTabPianiAlimentari
-            v-else-if="tabAttivo === 'piani'"
             :paziente-id="paziente.id"
             :archiviato="paziente.archiviato"
           />
-        </div>
-      </div>
+        </TabsContent>
+      </TabsRoot>
     </div>
   </AppShell>
 
@@ -498,13 +459,13 @@ onMounted(() => {
   <AlertDialog v-if="paziente" v-model:open="confermaDeArchiviaAperta">
     <AlertDialogContent>
       <AlertDialogHeader>
-        <AlertDialogTitle>De-archiviare {{ paziente.nome }} {{ paziente.cognome }}?</AlertDialogTitle>
+        <AlertDialogTitle>Ripristinare {{ paziente.nome }} {{ paziente.cognome }}?</AlertDialogTitle>
         <AlertDialogDescription>Il paziente tornerà visibile nella lista pazienti attivi.</AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel variant="neutral" :disabled="deArchiviazioneInCorso">Annulla</AlertDialogCancel>
         <AlertDialogAction :disabled="deArchiviazioneInCorso" @click="onDeArchivia">
-          {{ deArchiviazioneInCorso ? 'De-archiviazione…' : 'Conferma' }}
+          {{ deArchiviazioneInCorso ? 'Ripristino…' : 'Ripristina paziente' }}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>

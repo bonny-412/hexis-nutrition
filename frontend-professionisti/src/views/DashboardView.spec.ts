@@ -3,6 +3,7 @@ import { mount, flushPromises } from '@vue/test-utils'
 import { createTestingPinia } from '@pinia/testing'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import DashboardView from './DashboardView.vue'
+import DaFareCard from '@/components/dashboard/DaFareCard.vue'
 import * as pazientiApi from '@/api/pazienti'
 
 vi.mock('@/api/pazienti')
@@ -24,6 +25,37 @@ function creaRouter() {
 }
 
 describe('DashboardView', () => {
+  it('mostra conteggi e un solo pannello Da fare e consente di cambiare tab da tastiera', async () => {
+    const router = creaRouter()
+    await router.push('/')
+    const wrapper = mount(DaFareCard, {
+      props: {
+        oggi: '2026-11-25',
+        fineFinestraScadenze: '2026-12-02',
+        inScadenza: { voci: [], totale: 0 },
+        bozze: { voci: [{
+          id: 'bozza-1', nome: 'Piano di prova', pazienteNomeCompleto: 'Paziente di prova',
+          pazienteNome: 'Paziente', pazienteCognome: 'di prova', stato: 'BOZZA', obiettivoKcal: null,
+          modalita: 'PASTI', dataInizio: '2026-11-25', dataFine: null,
+        }], totale: 2 },
+        maiInvitati: { voci: [], totale: 0 },
+      },
+      global: { plugins: [router] },
+    })
+    const [scadenze, bozze, inviti] = wrapper.findAll('[role="tab"]')
+    expect(bozze?.text()).toContain('2')
+    expect(bozze?.attributes('aria-selected')).toBe('true')
+    expect(wrapper.text()).toContain('Piano di prova')
+    expect(wrapper.get('a[href="/piani-alimentari?stato=BOZZA"]').text()).toContain('Vedi tutti')
+
+    await inviti?.trigger('keydown', { key: 'Enter' })
+    expect(inviti?.attributes('aria-selected')).toBe('true')
+    expect(scadenze?.attributes('aria-selected')).toBe('false')
+    expect(wrapper.text()).toContain('Tutti i pazienti sono stati invitati.')
+    expect(wrapper.text()).not.toContain('Piano di prova')
+    wrapper.unmount()
+  })
+
   it('mostra il numero di pazienti attivi restituito dal server', async () => {
     vi.mocked(pazientiApi.conteggioAttivi).mockResolvedValue(2)
     const router = creaRouter()

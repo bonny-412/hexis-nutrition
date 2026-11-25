@@ -206,26 +206,26 @@ async function onSubmit() {
           <div class="grid gap-5 sm:grid-cols-2">
             <div class="flex flex-col gap-1.5">
               <Label for="modifica-nome" class="text-[13px] font-medium text-(--fg2)">Nome*</Label>
-              <Input id="modifica-nome" :model-value="nome" @update:model-value="onNomeInput" type="text" :aria-invalid="!!errori.nome" placeholder="Es. Mario" />
-              <p v-if="errori.nome" class="text-xs font-medium text-(--danger)">{{ errori.nome }}</p>
+              <Input id="modifica-nome" :model-value="nome" @update:model-value="onNomeInput" type="text" :aria-invalid="!!errori.nome" :aria-describedby="errori.nome ? 'modifica-paziente-errore-nome' : undefined" placeholder="Es. Mario" />
+              <p id="modifica-paziente-errore-nome" v-if="errori.nome" class="text-xs font-medium text-(--danger)">{{ errori.nome }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
               <Label for="modifica-cognome" class="text-[13px] font-medium text-(--fg2)">Cognome*</Label>
-              <Input id="modifica-cognome" :model-value="cognome" @update:model-value="onCognomeInput" type="text" :aria-invalid="!!errori.cognome" placeholder="Es. Rossi" />
-              <p v-if="errori.cognome" class="text-xs font-medium text-(--danger)">{{ errori.cognome }}</p>
+              <Input id="modifica-cognome" :model-value="cognome" @update:model-value="onCognomeInput" type="text" :aria-invalid="!!errori.cognome" :aria-describedby="errori.cognome ? 'modifica-paziente-errore-cognome' : undefined" placeholder="Es. Rossi" />
+              <p id="modifica-paziente-errore-cognome" v-if="errori.cognome" class="text-xs font-medium text-(--danger)">{{ errori.cognome }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
               <Label for="modifica-codice-fiscale" class="text-[13px] font-medium text-(--fg2)">Codice fiscale*</Label>
-              <Input id="modifica-codice-fiscale" :model-value="codiceFiscale" @update:model-value="onCodiceFiscaleInput" type="text" :aria-invalid="!!errori.codiceFiscale" placeholder="Es. RSSMRA80A01H501U" />
-              <p v-if="errori.codiceFiscale" class="text-xs font-medium text-(--danger)">{{ errori.codiceFiscale }}</p>
+              <Input id="modifica-codice-fiscale" :model-value="codiceFiscale" @update:model-value="onCodiceFiscaleInput" type="text" :aria-invalid="!!errori.codiceFiscale" :aria-describedby="errori.codiceFiscale ? 'modifica-paziente-errore-codiceFiscale' : undefined" placeholder="Es. RSSMRA80A01H501U" />
+              <p id="modifica-paziente-errore-codiceFiscale" v-if="errori.codiceFiscale" class="text-xs font-medium text-(--danger)">{{ errori.codiceFiscale }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
               <Label for="modifica-sesso" class="text-[13px] font-medium text-(--fg2)">Sesso*</Label>
               <Select :model-value="sesso" @update:model-value="onSessoChange">
-                <SelectTrigger id="modifica-sesso" class="w-full" :aria-invalid="!!errori.sesso">
+                <SelectTrigger id="modifica-sesso" class="w-full" :aria-invalid="!!errori.sesso" :aria-describedby="errori.sesso ? 'modifica-paziente-errore-sesso' : undefined">
                   <SelectValue placeholder="Seleziona" />
                 </SelectTrigger>
                 <SelectContent>
@@ -234,31 +234,31 @@ async function onSubmit() {
                   <SelectItem value="ALTRO">Altro</SelectItem>
                 </SelectContent>
               </Select>
-              <p v-if="errori.sesso" class="text-xs font-medium text-(--danger)">{{ errori.sesso }}</p>
+              <p id="modifica-paziente-errore-sesso" v-if="errori.sesso" class="text-xs font-medium text-(--danger)">{{ errori.sesso }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
               <Label for="modifica-data-nascita" class="text-[13px] font-medium text-(--fg2)">Data di nascita*</Label>
-              <DatePicker id="modifica-data-nascita" :model-value="dataNascita" @update:model-value="onDataNascitaChange" />
-              <p v-if="errori.dataNascita" class="text-xs font-medium text-(--danger)">{{ errori.dataNascita }}</p>
+              <DatePicker id="modifica-data-nascita" :model-value="dataNascita" :aria-invalid="!!errori.dataNascita" :aria-describedby="errori.dataNascita ? 'modifica-paziente-errore-data-nascita' : undefined" @update:model-value="onDataNascitaChange" />
+              <p v-if="errori.dataNascita" id="modifica-paziente-errore-data-nascita" class="text-xs font-medium text-(--danger)">{{ errori.dataNascita }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
               <Label for="modifica-email" class="text-[13px] font-medium text-(--fg2)">Email*</Label>
-              <Input id="modifica-email" :model-value="email" @update:model-value="onEmailInput" type="text" :aria-invalid="!!errori.email" placeholder="Es. mariorossi@gmail.com" />
-              <p v-if="errori.email" class="text-xs font-medium text-(--danger)">{{ errori.email }}</p>
+              <Input id="modifica-email" :model-value="email" @update:model-value="onEmailInput" type="text" :aria-invalid="!!errori.email" :aria-describedby="errori.email ? 'modifica-paziente-errore-email' : undefined" placeholder="Es. mariorossi@gmail.com" />
+              <p id="modifica-paziente-errore-email" v-if="errori.email" class="text-xs font-medium text-(--danger)">{{ errori.email }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
               <Label for="modifica-telefono" class="text-[13px] font-medium text-(--fg2)">Telefono</Label>
-              <Input id="modifica-telefono" :model-value="telefono" @update:model-value="onTelefonoInput" type="text" inputmode="numeric" :aria-invalid="!!errori.telefono" placeholder="Es. 0212345678" />
-              <p v-if="errori.telefono" class="text-xs font-medium text-(--danger)">{{ errori.telefono }}</p>
+              <Input id="modifica-telefono" :model-value="telefono" @update:model-value="onTelefonoInput" type="text" inputmode="numeric" :aria-invalid="!!errori.telefono" :aria-describedby="errori.telefono ? 'modifica-paziente-errore-telefono' : undefined" placeholder="Es. 0212345678" />
+              <p id="modifica-paziente-errore-telefono" v-if="errori.telefono" class="text-xs font-medium text-(--danger)">{{ errori.telefono }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">
               <Label for="modifica-cellulare" class="text-[13px] font-medium text-(--fg2)">Cellulare</Label>
-              <Input id="modifica-cellulare" :model-value="cellulare" @update:model-value="onCellulareInput" type="text" inputmode="numeric" :aria-invalid="!!errori.cellulare" placeholder="Es. 3325676543" />
-              <p v-if="errori.cellulare" class="text-xs font-medium text-(--danger)">{{ errori.cellulare }}</p>
+              <Input id="modifica-cellulare" :model-value="cellulare" @update:model-value="onCellulareInput" type="text" inputmode="numeric" :aria-invalid="!!errori.cellulare" :aria-describedby="errori.cellulare ? 'modifica-paziente-errore-cellulare' : undefined" placeholder="Es. 3325676543" />
+              <p id="modifica-paziente-errore-cellulare" v-if="errori.cellulare" class="text-xs font-medium text-(--danger)">{{ errori.cellulare }}</p>
             </div>
 
             <div class="flex flex-col gap-1.5">

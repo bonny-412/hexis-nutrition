@@ -48,9 +48,9 @@ function paginaCon(contenuto: typeof pazienteEsempio[]): PaginaPazienti {
   return { contenuto, paginaCorrente: 0, dimensionePagina: 20, totaleElementi: contenuto.length, totalePagine: 1 }
 }
 
-async function montaView(attachToBody = false) {
+async function montaView(attachToBody = false, percorso = '/pazienti') {
   const router = creaRouter()
-  router.push('/pazienti')
+  router.push(percorso)
   await router.isReady()
   const wrapper = mount(PazientiListView, {
     attachTo: attachToBody ? document.body : undefined,
@@ -67,6 +67,16 @@ afterEach(() => {
 })
 
 describe('PazientiListView', () => {
+  it('applica il filtro Mai invitato dalla Dashboard già alla prima richiesta', async () => {
+    vi.mocked(pazientiApi.cerca).mockClear()
+    vi.mocked(pazientiApi.cerca).mockResolvedValue(paginaCon([pazienteEsempio]))
+    const wrapper = await montaView(false, '/pazienti?statoAccount=MAI_INVITATO')
+    expect(pazientiApi.cerca).toHaveBeenCalledTimes(1)
+    expect(pazientiApi.cerca).toHaveBeenCalledWith(expect.objectContaining({ statoAccount: 'MAI_INVITATO', archiviato: false }))
+    expect(wrapper.get('button[aria-pressed="true"]').text()).toBe('Mai invitato')
+    wrapper.unmount()
+  })
+
   it('mostra i pazienti caricati dal backend con le colonne reali', async () => {
     vi.mocked(pazientiApi.cerca).mockResolvedValue(paginaCon([pazienteEsempio]))
     const wrapper = await montaView()
@@ -229,17 +239,24 @@ describe('PazientiListView', () => {
     expect(wrapper.text()).toContain('Luca Verdi')
   })
 
-  it('invita un paziente e ne aggiorna lo stato in tabella', async () => {
-    vi.mocked(pazientiApi.cerca).mockResolvedValue(paginaCon([pazienteEsempio]))
+  it.each([
+    ['in tabella', 'table'],
+    ['nelle schede', '[data-test="schede-pazienti"]'],
+  ])('invita dalla pillola e ne aggiorna lo stato %s', async (_, selettore) => {
+    vi.mocked(pazientiApi.cerca).mockResolvedValue(paginaCon([{ ...pazienteEsempio }]))
     vi.mocked(pazientiApi.invita).mockResolvedValue(undefined)
     const wrapper = await montaView()
 
-    const pulsanteInvita = wrapper.findAll('button').find((b) => b.text() === 'Invita')
-    await pulsanteInvita?.trigger('click')
+    const lista = wrapper.get(selettore)
+    const pillola = lista.get('[data-test="badge-stato-account"]')
+    expect(pillola.text()).toContain('Mai invitato')
+    expect(lista.findAll('[data-test="pulsante-invita"]')).toHaveLength(1)
+    await pillola.get('[data-test="pulsante-invita"]').trigger('click')
     await flushPromises()
 
     expect(pazientiApi.invita).toHaveBeenCalledWith('1')
-    expect(wrapper.text()).toContain('Invitato')
+    expect(pillola.text()).toContain('Invitato')
+    expect(pillola.get('[data-test="pulsante-invita"]').text()).toBe('Reinvia invito')
     expect(toast.success).toHaveBeenCalledWith('Invito inviato.')
   })
 

@@ -10,7 +10,10 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { avanzamentoPiano } from '@/utils/pianoAlimentare'
 import { formattaDataItalianaConMese } from '@/utils/data'
-import { Copy, Eye, Pencil, Plus } from '@lucide/vue'
+import { Copy, Eye, Pencil, Plus, Utensils } from '@lucide/vue'
+import StatoVuoto from '@/components/StatoVuoto.vue'
+import ErroreLista from '@/components/liste/ErroreLista.vue'
+import CaricamentoLista from '@/components/liste/CaricamentoLista.vue'
 
 const props = defineProps<{
   pazienteId: string
@@ -107,54 +110,54 @@ function onDuplica(piano: PianoAlimentareRigaLista) {
 </script>
 
 <template>
-  <div v-if="caricamento" class="flex flex-col gap-4">
-    <div v-for="n in 2" :key="n" data-test="piani-skeleton" class="h-28 animate-pulse rounded-2xl bg-(--hover)" />
-  </div>
+  <CaricamentoLista v-if="caricamento" etichetta="Caricamento piani alimentari" :righe="2" schede />
 
-  <div v-else-if="errore" class="rounded-2xl border border-(--bd) bg-(--surf) p-8 text-center">
-    <p class="text-sm text-(--fg3)">Non è stato possibile caricare i piani alimentari.</p>
-    <Button variant="neutral" class="mt-3" @click="carica">Riprova</Button>
-  </div>
+  <ErroreLista
+    v-else-if="errore"
+    class="rounded-2xl border border-(--bd) bg-(--surf)"
+    messaggio="Non è stato possibile caricare i piani alimentari."
+    compatto
+    @riprova="carica"
+  />
 
   <div v-else class="flex flex-col gap-4">
     <div
-      class="rounded-2xl border px-5 py-4"
-      :class="pianoAttivo && avanzamento ? 'border-(--hero-d) bg-(--hero) text-(--on-hero)' : 'border-(--bd) bg-(--surf)'"
+      class="rounded-2xl border border-(--bd) bg-(--surf) px-5 py-4"
       data-test="piano-attivo-card"
     >
       <template v-if="pianoAttivo && avanzamento">
         <div class="flex flex-wrap items-start gap-3.5">
           <div class="min-w-55 flex-1">
             <div class="flex flex-wrap items-center gap-2">
-              <span class="text-xs font-semibold text-(--on-hero-2)">Piano attivo</span>
-              <Badge variant="secondary" class="bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring)">{{ ETICHETTE_MODALITA[pianoAttivo.modalita] }}</Badge>
+              <span class="text-xs font-semibold text-(--fg3)">Piano attivo</span>
+              <Badge variant="secondary" class="bg-(--mint) text-(--green-d)">{{ ETICHETTE_MODALITA[pianoAttivo.modalita] }}</Badge>
             </div>
-            <div class="font-heading mt-1 text-[21px] font-medium italic text-(--on-hero)">{{ pianoAttivo.nome }}</div>
-            <div class="mt-0.5 text-[12.5px] text-(--on-hero-2)">
+            <div class="font-heading mt-1 text-[21px] font-medium italic text-(--fg)">{{ pianoAttivo.nome }}</div>
+            <div class="mt-0.5 text-[12.5px] text-(--fg3)">
               {{ periodo(pianoAttivo) }}<template v-if="pianoAttivo.obiettivoKcal != null"> · {{ target(pianoAttivo) }}/giorno</template>
             </div>
           </div>
           <div class="flex flex-wrap gap-2">
-            <Button v-if="!archiviato" variant="hero" @click="onDuplica(pianoAttivo)">
+            <Button v-if="!archiviato" variant="neutral" @click="onDuplica(pianoAttivo)">
               <Copy :size="16" />
-              <span>Duplica</span>
+              <span>Duplica piano</span>
             </Button>
-            <Button as-child variant="accent">
+            <Button as-child>
               <router-link :to="linkPiano(pianoAttivo)"><Pencil :size="16" /> Apri piano</router-link>
             </Button>
           </div>
         </div>
 
         <div v-if="avanzamento.percentuale !== null" class="mt-3.5">
-          <div class="mb-1 flex justify-between text-[11.5px] text-(--on-hero-2)">
+          <div class="mb-1 flex justify-between text-[11.5px] text-(--fg3)">
             <span>{{ avanzamento.durataLabel }}</span>
             <span
               class="font-bold"
-              :class="avanzamento.scadenzaInGiornata || avanzamento.scadenzaScaduta ? 'text-(--on-hero-warn)' : ''"
+              :class="avanzamento.scadenzaInGiornata || avanzamento.scadenzaScaduta ? 'text-(--warn-fg)' : ''"
             >{{ avanzamento.scadenzaLabel }}</span>
           </div>
-          <div class="h-1.5 overflow-hidden rounded bg-(--hero-track)">
-            <div data-test="piano-avanzamento" class="h-full rounded bg-(--lime)" :style="{ width: `${avanzamento.percentuale}%` }" />
+          <div class="h-1.5 overflow-hidden rounded bg-(--hover)">
+            <div data-test="piano-avanzamento" class="h-full rounded bg-(--green)" :style="{ width: `${avanzamento.percentuale}%` }" />
           </div>
         </div>
       </template>
@@ -178,21 +181,20 @@ function onDuplica(piano: PianoAlimentareRigaLista) {
         </Button>
       </div>
 
-      <div v-else class="flex flex-wrap items-center gap-3.5">
-        <div class="min-w-55 flex-1">
-          <span class="text-xs font-semibold text-(--fg3)">Piano attivo</span>
-          <div class="font-heading mt-1 text-lg italic text-(--fg)">Nessun piano attivo</div>
-          <p class="mt-0.5 text-[12.5px] text-(--fg3)">
-            {{ totalePiani > 0 ? 'Apri un piano dallo storico per attivarlo, oppure creane uno nuovo.' : 'Questo paziente non ha ancora nessun piano alimentare.' }}
-          </p>
-        </div>
+      <StatoVuoto
+        v-else
+        :icona="Utensils"
+        titolo="Nessun piano attivo"
+        :testo="totalePiani > 0 ? 'Apri un piano dallo storico per attivarlo, oppure creane uno nuovo.' : 'Questo paziente non ha ancora nessun piano alimentare.'"
+        compatto
+      >
         <Button v-if="!archiviato" as-child>
           <router-link :to="`/piani-alimentari/nuovo?pazienteId=${pazienteId}`" data-test="tab-piani-nuovo-piano">
             <Plus :size="16" />
             <span>Nuovo piano</span>
           </router-link>
         </Button>
-      </div>
+      </StatoVuoto>
     </div>
 
     <div v-if="pianiPrecedenti && pianiPrecedenti.contenuto.length > 0" class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)">

@@ -285,10 +285,10 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
               @update:model-value="onNomeInput"
               type="text"
               :disabled="soloLettura"
-              :aria-invalid="!!errori.nome"
+              :aria-invalid="!!errori.nome" :aria-describedby="errori.nome ? 'alimento-errore-nome' : undefined"
               placeholder="Es. Petto di pollo, crudo"
             />
-            <p v-if="errori.nome" class="text-xs font-medium text-(--danger)">{{ errori.nome }}</p>
+            <p id="alimento-errore-nome" v-if="errori.nome" class="text-xs font-medium text-(--danger)">{{ errori.nome }}</p>
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -299,10 +299,10 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
               @update:model-value="onCategoriaInput"
               type="text"
               :disabled="soloLettura"
-              :aria-invalid="!!errori.categoria"
+              :aria-invalid="!!errori.categoria" :aria-describedby="errori.categoria ? 'alimento-errore-categoria' : undefined"
               placeholder="Es. Carni"
             />
-            <p v-if="errori.categoria" class="text-xs font-medium text-(--danger)">{{ errori.categoria }}</p>
+            <p id="alimento-errore-categoria" v-if="errori.categoria" class="text-xs font-medium text-(--danger)">{{ errori.categoria }}</p>
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -314,10 +314,10 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
               type="text"
               inputmode="decimal"
               :disabled="soloLettura"
-              :aria-invalid="!!errori.quantitaG"
+              :aria-invalid="!!errori.quantitaG" :aria-describedby="errori.quantitaG ? 'alimento-errore-quantitaG' : undefined"
               placeholder="Es. 100"
             />
-            <p v-if="errori.quantitaG" class="text-xs font-medium text-(--danger)">{{ errori.quantitaG }}</p>
+            <p id="alimento-errore-quantitaG" v-if="errori.quantitaG" class="text-xs font-medium text-(--danger)">{{ errori.quantitaG }}</p>
           </div>
 
           <div>
@@ -334,11 +334,12 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
                     inputmode="decimal"
                     :disabled="soloLettura"
                     :aria-invalid="!!errori[campo.chiave]"
+                    :aria-describedby="errori[campo.chiave] ? `${campo.id}-errore` : undefined"
                     class="border-0 px-0 shadow-none focus-visible:ring-0"
                   />
                   <span class="text-xs text-(--fg3)">{{ campo.unita }}</span>
                 </div>
-                <p v-if="errori[campo.chiave]" class="text-xs font-medium text-(--danger)">{{ errori[campo.chiave] }}</p>
+                <p v-if="errori[campo.chiave]" :id="`${campo.id}-errore`" class="text-xs font-medium text-(--danger)">{{ errori[campo.chiave] }}</p>
               </div>
             </div>
           </div>
@@ -377,7 +378,7 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
-        <AlertDialogAction class="bg-(--danger) hover:bg-(--danger-d)" @click="onElimina">Conferma</AlertDialogAction>
+        <AlertDialogAction variant="destructive" @click="onElimina">Elimina alimento</AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>

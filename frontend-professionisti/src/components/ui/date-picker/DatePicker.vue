@@ -126,6 +126,7 @@ async function onTestoInput(valore: string | number) {
       <PopoverAnchor as-child>
         <div ref="ancora" class="relative w-full">
           <Input
+            v-bind="$attrs"
             :id="id"
             type="text"
             inputmode="numeric"
@@ -153,6 +154,7 @@ async function onTestoInput(valore: string | number) {
     </template>
     <PopoverTrigger v-else as-child>
       <Button
+        v-bind="$attrs"
         :id="id"
         type="button"
         variant="outline"

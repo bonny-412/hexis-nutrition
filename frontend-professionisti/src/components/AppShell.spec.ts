@@ -21,6 +21,26 @@ function creaRouter() {
 }
 
 describe('AppShell', () => {
+  it('mantiene la compressione desktop al rimontaggio e conserva i nomi dei link', async () => {
+    const router = creaRouter()
+    await router.push('/alimenti')
+    const options = { global: { plugins: [router, createTestingPinia()] } }
+    const wrapper = mount(AppShell, options)
+    await wrapper.get('[aria-label="Comprimi sidebar"]').trigger('click')
+    wrapper.unmount()
+
+    await router.push('/agenda')
+    const rimontata = mount(AppShell, options)
+    try {
+      expect(rimontata.find('[aria-label="Espandi sidebar"]').exists()).toBe(true)
+      expect(rimontata.get('a[href="/agenda"]').attributes('aria-label')).toBe('Agenda')
+      expect(rimontata.get('a[href="/alimenti"]').attributes('aria-label')).toBe('Alimenti')
+    } finally {
+      rimontata.unmount()
+      sessionStorage.removeItem('hexis-sidebar-compressa')
+    }
+  })
+
   it('apre il cassetto della sidebar cliccando l\'hamburger nell\'header', async () => {
     const router = creaRouter()
     router.push('/')

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import AppShell from '@/components/AppShell.vue'
 import {
@@ -14,8 +14,11 @@ import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
-import { Plus, ArrowUp, ArrowDown, ArrowUpDown, ChevronRight } from '@lucide/vue'
-import { formattaDataItalianaConMese } from '@/utils/data'
+import { Plus, ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, SearchX, Utensils } from '@lucide/vue'
+import StatoVuoto from '@/components/StatoVuoto.vue'
+import ErroreLista from '@/components/liste/ErroreLista.vue'
+import CaricamentoLista from '@/components/liste/CaricamentoLista.vue'
+import { formattaDataItalianaConMese, isoATimestamp, timestampAIso } from '@/utils/data'
 import { inizialiPaziente } from '@/utils/paziente'
 import { useVistaLista } from '@/composables/useVistaLista'
 import VistaListaToggle from '@/components/liste/VistaListaToggle.vue'
@@ -54,6 +57,7 @@ const CLASSI_STATO: Record<StatoPiano, string> = {
 // Stesso avatar a iniziali della lista pazienti, colorato come il badge di stato del piano.
 
 const router = useRouter()
+const route = useRoute()
 
 const ricercaInput = ref('')
 const ricercaEffettiva = ref('')
@@ -133,6 +137,28 @@ async function carica() {
     aggiornamentoInCorso.value = false
   }
 }
+function dataDaQuery(valore: unknown) {
+  if (typeof valore !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(valore)) return ''
+  return timestampAIso(isoATimestamp(valore)) === valore ? valore : ''
+}
+
+watch(
+  [() => route.query.stato, () => route.query.dataFineDa, () => route.query.dataFineA],
+  ([stato, da, a]) => {
+    statoFiltro.value = CHIP_STATI.find((chip) => chip.valore === stato)?.valore ?? 'TUTTI'
+    dataFineDa.value = dataDaQuery(da)
+    dataFineA.value = dataDaQuery(a)
+    if (dataFineDa.value && dataFineA.value && dataFineDa.value > dataFineA.value) {
+      dataFineDa.value = ''
+      dataFineA.value = ''
+    }
+    filtriAvanzatiAperti.value = !!(dataFineDa.value || dataFineA.value)
+    ordinaPer.value = filtriAvanzatiAperti.value ? 'dataFine' : undefined
+    direzione.value = 'asc'
+    pagina.value = 0
+  },
+  { immediate: true },
+)
 watch([ricercaEffettiva, statoFiltro, dataInizioDa, dataInizioA, dataFineDa, dataFineA, pagina, ordinaPer, direzione], carica)
 onMounted(carica)
 
@@ -176,6 +202,11 @@ function pulisciFiltri() {
   dataFineDa.value = ''
   dataFineA.value = ''
   pagina.value = 0
+  if (route.query.stato || route.query.dataFineDa || route.query.dataFineA) {
+    ordinaPer.value = undefined
+    direzione.value = 'asc'
+    void router.replace({ query: { ...route.query, stato: undefined, dataFineDa: undefined, dataFineA: undefined } })
+  }
 }
 
 function paginaPrecedente() {
@@ -233,10 +264,11 @@ const conteggioTesto = computed(() => {
 
     <section class="mb-3.5 rounded-2xl border border-(--bd) bg-(--surf) p-3.5">
       <div class="flex flex-wrap items-center gap-2.5">
-        <Input v-model="ricercaInput" type="search" autocomplete="off" placeholder="Cerca paziente o piano…" class="min-w-70 flex-1" />
+        <Input v-model="ricercaInput" type="search" autocomplete="off" aria-label="Cerca paziente o piano" placeholder="Cerca paziente o piano…" class="min-w-70 flex-1" />
         <div class="flex flex-wrap gap-1.5">
           <button
             v-for="chip in CHIP_STATI" :key="chip.valore" type="button" :data-test="`chip-stato-${chip.valore}`"
+            :aria-pressed="statoFiltro === chip.valore"
             class="rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
             :class="statoFiltro === chip.valore
               ? 'border-(--sage) bg-(--mint) text-(--green-d)'
@@ -302,14 +334,8 @@ const conteggioTesto = computed(() => {
     </div>
 
     <section class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)">
-      <div v-if="errore" class="flex flex-col items-center gap-3 p-14 text-center">
-        <p class="text-(--danger)">Non è stato possibile caricare i piani.</p>
-        <Button type="button" variant="neutral" @click="carica">Riprova</Button>
-      </div>
-
-      <div v-else-if="caricamentoIniziale" class="flex flex-col gap-2 p-4">
-        <div v-for="n in 6" :key="n" class="h-9 animate-pulse rounded-lg bg-(--hover)" />
-      </div>
+      <ErroreLista v-if="errore" messaggio="Non è stato possibile caricare i piani alimentari." @riprova="carica" />
+      <CaricamentoLista v-else-if="caricamentoIniziale" etichetta="Caricamento i piani alimentari" />
 
       <template v-else-if="paginaDati && paginaDati.contenuto.length > 0">
         <!-- Schede: sempre su mobile, su desktop se scelte con l'interruttore. -->
@@ -429,16 +455,12 @@ const conteggioTesto = computed(() => {
         </div>
       </template>
 
-      <div v-else-if="!filtriAttivi" class="flex flex-col items-center gap-2 p-16 text-center">
-        <p class="font-heading text-lg italic">Nessun piano presente</p>
-        <p class="text-xs text-muted-foreground max-w-xs">Inizia creando il primo piano alimentare per un tuo paziente.</p>
+      <StatoVuoto v-else-if="!filtriAttivi" :icona="Utensils" titolo="Nessun piano presente" testo="Inizia creando il primo piano alimentare per un tuo paziente." livello="h2">
         <Button as-child class="active:not-aria-[haspopup]:translate-y-0.5"><router-link to="/piani-alimentari/nuovo">Nuovo piano</router-link></Button>
-      </div>
-      <div v-else class="flex flex-col items-center gap-2 p-16 text-center">
-        <p class="font-bold">Nessun risultato trovato</p>
-        <p class="text-xs text-muted-foreground max-w-xs">Prova a modificare o resettare i filtri applicati.</p>
+      </StatoVuoto>
+      <StatoVuoto v-else :icona="SearchX" titolo="Nessun risultato trovato" testo="Prova a modificare o resettare i filtri applicati." livello="h2">
         <Button type="button" variant="neutral" @click="pulisciFiltri">Pulisci filtri</Button>
-      </div>
+      </StatoVuoto>
 
       <div v-if="paginaDati && !errore" class="flex items-center justify-between gap-3 border-t border-(--div) bg-(--soft) px-4.5 py-3">
         <span class="text-xs text-(--fg3)">{{ conteggioTesto }}</span>

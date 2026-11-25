@@ -7,7 +7,7 @@ import * as api from '@/api/pianiAlimentari'
 
 vi.mock('@/api/pianiAlimentari')
 
-async function creaRouter() {
+async function creaRouter(percorso = '/piani-alimentari') {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
@@ -21,7 +21,7 @@ async function creaRouter() {
       { path: '/login', name: 'login', component: { template: '<div/>' } },
     ],
   })
-  router.push('/piani-alimentari')
+  router.push(percorso)
   await router.isReady()
   return router
 }
@@ -60,6 +60,24 @@ describe('PianiAlimentariListView', () => {
     await vi.waitFor(() =>
       expect(api.cerca).toHaveBeenCalledWith(expect.objectContaining({ stato: 'ATTIVO', pagina: 0 })),
     )
+  })
+
+  it('applica le scadenze e lo stato della Dashboard già alla prima richiesta', async () => {
+    vi.mocked(api.cerca).mockClear()
+    const router = await creaRouter('/piani-alimentari?stato=ATTIVO&dataFineDa=2026-11-25&dataFineA=2026-12-02')
+    const wrapper = montaView(router)
+    await vi.waitFor(() => expect(api.cerca).toHaveBeenCalledTimes(1))
+    expect(api.cerca).toHaveBeenCalledWith(expect.objectContaining({
+      stato: 'ATTIVO', dataFineDa: '2026-11-25', dataFineA: '2026-12-02', ordinaPer: 'dataFine', direzione: 'asc',
+    }))
+    expect(wrapper.get('[data-test="chip-stato-ATTIVO"]').attributes('aria-pressed')).toBe('true')
+
+    await router.push('/piani-alimentari?stato=BOZZA')
+    await vi.waitFor(() => expect(api.cerca).toHaveBeenLastCalledWith(expect.objectContaining({
+      stato: 'BOZZA', dataFineDa: undefined, dataFineA: undefined,
+    })))
+    expect(wrapper.get('[data-test="chip-stato-BOZZA"]').attributes('aria-pressed')).toBe('true')
+    wrapper.unmount()
   })
 
   it('senza filtri e senza piani mostra lo stato vuoto che invita a creare il primo piano', async () => {

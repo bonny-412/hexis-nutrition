@@ -45,6 +45,23 @@ In breve: l'app è passata da "curata pagina per pagina" a "un sistema". Per dir
     - Riquadro "Visite oggi" che ripete il banner della Dashboard.
     - Nessuna larghezza massima del contenuto oltre 1600 px.
 
+## Riscontro in Chrome
+
+Verifica su `localhost:5173` con un account di test. Il giro ha incluso desktop in tema chiaro e scuro e l'emulazione iPhone a 375 e 393 px.
+
+| Priorità | Problema | Riproduzione ed esito |
+|---|---|---|
+| Alta | La ricerca globale non consente di aprire un risultato con freccia e Invio (punto 8). | Aprire la palette con `Ctrl+K`, cercare un paziente per cognome, premere `↓` e poi `Invio`. La palette resta aperta. Un clic sullo stesso risultato apre la scheda. |
+| Alta | La barra laterale perde lo stato compresso e i link compressi perdono il nome accessibile (punto 6). | In Alimenti, premere «Comprimi». Nell'albero di accessibilità il collegamento ad Agenda è senza nome. Aprendo Agenda dalla sua icona, la barra torna espansa. |
+| Media | Il selettore paziente copre i campi del promemoria. | In Agenda, aprire «Nuovo promemoria» oppure modificare un promemoria senza paziente. Il campo facoltativo riceve il focus e apre subito l'elenco delle visite recenti, che si sovrappone a data, ora e testo. |
+| Media | Il messaggio di conferma indica il tipo di evento sbagliato. | Salvare un nuovo promemoria. L'evento compare in Agenda e il messaggio recita «Appuntamento creato.». |
+| Media | «Chat» e «Analytics» sono esposte come testo semplice nella navigazione (punto 1). | Espandere la barra laterale. Nell'albero di accessibilità le due voci sono testo e non espongono un collegamento o un pulsante. |
+| Media | La lista Pazienti mostra stato e invito come elementi separati (punto 4). | Aprire la lista in tabella o visualizzarla a 393 px. Lo stesso paziente presenta «Mai invitato» e «Invita» separati. La scheda paziente li raggruppa in una pillola. |
+| Media | Le diciture per fissare un appuntamento variano tra le schermate (punto 2). | Confrontare «Fissa un appuntamento» in Dashboard, «Fissa appuntamento» nella scheda paziente, «Aggiungi» in Agenda e «Nuovo appuntamento» nel modulo. |
+| Bassa | Lo stato vuoto di Notifiche è una riga di testo (punto 5). | Aprire la campanella con l'account di test senza notifiche. Il pannello mostra «Nessuna notifica». |
+
+La ricerca locale ha restituito una corrispondenza per cognome in Pazienti e «Banana» dal catalogo BDA in Alimenti. In Agenda è stata verificata anche una settimana con alcuni eventi. Dopo il salvataggio di una visita, la scheda ha mostrato il grafico con due rilevazioni.
+
 ## Cosa funziona già bene
 
 - Dashboard orientata alle azioni ("Avvia visita", "Da fare").
@@ -62,5 +79,4 @@ In breve: l'app è passata da "curata pagina per pagina" a "un sistema". Per dir
 - Vista Settimana piena di eventi.
 - Grafici con molte visite.
 - Tastiera mobile sopra la barra azioni.
-- Ricerca pazienti e alimenti con il backend nuovo (da riavviare).
 - Autocompletamento di Chrome al login.

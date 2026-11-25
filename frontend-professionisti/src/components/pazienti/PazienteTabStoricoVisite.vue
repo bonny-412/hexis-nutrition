@@ -304,10 +304,10 @@ const righe = computed<RigaStorico[]>(() =>
         <AlertDialogAction
           data-test="elimina-visita-conferma"
           :disabled="eliminazioneInCorso"
-          class="bg-(--danger) hover:bg-(--danger-d)"
+          variant="destructive"
           @click="confermaEliminazione"
         >
-          {{ eliminazioneInCorso ? 'Eliminazione…' : 'Elimina' }}
+          {{ eliminazioneInCorso ? 'Eliminazione…' : 'Elimina visita' }}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>

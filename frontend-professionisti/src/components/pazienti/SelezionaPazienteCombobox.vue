@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverAnchor } from '@/components/ui/popover'
 import { X } from '@lucide/vue'
 import { classiAvatarPaziente, inizialiPaziente } from '@/utils/paziente'
 
-defineProps<{ modelValue: Paziente | null }>()
+defineProps<{ modelValue: Paziente | null; id?: string; ariaInvalid?: boolean; ariaDescribedby?: string }>()
 const emit = defineEmits<{ 'update:modelValue': [paziente: Paziente | null] }>()
 
 const testoRicerca = ref('')
@@ -102,6 +102,10 @@ function cambiaSelezione() {
     <Popover v-else v-model:open="popoverAperto">
       <PopoverAnchor as-child>
         <Input
+          :id="id"
+          :aria-invalid="ariaInvalid"
+          :aria-describedby="ariaDescribedby"
+          aria-label="Cerca paziente per nome, email o codice fiscale"
           data-test="input-cerca-paziente"
           class="bg-(--surf)"
           :model-value="testoRicerca"

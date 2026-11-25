@@ -101,7 +101,7 @@ function esegui(azione: AzioneAppuntamento) {
           </div>
         </dl>
 
-        <DialogFooter class="flex-wrap gap-2">
+        <DialogFooter>
           <Button v-if="a.pazienteId" type="button" variant="neutral" data-test="dettaglio-apri-cartella" @click="esegui('APRI_CARTELLA')"><FolderOpen /> Apri scheda paziente</Button>
 
           <template v-if="eProgrammata">

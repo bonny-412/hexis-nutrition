@@ -80,8 +80,8 @@ function confermaEliminazione() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
-          <AlertDialogAction class="bg-(--danger) hover:bg-(--danger-d)" @click="confermaEliminazione">
-            Conferma
+          <AlertDialogAction variant="destructive" @click="confermaEliminazione">
+            Elimina alimento
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -76,7 +76,7 @@ describe('AlimentoRigaAzioni', () => {
     expect(wrapper.emitted('elimina')).toBeUndefined()
     expect(document.body.textContent).toContain('Eliminare Frullato proteico?')
 
-    const conferma = Array.from(document.querySelectorAll('button')).find((b) => b.textContent?.trim() === 'Conferma')
+    const conferma = Array.from(document.querySelectorAll('button')).find((b) => b.textContent?.trim() === 'Elimina alimento')
     conferma?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }))
     await flushPromises()
 

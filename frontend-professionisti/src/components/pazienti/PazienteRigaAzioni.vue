@@ -19,7 +19,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { ArchiveRestore, CalendarPlus, ClipboardPlus, FolderOpen, MoreHorizontal, Trash2, Utensils } from '@lucide/vue'
+import { Archive, ArchiveRestore, CalendarPlus, ClipboardPlus, FolderOpen, MoreHorizontal, Utensils } from '@lucide/vue'
 
 const props = defineProps<{
   paziente: Paziente
@@ -29,7 +29,6 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  invita: [paziente: Paziente]
   archivia: [paziente: Paziente]
   deArchivia: [paziente: Paziente]
 }>()
@@ -49,11 +48,6 @@ function confermaAzione() {
   confermaAperta.value = false
 }
 
-function etichettaAzione(paziente: Paziente) {
-  if (paziente.statoAccount === 'MAI_INVITATO') return 'Invita'
-  if (paziente.statoAccount === 'INVITATO') return 'Reinvia invito'
-  return null
-}
 </script>
 
 <template>
@@ -62,15 +56,6 @@ function etichettaAzione(paziente: Paziente) {
       <router-link :to="`/pazienti/${paziente.id}`">
         <FolderOpen :size="16" />
       </router-link>
-    </Button>
-
-    <Button
-      v-if="!mostraArchiviati && etichettaAzione(paziente)"
-      type="button"
-      variant="ghost"
-      @click="emit('invita', paziente)"
-    >
-      {{ etichettaAzione(paziente) }}
     </Button>
 
     <DropdownMenu>
@@ -89,7 +74,7 @@ function etichettaAzione(paziente: Paziente) {
         <DropdownMenuItem v-if="!mostraArchiviati" as-child data-test="menu-fissa-appuntamento" class="cursor-pointer">
           <router-link :to="`/agenda?nuovo=visita&pazienteId=${paziente.id}`">
             <CalendarPlus />
-            Fissa appuntamento
+            Nuovo appuntamento
           </router-link>
         </DropdownMenuItem>
         <DropdownMenuItem v-if="!mostraArchiviati" as-child data-test="menu-nuovo-piano" class="cursor-pointer">
@@ -103,15 +88,15 @@ function etichettaAzione(paziente: Paziente) {
           v-if="!mostraArchiviati"
           data-test="menu-archivia"
           variant="destructive"
-          class="text-(--danger) focus:text-(--danger) cursor-pointer"
+          class="cursor-pointer"
           @click="apriConferma"
         >
-          <Trash2 />
+          <Archive />
           Archivia paziente
         </DropdownMenuItem>
         <DropdownMenuItem v-else data-test="menu-de-archivia" class="cursor-pointer" @click="apriConferma">
           <ArchiveRestore />
-          De-archivia paziente
+          Ripristina paziente
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -120,13 +105,13 @@ function etichettaAzione(paziente: Paziente) {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {{ mostraArchiviati ? 'De-archiviare' : 'Archiviare' }} {{ paziente.nome }} {{ paziente.cognome }}?
+            {{ mostraArchiviati ? 'Ripristinare' : 'Archiviare' }} {{ paziente.nome }} {{ paziente.cognome }}?
           </AlertDialogTitle>
           <AlertDialogDescription>
             {{
               mostraArchiviati
                 ? 'Il paziente tornerà visibile nella lista pazienti attivi.'
-                : 'Il paziente non comparirà più nella lista pazienti attivi e le visite e i promemoria futuri collegati al paziente verranno eliminati. Potrai de-archiviarlo in qualsiasi momento.'
+                : 'Il paziente uscirà dalla lista degli attivi. Le visite e i promemoria futuri collegati verranno eliminati. Potrai ripristinare il paziente in qualsiasi momento.'
             }}
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -134,10 +119,10 @@ function etichettaAzione(paziente: Paziente) {
           <AlertDialogCancel data-test="conferma-annulla" variant="neutral">Annulla</AlertDialogCancel>
           <AlertDialogAction
             data-test="conferma-conferma"
-            :class="mostraArchiviati ? '' : 'bg-(--danger) hover:bg-(--danger-d)'"
+            :variant="mostraArchiviati ? 'default' : 'destructive'"
             @click="confermaAzione"
           >
-            Conferma
+            {{ mostraArchiviati ? 'Ripristina paziente' : 'Archivia paziente' }}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
