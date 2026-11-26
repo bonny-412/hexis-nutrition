@@ -69,8 +69,9 @@ public class PianoAlimentareController {
                     var paziente = pazientiPerId.get(p.getPazienteId());
                     String nome = paziente != null ? paziente.getNome() : null;
                     String cognome = paziente != null ? paziente.getCognome() : null;
+                    String email = paziente != null ? paziente.getEmail() : null;
                     String nomeCompleto = paziente != null ? nome + " " + cognome : "—";
-                    return new PianoAlimentareRigaListaResponse(p.getId(), nomeCompleto, nome, cognome,
+                    return new PianoAlimentareRigaListaResponse(p.getId(), nomeCompleto, nome, cognome, email,
                             p.getNome(), p.statoEffettivo(), p.getObiettivoKcal(), p.getModalita(),
                             p.getDataInizio(), p.getDataFine());
                 })

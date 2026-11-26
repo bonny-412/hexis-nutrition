@@ -14,10 +14,14 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { ETICHETTE_CIRCONFERENZE, ETICHETTE_OBIETTIVO, formattaNumero } from '@/utils/visita'
+import { ETICHETTE_OBIETTIVO, formattaNumero } from '@/utils/visita'
+// Verde/rosso secondo l'obiettivo della visita, come nel Confronto e nella striscia in alto (decisione del 2026-11-25).
+import { CLASSE_ESITO, esitoVariazione } from '@/utils/obiettivo'
 import { formattaDataItalianaConMese } from '@/utils/data'
-import { ChevronDown, ClipboardPlus, Pencil, Stethoscope, Trash2 } from '@lucide/vue'
+import { ChevronDown, ClipboardPlus, Pencil, Stethoscope, Trash2, X } from '@lucide/vue'
 import StatoVuoto from '@/components/StatoVuoto.vue'
+import PlicometriaCard from './PlicometriaCard.vue'
+import CirconferenzeCard from './CirconferenzeCard.vue'
 import type { Visita } from '@/api/pazienti'
 
 const props = defineProps<{
@@ -121,24 +125,16 @@ interface RigaStorico {
   rel: string
   deltaPeso: number | null
   deltaMg: number | null
-  circonferenze: Array<{ label: string; valore: number | null }>
-  haCirconferenze: boolean
   recentissima: boolean
 }
 
 const righe = computed<RigaStorico[]>(() =>
   caricate.value.map(({ visita, posizione, deltaPesoKg, deltaPercentualeGrasso }) => {
-    const circonferenze = (Object.keys(ETICHETTE_CIRCONFERENZE) as Array<keyof Visita['circonferenze']>).map((chiave) => ({
-      label: ETICHETTE_CIRCONFERENZE[chiave],
-      valore: visita.circonferenze[chiave],
-    }))
     return {
       visita,
       rel: posizione === 0 ? 'Più recente' : posizione === 1 ? '1 visita fa' : posizione + ' visite fa',
       deltaPeso: deltaPesoKg !== null ? +deltaPesoKg.toFixed(2) : null,
       deltaMg: deltaPercentualeGrasso !== null ? +deltaPercentualeGrasso.toFixed(2) : null,
-      circonferenze,
-      haCirconferenze: circonferenze.some((c) => c.valore !== null),
       recentissima: posizione === 0,
     }
   }),
@@ -200,7 +196,7 @@ const righe = computed<RigaStorico[]>(() =>
               <span
                 v-if="riga.deltaPeso !== null"
                 class="text-xs font-bold"
-                :class="riga.deltaPeso <= 0 ? 'text-(--green)' : 'text-(--danger)'"
+                :class="CLASSE_ESITO[esitoVariazione(riga.visita.obiettivo, 'peso', riga.deltaPeso)]"
               >
                 {{ riga.deltaPeso > 0 ? '+' : '' }}{{ formattaNumero(riga.deltaPeso) }} kg
               </span>
@@ -216,7 +212,7 @@ const righe = computed<RigaStorico[]>(() =>
               <span
                 v-if="riga.deltaMg !== null"
                 class="text-xs font-bold"
-                :class="riga.deltaMg <= 0 ? 'text-(--green)' : 'text-(--danger)'"
+                :class="CLASSE_ESITO[esitoVariazione(riga.visita.obiettivo, 'percentualeGrasso', riga.deltaMg)]"
               >
                 {{ riga.deltaMg > 0 ? '+' : '' }}{{ formattaNumero(riga.deltaMg) }} pt
               </span>
@@ -243,41 +239,25 @@ const righe = computed<RigaStorico[]>(() =>
             </Button>
           </div>
 
-          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <div class="rounded-xl bg-(--soft) p-4">
-              <h5 class="text-xs font-semibold text-(--fg3)">Generali</h5>
-              <dl class="mt-2 space-y-1 text-sm">
-                <div class="flex items-center justify-between"><dt class="text-(--fg2)">Peso</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.pesoKg) }} kg</dd></div>
-                <div v-if="riga.visita.bmi !== null" class="flex items-center justify-between"><dt class="text-(--fg2)">BMI</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.bmi, 1) }}</dd></div>
-              </dl>
-              <p v-if="riga.visita.note" class="mt-2 border-t border-(--div) pt-2 text-xs leading-relaxed text-(--fg3)">{{ riga.visita.note }}</p>
+          <div class="grid grid-cols-1 gap-3 md:grid-cols-2 md:items-start xl:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_minmax(0,1fr)]">
+            <div class="grid gap-3 md:col-span-2 md:grid-cols-2 xl:col-span-1 xl:grid-cols-1">
+              <div class="rounded-xl bg-(--soft) p-4">
+                <h5 class="text-xs font-semibold text-(--fg3)">Generali</h5>
+                <dl class="mt-2 space-y-1 text-sm">
+                  <div class="flex items-center justify-between"><dt class="text-(--fg2)">Peso</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.pesoKg) }} kg</dd></div>
+                  <div v-if="riga.visita.bmi !== null" class="flex items-center justify-between"><dt class="text-(--fg2)">BMI</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.bmi, 1) }}</dd></div>
+                </dl>
+                <p v-if="riga.visita.note" class="mt-2 border-t border-(--div) pt-2 text-xs leading-relaxed text-(--fg3)">{{ riga.visita.note }}</p>
+              </div>
+
+              <div class="rounded-xl bg-(--soft) p-4">
+                <h5 class="text-xs font-semibold text-(--fg3)">BIA</h5>
+                <p class="mt-2 text-xs text-(--fg3)">Dati non disponibili.</p>
+              </div>
             </div>
 
-            <div class="rounded-xl bg-(--soft) p-4">
-              <h5 class="text-xs font-semibold text-(--fg3)">BIA</h5>
-              <p class="mt-2 text-xs text-(--fg3)">Dati non disponibili.</p>
-            </div>
-
-            <div class="rounded-xl bg-(--soft) p-4">
-              <h5 class="text-xs font-semibold text-(--fg3)">Plicometria</h5>
-              <dl v-if="riga.visita.plicometria" class="mt-2 space-y-1 text-sm">
-                <div class="flex items-center justify-between"><dt class="text-(--fg2)">% Grasso</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.plicometria.percentualeGrassoCorporeo) }}%</dd></div>
-                <div class="flex items-center justify-between"><dt class="text-(--fg2)">Massa grassa</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.plicometria.massaGrassaKg) }} kg</dd></div>
-                <div class="flex items-center justify-between"><dt class="text-(--fg2)">Massa magra</dt><dd class="font-semibold text-(--fg)">{{ formattaNumero(riga.visita.plicometria.massaMagraKg) }} kg</dd></div>
-              </dl>
-              <p v-else class="mt-2 text-xs text-(--fg3)">Nessuna plicometria registrata.</p>
-            </div>
-
-            <div class="rounded-xl bg-(--soft) p-4">
-              <h5 class="text-xs font-semibold text-(--fg3)">Circonferenze</h5>
-              <dl v-if="riga.haCirconferenze" class="mt-2 space-y-1 text-sm">
-                <div v-for="c in riga.circonferenze" :key="c.label" class="flex items-center justify-between">
-                  <dt class="text-(--fg2)">{{ c.label }}</dt>
-                  <dd class="font-semibold text-(--fg)">{{ c.valore !== null ? `${formattaNumero(c.valore)} cm` : '—' }}</dd>
-                </div>
-              </dl>
-              <p v-else class="mt-2 text-xs text-(--fg3)">Nessuna circonferenza registrata.</p>
-            </div>
+            <PlicometriaCard :visita="riga.visita" annidata testo-vuoto="Nessuna plicometria registrata." />
+            <CirconferenzeCard :visita="riga.visita" annidata testo-vuoto="Nessuna circonferenza registrata." />
           </div>
         </div>
       </div>
@@ -285,6 +265,7 @@ const righe = computed<RigaStorico[]>(() =>
 
     <div v-if="visiteRimanenti > 0" class="relative mt-3.5 flex justify-center lg:pl-11">
       <Button type="button" variant="neutral" data-test="carica-altre-visite" :disabled="caricamentoAltre" @click="caricaAltre">
+        <ChevronDown />
         {{ caricamentoAltre ? 'Caricamento…' : 'Carica altre visite' }}
         <span class="text-(--fg3)">({{ visiteRimanenti }} {{ visiteRimanenti === 1 ? 'rimanente' : 'rimanenti' }})</span>
       </Button>
@@ -300,13 +281,14 @@ const righe = computed<RigaStorico[]>(() =>
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogCancel data-test="elimina-visita-annulla" variant="neutral" :disabled="eliminazioneInCorso">Annulla</AlertDialogCancel>
+        <AlertDialogCancel data-test="elimina-visita-annulla" variant="neutral" :disabled="eliminazioneInCorso"><X /> Annulla</AlertDialogCancel>
         <AlertDialogAction
           data-test="elimina-visita-conferma"
           :disabled="eliminazioneInCorso"
           variant="destructive"
           @click="confermaEliminazione"
         >
+          <Trash2 />
           {{ eliminazioneInCorso ? 'Eliminazione…' : 'Elimina visita' }}
         </AlertDialogAction>
       </AlertDialogFooter>

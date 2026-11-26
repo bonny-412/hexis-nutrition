@@ -31,10 +31,12 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
 <template>
   <DialogPortal>
     <DialogOverlay />
+    <!-- Adattamento Hexis: sotto i 640 px il dialog è un pannello che sale dal basso (bottom sheet),
+      a tutta larghezza; da 640 px resta centrato come nell'originale shadcn. -->
     <DialogContent
       data-slot="dialog-content"
       v-bind="{ ...$attrs, ...forwarded }"
-      :class="cn('bg-popover text-popover-foreground data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 ring-foreground/10 flex flex-col max-w-[calc(100%-2rem)] max-h-[calc(100%-2rem)] gap-4 overflow-hidden rounded-xl p-4 text-sm ring-1 duration-100 sm:max-w-sm fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 outline-none', props.class)"
+      :class="cn('fixed z-50 w-full outline-none bg-popover text-popover-foreground ring-1 ring-foreground/10 inset-x-0 bottom-0 max-h-[90dvh] rounded-t-2xl p-4 pb-[max(1rem,env(safe-area-inset-bottom))] duration-200 data-open:animate-in data-closed:animate-out data-open:slide-in-from-bottom data-closed:slide-out-to-bottom motion-reduce:animate-none sm:inset-x-auto sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:max-h-[calc(100%-2rem)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:pb-4 sm:duration-100 sm:data-open:[--tw-enter-translate-y:0] sm:data-closed:[--tw-exit-translate-y:0] sm:data-open:fade-in-0 sm:data-closed:fade-out-0 sm:data-open:zoom-in-95 sm:data-closed:zoom-out-95 flex flex-col gap-4 overflow-hidden text-sm sm:max-w-sm', props.class)"
       @pointer-down-outside.prevent
     >
       <slot />
@@ -46,7 +48,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       >
         <Button variant="ghost" class="absolute top-2 right-2" size="icon-sm">
           <XIcon />
-          <span class="sr-only">Close</span>
+          <span class="sr-only">Chiudi</span>
         </Button>
       </DialogClose>
     </DialogContent>

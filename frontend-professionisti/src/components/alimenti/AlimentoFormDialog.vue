@@ -32,7 +32,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { Copy, Save, Trash2 } from '@lucide/vue'
+import { Copy, Save, Trash2, X } from '@lucide/vue'
 
 const props = defineProps<{
   open: boolean
@@ -359,6 +359,7 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
             <Trash2 :size="16" /> Elimina
           </Button>
           <Button v-if="modo !== 'view'" type="button" variant="neutral" :disabled="inCorso" @click="emit('update:open', false)">
+            <X />
             Annulla
           </Button>
           <Button v-if="modo !== 'view'" type="submit" :disabled="inCorso">
@@ -377,8 +378,8 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
         <AlertDialogDescription>L'alimento verrà rimosso definitivamente dal tuo catalogo personalizzato.</AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
-        <AlertDialogAction variant="destructive" @click="onElimina">Elimina alimento</AlertDialogAction>
+        <AlertDialogCancel variant="neutral"><X /> Annulla</AlertDialogCancel>
+        <AlertDialogAction variant="destructive" @click="onElimina"><Trash2 /> Elimina alimento</AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>

@@ -18,7 +18,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { CircleCheck, Copy, FolderOpen, MoreHorizontal, Trash2 } from '@lucide/vue'
+import { CircleCheck, Copy, FolderOpen, MoreHorizontal, Trash2, X } from '@lucide/vue'
 import DropdownMenuSeparator from '../ui/dropdown-menu/DropdownMenuSeparator.vue'
 
 const props = defineProps<{
@@ -86,8 +86,9 @@ function confermaElimina() {
           <AlertDialogDescription>L'operazione non è reversibile.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
+          <AlertDialogCancel variant="neutral"><X /> Annulla</AlertDialogCancel>
           <AlertDialogAction data-test="conferma-elimina-piano" variant="destructive" @click="confermaElimina">
+            <Trash2 />
             Elimina piano
           </AlertDialogAction>
         </AlertDialogFooter>

@@ -104,7 +104,15 @@ public class PazienteController {
 
     @GetMapping("/{id}")
     public PazienteResponse dettaglio(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id) {
-        return conProssimaVisita(pazienteService.dettaglio(professionistaId, id));
+        // Stessi campi calcolati della ricerca (obiettivo, ultimo piano, prossima visita): la Dashboard li usa
+        // per il contesto delle prossime visite. Prima qui erano sempre null tranne la prossima visita.
+        Paziente paziente = pazienteService.dettaglio(professionistaId, id);
+        List<UUID> ids = List.of(paziente.getId());
+        return PazienteResponse.da(paziente,
+                pazienteService.ultimeVisitePerPazienti(ids).get(paziente.getId()),
+                pazienteService.ultimiPianiPerPazienti(ids).get(paziente.getId()),
+                pazienteService.dataInizioObiettivoPerPazienti(ids).get(paziente.getId()),
+                pazienteService.prossimaVisitaPerPazienti(ids).get(paziente.getId()));
     }
 
     @PutMapping("/{id}")

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import AppShell from '@/components/AppShell.vue'
-import { conteggioAttivi, cerca as cercaPazienti, type Paziente } from '@/api/pazienti'
+import { conteggioAttivi, cerca as cercaPazienti, dettaglio as dettaglioPaziente, type Paziente } from '@/api/pazienti'
 import { elenco as elencoAgenda, type Appuntamento } from '@/api/agenda'
 import { cerca as cercaPiani, type PianoAlimentareRigaLista } from '@/api/pianiAlimentari'
 import { Button } from '@/components/ui/button'
@@ -9,10 +9,13 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Plus, ChevronDown, UserPlus, ClipboardPlus, CalendarPlus, CalendarDays, CalendarX2, ChevronRight, Play, Utensils, Video } from '@lucide/vue'
 import StatoVuoto from '@/components/StatoVuoto.vue'
 import DaFareCard, { type GruppoDaFare } from '@/components/dashboard/DaFareCard.vue'
+import SettimanaStrip from '@/components/dashboard/SettimanaStrip.vue'
+import { ETICHETTE_OBIETTIVO } from '@/utils/visita'
 import { useAuthStore } from '@/stores/auth'
 import { aggiungiGiorni, minutiDaOra, oggiIso } from '@/utils/agenda'
 import { eVisitaAttiva, nomePaziente } from '@/utils/agendaStile'
 import { formattaDataItalianaConMese } from '@/utils/data'
+import { TONI_STATO } from '@/utils/toniStato'
 import { riepilogoOggi } from '@/utils/riepilogoOggi'
 
 /** Quanti giorni avanti guarda la lista "Prossime visite" e quante righe mostra al massimo. */
@@ -54,6 +57,63 @@ const prossimeVisite = computed(() => {
     .slice(0, MAX_PROSSIME_VISITE)
 })
 
+/** Le prossime visite divise per giorno: l'intestazione del giorno compare una volta, non su ogni riga. */
+const gruppiVisite = computed(() => {
+  if (!prossimeVisite.value) return null
+  const gruppi: { data: string; visite: Appuntamento[] }[] = []
+  for (const v of prossimeVisite.value) {
+    const ultimo = gruppi[gruppi.length - 1]
+    if (ultimo?.data === v.data) ultimo.visite.push(v)
+    else gruppi.push({ data: v.data, visite: [v] })
+  }
+  return gruppi
+})
+
+/** Visite dei prossimi 7 giorni (da oggi), le stesse contate nella striscia della settimana. */
+const visiteSettimana = computed(() => {
+  if (!agendaSettimana.value) return null
+  const ultimo = aggiungiGiorni(oggi, 6)
+  return agendaSettimana.value.filter((a) => a.data <= ultimo && eVisitaAttiva(a)).length
+})
+
+/**
+ * Contesto dei pazienti delle prossime visite (obiettivo, piano): quello che serve per prepararsi.
+ * Una richiesta per paziente, al massimo `MAX_PROSSIME_VISITE`; se una fallisce la riga resta senza contesto.
+ */
+const pazientiVisite = ref<Record<string, Paziente>>({})
+async function caricaContestoPazienti() {
+  const ids = [...new Set((prossimeVisite.value ?? []).map((v) => v.pazienteId).filter((id): id is string => !!id))]
+  const esiti = await Promise.allSettled(ids.map((id) => dettaglioPaziente(id)))
+  const mappa: Record<string, Paziente> = {}
+  esiti.forEach((e, i) => {
+    if (e.status === 'fulfilled' && e.value) mappa[ids[i]] = e.value
+  })
+  pazientiVisite.value = mappa
+}
+
+function obiettivoPaziente(id: string | null): string | null {
+  const p = id ? pazientiVisite.value[id] : undefined
+  return p?.obiettivoUltimaVisita ? ETICHETTE_OBIETTIVO[p.obiettivoUltimaVisita] : null
+}
+
+/** "Ultima visita 25 nov", oppure "Prima visita" se il paziente non ne ha ancora: dice a che punto è il percorso. */
+function ultimaVisitaPaziente(id: string | null): string | null {
+  const p = id ? pazientiVisite.value[id] : undefined
+  if (!p) return null
+  return p.dataUltimaVisita ? `Ultima visita ${formattaDataItalianaConMese(p.dataUltimaVisita).slice(0, 6)}` : 'Prima visita'
+}
+
+/** Stato del piano più recente, nei toni di stato comuni: bozza da completare, attivo, oppure nessun piano. */
+function pianoPaziente(id: string | null): { testo: string; classi: string } | null {
+  const p = id ? pazientiVisite.value[id] : undefined
+  if (!p) return null
+  if (p.pianoStato === 'BOZZA') return { testo: 'Piano in bozza', classi: TONI_STATO.daFare }
+  if (p.pianoStato === 'ATTIVO') {
+    return { testo: p.pianoDataFine ? `Piano fino al ${formattaDataItalianaConMese(p.pianoDataFine).slice(0, 6)}` : 'Piano attivo', classi: TONI_STATO.attivo }
+  }
+  return { testo: 'Nessun piano attivo', classi: TONI_STATO.neutro }
+}
+
 function etichettaGiorno(iso: string): string {
   if (iso === oggi) return 'Oggi'
   if (iso === aggiungiGiorni(oggi, 1)) return 'Domani'
@@ -89,6 +149,7 @@ async function caricaConteggio() {
 async function caricaAgenda() {
   try {
     agendaSettimana.value = await elencoAgenda(oggi, aggiungiGiorni(oggi, GIORNI_PROSSIME_VISITE))
+    await caricaContestoPazienti()
   } catch {
     // Senza agenda il banner mostra solo il saluto: il resto della dashboard non dipende da questo.
     agendaSettimana.value = null
@@ -141,7 +202,7 @@ onMounted(() => Promise.all([caricaConteggio(), caricaAgenda(), caricaDaFare()])
             <DropdownMenuTrigger as-child>
               <Button variant="hero" class="group">
                 <Plus :size="16" />
-                Crea nuovo
+                Nuovo
                 <ChevronDown :size="14" class="transition-transform duration-200 group-data-[state=open]:rotate-180" />
               </Button>
             </DropdownMenuTrigger>
@@ -176,9 +237,12 @@ onMounted(() => Promise.all([caricaConteggio(), caricaAgenda(), caricaDaFare()])
       </div>
     </section>
 
-    <div class="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+    <!-- La settimana a colpo d'occhio, subito sotto il saluto: ogni giorno apre l'agenda su quella data. -->
+    <SettimanaStrip class="mt-4" :oggi="oggi" :appuntamenti="agendaSettimana" />
+
+    <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
       <!-- Prossime visite: il blocco principale, la cosa che il professionista guarda per prima -->
-      <section class="rounded-2xl border border-(--bd) bg-(--surf)" data-test="dashboard-prossime-visite">
+      <section class="overflow-clip rounded-2xl border border-(--bd) bg-(--surf)" data-test="dashboard-prossime-visite">
         <header class="flex items-baseline justify-between gap-3 px-5 pt-4 pb-3">
           <h2 class="font-heading text-lg italic text-(--fg)">Prossime visite</h2>
           <router-link to="/agenda" class="group inline-flex items-center gap-0.5 text-xs font-semibold text-(--green) transition-colors hover:text-(--green-d)">Vedi l'agenda <ChevronRight :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:translate-x-0.5" /></router-link>
@@ -195,33 +259,48 @@ onMounted(() => Promise.all([caricaConteggio(), caricaAgenda(), caricaDaFare()])
             <router-link to="/agenda?nuovo=visita" data-test="dashboard-fissa-appuntamento"><CalendarPlus :size="14" /> Nuovo appuntamento</router-link>
           </Button>
         </StatoVuoto>
-        <ul v-else class="divide-y divide-(--div) border-t border-(--div)">
-          <li v-for="v in prossimeVisite" :key="v.id" class="flex items-center transition-colors hover:bg-(--hover)">
-            <router-link
-              :to="v.pazienteId ? `/pazienti/${v.pazienteId}` : '/agenda'"
-              class="flex min-w-0 flex-1 items-center gap-4 py-3 pl-5"
-              :class="v.data === oggi && v.pazienteId ? 'pr-2' : 'pr-5'"
-            >
-              <div class="w-24 shrink-0">
-                <p class="text-sm font-semibold text-(--fg)">{{ etichettaGiorno(v.data) }}</p>
-                <p class="text-xs text-(--fg3) tabular-nums">{{ v.oraInizio ?? 'Senza orario' }}</p>
-              </div>
-              <div class="min-w-0 flex-1">
-                <p class="truncate text-sm font-semibold text-(--fg)">{{ nomePaziente(v) || 'Visita' }}</p>
-                <p v-if="v.testo" class="truncate text-xs text-(--fg3)">{{ v.testo }}</p>
-              </div>
-              <span v-if="v.tipo === 'VIDEOCONSULTO'" class="inline-flex shrink-0 items-center gap-1 text-xs text-(--fg3)">
-                <Video :size="14" /> Videoconsulto
-              </span>
-            </router-link>
-            <!-- Le visite di oggi si avviano da qui: stesso flusso di "Avvia visita" in agenda (l'appuntamento si conclude al salvataggio). -->
-            <Button v-if="v.data === oggi && v.pazienteId" as-child size="sm" class="mr-5 shrink-0">
-              <router-link :to="`/pazienti/${v.pazienteId}/visite/nuova?appuntamentoId=${v.id}`" data-test="dashboard-avvia-visita">
-                <Play :size="14" /> Avvia visita
-              </router-link>
-            </Button>
-          </li>
-        </ul>
+        <!-- Raggruppate per giorno; ogni riga dice anche obiettivo e stato del piano, per prepararsi alla visita. -->
+        <div v-else class="border-t border-(--div)">
+          <section v-for="g in gruppiVisite" :key="g.data" :aria-label="etichettaGiorno(g.data)">
+            <h3 class="border-b border-(--div) bg-(--soft) px-5 py-1.5 text-xs font-semibold text-(--fg2)">{{ etichettaGiorno(g.data) }}</h3>
+            <ul class="divide-y divide-(--div)">
+              <li v-for="v in g.visite" :key="v.id" class="group flex items-center transition-colors hover:bg-(--hover)">
+                <router-link
+                  :to="v.pazienteId ? `/pazienti/${v.pazienteId}` : '/agenda'"
+                  class="flex min-w-0 flex-1 items-center gap-4 py-3 pl-5"
+                  :class="v.data === oggi && v.pazienteId ? 'pr-2' : 'pr-5'"
+                >
+                  <span class="w-12 shrink-0 text-sm font-semibold tabular-nums text-(--fg)">{{ v.oraInizio ?? '—' }}</span>
+                  <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-semibold text-(--fg)">{{ nomePaziente(v) || 'Visita' }}</p>
+                    <p class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs text-(--fg3)">
+                      <span v-if="obiettivoPaziente(v.pazienteId)">{{ obiettivoPaziente(v.pazienteId) }}</span>
+                      <span v-if="ultimaVisitaPaziente(v.pazienteId)">{{ ultimaVisitaPaziente(v.pazienteId) }}</span>
+                      <span
+                        v-if="pianoPaziente(v.pazienteId)"
+                        class="inline-flex rounded-full px-2 py-px text-[11px] font-bold"
+                        :class="pianoPaziente(v.pazienteId)!.classi"
+                        data-test="dashboard-visita-piano"
+                      >{{ pianoPaziente(v.pazienteId)!.testo }}</span>
+                      <span v-if="v.testo" class="truncate">{{ v.testo }}</span>
+                    </p>
+                  </div>
+                  <span v-if="v.tipo === 'VIDEOCONSULTO'" class="inline-flex shrink-0 items-center gap-1 text-xs text-(--fg3)">
+                    <Video :size="14" /> Videoconsulto
+                  </span>
+                  <!-- La riga apre la scheda del paziente: la freccia lo dice senza doverci passare sopra. -->
+                  <ChevronRight :size="16" aria-hidden="true" class="shrink-0 text-(--fg4) transition-transform duration-150 motion-safe:group-hover:translate-x-0.5" />
+                </router-link>
+                <!-- Le visite di oggi si avviano da qui: stesso flusso di "Avvia visita" in agenda (l'appuntamento si conclude al salvataggio). -->
+                <Button v-if="v.data === oggi && v.pazienteId" as-child size="sm" class="mr-5 shrink-0">
+                  <router-link :to="`/pazienti/${v.pazienteId}/visite/nuova?appuntamentoId=${v.id}`" data-test="dashboard-avvia-visita">
+                    <Play :size="14" /> Avvia visita
+                  </router-link>
+                </Button>
+              </li>
+            </ul>
+          </section>
+        </div>
       </section>
 
       <div class="space-y-4">
@@ -233,9 +312,10 @@ onMounted(() => Promise.all([caricaConteggio(), caricaAgenda(), caricaDaFare()])
             </p>
           </div>
           <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4">
-            <p class="text-xs font-semibold text-(--fg3)">Visite oggi</p>
-            <p class="mt-1 text-3xl font-semibold text-(--fg) tabular-nums" data-test="dashboard-visite-oggi">
-              {{ riepilogo ? riepilogo.visite : '—' }}
+            <!-- Non "Visite oggi": lo dice già il banner. Il totale della settimana completa la striscia sopra. -->
+            <p class="text-xs font-semibold text-(--fg3)">Visite in 7 giorni</p>
+            <p class="mt-1 text-3xl font-semibold text-(--fg) tabular-nums" data-test="dashboard-visite-settimana">
+              {{ visiteSettimana ?? '—' }}
             </p>
           </div>
         </div>

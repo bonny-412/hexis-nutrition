@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { ChevronLeft, ChevronRight } from '@lucide/vue'
+import { CalendarCheck, ChevronLeft, ChevronRight } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import {
   aggiungiGiorni,
@@ -48,7 +48,7 @@ function sposta(direzione: 1 | -1) {
       <Button type="button" variant="neutral" size="icon" aria-label="Periodo precedente" data-test="agenda-precedente" @click="sposta(-1)">
         <ChevronLeft :size="16" />
       </Button>
-      <Button type="button" variant="neutral" data-test="agenda-oggi" @click="emit('update:riferimento', oggiIso())">Oggi</Button>
+      <Button type="button" variant="neutral" data-test="agenda-oggi" @click="emit('update:riferimento', oggiIso())"><CalendarCheck /> Oggi</Button>
       <Button type="button" variant="neutral" size="icon" aria-label="Periodo successivo" data-test="agenda-successivo" @click="sposta(1)">
         <ChevronRight :size="16" />
       </Button>
@@ -74,13 +74,14 @@ function sposta(direzione: 1 | -1) {
         </button>
       </div>
 
-      <div class="flex overflow-hidden rounded-lg border border-(--bd2) bg-(--surf)" role="group" aria-label="Vista">
+      <!-- Stesso selettore a segmenti di Tabella/Schede (VistaListaToggle): un solo stile in tutta l'app. -->
+      <div class="inline-flex items-center rounded-lg border border-(--bd2) bg-(--surf) p-0.5" role="group" aria-label="Vista">
         <button
           v-for="v in viste"
           :key="v.valore"
           type="button"
-          class="px-3 py-1.5 text-xs font-bold transition-colors"
-          :class="vista === v.valore ? 'bg-(--green) text-(--on-green)' : 'text-(--fg2) hover:bg-(--hover)'"
+          class="flex h-7 items-center rounded-md px-2.5 text-xs font-semibold transition-colors"
+          :class="vista === v.valore ? 'bg-(--mint) text-(--green-d)' : 'text-(--fg3) hover:text-(--fg)'"
           :aria-pressed="vista === v.valore"
           :data-test="`agenda-vista-${v.valore}`"
           @click="emit('update:vista', v.valore)"

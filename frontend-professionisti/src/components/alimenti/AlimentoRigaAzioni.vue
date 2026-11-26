@@ -19,7 +19,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { Eye, MoreHorizontal, Pencil, Trash2 } from '@lucide/vue'
+import { Eye, MoreHorizontal, Pencil, Trash2, X } from '@lucide/vue'
 import { nomeAlimentoLeggibile } from '@/utils/testo'
 
 const props = defineProps<{
@@ -79,8 +79,9 @@ function confermaEliminazione() {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
+          <AlertDialogCancel variant="neutral"><X /> Annulla</AlertDialogCancel>
           <AlertDialogAction variant="destructive" @click="confermaEliminazione">
+            <Trash2 />
             Elimina alimento
           </AlertDialogAction>
         </AlertDialogFooter>

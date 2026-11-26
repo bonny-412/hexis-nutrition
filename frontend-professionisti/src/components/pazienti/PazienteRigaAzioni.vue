@@ -19,7 +19,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { Archive, ArchiveRestore, CalendarPlus, ClipboardPlus, FolderOpen, MoreHorizontal, Utensils } from '@lucide/vue'
+import { Archive, ArchiveRestore, CalendarPlus, ClipboardPlus, FolderOpen, MoreHorizontal, Utensils, X } from '@lucide/vue'
 
 const props = defineProps<{
   paziente: Paziente
@@ -52,7 +52,7 @@ function confermaAzione() {
 
 <template>
   <div class="flex items-center justify-end gap-1">
-    <Button v-if="!senzaApriCartella" as-child variant="ghost" size="icon" aria-label="Apri cartella" title="Apri cartella">
+    <Button v-if="!senzaApriCartella" as-child variant="ghost" size="icon" aria-label="Apri scheda paziente" title="Apri scheda paziente">
       <router-link :to="`/pazienti/${paziente.id}`">
         <FolderOpen :size="16" />
       </router-link>
@@ -116,12 +116,13 @@ function confermaAzione() {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel data-test="conferma-annulla" variant="neutral">Annulla</AlertDialogCancel>
+          <AlertDialogCancel data-test="conferma-annulla" variant="neutral"><X /> Annulla</AlertDialogCancel>
           <AlertDialogAction
             data-test="conferma-conferma"
             :variant="mostraArchiviati ? 'default' : 'destructive'"
             @click="confermaAzione"
           >
+            <component :is="mostraArchiviati ? ArchiveRestore : Archive" />
             {{ mostraArchiviati ? 'Ripristina paziente' : 'Archivia paziente' }}
           </AlertDialogAction>
         </AlertDialogFooter>

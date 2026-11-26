@@ -3,7 +3,7 @@ title: Glossario
 tags: [glossario]
 stato: in-discussione
 creato: 2026-08-08
-aggiornato: 2026-08-08
+aggiornato: 2026-11-26
 fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md]
 ---
 
@@ -20,3 +20,22 @@ fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brain
 - **Scatto**: l'istante in cui una notifica diventa dovuta (`inizio dell'evento − anticipo`).
 - **Push** (Web Push): avviso di sistema mostrato dal browser anche con Hexis chiuso, tramite service worker e chiavi VAPID. Testo sempre generico.
 - **Visita registrata**: l'entità `Visita` con misure antropometriche e plicometria (creata dal form "Nuova visita"). Salvandola da "Avvia visita" conclude l'appuntamento collegato.
+
+## Azioni e diciture dell'interfaccia
+
+Fissate il 2026-11-26 (terzo giro di revisione UI, [`docs/ui-review-2026-11-26-giro3.md`](../docs/ui-review-2026-11-26-giro3.md)). Una stessa azione ha lo stesso nome ovunque; un'azione nuova riusa queste parole.
+
+| Azione | Dicitura | Non usare |
+|---|---|---|
+| Creare qualcosa (pulsante principale di pagina) | "Nuovo paziente", "Nuovo piano", "Nuovo alimento"; con un menu, "Nuovo ▾" | "Crea nuovo", "Aggiungi" |
+| Fissare un appuntamento | "Nuovo appuntamento" | "Fissa appuntamento", "Aggiungi" |
+| Aprire una bozza di piano | "Completa" | "Modifica" |
+| Copiare un piano | "Duplica piano" | "Rinnova", "Duplica come nuovo piano" |
+| Riportare un paziente archiviato | "Ripristina paziente" | "De-archivia" |
+| Aprire un paziente | "Apri scheda paziente" (icona cartella nelle tabelle) | "Apri cartella" |
+| Cercare in una lista | segnaposto "Cerca …" | "Filtra per …" |
+| Conferme distruttive | verbo + oggetto: "Elimina visita", "Archivia paziente" (rosso: cancella i futuri appuntamenti) | "Conferma" |
+| Funzioni non ancora disponibili | voce visibile con lucchetto, "in arrivo" | voce cliccabile che non fa nulla |
+
+Termini clinici: **"% massa grassa"** (non "% grasso" né "% grasso corporeo"), **"Macronutrienti"** (non "Macros"), **"Composizione corporea"** per il grafico massa magra / massa grassa.
+

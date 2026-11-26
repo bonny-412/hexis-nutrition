@@ -88,7 +88,7 @@ describe('PazienteTabConfrontoVisite', () => {
       visita({ id: 'v2', dataVisita: '2026-02-01', plicometria: plicometriaEsempio() }),
     ])
 
-    expect(wrapper.text()).toContain('% Grasso corporeo')
+    expect(wrapper.text()).toContain('% Massa grassa')
     expect(wrapper.text()).toContain('18,2')
   })
 
@@ -159,7 +159,7 @@ describe('PazienteTabConfrontoVisite', () => {
 
   it('mostra le card grafiche di Plicometria e Circonferenze sopra la tabella quando ci sono dati comparabili', () => {
     const wrapper = monta([
-      visita({ id: 'v1', dataVisita: '2026-01-01' }),
+      visita({ id: 'v1', dataVisita: '2026-01-01', plicometria: plicometriaEsempio(), circonferenze: circonferenzeEsempio() }),
       visita({ id: 'v2', dataVisita: '2026-02-01', plicometria: plicometriaEsempio(), circonferenze: circonferenzeEsempio() }),
     ])
     const titoli = wrapper.findAll('[data-slot="card-title"]').map((t) => t.text())

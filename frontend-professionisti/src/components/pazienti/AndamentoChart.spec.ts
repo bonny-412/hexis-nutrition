@@ -129,7 +129,7 @@ describe('AndamentoChart', () => {
     }
   })
 
-  it('mette un tick per visita e lo etichetta con la data italiana', () => {
+  it('mette un tick per visita e lo etichetta con giorno e mese abbreviato', () => {
     const wrapper = montaGrafico(DUE_VISITE)
     const asse = vis(wrapper, 'VisAxis')
 
@@ -137,15 +137,15 @@ describe('AndamentoChart', () => {
     const tickFormat = asse.props('tickFormat') as (tick: number | Date) => string
 
     expect(tickValues).toEqual([isoATimestamp('2026-06-01'), isoATimestamp('2026-08-01')])
-    expect(tickValues.map((t) => tickFormat(t))).toEqual(['01/06/26', '01/08/26'])
+    expect(tickValues.map((t) => tickFormat(t))).toEqual(['1 giu', '1 ago'])
   })
 
   it('etichetta correttamente anche un tick che non coincide con una visita', () => {
     const wrapper = montaGrafico(DUE_VISITE)
     const tickFormat = vis(wrapper, 'VisAxis').props('tickFormat') as (tick: number | Date) => string
 
-    expect(tickFormat(isoATimestamp('2026-07-15'))).toBe('15/07/26')
-    expect(tickFormat(new Date(isoATimestamp('2026-07-15')))).toBe('15/07/26')
+    expect(tickFormat(isoATimestamp('2026-07-15'))).toBe('15 lug')
+    expect(tickFormat(new Date(isoATimestamp('2026-07-15')))).toBe('15 lug')
   })
 
   it('non usa il fuso orario del browser per le etichette dell\'asse', () => {
@@ -160,14 +160,14 @@ describe('AndamentoChart', () => {
       // formattazione locale l'etichetta mostrerebbe l'anno sbagliato. Il tick
       // di un punto dati usa l'etichetta pre-calcolata dalla stringa ISO...
       ambiente.TZ = 'America/New_York'
-      expect(tickFormat(tickValues[0])).toBe('01/01/26')
+      expect(tickFormat(tickValues[0])).toBe('1 gen')
       // ...e un tick generato da d3, che non coincide con nessuna visita, passa
       // dalla conversione timestamp → giorno UTC.
-      expect(tickFormat(isoATimestamp('2027-01-01'))).toBe('01/01/27')
-      expect(tickFormat(new Date(isoATimestamp('2027-01-01')))).toBe('01/01/27')
+      expect(tickFormat(isoATimestamp('2027-01-01'))).toBe('1 gen')
+      expect(tickFormat(new Date(isoATimestamp('2027-01-01')))).toBe('1 gen')
       ambiente.TZ = 'Pacific/Kiritimati'
-      expect(tickFormat(tickValues[0])).toBe('01/01/26')
-      expect(tickFormat(isoATimestamp('2025-12-31'))).toBe('31/12/25')
+      expect(tickFormat(tickValues[0])).toBe('1 gen')
+      expect(tickFormat(isoATimestamp('2025-12-31'))).toBe('31 dic')
     } finally {
       ambiente.TZ = precedente
     }

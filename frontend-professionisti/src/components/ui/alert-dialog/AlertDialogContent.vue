@@ -42,7 +42,8 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       v-bind="{ ...$attrs, ...forwarded }"
       :class="
         cn(
-          'data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 bg-popover text-popover-foreground ring-foreground/10 gap-4 rounded-xl p-4 ring-1 duration-100 data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 outline-none',
+          // Adattamento Hexis: pannello dal basso sotto i 640 px, come DialogContent; da 640 px centrato.
+          'fixed z-50 w-full outline-none bg-popover text-popover-foreground ring-1 ring-foreground/10 inset-x-0 bottom-0 max-h-[90dvh] rounded-t-2xl p-4 pb-[max(1rem,env(safe-area-inset-bottom))] duration-200 data-open:animate-in data-closed:animate-out data-open:slide-in-from-bottom data-closed:slide-out-to-bottom motion-reduce:animate-none sm:inset-x-auto sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:max-h-[calc(100%-2rem)] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-xl sm:pb-4 sm:duration-100 sm:data-open:[--tw-enter-translate-y:0] sm:data-closed:[--tw-exit-translate-y:0] sm:data-open:fade-in-0 sm:data-closed:fade-out-0 sm:data-open:zoom-in-95 sm:data-closed:zoom-out-95 group/alert-dialog-content grid gap-4 sm:data-[size=default]:max-w-sm sm:data-[size=sm]:max-w-xs',
           props.class,
         )
       "

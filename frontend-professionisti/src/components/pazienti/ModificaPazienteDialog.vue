@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Save } from '@lucide/vue'
+import { Save, X } from '@lucide/vue'
 
 import {
   filtraNome,
@@ -272,13 +272,13 @@ async function onSubmit() {
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="modifica-stile-di-vita" class="text-[13px] font-medium text-(--fg2)">Stile di vita</Label>
+              <Label for="modifica-stile-di-vita" class="text-[13px] font-medium text-(--fg2)">Livello di attività</Label>
               <Select :model-value="stileDiVita || VALORE_SELEZIONA" @update:model-value="onStileDiVitaChange">
-                <SelectTrigger id="modifica-stile-di-vita" class="w-full">
+                <SelectTrigger id="modifica-stile-di-vita" class="w-full" :class="{ 'text-(--fg3)': !stileDiVita }">
                   <SelectValue placeholder="Seleziona" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem :value="VALORE_SELEZIONA">Seleziona</SelectItem>
+                  <SelectItem :value="VALORE_SELEZIONA">Non indicato</SelectItem>
                   <SelectItem value="SEDENTARIO">Sedentario</SelectItem>
                   <SelectItem value="POCO_ATTIVO">Poco attivo</SelectItem>
                   <SelectItem value="ATTIVO">Attivo</SelectItem>
@@ -290,13 +290,13 @@ async function onSubmit() {
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="modifica-note" class="text-[13px] font-medium text-(--fg2)">Storia paziente</Label>
+            <Label for="modifica-note" class="text-[13px] font-medium text-(--fg2)">Storia del paziente</Label>
             <Textarea id="modifica-note" v-model="note" maxlength="2000" placeholder="Es. vive da solo, fuma, beve, è autonomo, allergie, patologie…" />
             <p class="text-right text-xs text-(--fg3)">{{ note.length }}/2000</p>
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="modifica-trattamenti" class="text-[13px] font-medium text-(--fg2)">Trattamenti/Terapie</Label>
+            <Label for="modifica-trattamenti" class="text-[13px] font-medium text-(--fg2)">Terapie in corso</Label>
             <Textarea id="modifica-trattamenti" v-model="trattamenti" maxlength="2000" placeholder="Es. terapie farmacologiche in corso, integratori, trattamenti…" />
             <p class="text-right text-xs text-(--fg3)">{{ trattamenti.length }}/2000</p>
           </div>
@@ -304,6 +304,7 @@ async function onSubmit() {
 
         <DialogFooter class="flex items-center gap-2.5">
           <Button type="button" variant="neutral" :disabled="inCorso" @click="emit('update:open', false)">
+            <X />
             Annulla
           </Button>
           <Button type="submit" :disabled="inCorso">

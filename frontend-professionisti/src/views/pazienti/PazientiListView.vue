@@ -22,7 +22,7 @@ import { Label } from '@/components/ui/label'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
-import { ChevronRight, ArrowUp, ArrowDown, ArrowUpDown, UserPlus, SearchX, Users } from '@lucide/vue'
+import { Archive, ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronLeft, ChevronRight, FilterX, SearchX, UserPlus, Users } from '@lucide/vue'
 import StatoVuoto from '@/components/StatoVuoto.vue'
 import ErroreLista from '@/components/liste/ErroreLista.vue'
 import CaricamentoLista from '@/components/liste/CaricamentoLista.vue'
@@ -331,7 +331,7 @@ const conteggioTesto = computed(() => {
     <div class="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 class="font-heading text-3xl italic text-(--fg)">Pazienti</h1>
-        <p class="mt-1 text-sm text-(--fg3)">Gestisci la lista dei pazienti, gli inviti e le cartelle cliniche.</p>
+        <p class="mt-1 text-sm text-(--fg3)">Cartelle cliniche, inviti all'app e prossime visite.</p>
       </div>
       <Button as-child>
         <router-link to="/pazienti/nuovo"><UserPlus :size="16" /> Nuovo paziente</router-link>
@@ -343,8 +343,8 @@ const conteggioTesto = computed(() => {
         <Input
           v-model="ricercaInput"
           type="search"
-          aria-label="Filtra per nome, email o codice fiscale"
-          autocomplete="off" placeholder="Filtra per nome, email o codice fiscale…"
+          aria-label="Cerca per nome, email o codice fiscale"
+          autocomplete="off" placeholder="Cerca per nome, email o codice fiscale…"
           class="min-w-70 flex-1"
         />
         <div class="flex flex-wrap gap-1.5">
@@ -416,12 +416,15 @@ const conteggioTesto = computed(() => {
             type="button"
             role="switch"
             :aria-checked="mostraArchiviati"
-            class="rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
+            class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-colors"
             :class="mostraArchiviati
-              ? 'border-(--bd2) bg-(--soft) text-(--fg)'
-              : 'border-(--bd2) bg-(--surf) text-(--fg2) hover:bg-(--soft) hover:text-(--fg)'"
+              ? 'border-(--sage) bg-(--mint) text-(--green-d)'
+              : 'border-(--bd2) bg-(--surf) text-(--fg2) hover:border-(--sage)'"
             @click="onMostraArchiviatiChange(!mostraArchiviati)"
           >
+            <!-- Stesso stato attivo dei chip di stato, più la spunta: acceso/spento si legge anche senza il colore. -->
+            <Check v-if="mostraArchiviati" :size="14" aria-hidden="true" />
+            <Archive v-else :size="14" aria-hidden="true" />
             Mostra pazienti archiviati
           </button>
         </div>
@@ -446,7 +449,7 @@ const conteggioTesto = computed(() => {
       <VistaListaToggle v-model="vista" />
     </div>
 
-    <section class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)">
+    <section class="overflow-clip rounded-2xl border border-(--bd) bg-(--surf)">
       <ErroreLista v-if="errore" messaggio="Non è stato possibile caricare i pazienti." @riprova="carica" />
       <CaricamentoLista v-else-if="caricamentoIniziale" etichetta="Caricamento i pazienti" />
 
@@ -533,7 +536,7 @@ const conteggioTesto = computed(() => {
           </li>
         </ul>
 
-        <div class="overflow-x-auto" :class="[classiTabella(), { 'pointer-events-none opacity-60': aggiornamentoInCorso }]">
+        <div class="overflow-x-auto xl:overflow-x-visible" :class="[classiTabella(), { 'pointer-events-none opacity-60': aggiornamentoInCorso }]">
           <Table>
             <TableHeader>
               <TableRow>
@@ -577,10 +580,11 @@ const conteggioTesto = computed(() => {
                       {{ inizialiPaziente(paziente.nome, paziente.cognome) }}
                     </span>
                     <div>
-                      <router-link :to="`/pazienti/${paziente.id}`" class="font-semibold text-(--fg) hover:text-(--green)">
-                        {{ paziente.nome }} {{ paziente.cognome }}
-                      </router-link>
-                      <div class="text-xs text-(--fg3)">{{ paziente.email }} · {{ paziente.codiceFiscale }}</div>
+                      <!-- Nome non cliccabile: la scheda si apre dall'icona cartella, come nella tabella dei piani. -->
+                      <div class="font-semibold text-(--fg)">{{ paziente.nome }} {{ paziente.cognome }}</div>
+                      <!-- Solo l'email: col codice fiscale la tabella non entrava a 1280 px (serve per l'intestazione fissa).
+                        Il CF resta cercabile e compare passando il mouse. -->
+                      <div class="text-xs text-(--fg3)" :title="`Codice fiscale: ${paziente.codiceFiscale}`">{{ paziente.email }}</div>
                     </div>
                   </div>
                 </TableCell>
@@ -637,16 +641,17 @@ const conteggioTesto = computed(() => {
       </template>
 
       <StatoVuoto v-else-if="!filtriAttivi" :icona="Users" titolo="Nessun paziente presente" testo="Inizia aggiungendo il primo paziente per consultare la sua scheda o invitarlo." livello="h2">
-        <Button as-child class="active:not-aria-[haspopup]:translate-y-0.5"><router-link to="/pazienti/nuovo">Nuovo paziente</router-link></Button>
+        <Button as-child class="active:not-aria-[haspopup]:translate-y-0.5"><UserPlus /> <router-link to="/pazienti/nuovo">Nuovo paziente</router-link></Button>
       </StatoVuoto>
       <StatoVuoto v-else :icona="SearchX" titolo="Nessun risultato trovato" testo="Prova a modificare o resettare i filtri applicati." livello="h2">
-        <Button type="button" variant="neutral" @click="pulisciFiltri">Pulisci filtri</Button>
+        <Button type="button" variant="neutral" @click="pulisciFiltri"><FilterX /> Pulisci filtri</Button>
       </StatoVuoto>
 
       <div v-if="paginaDati && !errore" class="flex items-center justify-between gap-3 border-t border-(--div) bg-(--soft) px-4.5 py-3">
         <span class="text-xs text-(--fg3)">{{ conteggioTesto }}</span>
-        <div class="flex gap-2">
-          <Button type="button" variant="neutral" size="sm" :disabled="pagina === 0" @click="paginaPrecedente">Precedente</Button>
+        <!-- Con una pagina sola i pulsanti sarebbero entrambi disattivati: resta solo il conteggio. -->
+        <div v-if="paginaDati.totalePagine > 1" class="flex gap-2">
+          <Button type="button" variant="neutral" size="sm" :disabled="pagina === 0" @click="paginaPrecedente"><ChevronLeft /> Precedente</Button>
           <Button
             type="button"
             variant="neutral"
@@ -654,7 +659,7 @@ const conteggioTesto = computed(() => {
             :disabled="!paginaDati || pagina >= paginaDati.totalePagine - 1"
             @click="paginaSuccessiva"
           >
-            Successivo
+            Successivo <ChevronRight />
           </Button>
         </div>
       </div>

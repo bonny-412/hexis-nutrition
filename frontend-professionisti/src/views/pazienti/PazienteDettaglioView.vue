@@ -31,25 +31,7 @@ import { formattaDataItalianaConMese } from '@/utils/data'
 import { ETICHETTE_OBIETTIVO, formattaNumero } from '@/utils/visita'
 import { CLASSE_ESITO, esitoVariazione, type ParametroClinico } from '@/utils/obiettivo'
 import { inizialiPaziente } from '@/utils/paziente'
-import {
-  ArrowLeft,
-  ArrowUp,
-  ArrowDown,
-  Pencil,
-  AlertCircle,
-  Scale,
-  Ruler,
-  Percent,
-  Dumbbell,
-  CalendarX2,
-  ClipboardPlus,
-  Utensils,
-  Archive,
-  ArchiveRestore,
-  CalendarCheck,
-  CalendarPlus,
-  MoreHorizontal,
-} from '@lucide/vue'
+import { AlertCircle, Archive, ArchiveRestore, ArrowDown, ArrowLeft, ArrowUp, CalendarCheck, CalendarPlus, CalendarX2, ClipboardPlus, Dumbbell, MoreHorizontal, Pencil, Percent, RotateCcw, Ruler, Scale, Utensils, X } from '@lucide/vue'
 
 const TAB_DEFS = [
   { id: 'panoramica', label: 'Panoramica' },
@@ -176,7 +158,7 @@ onMounted(() => {
       <AlertCircle :size="40" class="text-(--danger) mb-3" />
       <h2 class="font-heading text-xl italic text-(--fg)">Errore di caricamento</h2>
       <p class="mt-1 text-sm text-(--fg3)">{{ erroreCaricamento }}</p>
-      <Button variant="neutral" size="sm" class="mt-4" @click="carica">Riprova</Button>
+      <Button variant="neutral" size="sm" class="mt-4" @click="carica"><RotateCcw /> Riprova</Button>
     </div>
 
     <!-- Skeleton Loading -->
@@ -196,11 +178,12 @@ onMounted(() => {
     <!-- Contenuto Principale -->
     <div v-else-if="paziente" class="space-y-6 mt-4">
       <!-- 1. INTESTAZIONE PAZIENTE -->
-      <div class="flex flex-col gap-4 rounded-2xl border border-(--hero-d) bg-(--hero) px-5 py-4 text-(--on-hero) sm:flex-row sm:flex-wrap sm:items-start sm:justify-between" data-test="paziente-hero">
-        <div class="flex items-start gap-4">
+      <!-- Da lg i pulsanti stanno sempre a destra: prima andavano a capo o no secondo la lunghezza delle pillole. -->
+      <div class="flex flex-col gap-4 rounded-2xl border border-(--hero-d) bg-(--hero) px-5 py-4 text-(--on-hero) sm:flex-row sm:flex-wrap sm:items-start sm:justify-between lg:flex-nowrap" data-test="paziente-hero">
+        <div class="flex min-w-0 items-start gap-4">
           <span
             class="flex size-10 shrink-0 items-center justify-center rounded-xl font-heading text-lg font-semibold select-none sm:size-14 sm:rounded-2xl sm:text-2xl"
-            :class="paziente.archiviato ? 'bg-(--hero-pill) text-(--danger-fixed) ring-1 ring-(--hero-pill-ring)' : 'bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring)'"
+            :class="paziente.archiviato ? 'bg-(--hero-pill) text-(--fg3) ring-1 ring-(--hero-pill-ring)' : 'bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring)'"
           >
             {{ inizialiPaziente(paziente.nome, paziente.cognome) }}
           </span>
@@ -231,27 +214,36 @@ onMounted(() => {
               <PazienteStatoAccount :paziente="paziente" hero :invito-in-corso="invitoInCorso" @invita="onInvita" />
               <span
                 v-if="paziente.archiviato"
-                class="inline-flex items-center gap-1.5 rounded-full bg-(--hero-pill) px-2.5 py-1 text-xs font-bold text-(--danger-fixed) ring-1 ring-(--hero-pill-ring)"
+                class="inline-flex items-center gap-1.5 rounded-full bg-(--hero-pill) px-2.5 py-1 text-xs font-bold text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring)"
               >
                 <Archive :size="16" />
                 Paziente archiviato
               </span>
-              <span
+              <!-- Pillole cliccabili: la prossima visita apre quel giorno in Agenda; senza visita, il nuovo appuntamento. -->
+              <router-link
                 v-else-if="paziente.prossimaVisita"
-                class="inline-flex items-center gap-1.5 rounded-full bg-(--hero-pill) px-2.5 py-1 text-xs font-bold text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring)"
+                :to="{ name: 'agenda', query: { data: paziente.prossimaVisita.slice(0, 10) } }"
+                data-test="pillola-prossima-visita"
+                class="inline-flex items-center gap-1.5 rounded-full bg-(--hero-pill) px-2.5 py-1 text-xs font-bold text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) transition-colors hover:bg-(--hero-pill-hover)"
               >
                 <CalendarCheck :size="16" />
                 Prossima visita: {{ formattaDataItalianaConMese(paziente.prossimaVisita.slice(0, 10)) }} · {{ paziente.prossimaVisita.slice(11, 16) }}
-              </span>
-              <span v-else class="inline-flex items-center gap-1.5 rounded-full bg-(--warn-bg) px-2.5 py-1 text-xs font-bold text-(--warn-fg)">
+              </router-link>
+              <router-link
+                v-else
+                :to="`/agenda?nuovo=visita&pazienteId=${paziente.id}`"
+                data-test="pillola-nessuna-visita"
+                class="inline-flex items-center gap-1.5 rounded-full bg-(--warn-bg) px-2.5 py-1 text-xs font-bold text-(--warn-fg) transition-[filter] hover:brightness-95"
+                title="Nuovo appuntamento"
+              >
                 <CalendarX2 :size="16" />
                 Nessuna visita programmata
-              </span>
+              </router-link>
             </div>
           </div>
         </div>
 
-        <div v-if="!paziente.archiviato" class="flex items-center gap-2 sm:flex-wrap">
+        <div v-if="!paziente.archiviato" class="flex items-center gap-2 sm:flex-wrap lg:flex-none lg:flex-nowrap">
           <!-- Da mobile un'azione principale e le altre nel menu; da 640 px i tre pulsanti. -->
           <Button as-child variant="hero" class="hidden sm:inline-flex">
             <router-link :to="`/piani-alimentari/nuovo?pazienteId=${paziente.id}`">
@@ -420,6 +412,7 @@ onMounted(() => {
             :errore-visite="erroreVisite"
             :visite="visite"
             :andamento="andamento"
+            @modifica="mostraModificaAnagrafica = true"
           />
         </TabsContent>
 
@@ -463,8 +456,9 @@ onMounted(() => {
         <AlertDialogDescription>Il paziente tornerà visibile nella lista pazienti attivi.</AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogCancel variant="neutral" :disabled="deArchiviazioneInCorso">Annulla</AlertDialogCancel>
+        <AlertDialogCancel variant="neutral" :disabled="deArchiviazioneInCorso"><X /> Annulla</AlertDialogCancel>
         <AlertDialogAction :disabled="deArchiviazioneInCorso" @click="onDeArchivia">
+          <ArchiveRestore />
           {{ deArchiviazioneInCorso ? 'Ripristino…' : 'Ripristina paziente' }}
         </AlertDialogAction>
       </AlertDialogFooter>

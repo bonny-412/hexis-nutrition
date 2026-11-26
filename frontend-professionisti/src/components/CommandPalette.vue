@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted, onUnmounted, useId } from 'vue'
 import { useRouter } from 'vue-router'
 import { FocusScope } from 'reka-ui'
-import { Search, SearchX, UserPlus, ClipboardPlus, CalendarPlus, CalendarOff, StickyNote, Apple, Utensils } from '@lucide/vue'
+import { Apple, CalendarOff, CalendarPlus, ClipboardPlus, RotateCcw, Search, SearchX, StickyNote, UserPlus, Utensils } from '@lucide/vue'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cerca, type Paziente } from '@/api/pazienti'
@@ -282,7 +282,7 @@ function vediTuttiRisultati() {
           </p>
         </div>
         <div v-if="erroreRicerca" class="flex justify-center px-6 pb-4 pt-2">
-          <Button type="button" variant="neutral" size="sm" @click="riprovaRicerca">Riprova</Button>
+          <Button type="button" variant="neutral" size="sm" @click="riprovaRicerca"><RotateCcw /> Riprova</Button>
         </div>
       </FocusScope>
     </div>

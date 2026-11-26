@@ -26,7 +26,8 @@ const sidebarCompressa = useSessionStorage('hexis-sidebar-compressa', false, { f
 
     <div class="flex flex-1 flex-col overflow-hidden">
       <AppHeader @apri-menu="sidebarAperta = true" />
-      <main class="flex-1 overflow-y-auto py-4 px-4">
+      <!-- scrollbar-gutter: la barra di scorrimento che compare e scompare non sposta più il contenuto (es. cambio tab). -->
+      <main class="flex-1 overflow-y-auto py-4 px-4 [scrollbar-gutter:stable]">
         <slot />
       </main>
     </div>

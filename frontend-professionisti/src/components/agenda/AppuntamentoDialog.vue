@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import type { AcceptableValue } from 'reka-ui'
 import { toast } from 'vue-sonner'
-import { Save } from '@lucide/vue'
+import { CalendarClock, Check, LogOut, Pencil, Save, X } from '@lucide/vue'
 import {
   aggiorna,
   crea,
@@ -446,6 +446,7 @@ function etichettaConflitto(c: Appuntamento): string {
 
         <DialogFooter class="flex items-center gap-2.5">
           <Button type="button" variant="neutral" :disabled="inCorso" data-test="appuntamento-annulla" @click="richiediChiusura">
+            <X />
             Annulla
           </Button>
           <Button type="submit" :disabled="inCorso || pazienteInCaricamento" data-test="appuntamento-salva">
@@ -464,8 +465,9 @@ function etichettaConflitto(c: Appuntamento): string {
         <AlertDialogDescription>Hai delle modifiche non salvate. Se esci ora andranno perse.</AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogCancel data-test="uscita-continua">Continua a modificare</AlertDialogCancel>
+        <AlertDialogCancel data-test="uscita-continua"><Pencil /> Continua a modificare</AlertDialogCancel>
         <AlertDialogAction data-test="uscita-esci" @click="esciSenzaSalvare">
+          <LogOut />
           Esci senza salvare
         </AlertDialogAction>
       </AlertDialogFooter>
@@ -484,8 +486,9 @@ function etichettaConflitto(c: Appuntamento): string {
         <li v-for="c in conflitti" :key="c.id">{{ etichettaConflitto(c) }}</li>
       </ul>
       <AlertDialogFooter>
-        <AlertDialogCancel data-test="sovrapposizione-cambia">Cambia orario</AlertDialogCancel>
+        <AlertDialogCancel data-test="sovrapposizione-cambia"><CalendarClock /> Cambia orario</AlertDialogCancel>
         <AlertDialogAction data-test="sovrapposizione-conferma" @click="confermaComunque">
+          <Check />
           Conferma comunque
         </AlertDialogAction>
       </AlertDialogFooter>

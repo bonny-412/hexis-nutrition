@@ -3,8 +3,8 @@ import { computed } from 'vue'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { ChartContainer, type ChartConfig } from '@/components/ui/chart'
 import { VisAxis, VisLine, VisScatter, VisXYContainer } from '@unovis/vue'
-import { MAX_PUNTI_GRAFICO, type Andamento } from '@/utils/andamento'
-import { formattaDataItaliana, isoATimestamp } from '@/utils/data'
+import { MAX_PUNTI_GRAFICO, diradaTick, suAnniDiversi, type Andamento } from '@/utils/andamento'
+import { formattaDataBreve, isoATimestamp } from '@/utils/data'
 import { formattaNumero } from '@/utils/visita'
 
 const props = withDefaults(
@@ -21,8 +21,6 @@ const props = withDefaults(
 interface PuntoGrafico {
   /** Mezzanotte UTC della visita: coordinata numerica dell'asse x. */
   timestamp: number
-  /** Etichetta `GG/MM/AA` già formattata per l'asse x. */
-  etichetta: string
   valore: number
 }
 
@@ -30,7 +28,6 @@ interface PuntoGrafico {
 const datiGrafico = computed<PuntoGrafico[]>(() =>
   props.andamento.punti.slice(-MAX_PUNTI_GRAFICO).map((p) => ({
     timestamp: isoATimestamp(p.data),
-    etichetta: formattaDataItaliana(p.data),
     valore: p.valore,
   })),
 )
@@ -40,13 +37,16 @@ const etichettaIntervallo = computed(() => {
   return n === 1 ? 'Ultima visita' : `Ultime ${n} visite`
 })
 
-/** Un tick per ogni visita: l'asse mostra le date reali, non una griglia arbitraria. */
-const tickDate = computed<number[]>(() => datiGrafico.value.map((p) => p.timestamp))
+/**
+ * Un tick per visita, sulle date reali, diradato se due visite sono troppo vicine (le etichette si
+ * sovrapponevano). Etichette corte, "8 set"; l'anno solo se le visite mostrate stanno su anni diversi.
+ */
+const tuttiTimestamp = computed<number[]>(() => datiGrafico.value.map((p) => p.timestamp))
+const tickDate = computed<number[]>(() => diradaTick(tuttiTimestamp.value))
+const conAnno = computed(() => suAnniDiversi(tuttiTimestamp.value))
 
 function formattaTick(tick: number | Date): string {
-  const timestamp = tick instanceof Date ? tick.getTime() : tick
-  const punto = datiGrafico.value.find((p) => p.timestamp === timestamp)
-  return punto ? punto.etichetta : formattaDataItaliana(timestamp)
+  return formattaDataBreve(tick instanceof Date ? tick.getTime() : tick, conAnno.value)
 }
 
 /** Il valore più recente è quello che si cerca: più grande, con l'unità, nel colore del testo principale. */

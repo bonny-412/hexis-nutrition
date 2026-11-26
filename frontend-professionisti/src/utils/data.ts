@@ -79,3 +79,14 @@ export function calcolaEta(dataNascita: string): number | null {
 
     return eta
 }
+
+/**
+ * Etichetta corta per l'asse dei grafici: "8 set", oppure "8 set 25" se `conAnno`.
+ * Accetta una data ISO o un timestamp a mezzanotte UTC; niente `Date` locale, stesso motivo di sopra.
+ */
+export function formattaDataBreve(data: string | number, conAnno = false): string {
+    const iso = typeof data === 'number' ? timestampAIso(data) : data
+    const [anno, mese, giorno] = iso.split('-')
+    const testo = `${Number(giorno)} ${MESI_BREVI_ITALIANI[Number(mese) - 1]}`
+    return conAnno ? `${testo} ${anno.slice(2)}` : testo
+}

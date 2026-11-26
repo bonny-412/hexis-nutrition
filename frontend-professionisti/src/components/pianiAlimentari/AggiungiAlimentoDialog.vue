@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Plus, X } from '@lucide/vue'
 import { ref, watch, nextTick, onUnmounted } from 'vue'
 import { cerca as cercaAlimenti, type Alimento } from '@/api/alimenti'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
@@ -160,7 +161,7 @@ function aggiungiManuale() {
 <template>
   <Dialog :open="props.open" @update:open="(v) => !v && chiudi()">
     <!-- Ancorato in alto invece che centrato: con i risultati che arrivano il dialog non deve saltare. -->
-    <DialogContent class="top-[10vh] translate-y-0 sm:max-w-lg" @open-auto-focus="focusRicerca">
+    <DialogContent class="sm:top-[10vh] sm:translate-y-0 sm:max-w-lg" @open-auto-focus="focusRicerca">
       <DialogHeader>
         <DialogTitle>Aggiungi alimento</DialogTitle>
       </DialogHeader>
@@ -311,8 +312,8 @@ function aggiungiManuale() {
       </div>
 
       <DialogFooter v-if="modo === 'manuale'" class="flex items-center gap-2.5">
-        <Button type="button" variant="neutral" @click="chiudi">Annulla</Button>
-        <Button data-test="aggiungi-manuale" @click="aggiungiManuale">Aggiungi al pasto</Button>
+        <Button type="button" variant="neutral" @click="chiudi"><X /> Annulla</Button>
+        <Button data-test="aggiungi-manuale" @click="aggiungiManuale"><Plus /> Aggiungi al pasto</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>

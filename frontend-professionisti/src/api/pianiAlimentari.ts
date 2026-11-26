@@ -153,6 +153,8 @@ export interface PianoAlimentareRigaLista {
   // null solo se il paziente non esiste più (il nome completo è allora "—").
   pazienteNome: string | null
   pazienteCognome: string | null
+  /** Sotto il nome nella lista piani, come nella lista pazienti. */
+  pazienteEmail: string | null
   nome: string
   stato: StatoPiano
   obiettivoKcal: number | null

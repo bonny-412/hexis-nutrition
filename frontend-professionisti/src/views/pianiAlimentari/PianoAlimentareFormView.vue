@@ -33,11 +33,12 @@ import {
   erroreDataInizioPiano, erroreDataFinePiano, erroreNumeroDecimaleObbligatorio,
 } from '@/utils/validators'
 import { formattaDataItalianaConMese } from '@/utils/data'
-import { ArrowLeft, CalendarRange, MoreHorizontal, Trash2, Pencil, Plus, X, Printer, CircleCheck, Copy, StickyNote } from '@lucide/vue'
+import { ArrowLeft, CalendarRange, CircleCheck, Copy, CopyCheck, LogOut, MoreHorizontal, Pencil, Plus, Printer, Repeat, StickyNote, Trash2, X } from '@lucide/vue'
 import PianoNoteSheet from '@/components/pianiAlimentari/PianoNoteSheet.vue'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { nomeAlimentoLeggibile } from '@/utils/testo'
 import { inizialiPaziente } from '@/utils/paziente'
+import { TONI_STATO } from '@/utils/toniStato'
 
 function oggiIso(): string {
   const oggi = new Date()
@@ -49,7 +50,7 @@ function oggiIso(): string {
 
 const ETICHETTA_MODALITA: Record<ModalitaPiano, string> = {
   PASTI: 'Piano con pasti',
-  MACRO: 'Macros',
+  MACRO: 'Macronutrienti',
   ESEMPI: 'Esempi intercambiabili',
 }
 
@@ -173,9 +174,9 @@ const solaLettura = computed(() => !modalitaModificabile.value)
 type StatoPagina = StatoPiano
 const statoPagina = computed<StatoPagina>(() => piano.value?.stato ?? 'BOZZA')
 const BADGE_STATO: Record<StatoPagina, { etichetta: string; classi: string }> = {
-  BOZZA: { etichetta: 'Bozza', classi: 'bg-(--warn-bg) text-(--warn-fg)' },
-  ATTIVO: { etichetta: 'Attivo', classi: 'bg-(--mint) text-(--green-d)' },
-  CONCLUSO: { etichetta: 'Concluso', classi: 'bg-(--hover) text-(--fg3)' },
+  BOZZA: { etichetta: 'Bozza', classi: TONI_STATO.daFare },
+  ATTIVO: { etichetta: 'Attivo', classi: TONI_STATO.attivo },
+  CONCLUSO: { etichetta: 'Concluso', classi: TONI_STATO.neutro },
 }
 
 const testoRiquadroSolaLettura = computed(() => {
@@ -1111,12 +1112,12 @@ function stampaPdf() {
             </router-link>
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
               <div class="flex min-w-0 max-w-full items-center gap-2">
-                <Input v-model="nome" :readonly="solaLettura" class="w-auto max-w-full field-sizing-content font-heading! text-2xl! sm:text-3xl! italic! text-(--fg)! border-0 p-0" />
+                <Input v-model="nome" aria-label="Nome del piano" :readonly="solaLettura" class="w-auto max-w-full field-sizing-content font-heading! text-2xl! sm:text-3xl! italic! text-(--fg)! border-0 p-0" />
                 <Pencil v-if="!solaLettura" :size="16" class="shrink-0 text-(--fg4)" />
               </div>
               <span
                 data-test="badge-stato" :data-stato="statoPagina"
-                class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                class="inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold"
                 :class="BADGE_STATO[statoPagina].classi"
               >
                 <span class="h-1.5 w-1.5 rounded-full bg-current" />
@@ -1314,7 +1315,7 @@ function stampaPdf() {
                     <Button
                       v-if="!solaLettura"
                       type="button"
-                      variant="destructive-ghost"
+                      variant="rimuovi"
                       size="icon-sm" aria-label="Rimuovi alimento" title="Rimuovi alimento"
                       class="-mr-1.5"
                       @click="rimuoviRigaEsempio(esempio.clientId, riga.clientId)"
@@ -1340,6 +1341,7 @@ function stampaPdf() {
                   <span class="whitespace-nowrap pt-px text-xs font-medium text-(--fg3)">Nota:</span>
                   <Textarea
                     data-test="esempio-nota"
+                    :aria-label="`Nota di ${esempio.nome || 'questo esempio'}`"
                     :model-value="esempio.nota ?? ''"
                     @update:model-value="(v) => (esempio.nota = String(v).trim() ? String(v) : null)"
                     rows="1"
@@ -1423,6 +1425,7 @@ function stampaPdf() {
               data-test="applica-a-tutti"
               @click="applicaMacroATuttiIGiorni"
             >
+              <CopyCheck />
               Applica a tutti i giorni
             </Button>
           </div>
@@ -1616,7 +1619,7 @@ function stampaPdf() {
                     <span class="text-xs text-(--fg3)">g</span>
                   </span>
                   <Button
-                    v-if="!solaLettura" variant="destructive-ghost" size="icon-sm" class="-mr-1.5"
+                    v-if="!solaLettura" variant="rimuovi" size="icon-sm" class="-mr-1.5"
                     aria-label="Rimuovi alimento" title="Rimuovi alimento"
                     @click="rimuoviRiga(pasto.clientId, riga.clientId)"
                   >
@@ -1656,6 +1659,7 @@ function stampaPdf() {
                     <td class="p-2 text-right">
                       <Input
                         type="text" inputmode="decimal" class="h-7 w-16 text-right text-xs"
+                        :aria-label="`Grammi di ${nomeAlimentoLeggibile(riga.nome)}`"
                         :model-value="grammiVisualizzati(riga)" @keydown="bloccaTastoNonNumerico"
                         @update:model-value="(v) => onGrammiInput(pasto.clientId, riga.clientId, v)"
                       />
@@ -1669,7 +1673,7 @@ function stampaPdf() {
                     <td class="p-2 text-right text-xs text-(--fg2)">{{ Math.round(macroRiga(riga).ferro) }}</td>
                     <td class="p-2 pr-4 text-right text-xs text-(--fg2)">{{ Math.round(macroRiga(riga).calcio) }}</td>
                     <td class="p-2 text-center">
-                      <Button v-if="!solaLettura" variant="destructive-ghost" size="icon-sm" aria-label="Rimuovi alimento" title="Rimuovi alimento" @click="rimuoviRiga(pasto.clientId, riga.clientId)">
+                      <Button v-if="!solaLettura" variant="rimuovi" size="icon-sm" aria-label="Rimuovi alimento" title="Rimuovi alimento" @click="rimuoviRiga(pasto.clientId, riga.clientId)">
                         <X :size="14" />
                       </Button>
                     </td>
@@ -1695,6 +1699,7 @@ function stampaPdf() {
             <div class="flex items-center gap-2 border-t border-(--div) bg-(--soft)/40 px-4 py-2">
               <span class="whitespace-nowrap text-xs font-medium text-(--fg3)">Nota:</span>
               <Textarea
+                :aria-label="`Nota di ${pasto.nome || 'questo pasto'}`"
                 :model-value="pasto.nota ?? ''"
                 @update:model-value="(v) => (pasto.nota = String(v).trim() ? String(v) : null)"
                 rows="1"
@@ -1752,8 +1757,9 @@ function stampaPdf() {
           <AlertDialogDescription>Hai delle modifiche non salvate. Se esci ora andranno perse.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel data-test="conferma-annulla-continua">Continua a modificare</AlertDialogCancel>
+          <AlertDialogCancel data-test="conferma-annulla-continua"><Pencil /> Continua a modificare</AlertDialogCancel>
           <AlertDialogAction data-test="conferma-annulla-esci" @click="tornaIndietro">
+            <LogOut />
             Esci senza salvare
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -1767,8 +1773,9 @@ function stampaPdf() {
           <AlertDialogDescription>L'operazione non è reversibile.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
+          <AlertDialogCancel variant="neutral"><X /> Annulla</AlertDialogCancel>
           <AlertDialogAction data-test="conferma-elimina-piano" variant="destructive" @click="confermaElimina">
+            <Trash2 />
             Elimina piano
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -1784,8 +1791,9 @@ function stampaPdf() {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel @click="annullaCambioModalita" variant="neutral">Annulla</AlertDialogCancel>
+          <AlertDialogCancel @click="annullaCambioModalita" variant="neutral"><X /> Annulla</AlertDialogCancel>
           <AlertDialogAction data-test="conferma-cambio-modalita" variant="destructive" @click="confermaCambioModalita">
+            <Repeat />
             Cambia modalità
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -1801,8 +1809,9 @@ function stampaPdf() {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel variant="neutral" @click="copiaPendente = null">Annulla</AlertDialogCancel>
+          <AlertDialogCancel variant="neutral" @click="copiaPendente = null"><X /> Annulla</AlertDialogCancel>
           <AlertDialogAction data-test="conferma-copia-pasto" variant="destructive" @click="copiaNegliAltriGiorni(copiaPendente!)">
+            <Copy />
             Copia e sostituisci
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -1816,8 +1825,9 @@ function stampaPdf() {
           <AlertDialogDescription>Gli alimenti già inseriti andranno persi. L'operazione non è reversibile.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel @click="rimozionePendente = null" variant="neutral">Annulla</AlertDialogCancel>
+          <AlertDialogCancel @click="rimozionePendente = null" variant="neutral"><X /> Annulla</AlertDialogCancel>
           <AlertDialogAction data-test="conferma-rimuovi-elemento" variant="destructive" @click="confermaRimozione">
+            <Trash2 />
             {{ rimozionePendente?.tipo === 'pasto' ? 'Rimuovi pasto' : 'Rimuovi esempio' }}
           </AlertDialogAction>
         </AlertDialogFooter>

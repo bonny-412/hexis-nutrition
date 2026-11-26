@@ -807,3 +807,38 @@ Dettaglio in [stato](stato.md#sessione-del-15-novembre-2026--agenda-implementata
 
 - Andrea ha committato il lavoro della giornata (`cb8d482`). Restano in staging solo `docs/ui-review-2026-11-25-giro2.md`, `wiki/log.md` e `wiki/stato.md`.
 - Prossima sessione: riavviare il backend e provare a mano palette con ".com", "Aggiungi alimento" con "pasta" e autocompletamento al login; poi i punti del secondo giro di revisione in ordine (voci "Chat"/"Analytics", glossario delle azioni, conferme distruttive, doppione "Invita" nella lista pazienti, stati vuoti delle liste, "Comprimi"). Regole: frontend-design per la UI, percorso superpowers, revisione indipendente, mai commit.
+
+## [2026-11-26] query | Terzo giro di revisione UI
+
+- Giro visivo nel browser integrato (Claude in Chrome non collegato), con frontend-design. Report: `docs/ui-review-2026-11-26-giro3.md`.
+- Punti principali: lista Pazienti tutta rossa per "Mai invitato"; card Circonferenze piena di trattini; colori delle variazioni nello Storico non legati all'obiettivo; glossario delle azioni ancora aperto; date sovrapposte nei grafici.
+
+## [2026-11-26] handoff | Card Plicometria, Circonferenze e Profilo; toni di stato
+
+- Nuove `CirconferenzeCard.vue`, `PlicometriaCard.vue` e `ProfiloPazienteCard.vue`: indici in testa su menta, solo i dati presenti, i mancanti in una riga in fondo. Decisioni di Andrea: niente soglie sugli indici (riferimenti di letteratura, non dati del paziente), niente variazioni nelle card (c'è la tab Confronto). Usate in Panoramica, Storico visite e riepilogo della visita precedente.
+- Confronto visite: nascoste le circonferenze assenti in entrambe le visite e i grafici senza misure in comune.
+- Nuova [decisione 0010](decisioni/0010-toni-di-stato-badge-e-avatar.md): tre toni per badge e avatar (`utils/toniStato.ts`); "Mai invitato" ambra, "Invitato" e "Archiviato" neutri a contorno, il rosso non è più uno stato. Allineati anche Piani e Alimenti.
+- Verifiche: `vue-tsc` pulito, `vitest` 301/301 (adeguati alcuni test esistenti, nessuno nuovo); browser in chiaro e in scuro. Nessun commit.
+- Dopo: badge tutti in grassetto; filtro archiviati più visibile; pillola neutra per i pazienti archiviati; intestazione delle tabelle fissa da 1280 px (niente scroll verticale interno, scelta di Andrea); CF tolto dalla riga sotto il nome nella tabella Pazienti; email sotto il nome nella tabella Piani (nuovo campo `pazienteEmail` nel backend, `api-contracts.md` aggiornato). Riavviare il backend.
+- BMI in petrolio come il Peso; palette base invariata (scelta del dietologo, decisione 0009).
+
+## [2026-11-26] handoff | Terzo giro: tutti i punti aperti
+
+- Su "fai tutto" di Andrea: glossario delle azioni (nuova sezione in [glossario](glossario.md)) e diciture allineate; variazioni dello Storico secondo l'obiettivo; "Chat"/"Analytics" con lucchetto; asse dei grafici con etichette corte e diradate; paginazione nascosta con una pagina; un solo selettore a segmenti; testata paziente stabile; pillole della prossima visita cliccabili (`/agenda?data=`); variante `rimuovi` del `Button`; pagina di accesso più asciutta; Dashboard con striscia della settimana e contesto paziente nelle prossime visite.
+- Scelte di Andrea durante il lavoro: lucchetto invece di togliere Chat/Analytics; "Archivia paziente" resta rosso; icona cartella per aprire le righe e nome non cliccabile nelle tabelle Pazienti e Piani.
+- Backend: `GET /pazienti/{id}` riempie anche obiettivo, ultima visita e ultimo piano (prima `null`); `api-contracts.md` aggiornato. Riavviare il backend.
+- Verifiche: `vue-tsc` pulito, `vitest` 301/301 (adeguate alcune asserzioni di testo e formato, nessun test nuovo), `mvn test` senza errori; browser in chiaro, scuro, 1280/1024 px e mobile per Dashboard e scheda paziente. Nessun commit.
+
+## [2026-11-26] handoff | Verifica scuro, mobile, dialog e accessibilità; icone sui pulsanti
+
+- Verificati tema scuro e mobile delle altre pagine, viste Mese e Giorno, dialog di creazione, accessibilità dei form (dettaglio in `docs/ui-review-2026-11-26-giro3.md`).
+- Corretti: riga della vista Giorno fuori schermo da mobile; conteggio del Mese con la parola; maiuscolo nel tipo di evento; etichette del profilo unificate ("Livello di attività", "Storia del paziente", "Terapie in corso", "Non indicato"); nomi accessibili mancanti nell'editor del piano; gerarchia dei titoli nelle card.
+- Su richiesta di Andrea: dialog e conferme come pannelli dal basso sotto i 640 px; icone su tutti i pulsanti con testo (anche "Annulla"); freccia e ultima visita nelle prossime visite della Dashboard; hover ritagliato dentro la card.
+- Verifiche: `vue-tsc` pulito, `vitest` 301/301. Nessun commit. Riavviare il backend (contesto paziente in Dashboard, email nella lista piani).
+
+## [2026-11-26] handoff | Chiusura del terzo giro di revisione UI
+
+- `stato.md`: nuova voce in cima a "Prossimo passo consigliato" con il giudizio (app chiara, moderna, accattivante e coerente; si torna alle funzionalità), le azioni a mano (commit, riavvio del backend) e quattro piccoli da fare decisi da Andrea: promemoria di oggi e pazienti da richiamare in Dashboard, domeniche di un colore diverso in Agenda, sfondo al passaggio del mouse sui pulsanti testo con icona.
+- Stato finale: `vue-tsc` pulito, `vitest` 301/301, `mvn test` senza errori; tutto non committato.
+- Rivisto con Andrea: promemoria di oggi dentro "Prossime visite" (gruppo "Oggi") e pazienti da richiamare come card sotto "Prossime visite", non come quarta scheda di "Da fare" (troppo pesante).
+

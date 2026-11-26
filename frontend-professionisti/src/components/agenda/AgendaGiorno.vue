@@ -47,7 +47,7 @@ const daFare = computed(() => delGiorno.value.filter((a) => a.tipo === 'PROMEMOR
       </StatoVuoto>
     </div>
 
-    <div v-else class="grid gap-5 p-4 lg:grid-cols-[1fr_280px]">
+    <div v-else class="grid grid-cols-[minmax(0,1fr)] gap-5 p-4 lg:grid-cols-[minmax(0,1fr)_280px]">
       <ul class="flex flex-col gap-2" data-test="agenda-impegni">
         <li v-if="impegni.length === 0" class="py-6 text-center text-sm text-(--fg3)">Nessun impegno con orario.</li>
         <li
@@ -58,7 +58,7 @@ const daFare = computed(() => delGiorno.value.filter((a) => a.tipo === 'PROMEMOR
           :data-test="`agenda-evento-${a.id}`"
           @click="emit('dettaglio', a)"
         >
-          <div class="w-20 flex-none text-xs text-(--fg2)">
+          <div class="w-14 flex-none text-xs text-(--fg2) sm:w-20">
             <div class="text-sm font-bold text-(--fg)">{{ a.oraInizio }}</div>
             <div v-if="oraFine(a)">{{ oraFine(a) }} · {{ a.durataMinuti }} min</div>
           </div>
@@ -66,7 +66,8 @@ const daFare = computed(() => delGiorno.value.filter((a) => a.tipo === 'PROMEMOR
             <div class="truncate text-sm font-semibold text-(--fg)">{{ titolo(a) }}</div>
             <div v-if="sottotitolo(a)" class="truncate text-xs text-(--fg3)">{{ sottotitolo(a) }}</div>
           </div>
-          <span class="flex flex-none items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-(--fg3)">
+          <!-- Da mobile il tipo lo dicono il colore del bordo e la legenda: lo spazio va al titolo. -->
+          <span class="hidden flex-none items-center gap-1 text-[11px] font-semibold text-(--fg3) sm:flex">
             <Video v-if="a.tipo === 'VIDEOCONSULTO'" :size="14" />
             {{ etichettaTipo(a) }}
           </span>

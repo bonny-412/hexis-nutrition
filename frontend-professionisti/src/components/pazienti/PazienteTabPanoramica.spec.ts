@@ -64,9 +64,9 @@ describe('PazienteTabPanoramica', () => {
     expect(wrapper.text()).toContain('BNCMRC80A01H501U')
   })
 
-  it('mostra un trattino per i campi del profilo assenti', () => {
+  it('raccoglie in una riga i campi del profilo non indicati', () => {
     const wrapper = monta([])
-    expect((wrapper.text().match(/—/g) ?? []).length).toBeGreaterThanOrEqual(2)
+    expect(wrapper.find('[data-test="profilo-non-indicati"]').text()).toContain('telefono, cellulare')
   })
 
   it('mostra un errore se lo storico visite non si è caricato', () => {
@@ -91,9 +91,9 @@ describe('PazienteTabPanoramica', () => {
 
     expect(wrapper.text()).toContain('Peso')
     expect(wrapper.text()).toContain('BMI')
-    expect(wrapper.text()).toContain('Massa magra e % grasso')
+    expect(wrapper.text()).toContain('Composizione corporea')
     expect(wrapper.text()).toContain('Dati non disponibili')
-    expect(wrapper.text()).not.toContain('% Grasso corporeo')
+    expect(wrapper.text()).not.toContain('% Massa grassa')
   })
 
   it('con una sola visita non disegna i grafici ma mostra i valori della plicometria', () => {
@@ -110,7 +110,7 @@ describe('PazienteTabPanoramica', () => {
     ])
 
     expect(wrapper.find('[data-test="andamento-una-visita"]').exists()).toBe(true)
-    expect(wrapper.text()).not.toContain('Massa magra e % grasso')
+    expect(wrapper.text()).not.toContain('Composizione corporea')
     expect(wrapper.text()).toContain('18,20%')
     expect(wrapper.text()).toContain('63,40 kg')
   })
@@ -152,7 +152,7 @@ describe('PazienteTabPanoramica', () => {
     expect(wrapper.text()).toContain('Nessuna plicometria registrata per l\'ultima visita.')
   })
 
-  it('mostra le circonferenze valorizzate dell\'ultima visita e un trattino per quelle assenti', () => {
+  it('mostra le circonferenze valorizzate dell\'ultima visita e raccoglie in fondo quelle non rilevate', () => {
     const wrapper = monta([
       visita({
         circonferenze: {
@@ -163,8 +163,8 @@ describe('PazienteTabPanoramica', () => {
     ])
 
     expect(wrapper.text()).toContain('Vita')
-    expect(wrapper.text()).toContain('84,00 cm')
-    expect(wrapper.findAll('dd').filter((d) => d.text() === '—').length).toBeGreaterThan(0)
+    expect(wrapper.text()).toContain('84,0 cm')
+    expect(wrapper.find('[data-test="circonferenze-non-rilevate"]').text()).toContain('Non rilevate: fianchi, addome, torace e arti')
   })
 
   it('mostra un messaggio se l\'ultima visita non ha nessuna circonferenza registrata', () => {

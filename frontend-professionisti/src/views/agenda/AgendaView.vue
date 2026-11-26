@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
-import { CalendarPlus, ChevronDown, Lock, StickyNote } from '@lucide/vue'
+import { ArrowLeft, CalendarClock, CalendarPlus, CalendarX2, Check, ChevronDown, Lock, RotateCcw, StickyNote, Trash2, X } from '@lucide/vue'
 import AppShell from '@/components/AppShell.vue'
 import AgendaToolbar from '@/components/agenda/AgendaToolbar.vue'
 import AgendaGiorno from '@/components/agenda/AgendaGiorno.vue'
@@ -190,6 +190,17 @@ watch(
   { immediate: true },
 )
 
+// `?data=YYYY-MM-DD` da solo (es. dalla pillola "Prossima visita" della scheda paziente): mostra quel giorno.
+watch(
+  () => route.query.data,
+  (data) => {
+    if (route.query.evento || typeof data !== 'string' || !REGEX_DATA.test(data)) return
+    riferimento.value = data
+    router.replace({ query: { ...route.query, data: undefined } })
+  },
+  { immediate: true },
+)
+
 function apriEventoInAttesa() {
   if (!eventoDaAprire.value) return
   const trovato = appuntamenti.value.find((a) => a.id === eventoDaAprire.value)
@@ -330,7 +341,7 @@ function titoloEliminazione(a: Appuntamento | null): string {
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button type="button" data-test="agenda-aggiungi">
-            <CalendarPlus :size="16" /> Aggiungi <ChevronDown :size="14" />
+            <CalendarPlus :size="16" /> Nuovo <ChevronDown :size="14" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="w-52">
@@ -354,7 +365,7 @@ function titoloEliminazione(a: Appuntamento | null): string {
 
     <div v-if="errore" class="flex flex-col items-center gap-3 rounded-2xl border border-(--bd) bg-(--surf) p-14 text-center">
       <p class="text-(--danger)">Non è stato possibile caricare l'agenda.</p>
-      <Button type="button" variant="neutral" @click="carica">Riprova</Button>
+      <Button type="button" variant="neutral" @click="carica"><RotateCcw /> Riprova</Button>
     </div>
 
     <div v-else-if="caricamento && appuntamenti.length === 0" class="rounded-2xl border border-(--bd) bg-(--surf) p-14 text-center text-(--fg3)">
@@ -411,8 +422,9 @@ function titoloEliminazione(a: Appuntamento | null): string {
           <AlertDialogDescription>L'appuntamento resterà in agenda come annullato e non occuperà più la fascia oraria.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel variant="neutral">Indietro</AlertDialogCancel>
+          <AlertDialogCancel variant="neutral"><ArrowLeft /> Indietro</AlertDialogCancel>
           <AlertDialogAction variant="destructive" data-test="conferma-annulla-appuntamento" @click="confermaAnnulla">
+            <CalendarX2 />
             Annulla appuntamento
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -426,8 +438,9 @@ function titoloEliminazione(a: Appuntamento | null): string {
           <AlertDialogDescription>L'operazione non è reversibile.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
+          <AlertDialogCancel variant="neutral"><X /> Annulla</AlertDialogCancel>
           <AlertDialogAction variant="destructive" data-test="conferma-elimina-appuntamento" @click="confermaElimina">
+            <Trash2 />
             {{ daEliminare?.tipo === 'PROMEMORIA' ? 'Elimina promemoria' : 'Elimina fascia bloccata' }}
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -444,8 +457,8 @@ function titoloEliminazione(a: Appuntamento | null): string {
           <li v-for="c in spostamento.conflitti" :key="c.id">{{ etichettaConflitto(c) }}</li>
         </ul>
         <AlertDialogFooter>
-          <AlertDialogCancel variant="neutral">Cambia orario</AlertDialogCancel>
-          <AlertDialogAction @click="confermaSpostamento">Conferma comunque</AlertDialogAction>
+          <AlertDialogCancel variant="neutral"><CalendarClock /> Cambia orario</AlertDialogCancel>
+          <AlertDialogAction @click="confermaSpostamento"><Check /> Conferma comunque</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

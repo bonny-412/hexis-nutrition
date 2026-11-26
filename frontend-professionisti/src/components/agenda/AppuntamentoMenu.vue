@@ -77,7 +77,7 @@ const eBlocco = computed(() => props.appuntamento.tipo === 'BLOCCO')
 
       <template v-else-if="eChiusa">
         <DropdownMenuItem class="cursor-pointer" data-test="azione-apri-cartella" @click="emit('azione', 'APRI_CARTELLA')">
-          <FolderOpen /> Apri cartella paziente
+          <FolderOpen /> Apri scheda paziente
         </DropdownMenuItem>
       </template>
 

@@ -111,7 +111,7 @@ function cambiaSelezione() {
           :model-value="testoRicerca"
           @update:model-value="onInput"
           type="text"
-          autocomplete="off" placeholder="Cerca paziente per nome, email o codice fiscale…"
+          autocomplete="off" placeholder="Cerca paziente…"
           @focus="apriRecenti"
           @click="apriRecenti"
         />

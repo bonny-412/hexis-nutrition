@@ -35,7 +35,7 @@ describe('DashboardView', () => {
         inScadenza: { voci: [], totale: 0 },
         bozze: { voci: [{
           id: 'bozza-1', nome: 'Piano di prova', pazienteNomeCompleto: 'Paziente di prova',
-          pazienteNome: 'Paziente', pazienteCognome: 'di prova', stato: 'BOZZA', obiettivoKcal: null,
+          pazienteNome: 'Paziente', pazienteCognome: 'di prova', pazienteEmail: null, stato: 'BOZZA', obiettivoKcal: null,
           modalita: 'PASTI', dataInizio: '2026-11-25', dataFine: null,
         }], totale: 2 },
         maiInvitati: { voci: [], totale: 0 },

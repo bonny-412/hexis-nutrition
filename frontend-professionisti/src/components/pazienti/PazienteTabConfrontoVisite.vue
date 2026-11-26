@@ -63,24 +63,35 @@ const rigaObiettivo = computed(() => ({
 const haPlicometria = computed(() => !!visitaA.value?.plicometria || !!visitaB.value?.plicometria)
 
 const righePlicometria = computed<Riga[]>(() => [
-  { label: '% Grasso corporeo', parametro: 'percentualeGrasso', a: visitaA.value?.plicometria?.percentualeGrassoCorporeo ?? null, b: visitaB.value?.plicometria?.percentualeGrassoCorporeo ?? null, unita: '%' },
+  { label: '% Massa grassa', parametro: 'percentualeGrasso', a: visitaA.value?.plicometria?.percentualeGrassoCorporeo ?? null, b: visitaB.value?.plicometria?.percentualeGrassoCorporeo ?? null, unita: '%' },
   { label: 'Massa grassa (kg)', parametro: 'massaGrassa', a: visitaA.value?.plicometria?.massaGrassaKg ?? null, b: visitaB.value?.plicometria?.massaGrassaKg ?? null, unita: 'kg' },
   { label: 'Massa magra (kg)', parametro: 'massaMagra', a: visitaA.value?.plicometria?.massaMagraKg ?? null, b: visitaB.value?.plicometria?.massaMagraKg ?? null, unita: 'kg' },
   { label: 'FMI', parametro: 'fmi', a: visitaA.value?.plicometria?.fmi ?? null, b: visitaB.value?.plicometria?.fmi ?? null, unita: '' },
   { label: 'FFMI', parametro: 'ffmi', a: visitaA.value?.plicometria?.ffmi ?? null, b: visitaB.value?.plicometria?.ffmi ?? null, unita: '' },
 ])
 
+// Solo le circonferenze misurate in almeno una delle due visite: una riga vuota in entrambe non dice nulla.
+// Un decimale, come nelle card Circonferenze della scheda.
 const righeCirconferenze = computed<Riga[]>(() =>
-  (Object.keys(ETICHETTE_CIRCONFERENZE) as Array<keyof Visita['circonferenze']>).map((chiave) => ({
-    label: ETICHETTE_CIRCONFERENZE[chiave],
-    parametro: chiave,
-    a: visitaA.value?.circonferenze[chiave] ?? null,
-    b: visitaB.value?.circonferenze[chiave] ?? null,
-    unita: 'cm',
-  })),
+  (Object.keys(ETICHETTE_CIRCONFERENZE) as Array<keyof Visita['circonferenze']>)
+    .map((chiave) => ({
+      label: ETICHETTE_CIRCONFERENZE[chiave],
+      parametro: chiave,
+      a: visitaA.value?.circonferenze[chiave] ?? null,
+      b: visitaB.value?.circonferenze[chiave] ?? null,
+      unita: 'cm',
+      decimali: 1,
+    }))
+    .filter((r) => r.a !== null || r.b !== null),
 )
 
-const haCirconferenze = computed(() => righeCirconferenze.value.some((r) => r.a !== null || r.b !== null))
+const haCirconferenze = computed(() => righeCirconferenze.value.length > 0)
+
+// I grafici confrontano solo misure presenti in entrambe le visite: senza nessuna, il grafico non compare
+// (i valori di una sola visita restano nella tabella sotto).
+const haCoppia = (righe: Riga[]) => righe.some((r) => r.a !== null && r.b !== null)
+const graficoPlicometria = computed(() => haCoppia(righePlicometria.value))
+const graficoCirconferenze = computed(() => haCoppia(righeCirconferenze.value))
 
 /** Colore della variazione in tabella: verde/rosso secondo l'obiettivo della visita B, grigio se indifferente. */
 function classeVariazione(r: Riga & { variazione: number | null }): string {
@@ -132,12 +143,12 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
     </div>
 
     <div
-      v-if="haPlicometria || haCirconferenze"
+      v-if="graficoPlicometria || graficoCirconferenze"
       class="grid grid-cols-1 gap-4"
-      :class="{ 'xl:grid-cols-2': haPlicometria && haCirconferenze }"
+      :class="{ 'xl:grid-cols-2': graficoPlicometria && graficoCirconferenze }"
     >
       <ConfrontoBarChart
-        v-if="haPlicometria"
+        v-if="graficoPlicometria"
         titolo="Plicometria"
         :righe="righePlicometria"
         :etichetta-a="formattaDataItalianaConMese(visitaA!.dataVisita)"
@@ -145,7 +156,7 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
         colore="var(--chart-1)"
       />
       <ConfrontoBarChart
-        v-if="haCirconferenze"
+        v-if="graficoCirconferenze"
         titolo="Circonferenze"
         :righe="righeCirconferenze"
         :etichetta-a="formattaDataItalianaConMese(visitaA!.dataVisita)"
@@ -155,10 +166,11 @@ function formattaVariazione(variazione: number | null, unita: string, decimali?:
       />
     </div>
 
-    <div class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)">
-      <div class="overflow-x-auto">
+    <div class="overflow-clip rounded-2xl border border-(--bd) bg-(--surf)">
+      <div class="overflow-x-auto xl:overflow-x-visible">
         <table class="w-full min-w-140 border-collapse text-sm">
-          <thead>
+          <!-- Intestazione fissa durante lo scroll da xl, come in components/ui/table. -->
+          <thead class="xl:sticky xl:-top-4 xl:z-10 xl:shadow-[0_1px_0_var(--bd)]">
             <tr class="bg-(--soft) text-xs font-semibold text-(--fg3)">
               <th class="px-5 py-3 text-left">Parametro</th>
               <th class="px-3 py-3 text-right">{{ formattaDataItalianaConMese(visitaA!.dataVisita) }}</th>

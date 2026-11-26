@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink, useRoute } from 'vue-router'
-import { LayoutGrid, Calendar, Users, MessageSquare, BarChart3, Apple, PanelLeftOpen, PanelLeftClose, Utensils } from '@lucide/vue'
+import { LayoutGrid, Calendar, Users, MessageSquare, BarChart3, Apple, Lock, PanelLeftOpen, PanelLeftClose, Utensils } from '@lucide/vue'
 import { useNotificheStore } from '@/stores/notifiche'
 
 const notifiche = useNotificheStore()
@@ -45,8 +45,11 @@ const route = useRoute()
           :to="voce.routeName ? { name: voce.routeName } : undefined"
           :aria-label="voce.nome === 'Agenda' && notifiche.nonVisteInAgenda > 0
             ? 'Agenda, nuove notifiche'
-            : isCollapsed && voce.routeName ? voce.nome : undefined"
-          :title="isCollapsed && voce.routeName ? voce.nome : undefined"
+            : !voce.routeName ? `${voce.nome}, in arrivo`
+            : isCollapsed ? voce.nome : undefined"
+          :title="voce.routeName ? (isCollapsed ? voce.nome : undefined) : `${voce.nome}: in arrivo`"
+          :aria-disabled="voce.routeName ? undefined : 'true'"
+          :role="voce.routeName ? undefined : 'link'"
           class="relative flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium transition-colors"
           :class="[
             isCollapsed ? 'justify-center px-0' : '',
@@ -59,6 +62,16 @@ const route = useRoute()
         >
           <component :is="voce.icona" :size="16" :stroke-width="1.8" />
           <span v-if="!isCollapsed" class="truncate">{{ voce.nome }}</span>
+          <!-- Funzioni non ancora disponibili: visibili per far sapere che arriveranno, col lucchetto e non cliccabili. -->
+          <Lock
+            v-if="!voce.routeName"
+            :size="12"
+            :stroke-width="2"
+            class="flex-none"
+            :class="isCollapsed ? 'absolute bottom-1 right-1.5' : 'ml-auto'"
+            aria-hidden="true"
+            data-test="sidebar-voce-bloccata"
+          />
           <span
             v-if="voce.nome === 'Agenda' && notifiche.nonVisteInAgenda > 0"
             class="size-2 flex-none rounded-full bg-(--lime)"

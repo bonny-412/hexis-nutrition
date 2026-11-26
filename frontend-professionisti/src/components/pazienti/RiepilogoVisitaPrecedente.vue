@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { Paziente, Plicometria, Visita } from '@/api/pazienti'
+import type { Paziente, Visita } from '@/api/pazienti'
 import type { PianoAlimentareRigaLista } from '@/api/pianiAlimentari'
 import type { PianoConNote } from '@/utils/pianoAlimentare'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { X } from '@lucide/vue'
 import { formattaDataItalianaConMese } from '@/utils/data'
-import { ETICHETTE_CIRCONFERENZE, ETICHETTE_OBIETTIVO, formattaNumero } from '@/utils/visita'
+import { ETICHETTE_OBIETTIVO, formattaNumero } from '@/utils/visita'
+import PlicometriaCard from './PlicometriaCard.vue'
+import CirconferenzeCard from './CirconferenzeCard.vue'
 
 const props = defineProps<{
   visita: Visita
@@ -28,23 +30,6 @@ const ETICHETTE_STILE_DI_VITA: Record<NonNullable<Paziente['stileDiVita']>, stri
   ESTREMAMENTE_ATTIVO: 'Estremamente attivo',
 }
 
-type ChiavePlica = keyof Pick<Plicometria,
-  'plicaPettoraleMm' | 'plicaAscellareMm' | 'plicaTricipitaleMm' | 'plicaBicipitaleMm' | 'plicaSottoscapolareMm'
-  | 'plicaSoprailiacaMm' | 'plicaAddominaleMm' | 'plicaCosciaMm' | 'plicaPolpaccioMm'>
-
-/** Solo le pliche rilevate dal protocollo usato compaiono (le altre sono `null`). */
-const ETICHETTE_PLICHE: Record<ChiavePlica, string> = {
-  plicaTricipitaleMm: 'Tricipite',
-  plicaBicipitaleMm: 'Bicipite',
-  plicaSottoscapolareMm: 'Sottoscapolare',
-  plicaSoprailiacaMm: 'Sovrailiaca',
-  plicaAddominaleMm: 'Addominale',
-  plicaPettoraleMm: 'Pettorale',
-  plicaAscellareMm: 'Ascellare',
-  plicaCosciaMm: 'Coscia',
-  plicaPolpaccioMm: 'Polpaccio',
-}
-
 interface Riga { etichetta: string; valore: string }
 interface Blocco { titolo: string; righe: Riga[] }
 
@@ -58,30 +43,12 @@ const blocchi = computed<Blocco[]>(() => {
     generali.push({ etichetta: 'Livello di attività', valore: ETICHETTE_STILE_DI_VITA[props.stileDiVita] })
   }
 
-  const p = v.plicometria
-  const composizione: Riga[] = p
-    ? [
-        { etichetta: '% grasso', valore: `${formattaNumero(p.percentualeGrassoCorporeo, 1)} %` },
-        { etichetta: 'Massa grassa', valore: `${formattaNumero(p.massaGrassaKg)} kg` },
-        { etichetta: 'Massa magra', valore: `${formattaNumero(p.massaMagraKg)} kg` },
-      ]
-    : []
-  const pliche: Riga[] = p
-    ? (Object.keys(ETICHETTE_PLICHE) as ChiavePlica[])
-        .filter((chiave) => p[chiave] !== null)
-        .map((chiave) => ({ etichetta: ETICHETTE_PLICHE[chiave], valore: formattaNumero(p[chiave] as number) }))
-    : []
-  const circonferenze: Riga[] = (Object.keys(ETICHETTE_CIRCONFERENZE) as Array<keyof Visita['circonferenze']>)
-    .filter((chiave) => v.circonferenze[chiave] !== null)
-    .map((chiave) => ({ etichetta: ETICHETTE_CIRCONFERENZE[chiave], valore: formattaNumero(v.circonferenze[chiave] as number) }))
-
   return [
     { titolo: 'Generali', righe: generali },
-    { titolo: 'Composizione corporea', righe: composizione },
-    { titolo: 'Plicometria (mm)', righe: pliche },
-    { titolo: 'Circonferenze (cm)', righe: circonferenze },
   ].filter((blocco) => blocco.righe.length > 0)
 })
+
+const haCirconferenze = computed(() => Object.values(props.visita.circonferenze).some((valore) => valore !== null))
 
 // "5 set → 18 set 2026": l'anno si scrive una volta sola quando inizio e fine sono nello stesso anno.
 function periodoPiano(piano: PianoAlimentareRigaLista): string {
@@ -135,6 +102,10 @@ function periodoPiano(piano: PianoAlimentareRigaLista): string {
             </div>
           </dl>
         </div>
+
+        <!-- Stesse card della scheda paziente; qui si mostrano solo se la visita ha quei dati. -->
+        <PlicometriaCard v-if="visita.plicometria" :visita="visita" annidata />
+        <CirconferenzeCard v-if="haCirconferenze" :visita="visita" annidata />
 
         <div v-if="visita.note" data-test="note-visita" class="rounded-xl border border-(--bd) p-3">
           <p class="mb-1 text-xs font-medium text-(--fg3)">Note della visita</p>

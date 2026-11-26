@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { TONI_STATO } from '@/utils/toniStato'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -9,7 +10,7 @@ import AlimentoFormDialog from '@/components/alimenti/AlimentoFormDialog.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
-import { Apple, Plus, ArrowUp, ArrowDown, ArrowUpDown, SearchX } from '@lucide/vue'
+import { Apple, ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, FilterX, Plus, SearchX } from '@lucide/vue'
 import StatoVuoto from '@/components/StatoVuoto.vue'
 import ErroreLista from '@/components/liste/ErroreLista.vue'
 import CaricamentoLista from '@/components/liste/CaricamentoLista.vue'
@@ -212,7 +213,7 @@ const conteggioTesto = computed(() => {
       </div>
     </section>
 
-    <section class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)">
+    <section class="overflow-clip rounded-2xl border border-(--bd) bg-(--surf)">
       <ErroreLista v-if="errore" messaggio="Non è stato possibile caricare gli alimenti." @riprova="carica" />
       <CaricamentoLista v-else-if="caricamentoIniziale" etichetta="Caricamento gli alimenti" />
 
@@ -235,7 +236,7 @@ const conteggioTesto = computed(() => {
               <div class="truncate text-xs text-(--fg3)">
                 <span
                   class="mr-1 rounded px-1.5 py-px text-[10.5px] font-bold"
-                  :class="alimento.bda ? 'bg-(--mint) text-(--green-d)' : 'bg-(--warn-bg) text-(--warn-fg)'"
+                  :class="alimento.bda ? TONI_STATO.neutro : TONI_STATO.attivo"
                 >{{ alimento.bda ? 'BDA' : 'Personalizzato' }}</span>
                 {{ alimento.categoria }}
               </div>
@@ -255,7 +256,7 @@ const conteggioTesto = computed(() => {
           </li>
         </ul>
 
-        <div class="hidden overflow-x-auto md:block" :class="{ 'pointer-events-none opacity-60': aggiornamentoInCorso }">
+        <div class="hidden overflow-x-auto md:block xl:overflow-x-visible" :class="{ 'pointer-events-none opacity-60': aggiornamentoInCorso }">
           <Table>
             <TableHeader>
               <TableRow>
@@ -291,7 +292,7 @@ const conteggioTesto = computed(() => {
                 <TableCell>
                   <span
                     class="rounded px-2 py-0.5 text-[10.5px] font-bold tracking-wide"
-                    :class="alimento.bda ? 'bg-(--mint) text-(--green-d)' : 'bg-(--warn-bg) text-(--warn-fg)'"
+                    :class="alimento.bda ? TONI_STATO.neutro : TONI_STATO.attivo"
                   >
                     {{ alimento.bda ? 'BDA' : 'PERSONALIZZATO' }}
                   </span>
@@ -310,16 +311,17 @@ const conteggioTesto = computed(() => {
       </template>
 
       <StatoVuoto v-else-if="filtriAttivi" :icona="SearchX" titolo="Nessun alimento trovato" testo="Prova a modificare la ricerca o i filtri." livello="h2">
-        <Button type="button" variant="neutral" @click="pulisciFiltri">Pulisci filtri</Button>
+        <Button type="button" variant="neutral" @click="pulisciFiltri"><FilterX /> Pulisci filtri</Button>
       </StatoVuoto>
       <StatoVuoto v-else :icona="Apple" titolo="Nessun alimento trovato" testo="Puoi aggiungere un alimento personalizzato." livello="h2">
-        <Button type="button" @click="apriCreazione">Nuovo alimento</Button>
+        <Button type="button" @click="apriCreazione"><Plus /> Nuovo alimento</Button>
       </StatoVuoto>
 
       <div v-if="paginaDati && !errore" class="flex items-center justify-between gap-3 border-t border-(--div) bg-(--soft) px-4.5 py-3">
         <span class="text-xs text-(--fg3)">{{ conteggioTesto }}</span>
-        <div class="flex gap-2">
-          <Button type="button" variant="neutral" size="sm" :disabled="pagina === 0" @click="paginaPrecedente">Precedente</Button>
+        <!-- Con una pagina sola i pulsanti sarebbero entrambi disattivati: resta solo il conteggio. -->
+        <div v-if="paginaDati.totalePagine > 1" class="flex gap-2">
+          <Button type="button" variant="neutral" size="sm" :disabled="pagina === 0" @click="paginaPrecedente"><ChevronLeft /> Precedente</Button>
           <Button
             type="button"
             variant="neutral"
@@ -327,7 +329,7 @@ const conteggioTesto = computed(() => {
             :disabled="!paginaDati || pagina >= paginaDati.totalePagine - 1"
             @click="paginaSuccessiva"
           >
-            Successivo
+            Successivo <ChevronRight />
           </Button>
         </div>
       </div>

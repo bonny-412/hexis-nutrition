@@ -1,4 +1,4 @@
-import type { Visita } from '@/api/pazienti'
+import type { Plicometria, Visita } from '@/api/pazienti'
 
 export const ETICHETTE_OBIETTIVO: Record<Visita['obiettivo'], string> = {
   DIMAGRIMENTO: 'Dimagrimento',
@@ -70,4 +70,31 @@ export function calcolaBmi(altezzaCm: number | null, pesoKg: number | null): num
 /** Formatta un numero con la notazione italiana (virgola decimale). Default a 2 cifre: usato per peso, plicometria e circonferenze; il BMI passa esplicitamente 1. */
 export function formattaNumero(valore: number, decimali = 2): string {
   return valore.toLocaleString('it-IT', { minimumFractionDigits: decimali, maximumFractionDigits: decimali })
+}
+
+export type ChiavePlica = keyof Pick<Plicometria,
+  'plicaPettoraleMm' | 'plicaAscellareMm' | 'plicaTricipitaleMm' | 'plicaBicipitaleMm' | 'plicaSottoscapolareMm'
+  | 'plicaSoprailiacaMm' | 'plicaAddominaleMm' | 'plicaCosciaMm' | 'plicaPolpaccioMm'>
+
+/** Etichette delle pliche, nell'ordine in cui vanno mostrate. Solo quelle del protocollo usato sono valorizzate. */
+export const ETICHETTE_PLICHE: Record<ChiavePlica, string> = {
+  plicaTricipitaleMm: 'Tricipite',
+  plicaBicipitaleMm: 'Bicipite',
+  plicaSottoscapolareMm: 'Sottoscapolare',
+  plicaSoprailiacaMm: 'Sovrailiaca',
+  plicaAddominaleMm: 'Addominale',
+  plicaPettoraleMm: 'Pettorale',
+  plicaAscellareMm: 'Ascellare',
+  plicaCosciaMm: 'Coscia',
+  plicaPolpaccioMm: 'Polpaccio',
+}
+
+/** Stesse diciture della select del protocollo in `PlicometriaForm.vue`. */
+export const ETICHETTE_PROTOCOLLO_PLICOMETRIA: Record<Plicometria['protocollo'], string> = {
+  JACKSON_POLLOCK_3: 'Jackson-Pollock 3 pliche',
+  JACKSON_POLLOCK_7: 'Jackson-Pollock 7 pliche',
+  DURNIN_WOMERSLEY_4: 'Durnin-Womersley 4 pliche',
+  FAULKNER_4: 'Faulkner 4 pliche',
+  SLAUGHTER_PEDIATRICO: 'Slaughter (pediatrico)',
+  EVANS_ATLETI: 'Evans (atleti)',
 }

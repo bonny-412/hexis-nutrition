@@ -82,7 +82,7 @@ describe('PazientiListView', () => {
     const wrapper = await montaView()
 
     expect(wrapper.text()).toContain('Luca Verdi')
-    expect(wrapper.text()).toContain('luca@example.com · RSSMRA80A01H501U')
+    expect(wrapper.text()).toContain('luca@example.com')
     expect(wrapper.text()).toContain('Obiettivo')
     expect(wrapper.text()).toContain('Invita')
   })

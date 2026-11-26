@@ -129,7 +129,7 @@ describe('PazienteTabStoricoVisite', () => {
     expect(dettaglio.text()).toContain('Plicometria')
     expect(dettaglio.text()).toContain('18,20%')
     expect(dettaglio.text()).toContain('Circonferenze')
-    expect(dettaglio.text()).toContain('84,00 cm')
+    expect(dettaglio.text()).toContain('84,0 cm')
 
     await wrapper.get('[data-test="storico-riga"]').trigger('click')
     expect(wrapper.find('[data-test="storico-dettaglio"]').exists()).toBe(false)

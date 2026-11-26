@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Loader2, MailCheck, MailX, UserCheck } from '@lucide/vue'
 import type { Paziente } from '@/api/pazienti'
 import { CLASSI_STATO_ACCOUNT } from '@/utils/paziente'
+import { TONI_STATO } from '@/utils/toniStato'
 
 const props = defineProps<{
   paziente: Paziente
@@ -19,13 +20,20 @@ const stati = {
   ATTIVO: { etichetta: 'Attivo', icona: UserCheck, azione: null },
 }
 
+// Sulla testata petrolio: "Mai invitato" è l'unico stato con un colore proprio (ambra, da fare);
+// gli altri usano la pillola neutra della testata.
 const classiHero = {
-  MAI_INVITATO: 'bg-(--hero-pill) text-(--danger-fixed) ring-1 ring-(--hero-pill-ring)',
-  INVITATO: CLASSI_STATO_ACCOUNT.INVITATO,
+  MAI_INVITATO: 'bg-(--warn-bg) text-(--warn-fg) ring-1 ring-(--hero-pill-ring)',
+  INVITATO: 'bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring)',
   ATTIVO: 'bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring)',
 }
 
 const stato = computed(() => stati[props.paziente.statoAccount])
+// Un paziente archiviato non ha niente da fare: lo stato resta scritto, ma col tono neutro (decisione 0010).
+const classiStato = computed(() => {
+  if (props.paziente.archiviato) return props.hero ? classiHero.ATTIVO : TONI_STATO.neutro
+  return (props.hero ? classiHero : CLASSI_STATO_ACCOUNT)[props.paziente.statoAccount]
+})
 const puoInvitare = computed(() => !props.solaLettura && !props.paziente.archiviato && !!stato.value.azione)
 </script>
 
@@ -33,7 +41,7 @@ const puoInvitare = computed(() => !props.solaLettura && !props.paziente.archivi
   <span
     data-test="badge-stato-account"
     class="inline-flex w-fit items-center gap-1.5 rounded-full py-1 pl-2.5 text-xs font-bold"
-    :class="[(hero ? classiHero : CLASSI_STATO_ACCOUNT)[paziente.statoAccount], puoInvitare ? 'pr-1' : 'pr-2.5']"
+    :class="[classiStato, puoInvitare ? 'pr-1' : 'pr-2.5']"
   >
     <span class="inline-flex items-center gap-1.5">
       <component :is="stato.icona" :size="hero ? 16 : 14" class="shrink-0" aria-hidden="true" />

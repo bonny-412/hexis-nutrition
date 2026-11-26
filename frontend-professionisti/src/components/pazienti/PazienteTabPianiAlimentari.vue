@@ -10,10 +10,11 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
 import { avanzamentoPiano } from '@/utils/pianoAlimentare'
 import { formattaDataItalianaConMese } from '@/utils/data'
-import { Copy, Eye, Pencil, Plus, Utensils } from '@lucide/vue'
+import { ChevronLeft, ChevronRight, Copy, Eye, Pencil, Plus, Utensils } from '@lucide/vue'
 import StatoVuoto from '@/components/StatoVuoto.vue'
 import ErroreLista from '@/components/liste/ErroreLista.vue'
 import CaricamentoLista from '@/components/liste/CaricamentoLista.vue'
+import { TONI_STATO } from '@/utils/toniStato'
 
 const props = defineProps<{
   pazienteId: string
@@ -166,7 +167,7 @@ function onDuplica(piano: PianoAlimentareRigaLista) {
         <div class="min-w-55 flex-1">
           <div class="flex flex-wrap items-center gap-2">
             <span class="text-xs font-semibold text-(--fg3)">Nessun piano attivo · ultima bozza</span>
-            <Badge variant="secondary" class="bg-(--warn-bg) text-(--warn-fg)">Bozza</Badge>
+            <Badge variant="secondary" :class="TONI_STATO.daFare">Bozza</Badge>
           </div>
           <div class="font-heading mt-1 text-[21px] font-medium italic text-(--fg)">{{ bozzaRecente.nome }}</div>
           <div class="mt-0.5 text-[12.5px] text-(--fg3)">
@@ -176,7 +177,7 @@ function onDuplica(piano: PianoAlimentareRigaLista) {
         <Button v-if="!archiviato" as-child>
           <router-link :to="linkPiano(bozzaRecente)">
             <Pencil :size="16" />
-            <span>Modifica</span>
+            <span>Completa</span>
           </router-link>
         </Button>
       </div>
@@ -197,7 +198,7 @@ function onDuplica(piano: PianoAlimentareRigaLista) {
       </StatoVuoto>
     </div>
 
-    <div v-if="pianiPrecedenti && pianiPrecedenti.contenuto.length > 0" class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)">
+    <div v-if="pianiPrecedenti && pianiPrecedenti.contenuto.length > 0" class="overflow-clip rounded-2xl border border-(--bd) bg-(--surf)">
       <div class="font-heading border-b border-(--div) px-4.5 py-3.5 text-[15px] font-semibold">Piani precedenti</div>
       <Table class="min-w-150" :class="aggiornamentoInCorso ? 'opacity-60' : ''">
         <TableHeader>
@@ -225,9 +226,10 @@ function onDuplica(piano: PianoAlimentareRigaLista) {
       </Table>
       <div class="flex items-center justify-between gap-3 border-t border-(--div) bg-(--soft) px-4.5 py-3">
         <span class="text-xs text-(--fg3)">{{ conteggioTesto }}</span>
-        <div class="flex gap-2">
-          <Button type="button" variant="neutral" size="sm" :disabled="pagina === 0" @click="paginaPrecedente">Precedente</Button>
-          <Button type="button" variant="neutral" size="sm" :disabled="pagina >= pianiPrecedenti.totalePagine - 1" @click="paginaSuccessiva">Successivo</Button>
+        <!-- Con una pagina sola i pulsanti sarebbero entrambi disattivati: resta solo il conteggio. -->
+        <div v-if="pianiPrecedenti.totalePagine > 1" class="flex gap-2">
+          <Button type="button" variant="neutral" size="sm" :disabled="pagina === 0" @click="paginaPrecedente"><ChevronLeft /> Precedente</Button>
+          <Button type="button" variant="neutral" size="sm" :disabled="pagina >= pianiPrecedenti.totalePagine - 1" @click="paginaSuccessiva">Successivo <ChevronRight /></Button>
         </div>
       </div>
     </div>

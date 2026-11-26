@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
-import { Plus, ArrowUp, ArrowDown, ArrowUpDown, ChevronRight, SearchX, Utensils } from '@lucide/vue'
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, FilterX, Plus, SearchX, Utensils } from '@lucide/vue'
 import StatoVuoto from '@/components/StatoVuoto.vue'
 import ErroreLista from '@/components/liste/ErroreLista.vue'
 import CaricamentoLista from '@/components/liste/CaricamentoLista.vue'
@@ -23,6 +23,7 @@ import { inizialiPaziente } from '@/utils/paziente'
 import { useVistaLista } from '@/composables/useVistaLista'
 import VistaListaToggle from '@/components/liste/VistaListaToggle.vue'
 import OrdinamentoSchede from '@/components/liste/OrdinamentoSchede.vue'
+import { TONI_STATO } from '@/utils/toniStato'
 
 const { vista, classiTabella, classiSchede } = useVistaLista('piani')
 
@@ -43,15 +44,15 @@ const ETICHETTE_STATO: Record<StatoPiano, string> = {
 
 const ETICHETTE_MODALITA: Record<ModalitaPiano, string> = {
   PASTI: 'Piano con pasti',
-  MACRO: 'Macros',
+  MACRO: 'Macronutrienti',
   ESEMPI: 'Esempi intercambiabili',
 }
 
+// Stesso codice colori della lista pazienti (`toniStato.ts`): la bozza è da completare, il concluso è neutro.
 const CLASSI_STATO: Record<StatoPiano, string> = {
-  BOZZA: 'bg-(--warn-bg) text-(--warn-fg)',
-  ATTIVO: 'bg-(--mint) text-(--green-d)',
-  // Un piano concluso è la fine normale del ciclo, non un errore: grigio neutro invece del rosso.
-  CONCLUSO: 'bg-(--hover) text-(--fg3)',
+  BOZZA: TONI_STATO.daFare,
+  ATTIVO: TONI_STATO.attivo,
+  CONCLUSO: TONI_STATO.neutro,
 }
 
 // Stesso avatar a iniziali della lista pazienti, colorato come il badge di stato del piano.
@@ -255,7 +256,7 @@ const conteggioTesto = computed(() => {
     <div class="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 class="font-heading text-3xl italic text-(--fg)">Piani alimentari</h1>
-        <p class="mt-1 text-sm text-(--fg3)">Gestisci i piani alimentari dei tuoi pazienti.</p>
+        <p class="mt-1 text-sm text-(--fg3)">Bozze, piani attivi e conclusi di tutti i pazienti.</p>
       </div>
       <Button as-child>
         <router-link to="/piani-alimentari/nuovo"><Plus :size="16" /> Nuovo piano</router-link>
@@ -333,7 +334,7 @@ const conteggioTesto = computed(() => {
       <VistaListaToggle v-model="vista" />
     </div>
 
-    <section class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)">
+    <section class="overflow-clip rounded-2xl border border-(--bd) bg-(--surf)">
       <ErroreLista v-if="errore" messaggio="Non è stato possibile caricare i piani alimentari." @riprova="carica" />
       <CaricamentoLista v-else-if="caricamentoIniziale" etichetta="Caricamento i piani alimentari" />
 
@@ -394,7 +395,7 @@ const conteggioTesto = computed(() => {
           </li>
         </ul>
 
-        <div class="overflow-x-auto" :class="[classiTabella(), { 'pointer-events-none opacity-60': aggiornamentoInCorso }]">
+        <div class="overflow-x-auto xl:overflow-x-visible" :class="[classiTabella(), { 'pointer-events-none opacity-60': aggiornamentoInCorso }]">
           <Table>
             <TableHeader>
               <TableRow>
@@ -429,7 +430,11 @@ const conteggioTesto = computed(() => {
                     <span class="flex h-9 w-9 flex-none items-center justify-center rounded-full text-[13px] font-semibold" :class="CLASSI_STATO[riga.stato]">
                       {{ inizialiPaziente(riga.pazienteNome ?? '', riga.pazienteCognome ?? '') || '—' }}
                     </span>
-                    <span class="font-semibold text-(--fg)">{{ riga.pazienteNomeCompleto }}</span>
+                    <!-- Nome ed email come nella lista pazienti. -->
+                    <div class="min-w-0">
+                      <div class="font-semibold text-(--fg)">{{ riga.pazienteNomeCompleto }}</div>
+                      <div v-if="riga.pazienteEmail" class="text-xs text-(--fg3)">{{ riga.pazienteEmail }}</div>
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -456,16 +461,17 @@ const conteggioTesto = computed(() => {
       </template>
 
       <StatoVuoto v-else-if="!filtriAttivi" :icona="Utensils" titolo="Nessun piano presente" testo="Inizia creando il primo piano alimentare per un tuo paziente." livello="h2">
-        <Button as-child class="active:not-aria-[haspopup]:translate-y-0.5"><router-link to="/piani-alimentari/nuovo">Nuovo piano</router-link></Button>
+        <Button as-child class="active:not-aria-[haspopup]:translate-y-0.5"><Plus /> <router-link to="/piani-alimentari/nuovo">Nuovo piano</router-link></Button>
       </StatoVuoto>
       <StatoVuoto v-else :icona="SearchX" titolo="Nessun risultato trovato" testo="Prova a modificare o resettare i filtri applicati." livello="h2">
-        <Button type="button" variant="neutral" @click="pulisciFiltri">Pulisci filtri</Button>
+        <Button type="button" variant="neutral" @click="pulisciFiltri"><FilterX /> Pulisci filtri</Button>
       </StatoVuoto>
 
       <div v-if="paginaDati && !errore" class="flex items-center justify-between gap-3 border-t border-(--div) bg-(--soft) px-4.5 py-3">
         <span class="text-xs text-(--fg3)">{{ conteggioTesto }}</span>
-        <div class="flex gap-2">
-          <Button type="button" variant="neutral" size="sm" :disabled="pagina === 0" @click="paginaPrecedente">Precedente</Button>
+        <!-- Con una pagina sola i pulsanti sarebbero entrambi disattivati: resta solo il conteggio. -->
+        <div v-if="paginaDati.totalePagine > 1" class="flex gap-2">
+          <Button type="button" variant="neutral" size="sm" :disabled="pagina === 0" @click="paginaPrecedente"><ChevronLeft /> Precedente</Button>
           <Button
             type="button"
             variant="neutral"
@@ -473,7 +479,7 @@ const conteggioTesto = computed(() => {
             :disabled="!paginaDati || pagina >= paginaDati.totalePagine - 1"
             @click="paginaSuccessiva"
           >
-            Successivo
+            Successivo <ChevronRight />
           </Button>
         </div>
       </div>

@@ -31,7 +31,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { ArrowLeft, History } from '@lucide/vue'
+import { ArrowLeft, History, LogOut, Pencil } from '@lucide/vue'
 import { formattaDataItalianaConMese } from '@/utils/data'
 import { formattaNumero } from '@/utils/visita'
 
@@ -326,8 +326,8 @@ async function onSubmit() {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel data-test="conferma-annulla-continua">Continua a compilare</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-annulla-esci" @click="confermaAnnulla">Esci senza salvare</AlertDialogAction>
+          <AlertDialogCancel data-test="conferma-annulla-continua"><Pencil /> Continua a compilare</AlertDialogCancel>
+          <AlertDialogAction data-test="conferma-annulla-esci" @click="confermaAnnulla"><LogOut /> Esci senza salvare</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

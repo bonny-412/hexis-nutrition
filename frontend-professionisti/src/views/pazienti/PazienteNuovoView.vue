@@ -29,7 +29,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { ArrowLeft } from '@lucide/vue'
+import { ArrowLeft, LogOut, Pencil } from '@lucide/vue'
 
 // Import di tutti i filtri, regex e validatori dal file esterno
 import {
@@ -323,13 +323,14 @@ async function onSubmit() {
           </div>
 
           <div class="flex flex-col gap-1.5">
-            <Label for="stile-di-vita" class="text-[13px] font-medium text-(--fg2)">Stile di vita</Label>
+            <Label for="stile-di-vita" class="text-[13px] font-medium text-(--fg2)">Livello di attività</Label>
             <Select :model-value="stileDiVita || VALORE_SELEZIONA" @update:model-value="onStileDiVitaChange">
-              <SelectTrigger id="stile-di-vita" class="w-full">
+              <SelectTrigger id="stile-di-vita" class="w-full" :class="{ 'text-(--fg3)': !stileDiVita }">
                 <SelectValue placeholder="Seleziona" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem :value="VALORE_SELEZIONA">Seleziona</SelectItem>
+                <!-- Voce per togliere il valore: "Non indicato" e non "Seleziona", che sembrava un valore già scelto. -->
+                <SelectItem :value="VALORE_SELEZIONA">Non indicato</SelectItem>
                 <SelectItem value="SEDENTARIO">Sedentario</SelectItem>
                 <SelectItem value="POCO_ATTIVO">Poco attivo</SelectItem>
                 <SelectItem value="ATTIVO">Attivo</SelectItem>
@@ -341,13 +342,13 @@ async function onSubmit() {
         </div>
 
         <div class="mt-5 flex flex-col gap-1.5">
-          <Label for="note" class="text-[13px] font-medium text-(--fg2)">Storia paziente</Label>
+          <Label for="note" class="text-[13px] font-medium text-(--fg2)">Storia del paziente</Label>
           <Textarea id="note" v-model="note" maxlength="2000" placeholder="Es. vive da solo, fuma, beve, è autonomo, allergie, patologie…" />
           <p class="text-right text-xs text-(--fg3)">{{ note.length }}/2000</p>
         </div>
 
         <div class="mt-5 flex flex-col gap-1.5">
-          <Label for="trattamenti" class="text-[13px] font-medium text-(--fg2)">Trattamenti/Terapie</Label>
+          <Label for="trattamenti" class="text-[13px] font-medium text-(--fg2)">Terapie in corso</Label>
           <Textarea id="trattamenti" v-model="trattamenti" maxlength="2000" placeholder="Es. terapie farmacologiche in corso, integratori, trattamenti…" />
           <p class="text-right text-xs text-(--fg3)">{{ trattamenti.length }}/2000</p>
         </div>
@@ -374,8 +375,8 @@ async function onSubmit() {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel data-test="conferma-annulla-continua">Continua a compilare</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-annulla-esci" @click="confermaAnnulla">Esci senza salvare</AlertDialogAction>
+          <AlertDialogCancel data-test="conferma-annulla-continua"><Pencil /> Continua a compilare</AlertDialogCancel>
+          <AlertDialogAction data-test="conferma-annulla-esci" @click="confermaAnnulla"><LogOut /> Esci senza salvare</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

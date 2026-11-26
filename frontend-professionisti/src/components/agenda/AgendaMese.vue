@@ -61,7 +61,8 @@ const celle = computed(() => {
             {{ c.numero }}
           </button>
           <span v-if="c.festa" class="min-w-0 flex-1 truncate text-[10px] font-semibold text-(--warn-fg)" :title="c.festa">{{ c.festa }}</span>
-          <span v-if="c.visite > 0" class="ml-auto flex-none text-[10.5px] font-semibold text-(--fg3)">{{ c.visite }}</span>
+          <!-- Con la parola: un numero da solo nell'angolo non diceva cosa contava. -->
+          <span v-if="c.visite > 0" class="ml-auto flex-none text-[10.5px] font-semibold text-(--fg3)">{{ c.visite }} {{ c.visite === 1 ? 'visita' : 'visite' }}</span>
         </div>
         <button
           v-for="a in c.mostrati"

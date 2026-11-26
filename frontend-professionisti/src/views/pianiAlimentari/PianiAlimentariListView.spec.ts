@@ -34,7 +34,7 @@ describe('PianiAlimentariListView', () => {
   beforeEach(() => {
     vi.mocked(api.cerca).mockResolvedValue({
       contenuto: [
-        { id: '1', pazienteNomeCompleto: 'Mario Bianchi', pazienteNome: 'Mario', pazienteCognome: 'Bianchi', nome: 'Ipertrofia · fase 2', stato: 'ATTIVO', obiettivoKcal: 2800, modalita: 'PASTI', dataInizio: '2026-09-05', dataFine: '2026-09-18' },
+        { id: '1', pazienteNomeCompleto: 'Mario Bianchi', pazienteNome: 'Mario', pazienteCognome: 'Bianchi', pazienteEmail: 'mario@example.com', nome: 'Ipertrofia · fase 2', stato: 'ATTIVO', obiettivoKcal: 2800, modalita: 'PASTI', dataInizio: '2026-09-05', dataFine: '2026-09-18' },
       ],
       paginaCorrente: 0, dimensionePagina: 20, totaleElementi: 1, totalePagine: 1,
     })

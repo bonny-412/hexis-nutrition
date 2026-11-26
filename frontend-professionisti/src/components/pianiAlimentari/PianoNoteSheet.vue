@@ -17,7 +17,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog'
-import { Trash2 } from '@lucide/vue'
+import { Plus, Trash2, X } from '@lucide/vue'
 import { formattaDataItalianaConMese } from '@/utils/data'
 
 const props = defineProps<{
@@ -118,6 +118,7 @@ async function confermaElimina() {
             />
           </div>
           <Button type="submit" data-test="aggiungi-nota" :disabled="!testo.trim() || !data || salvataggioInCorso">
+            <Plus />
             Aggiungi nota
           </Button>
         </form>
@@ -155,8 +156,9 @@ async function confermaElimina() {
         <AlertDialogDescription>L'operazione non è reversibile.</AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogCancel variant="neutral">Annulla</AlertDialogCancel>
+        <AlertDialogCancel variant="neutral"><X /> Annulla</AlertDialogCancel>
         <AlertDialogAction data-test="conferma-elimina-nota" variant="destructive" @click="confermaElimina">
+          <Trash2 />
           Elimina nota
         </AlertDialogAction>
       </AlertDialogFooter>

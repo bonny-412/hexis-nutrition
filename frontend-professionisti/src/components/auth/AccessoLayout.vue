@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { ShieldCheck } from '@lucide/vue'
-
 // Cornice comune di login, password dimenticata e nuova password: pannello scuro con il marchio
 // da 768 px in su, logo compatto sopra il modulo da mobile. Il contenuto (titolo e modulo) va nello slot.
 </script>
@@ -19,22 +17,18 @@ import { ShieldCheck } from '@lucide/vue'
       </div>
 
       <div class="relative z-10 my-auto max-w-lg py-12">
-        <div class="mb-6 inline-flex items-center gap-2 rounded-full bg-(--side-act-bg) px-3.5 py-1.5 text-xs font-medium text-(--side-fg) ring-1 ring-(--side-bd)">
-          <ShieldCheck :size="14" />
-          <span>Piattaforma clinica avanzata</span>
-        </div>
         <!-- Motto del marchio, non un titolo: il titolo della pagina è l'h1 del modulo. -->
         <p class="font-heading text-4xl font-normal italic leading-tight text-(--on-hero) xl:text-5xl">
           Il tuo studio nutrizionale, in un unico posto.
         </p>
         <p class="mt-4 text-base leading-relaxed text-(--side-fg)">
-          Pazienti, piani alimentari e agenda: una suite integrata pensata per valorizzare la tua professione ogni giorno.
+          Pazienti, visite, piani alimentari e agenda: dalla prima visita al controllo successivo.
         </p>
       </div>
 
       <div class="relative z-10 flex items-center justify-between text-xs text-(--side-fg)">
+        <!-- "Privacy Policy" tolta finché non esiste la pagina: era testo che sembrava un link. -->
         <span>© 2026 Hexis Nutrition</span>
-        <span>Privacy Policy</span>
       </div>
     </div>
 
