@@ -230,10 +230,12 @@ async function onSubmit() {
 <template>
   <AppShell>
     <div class="mb-6">
-      <router-link to="/pazienti" class="group inline-flex items-center gap-1.5 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)">
-        <ArrowLeft :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:-translate-x-0.5" />
-        <span>Torna alla lista pazienti</span>
-      </router-link>
+      <Button as-child variant="ghost-primary" size="sm" class="group font-semibold">
+        <router-link to="/pazienti">
+          <ArrowLeft aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:-translate-x-0.5" />
+          Torna alla lista pazienti
+        </router-link>
+      </Button>
       <h1 class="font-heading text-3xl italic text-(--fg)">Nuovo paziente</h1>
       <p class="mt-1 text-sm text-(--fg3)">
         Inserisci le informazioni personali e i dati della prima visita per registrare una nuova scheda clinica.

@@ -125,6 +125,12 @@ function navigaRisultati(evento: KeyboardEvent) {
   opzione?.scrollIntoView?.({ block: 'nearest' })
 }
 
+function evidenziaConPuntatore(evento: PointerEvent) {
+  if (evento.pointerType !== 'mouse' || !(evento.target instanceof Element)) return
+  const opzione = evento.target.closest<HTMLButtonElement>('button[role="option"]:enabled')
+  if (opzione) idSelezionato.value = opzione.id
+}
+
 function onKeydown(evento: KeyboardEvent) {
   if (evento.defaultPrevented || evento.isComposing) return
   if ((evento.metaKey || evento.ctrlKey) && evento.key.toLowerCase() === 'k') {
@@ -213,7 +219,7 @@ function vediTuttiRisultati() {
           </button>
         </div>
 
-        <div :id="idRisultati" ref="listaRisultati" role="listbox" aria-label="Risultati di ricerca" class="max-h-80 overflow-y-auto p-2">
+        <div :id="idRisultati" ref="listaRisultati" role="listbox" aria-label="Risultati di ricerca" class="max-h-80 overflow-y-auto p-2" @pointermove="evidenziaConPuntatore">
           <div v-if="azioniFiltrate.length > 0" role="group" aria-label="Azioni">
             <div aria-hidden="true" class="px-2.5 pb-1 pt-2 text-xs font-medium text-(--fg3)">Azioni</div>
             <button
@@ -249,12 +255,15 @@ function vediTuttiRisultati() {
               @click="selezionaPaziente(paziente)"
             >
               <span
-                class="flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold"
+                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold"
                 :class="classiAvatarPaziente(paziente)"
               >
                 {{ inizialiPaziente(paziente.nome, paziente.cognome) }}
               </span>
-              {{ paziente.nome }} {{ paziente.cognome }}
+              <span class="min-w-0">
+                <span class="block truncate font-medium">{{ paziente.nome }} {{ paziente.cognome }}</span>
+                <span v-if="paziente.email" class="block truncate text-xs text-(--fg3)">{{ paziente.email }}</span>
+              </span>
             </button>
             <button
               v-if="pazientiTotale > pazientiRisultati.length"
@@ -294,15 +303,8 @@ function vediTuttiRisultati() {
   cursor: pointer;
 }
 
-@media (hover: hover) {
-  .risultato:enabled[aria-selected='false']:hover {
-    background-color: var(--mint);
-    box-shadow: inset 0 0 0 1px var(--sage);
-  }
-}
-
 .risultato[aria-selected='true'] {
-  background-color: color-mix(in srgb, var(--mint), var(--sage) 22%);
-  box-shadow: inset 3px 0 var(--green-d), inset 0 0 0 1px var(--sage);
+  background-color: var(--mint);
+  box-shadow: inset 0 0 0 1px var(--sage);
 }
 </style>

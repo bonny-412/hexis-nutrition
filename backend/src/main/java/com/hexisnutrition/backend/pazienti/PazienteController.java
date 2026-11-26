@@ -80,7 +80,8 @@ public class PazienteController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataUltimaVisitaDa,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataUltimaVisitaA,
             @RequestParam(defaultValue = "false") boolean archiviato,
-            @RequestParam(required = false) Integer prossimaVisitaEntroGiorni) {
+            @RequestParam(required = false) Integer prossimaVisitaEntroGiorni,
+            @RequestParam(defaultValue = "false") boolean senzaProssimaVisita) {
         if (prossimaVisitaEntroGiorni != null && !GIORNI_PROSSIMA_VISITA_AMMESSI.contains(prossimaVisitaEntroGiorni)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "prossimaVisitaEntroGiorni ammesso: 7, 14, 21, 30");
         }
@@ -92,7 +93,8 @@ public class PazienteController {
                 ? Sort.by(direzioneSort, "cognome", "nome")
                 : Sort.by(direzioneSort, ordinaPer.name());
         Pageable pageable = PageRequest.of(paginaEffettiva, dimensioneEffettiva, ordinamento);
-        CriteriRicercaPazienti criteri = new CriteriRicercaPazienti(ricerca, statoAccount, obiettivo, dataUltimaVisitaDa, dataUltimaVisitaA, archiviato, prossimaVisitaEntroGiorni);
+        CriteriRicercaPazienti criteri = new CriteriRicercaPazienti(ricerca, statoAccount, obiettivo,
+                dataUltimaVisitaDa, dataUltimaVisitaA, archiviato, prossimaVisitaEntroGiorni, senzaProssimaVisita);
         Page<Paziente> pagina1 = pazienteService.cerca(professionistaId, criteri, pageable);
         List<UUID> idPagina = pagina1.getContent().stream().map(Paziente::getId).toList();
         Map<UUID, Visita> ultimeVisite = pazienteService.ultimeVisitePerPazienti(idPagina);

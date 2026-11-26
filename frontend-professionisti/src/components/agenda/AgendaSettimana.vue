@@ -68,6 +68,7 @@ const colonne = computed(() =>
     return {
       iso,
       nome: NOMI_GIORNI[i],
+      domenica: i === 6,
       numero: Number(iso.slice(8)),
       festa: festivitaDelGiorno(iso),
       eOggi: iso === oggi.value,
@@ -122,7 +123,7 @@ function testoEvento(a: Appuntamento): string {
           v-for="c in colonne"
           :key="c.iso"
           class="flex min-w-0 flex-col gap-1 border-l border-(--bd) px-2 py-2.5"
-          :class="c.festa ? 'bg-(--warn-bg)' : c.eOggi ? 'bg-(--mint)' : ''"
+          :class="c.eOggi && (!c.festa || c.domenica) ? 'bg-(--mint)' : c.festa ? 'bg-(--warn-bg)' : c.domenica ? 'bg-(--agenda-domenica)' : ''"
           :data-test="`settimana-intestazione-${c.iso}`"
         >
           <div class="flex items-center gap-2">
@@ -171,7 +172,7 @@ function testoEvento(a: Appuntamento): string {
           v-for="c in colonne"
           :key="c.iso"
           class="relative min-w-0 border-l border-(--bd)"
-          :class="c.festa ? 'bg-(--warn-bg)' : c.eOggi ? 'bg-(--mint)/40' : ''"
+          :class="c.eOggi && (!c.festa || c.domenica) ? 'bg-(--mint)/40' : c.festa ? 'bg-(--warn-bg)' : c.domenica ? 'bg-(--agenda-domenica)' : ''"
           :data-test="`settimana-colonna-${c.iso}`"
         >
           <div v-for="h in ORE" :key="h" class="h-[58px] border-t border-(--div)" />

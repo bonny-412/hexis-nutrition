@@ -76,17 +76,25 @@ public final class PazienteSpecifications {
      * giorno oggi + giorni (estremo incluso).
      */
     public static Specification<Paziente> conProssimaVisitaEntro(int giorni) {
+        return conProssimaVisita(giorni);
+    }
+
+    public static Specification<Paziente> senzaProssimaVisita() {
+        return Specification.not(conProssimaVisita(null));
+    }
+
+    private static Specification<Paziente> conProssimaVisita(Integer giorni) {
         return (root, query, cb) -> {
             LocalDateTime adesso = AgendaTempo.adesso();
             LocalDate oggi = adesso.toLocalDate();
-            LocalDate ultimoGiorno = oggi.plusDays(giorni);
             Subquery<UUID> sub = query.subquery(UUID.class);
             var app = sub.from(Appuntamento.class);
             sub.select(app.<UUID>get("id")).where(cb.and(
                     cb.equal(app.get("pazienteId"), root.get("id")),
                     cb.equal(app.get("stato"), StatoAppuntamento.PROGRAMMATA),
                     app.get("tipo").in(TipoAppuntamento.VISITA_STUDIO, TipoAppuntamento.VIDEOCONSULTO),
-                    cb.lessThanOrEqualTo(app.<LocalDate>get("data"), ultimoGiorno),
+                    cb.isNotNull(app.get("oraInizio")),
+                    giorni == null ? cb.conjunction() : cb.lessThanOrEqualTo(app.<LocalDate>get("data"), oggi.plusDays(giorni)),
                     cb.or(
                             cb.greaterThan(app.<LocalDate>get("data"), oggi),
                             cb.and(cb.equal(app.get("data"), oggi),

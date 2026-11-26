@@ -9,6 +9,7 @@ public record CriteriRicercaPazienti(
         LocalDate dataUltimaVisitaDa,
         LocalDate dataUltimaVisitaA,
         boolean archiviato,
-        Integer prossimaVisitaEntroGiorni
+        Integer prossimaVisitaEntroGiorni,
+        boolean senzaProssimaVisita
 ) {
 }

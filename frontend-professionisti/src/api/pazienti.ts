@@ -42,6 +42,7 @@ export interface CriteriRicercaPazienti {
   dataUltimaVisitaA?: string
   archiviato?: boolean
   prossimaVisitaEntroGiorni?: 7 | 14 | 21 | 30
+  senzaProssimaVisita?: boolean
 }
 
 export interface PaginaPazienti {
@@ -217,6 +218,7 @@ export function cerca(criteri: CriteriRicercaPazienti = {}): Promise<PaginaPazie
   if (criteri.dataUltimaVisitaA) parametri.set('dataUltimaVisitaA', criteri.dataUltimaVisitaA)
   if (criteri.archiviato !== undefined) parametri.set('archiviato', String(criteri.archiviato))
   if (criteri.prossimaVisitaEntroGiorni) parametri.set('prossimaVisitaEntroGiorni', String(criteri.prossimaVisitaEntroGiorni))
+  if (criteri.senzaProssimaVisita) parametri.set('senzaProssimaVisita', 'true')
 
   const query = parametri.toString()
   return apiRequest<PaginaPazienti>(`/pazienti/ricerca${query ? `?${query}` : ''}`)

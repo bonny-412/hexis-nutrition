@@ -66,14 +66,14 @@ function esegui(azione: AzioneAppuntamento) {
   <Dialog :open="aperto" @update:open="emit('update:aperto', $event)">
     <DialogContent class="sm:max-w-lg" data-test="appuntamento-dettaglio-dialog">
       <template v-if="a">
-        <DialogHeader>
+        <DialogHeader class="shrink-0">
           <!-- Promemoria e fasce bloccate hanno un titolo fisso: il loro testo compare solo nel corpo, non due volte. -->
           <p v-if="eVisita" class="text-xs font-semibold text-(--fg3)" data-test="dettaglio-tipo">{{ etichettaTipo(a) }}</p>
           <DialogTitle class="font-heading text-xl italic" data-test="dettaglio-titolo">{{ titoloDialog }}</DialogTitle>
           <DialogDescription class="sr-only">Dettaglio dell'impegno selezionato in agenda.</DialogDescription>
         </DialogHeader>
 
-        <dl class="space-y-3 text-sm">
+        <dl class="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-1 py-1 text-sm">
           <div>
             <dt class="text-[13px] font-medium text-(--fg2)">Data e ora</dt>
             <dd class="mt-0.5 text-(--fg)" data-test="dettaglio-data">{{ dataEstesa }} · {{ orario }}</dd>

@@ -142,12 +142,12 @@ onMounted(() => {
   <AppShell>
     <!-- Link Torna Indietro -->
     <div>
-      <router-link to="/pazienti"
-        class="group inline-flex items-center gap-1.5 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)"
-      >
-        <ArrowLeft :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:-translate-x-0.5" />
-        <span>Torna alla lista pazienti</span>
-      </router-link>
+      <Button as-child variant="ghost-primary" size="sm" class="group font-semibold">
+        <router-link to="/pazienti">
+          <ArrowLeft aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:-translate-x-0.5" />
+          Torna alla lista pazienti
+        </router-link>
+      </Button>
     </div>
 
     <!-- Stato Errore Caricamento -->

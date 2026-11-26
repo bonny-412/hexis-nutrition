@@ -5,8 +5,11 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import DashboardView from './DashboardView.vue'
 import DaFareCard from '@/components/dashboard/DaFareCard.vue'
 import * as pazientiApi from '@/api/pazienti'
+import * as agendaApi from '@/api/agenda'
+import { aggiungiGiorni, inizioSettimana, oggiIso } from '@/utils/agenda'
 
 vi.mock('@/api/pazienti')
+vi.mock('@/api/agenda')
 
 function creaRouter() {
   return createRouter({
@@ -77,5 +80,26 @@ describe('DashboardView', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('—')
+  })
+
+  it('mostra i giorni liberi solo dopo il caricamento dei sette giorni di Agenda', async () => {
+    vi.mocked(agendaApi.elenco).mockRejectedValueOnce(new Error('rete')).mockResolvedValueOnce([])
+    const router = creaRouter()
+    await router.push('/')
+    const wrapper = mount(DashboardView, { global: { plugins: [router, createTestingPinia()] } })
+    await flushPromises()
+
+    const striscia = wrapper.get('[data-test="dashboard-settimana"]')
+    const lunedi = inizioSettimana(oggiIso())
+    expect(agendaApi.elenco).toHaveBeenCalledWith(lunedi, aggiungiGiorni(lunedi, 6))
+    expect(striscia.findAll('a')).toHaveLength(7)
+    expect(striscia.text()).toContain('Riepilogo agenda non disponibile')
+    expect(striscia.text()).not.toContain('Libero')
+
+    await wrapper.get('button[aria-label="Riprova a caricare gli impegni"]').trigger('click')
+    await flushPromises()
+    expect(striscia.text()).toContain('Libero')
+    expect(striscia.text()).not.toContain('non disponibile')
+    wrapper.unmount()
   })
 })

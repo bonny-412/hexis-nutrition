@@ -161,12 +161,12 @@ function aggiungiManuale() {
 <template>
   <Dialog :open="props.open" @update:open="(v) => !v && chiudi()">
     <!-- Ancorato in alto invece che centrato: con i risultati che arrivano il dialog non deve saltare. -->
-    <DialogContent class="sm:top-[10vh] sm:translate-y-0 sm:max-w-lg" @open-auto-focus="focusRicerca">
-      <DialogHeader>
+    <DialogContent class="sm:top-[10dvh] sm:max-h-[calc(90dvh-1rem)] sm:translate-y-0 sm:max-w-lg" @open-auto-focus="focusRicerca">
+      <DialogHeader class="shrink-0">
         <DialogTitle>Aggiungi alimento</DialogTitle>
       </DialogHeader>
 
-      <div class="flex gap-1 border-b border-(--div) px-1">
+      <div class="flex shrink-0 gap-1 border-b border-(--div) px-1">
         <button
           data-test="tab-cerca"
           class="border-b-2 px-1 py-2 text-sm font-bold"
@@ -185,9 +185,9 @@ function aggiungiManuale() {
         </button>
       </div>
 
-      <div v-if="modo === 'cerca'" class="flex flex-col gap-3">
-        <Input ref="inputCerca" v-model="query" autocomplete="off" placeholder="Cerca per nome o categoria…" />
-        <div class="flex h-80 flex-col gap-1 overflow-y-auto">
+      <div v-if="modo === 'cerca'" class="flex min-h-0 flex-1 flex-col gap-3">
+        <Input ref="inputCerca" v-model="query" class="shrink-0" autocomplete="off" placeholder="Cerca per nome o categoria…" />
+        <div class="flex h-80 min-h-0 flex-col gap-1 overflow-y-auto overscroll-contain">
           <p v-if="!query.trim()" class="p-4 text-center text-sm text-(--fg3)">
             Scrivi il nome di un alimento, per esempio «pasta» o «yogurt».
           </p>
@@ -210,7 +210,7 @@ function aggiungiManuale() {
         </div>
       </div>
 
-      <div v-else class="flex flex-col gap-3">
+      <div v-else class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-1 py-1">
         <label class="flex flex-col gap-1">
           <span class="text-[13px] font-medium text-(--fg2)">Nome alimento</span>
           <Input data-test="manuale-nome" v-model="manualeNome" placeholder="Es. Insalata mista condita" :aria-invalid="!!errori.nome" />

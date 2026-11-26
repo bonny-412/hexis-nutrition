@@ -1076,15 +1076,12 @@ function stampaPdf() {
     <div v-else-if="erroreCaricamento" class="p-6 text-sm text-(--danger)">{{ erroreCaricamento }}</div>
 
     <div v-else class="flex flex-col gap-4">
-      <router-link
-        :to="linkIndietro"
-        data-test="link-indietro"
-        class="group inline-flex w-fit items-center gap-1.5 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green) print:hidden"
-        @click.capture.prevent="annulla"
-      >
-        <ArrowLeft :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:-translate-x-0.5" />
-        <span>{{ testoLinkIndietro }}</span>
-      </router-link>
+      <Button as-child variant="ghost-primary" size="sm" class="group font-semibold w-fit print:hidden">
+        <router-link :to="linkIndietro" data-test="link-indietro" @click.capture.prevent="annulla">
+          <ArrowLeft aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:-translate-x-0.5" />
+          {{ testoLinkIndietro }}
+        </router-link>
+      </Button>
 
       <div v-if="!pronto">
         <h1 class="font-heading text-3xl italic text-(--fg)">Nuovo piano alimentare</h1>

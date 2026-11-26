@@ -16,9 +16,10 @@
   --div: #EAF1EE;
   --soft: #FAFCFB;
   --hover: #E8F0ED;
+  --agenda-domenica: #E5E8EE;
   --fg: #183C3A;
   --fg2: #4A6663;
-  --fg3: #5A7673;
+  --fg3: #506B68;
   --fg4: #596F6C;
   --green: #087F74;
   --green-d: #06675F;
@@ -85,7 +86,7 @@
   --destructive: var(--danger);
   --border: var(--bd2);
   --input: var(--bd2);
-  --ring: var(--sage);
+  --ring: #267D72;
   --radius: 0.625rem;
   --sidebar: var(--side);
   --sidebar-foreground: var(--side-fg);
@@ -111,11 +112,12 @@
   --div: #203230;
   --soft: #1A2926;
   --hover: #1E2E2B;
+  --agenda-domenica: #29323D;
 
   /* Testi */
   --fg: #E4EDEB;
   --fg2: #A7B9B5;
-  --fg3: #879B97;
+  --fg3: #8DA19D;
   --fg4: #7A8F8B; /* 4,7:1 sulle card (prima 4,1:1) */
 
   /* Petrolio: schiarito per il contrasto, testo scuro sopra */

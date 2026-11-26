@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { CalendarCheck, ChevronLeft, ChevronRight } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
+import SelettoreSegmentato from '@/components/ui/SelettoreSegmentato.vue'
 import {
   aggiungiGiorni,
   aggiungiMesi,
@@ -74,21 +75,14 @@ function sposta(direzione: 1 | -1) {
         </button>
       </div>
 
-      <!-- Stesso selettore a segmenti di Tabella/Schede (VistaListaToggle): un solo stile in tutta l'app. -->
-      <div class="inline-flex items-center rounded-lg border border-(--bd2) bg-(--surf) p-0.5" role="group" aria-label="Vista">
-        <button
-          v-for="v in viste"
-          :key="v.valore"
-          type="button"
-          class="flex h-7 items-center rounded-md px-2.5 text-xs font-semibold transition-colors"
-          :class="vista === v.valore ? 'bg-(--mint) text-(--green-d)' : 'text-(--fg3) hover:text-(--fg)'"
-          :aria-pressed="vista === v.valore"
-          :data-test="`agenda-vista-${v.valore}`"
-          @click="emit('update:vista', v.valore)"
-        >
-          {{ v.etichetta }}
-        </button>
-      </div>
+      <SelettoreSegmentato
+        :model-value="vista"
+        :opzioni="viste"
+        etichetta="Vista dell'agenda"
+        prefisso-test="agenda-vista"
+        class="inline-flex"
+        @update:model-value="emit('update:vista', $event)"
+      />
     </div>
   </div>
 </template>

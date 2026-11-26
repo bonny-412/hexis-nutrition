@@ -232,6 +232,9 @@ public class PazienteService {
         if (criteri.prossimaVisitaEntroGiorni() != null) {
             specifiche.add(PazienteSpecifications.conProssimaVisitaEntro(criteri.prossimaVisitaEntroGiorni()));
         }
+        if (criteri.senzaProssimaVisita()) {
+            specifiche.add(PazienteSpecifications.senzaProssimaVisita());
+        }
         Specification<Paziente> specifica = Specification.allOf(specifiche);
 
         Sort.Order ordinePrincipale = pageable.getSort().stream().findFirst().orElse(null);

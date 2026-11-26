@@ -236,15 +236,12 @@ async function onSubmit() {
   <AppShell>
     <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
-      <router-link
-        :to="linkIndietro"
-        data-test="link-indietro"
-        class="group inline-flex items-center gap-1.5 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--green)"
-        @click.capture.prevent="onAnnullaClick"
-      >
-        <ArrowLeft :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:-translate-x-0.5" />
-        <span>{{ testoLinkIndietro }}</span>
-      </router-link>
+      <Button as-child variant="ghost-primary" size="sm" class="group font-semibold">
+        <router-link :to="linkIndietro" data-test="link-indietro" @click.capture.prevent="onAnnullaClick">
+          <ArrowLeft aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:-translate-x-0.5" />
+          {{ testoLinkIndietro }}
+        </router-link>
+      </Button>
       <h1 class="font-heading text-3xl italic text-(--fg)">{{ modalitaModifica ? 'Modifica visita' : 'Nuova visita' }}</h1>
       <p v-if="sottotitolo" class="mt-1 text-sm text-(--fg3)">{{ sottotitolo }}</p>
       </div>
