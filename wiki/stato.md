@@ -771,7 +771,7 @@ Sessione senza codice. Un amico di Andrea, che promuove e finanzia Hexis, chiede
 
 **Aggiornato il 26 novembre 2026 (terzo giro di revisione UI), a fine sessione** (prevale sulle voci sotto): il terzo giro è chiuso, dettaglio in [`docs/ui-review-2026-11-26-giro3.md`](../docs/ui-review-2026-11-26-giro3.md). Giudizio: l'app è **chiara, moderna, accattivante e coerente** tra sezioni, componenti e pagine; restano rifiniture, non incoerenze di sistema. Si può tornare allo sviluppo di funzionalità.
 
-Da fare a mano: (1) **commit** di tutto il lavoro (backend, frontend, wiki, `docs/ui-review-2026-11-26-giro3.md`); (2) **riavviare il backend**: `GET /pazienti/{id}` ora restituisce obiettivo, ultima visita e ultimo piano (Dashboard), `pazienteEmail` nella lista piani; poi provare la Dashboard con Beatrice De Luca (deve dire "Ultima visita 25 nov" e "Piano in bozza", non "Prima visita").
+Da fare a mano: (1) ~~commit~~ (fatto da Andrea, `79b62a3`); (2) **riavviare il backend**: `GET /pazienti/{id}` ora restituisce obiettivo, ultima visita e ultimo piano (Dashboard), `pazienteEmail` nella lista piani; poi provare la Dashboard con Beatrice De Luca (deve dire "Ultima visita 25 nov" e "Piano in bozza", non "Prima visita").
 
 Da fare in UI, decisi da Andrea il 26 novembre (piccoli, si possono fare all'inizio della prossima sessione):
 1. **Dashboard, promemoria di oggi**: dentro la card "Prossime visite", nel gruppo "Oggi", in ordine di orario tra le visite (quelli senza orario in fondo al gruppo), ciascuno con la spunta per segnarlo fatto (`impostaFatto` esiste già in `api/agenda.ts`). La giornata si legge in un posto solo; il banner dice "1 promemoria da fare" ma oggi non si vede quale.
