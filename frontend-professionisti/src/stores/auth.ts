@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import * as authApi from '@/api/auth'
-import { ApiError } from '@/api/client'
+import { ApiError, eErroreConnessione } from '@/api/client'
 
 const STORAGE_KEY = 'hexis-auth-token'
 
@@ -46,14 +46,16 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function ripristinaSessione() {
-    if (!token.value) return
+    if (!token.value) return true
     try {
       await caricaProfilo()
     } catch (errore) {
       if (errore instanceof ApiError && errore.status === 401) {
         logout()
       }
+      return !eErroreConnessione(errore)
     }
+    return true
   }
 
   return { token, professionista, login, ripristinaSessione, logout }

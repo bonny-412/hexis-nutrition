@@ -38,6 +38,7 @@ const router = createRouter({
     { path: '/pazienti/:id', name: 'paziente-dettaglio', component: () => import('@/views/pazienti/PazienteDettaglioView.vue'), meta: { requiresAuth: true } },
     { path: '/pazienti/:id/visite/nuova', name: 'visita-nuova', component: () => import('@/views/pazienti/VisitaFormView.vue'), meta: { requiresAuth: true } },
     { path: '/pazienti/:id/visite/:visitaId/modifica', name: 'visita-modifica', component: () => import('@/views/pazienti/VisitaFormView.vue'), meta: { requiresAuth: true } },
+    { path: '/:pathMatch(.*)*', name: 'pagina-non-trovata', component: () => import('@/views/PaginaNonTrovataView.vue'), meta: { requiresAuth: false } },
   ],
 })
 

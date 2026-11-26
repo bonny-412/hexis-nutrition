@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { useAuthStore } from './auth'
 import * as authApi from '@/api/auth'
-import { ApiError } from '@/api/client'
+import { ApiError, ErroreRete } from '@/api/client'
 
 vi.mock('@/api/auth')
 
@@ -62,10 +62,10 @@ describe('useAuthStore', () => {
 
   it('ripristinaSessione non fa logout per un errore non-401 (es. rete assente)', async () => {
     localStorage.setItem('hexis-auth-token', 'valido')
-    vi.mocked(authApi.me).mockRejectedValue(new Error('network error'))
+    vi.mocked(authApi.me).mockRejectedValue(new ErroreRete(new TypeError('Failed to fetch')))
     const store = useAuthStore()
 
-    await store.ripristinaSessione()
+    await expect(store.ripristinaSessione()).resolves.toBe(false)
 
     expect(store.token).toBe('valido')
   })

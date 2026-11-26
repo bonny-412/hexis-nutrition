@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { useErroreConnessione } from '@/composables/useErroreConnessione'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { ArrowLeft, CalendarClock, CalendarPlus, CalendarX2, Check, ChevronDown, Lock, RotateCcw, StickyNote, Trash2, X } from '@lucide/vue'
 import AppShell from '@/components/AppShell.vue'
+import CaricamentoLista from '@/components/liste/CaricamentoLista.vue'
 import AgendaToolbar from '@/components/agenda/AgendaToolbar.vue'
 import AgendaGiorno from '@/components/agenda/AgendaGiorno.vue'
 import AgendaSettimana from '@/components/agenda/AgendaSettimana.vue'
@@ -53,22 +55,35 @@ const vista = ref<VistaAgenda>(
 const riferimento = ref(oggiIso())
 const filtro = ref<FiltroAgenda>('TUTTI')
 const appuntamenti = ref<Appuntamento[]>([])
-const caricamento = ref(false)
+const caricamento = ref(true)
 const errore = ref(false)
+const intervallo = computed(() => intervalloVisibile(vista.value, riferimento.value))
+const intervalloCaricato = ref<{ da: string; a: string } | null>(null)
+const caricamentoIntervallo = computed(() => caricamento.value && (
+  intervalloCaricato.value?.da !== intervallo.value.da || intervalloCaricato.value?.a !== intervallo.value.a
+))
 
 // Guardia sulla richiesta più recente: una risposta in ritardo non sovrascrive quella attuale.
 let richiestaElenco = 0
+
+const segnalaErroreConnessione = useErroreConnessione()
 
 async function carica() {
   const richiesta = ++richiestaElenco
   caricamento.value = true
   errore.value = false
   try {
-    const { da, a } = intervalloVisibile(vista.value, riferimento.value)
+    const { da, a } = intervallo.value
     const risultato = await elenco(da, a)
-    if (richiesta === richiestaElenco) appuntamenti.value = risultato
-  } catch {
-    if (richiesta === richiestaElenco) errore.value = true
+    if (richiesta === richiestaElenco) {
+      appuntamenti.value = risultato
+      intervalloCaricato.value = { da, a }
+    }
+  } catch (causa) {
+    if (richiesta === richiestaElenco) {
+      errore.value = true
+      segnalaErroreConnessione(causa)
+    }
   } finally {
     if (richiesta === richiestaElenco) caricamento.value = false
   }
@@ -368,8 +383,17 @@ function titoloEliminazione(a: Appuntamento | null): string {
       <Button type="button" variant="neutral" @click="carica"><RotateCcw /> Riprova</Button>
     </div>
 
-    <div v-else-if="caricamento && appuntamenti.length === 0" class="rounded-2xl border border-(--bd) bg-(--surf) p-14 text-center text-(--fg3)">
-      Caricamento…
+    <div v-else-if="caricamentoIntervallo" class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)">
+      <div v-if="vista !== 'GIORNO'" role="status">
+        <span class="sr-only">Caricamento dell’agenda</span>
+        <div aria-hidden="true" class="grid grid-cols-7 gap-px bg-(--div)">
+          <div v-for="giorno in 7" :key="giorno" class="bg-(--surf) p-2 sm:p-3">
+            <div class="mx-auto mb-3 h-3 w-5 rounded bg-(--hover) motion-safe:animate-pulse sm:w-8" />
+            <div v-for="riga in (vista === 'MESE' ? 5 : 4)" :key="riga" class="mt-2 h-12 rounded-lg bg-(--hover) motion-safe:animate-pulse sm:h-16" />
+          </div>
+        </div>
+      </div>
+      <CaricamentoLista v-else etichetta="Caricamento dell’agenda" :righe="4" />
     </div>
 
     <template v-else>

@@ -1,6 +1,8 @@
 <script setup lang="ts">
+import { useErroreConnessione } from '@/composables/useErroreConnessione'
 import { computed, ref, onMounted } from 'vue'
 import AppShell from '@/components/AppShell.vue'
+import CaricamentoLista from '@/components/liste/CaricamentoLista.vue'
 import { conteggioAttivi, cerca as cercaPazienti, dettaglio as dettaglioPaziente, type Paziente } from '@/api/pazienti'
 import { elenco as elencoAgenda, type Appuntamento } from '@/api/agenda'
 import { cerca as cercaPiani, type PianoAlimentareRigaLista } from '@/api/pianiAlimentari'
@@ -143,12 +145,15 @@ function gruppo<T>(esito: PromiseSettledResult<{ contenuto: T[]; totaleElementi:
   return { voci: esito.value.contenuto, totale: esito.value.totaleElementi }
 }
 
+const segnalaErroreConnessione = useErroreConnessione()
+
 async function caricaConteggio() {
   erroreCaricamento.value = false
   try {
     pazientiAttivi.value = await conteggioAttivi()
-  } catch {
+  } catch (causa) {
     erroreCaricamento.value = true
+    segnalaErroreConnessione(causa)
   }
 }
 
@@ -157,10 +162,10 @@ async function caricaAgenda() {
   try {
     agendaSettimana.value = await elencoAgenda(settimanaCorrente.da, settimanaCorrente.a)
     await caricaContestoPazienti()
-  } catch {
-    // Senza agenda il banner mostra solo il saluto: il resto della dashboard non dipende da questo.
+  } catch (causa) {
     agendaSettimana.value = null
     erroreAgenda.value = true
+    segnalaErroreConnessione(causa)
   }
 }
 
@@ -261,7 +266,7 @@ onMounted(() => Promise.all([caricaConteggio(), caricaAgenda(), caricaDaFare()])
             <p class="text-sm text-(--fg3)" role="status">Non è stato possibile caricare l'agenda.</p>
             <Button type="button" variant="neutral" size="sm" aria-label="Riprova a caricare gli impegni" @click="caricaAgenda"><RotateCcw /> Riprova</Button>
           </div>
-          <p v-else-if="gruppiAgenda === null" class="px-5 pb-5 text-sm text-(--fg3)" role="status">Caricamento degli impegni…</p>
+          <CaricamentoLista v-else-if="gruppiAgenda === null" etichetta="Caricamento degli impegni" :righe="3" />
           <StatoVuoto
             v-else-if="gruppiAgenda.length === 0"
             compatto
@@ -329,8 +334,12 @@ onMounted(() => Promise.all([caricaConteggio(), caricaAgenda(), caricaDaFare()])
         <div class="grid grid-cols-2 gap-4">
           <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4">
             <p class="text-xs font-semibold text-(--fg3)">Pazienti attivi</p>
-            <p class="mt-1 text-3xl font-semibold text-(--green-d) tabular-nums">
-              {{ erroreCaricamento ? '—' : (pazientiAttivi ?? '…') }}
+            <div v-if="pazientiAttivi === null && !erroreCaricamento" role="status" class="mt-1 flex h-9 items-center">
+              <span class="sr-only">Caricamento del conteggio dei pazienti</span>
+              <div aria-hidden="true" class="h-7 w-12 rounded bg-(--hover) motion-safe:animate-pulse" />
+            </div>
+            <p v-else class="mt-1 text-3xl font-semibold text-(--green-d) tabular-nums">
+              {{ erroreCaricamento ? '—' : pazientiAttivi }}
             </p>
             <div v-if="erroreCaricamento" class="mt-2 space-y-2">
               <p class="text-xs text-(--fg3)" role="status">Conteggio non disponibile.</p>
@@ -339,14 +348,18 @@ onMounted(() => Promise.all([caricaConteggio(), caricaAgenda(), caricaDaFare()])
           </div>
           <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4">
             <p class="text-xs font-semibold text-(--fg3)">Visite Lun-Dom</p>
-            <p class="mt-1 text-3xl font-semibold text-(--green-d) tabular-nums" data-test="dashboard-visite-settimana">
-              {{ erroreAgenda ? '—' : (visiteSettimana ?? '…') }}
+            <div v-if="visiteSettimana === null && !erroreAgenda" role="status" class="mt-1 flex h-9 items-center">
+              <span class="sr-only">Caricamento del conteggio delle visite</span>
+              <div aria-hidden="true" class="h-7 w-12 rounded bg-(--hover) motion-safe:animate-pulse" />
+            </div>
+            <p v-else class="mt-1 text-3xl font-semibold text-(--green-d) tabular-nums" data-test="dashboard-visite-settimana">
+              {{ erroreAgenda ? '—' : visiteSettimana }}
             </p>
             <p class="mt-1 text-xs text-(--fg3)">Programmate e concluse</p>
           </div>
         </div>
 
-        <div v-if="caricamentoDaFare" class="h-40 animate-pulse rounded-2xl bg-(--hover)" data-test="dashboard-da-fare-skeleton" />
+        <CaricamentoLista v-if="caricamentoDaFare" class="rounded-2xl border border-(--bd) bg-(--surf)" etichetta="Caricamento delle attività da fare" :righe="3" data-test="dashboard-da-fare-skeleton" />
         <DaFareCard v-else :in-scadenza="pianiInScadenza" :bozze="pianiInBozza" :mai-invitati="maiInvitati" :oggi="oggi" :fine-finestra-scadenze="fineFinestraScadenze" @invitato="onInvitato" />
       </div>
     </div>

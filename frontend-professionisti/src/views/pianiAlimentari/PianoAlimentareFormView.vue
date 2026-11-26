@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CaricamentoLista from '@/components/liste/CaricamentoLista.vue'
 import { scorriAlPrimoErrore } from '@/utils/form'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -1072,7 +1073,10 @@ function stampaPdf() {
 
 <template>
   <AppShell>
-    <div v-if="caricamento" class="p-6 text-sm text-(--fg3)">Caricamento…</div>
+    <div v-if="caricamento" class="space-y-4">
+      <div aria-hidden="true" class="h-8 w-60 max-w-full rounded-lg bg-(--hover) motion-safe:animate-pulse" />
+      <CaricamentoLista schede etichetta="Caricamento del piano alimentare" :righe="3" />
+    </div>
     <div v-else-if="erroreCaricamento" class="p-6 text-sm text-(--danger)">{{ erroreCaricamento }}</div>
 
     <div v-else class="flex flex-col gap-4">

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useErroreConnessione } from '@/composables/useErroreConnessione'
 import { TONI_STATO } from '@/utils/toniStato'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -64,6 +65,8 @@ function criteriCorrenti(): CriteriRicercaAlimenti {
   }
 }
 
+const segnalaErroreConnessione = useErroreConnessione()
+
 async function carica() {
   if (paginaDati.value === null) {
     caricamentoIniziale.value = true
@@ -78,8 +81,9 @@ async function carica() {
       return
     }
     paginaDati.value = risultato
-  } catch {
+  } catch (causa) {
     errore.value = true
+    segnalaErroreConnessione(causa)
   } finally {
     caricamentoIniziale.value = false
     aggiornamentoInCorso.value = false

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CaricamentoLista from '@/components/liste/CaricamentoLista.vue'
 import { scorriAlPrimoErrore } from '@/utils/form'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -270,9 +271,7 @@ async function onSubmit() {
       <p class="text-sm text-(--fg3)">{{ erroreCaricamento }}</p>
     </div>
 
-    <div v-else-if="caricamento" class="space-y-6">
-      <div class="h-64 animate-pulse rounded-2xl bg-(--hover)" />
-    </div>
+    <CaricamentoLista v-else-if="caricamento" schede etichetta="Caricamento dei dati della visita" :righe="2" />
 
     <template v-else>
       <SelezionaPazienteCombobox

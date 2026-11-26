@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useErroreConnessione } from '@/composables/useErroreConnessione'
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -74,11 +75,14 @@ function classeDelta(parametro: ParametroClinico, delta: number | null): string 
   return CLASSE_ESITO[esitoVariazione(ultimaVisita.value?.obiettivo, parametro, delta)]
 }
 
+const segnalaErroreConnessione = useErroreConnessione()
+
 async function carica() {
   caricamento.value = true
   try {
     paziente.value = await dettaglio(route.params.id as string)
   } catch (e) {
+    segnalaErroreConnessione(e)
     if (e instanceof ApiError && e.status === 404) {
       erroreCaricamento.value = 'Paziente non trovato.'
     } else {
@@ -161,18 +165,20 @@ onMounted(() => {
       <Button variant="neutral" size="sm" class="mt-4" @click="carica"><RotateCcw /> Riprova</Button>
     </div>
 
-    <!-- Skeleton Loading -->
-    <div v-else-if="caricamento" class="space-y-6">
-      <div class="space-y-2">
-        <div class="h-8 w-64 animate-pulse rounded bg-(--hover)" />
-        <div class="h-4 w-96 animate-pulse rounded bg-(--hover)" />
+    <div v-else-if="caricamento" role="status">
+      <span class="sr-only">Caricamento della scheda paziente</span>
+      <div aria-hidden="true" class="space-y-6 motion-safe:animate-pulse">
+        <div class="space-y-2">
+          <div class="h-8 w-64 max-w-full rounded bg-(--hover)" />
+          <div class="h-4 w-96 max-w-full rounded bg-(--hover)" />
+        </div>
+        <div class="h-40 rounded-2xl bg-(--hover)" />
+        <div class="grid gap-6 md:grid-cols-2">
+          <div class="h-48 rounded-2xl bg-(--hover)" />
+          <div class="h-48 rounded-2xl bg-(--hover)" />
+        </div>
+        <div class="h-64 rounded-2xl bg-(--hover)" />
       </div>
-      <div class="h-40 animate-pulse rounded-2xl bg-(--hover)" />
-      <div class="grid gap-6 md:grid-cols-2">
-        <div class="h-48 animate-pulse rounded-2xl bg-(--hover)" />
-        <div class="h-48 animate-pulse rounded-2xl bg-(--hover)" />
-      </div>
-      <div class="h-64 animate-pulse rounded-2xl bg-(--hover)" />
     </div>
 
     <!-- Contenuto Principale -->

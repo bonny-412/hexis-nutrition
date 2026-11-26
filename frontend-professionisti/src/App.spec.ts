@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import App from './App.vue'
 
@@ -16,5 +16,34 @@ describe('App', () => {
     await router.isReady()
 
     expect(wrapper.text()).toContain('Vista di test')
+  })
+
+  it('mostra l’errore all’avvio e riapre la stessa rotta dopo Riprova', async () => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{
+        path: '/agenda',
+        component: { template: '<div>Agenda di test</div>' },
+        meta: { requiresAuth: true },
+      }],
+    })
+    await router.push('/agenda')
+    const ripristinaSessione = vi.fn()
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true)
+    const wrapper = mount(App, {
+      props: { ripristinaSessione },
+      global: { plugins: [router] },
+    })
+    await flushPromises()
+
+    expect(wrapper.get('h1').text()).toBe('Non riusciamo a raggiungere il server')
+    await wrapper.get('button').trigger('click')
+    await flushPromises()
+
+    expect(ripristinaSessione).toHaveBeenCalledTimes(2)
+    expect(router.currentRoute.value.path).toBe('/agenda')
+    expect(wrapper.text()).toContain('Agenda di test')
+    wrapper.unmount()
   })
 })

@@ -7,6 +7,16 @@ export class ApiError extends Error {
   }
 }
 
+export class ErroreRete extends Error {
+  constructor(causa: unknown) {
+    super('Server non raggiungibile', { cause: causa })
+  }
+}
+
+export function eErroreConnessione(errore: unknown) {
+  return errore instanceof ErroreRete || (errore instanceof ApiError && errore.status >= 500)
+}
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080'
 
 let getToken: () => string | null = () => null
@@ -31,6 +41,8 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+  }).catch((errore: unknown) => {
+    throw new ErroreRete(errore)
   })
 
   if (response.status === 401) {

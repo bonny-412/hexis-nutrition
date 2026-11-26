@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useErroreConnessione } from '@/composables/useErroreConnessione'
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -122,6 +123,8 @@ function criteriCorrenti(): CriteriRicercaPianiAlimentari {
   }
 }
 
+const segnalaErroreConnessione = useErroreConnessione()
+
 async function carica() {
   if (paginaDati.value === null) {
     caricamentoIniziale.value = true
@@ -131,8 +134,9 @@ async function carica() {
   errore.value = false
   try {
     paginaDati.value = await cerca(criteriCorrenti())
-  } catch {
+  } catch (causa) {
     errore.value = true
+    segnalaErroreConnessione(causa)
   } finally {
     caricamentoIniziale.value = false
     aggiornamentoInCorso.value = false

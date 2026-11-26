@@ -1,5 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { guardiaAutenticazione } from './index'
+import router, { guardiaAutenticazione } from './index'
+
+describe('rotta pagina non trovata', () => {
+  it('mostra la 404 per un indirizzo sconosciuto anche senza sessione', () => {
+    const rotta = router.resolve('/pazienti/123/indirizzo-inesistente?origine=link')
+
+    expect(rotta).toMatchObject({
+      name: 'pagina-non-trovata',
+      meta: { requiresAuth: false },
+    })
+  })
+
+  it('lascia al router le rotte esistenti, anche con parametri', () => {
+    expect(router.resolve('/pazienti/123').name).toBe('paziente-dettaglio')
+  })
+})
 
 describe('guardiaAutenticazione', () => {
   it('rimanda al login se la rotta richiede autenticazione e non c\'è token', () => {

@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { CalendarPlus, RotateCcw } from '@lucide/vue'
 import { cerca, type Paziente } from '@/api/pazienti'
 import { Button } from '@/components/ui/button'
+import CaricamentoLista from '@/components/liste/CaricamentoLista.vue'
 import { aggiungiGiorni } from '@/utils/agenda'
 import { formattaDataItalianaConMese } from '@/utils/data'
 
@@ -43,7 +44,7 @@ onMounted(carica)
       <h2 id="titolo-pazienti-da-richiamare" class="font-heading text-lg italic text-(--fg)">Pazienti da richiamare</h2>
       <p class="mt-1 text-xs text-(--fg3)">Ultima visita almeno {{ SETTIMANE_SOGLIA }} settimane fa e nessuna prossima visita.</p>
     </header>
-    <p v-if="caricamento" class="px-5 pb-4 text-sm text-(--fg3)" role="status">Caricamento pazienti…</p>
+    <CaricamentoLista v-if="caricamento" etichetta="Caricamento dei pazienti da richiamare" :righe="2" />
     <div v-else-if="errore" class="flex flex-wrap items-center justify-between gap-2 px-5 pb-4">
       <p class="text-sm text-(--fg3)" role="status">Non è stato possibile caricare i pazienti da richiamare.</p>
       <Button type="button" variant="neutral" size="sm" @click="carica"><RotateCcw /> Riprova</Button>

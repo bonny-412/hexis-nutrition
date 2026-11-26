@@ -7,21 +7,20 @@ import { useAuthStore } from './stores/auth'
 import { useThemeStore } from './stores/theme'
 import { configureApiClient } from './api/client'
 
-const app = createApp(App)
-app.use(createPinia())
+const pinia = createPinia()
+const auth = useAuthStore(pinia)
+const app = createApp(App, { ripristinaSessione: auth.ripristinaSessione })
+app.use(pinia)
 app.use(router)
 
 useThemeStore()
-const auth = useAuthStore()
 
 configureApiClient({
   getToken: () => auth.token,
   onUnauthorized: () => {
     auth.logout()
-    router.push({ name: 'login' })
+    if (router.currentRoute.value.meta.requiresAuth) router.push({ name: 'login' })
   },
 })
 
-auth.ripristinaSessione().finally(() => {
-  app.mount('#app')
-})
+void router.isReady().then(() => app.mount('#app'))
