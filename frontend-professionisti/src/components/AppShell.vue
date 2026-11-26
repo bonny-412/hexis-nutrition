@@ -20,14 +20,15 @@ const sidebarCompressa = useSessionStorage('hexis-sidebar-compressa', false, { f
         :show-close-button="false"
       >
         <SheetTitle class="sr-only">Menu di navigazione</SheetTitle>
-        <AppSidebar class="h-full" />
+        <AppSidebar class="h-full" con-profilo />
       </SheetContent>
     </Sheet>
 
     <div class="flex flex-1 flex-col overflow-hidden">
       <AppHeader @apri-menu="sidebarAperta = true" />
       <!-- scrollbar-gutter: la barra di scorrimento che compare e scompare non sposta più il contenuto (es. cambio tab). -->
-      <main class="flex-1 overflow-y-auto py-4 px-4 [scrollbar-gutter:stable]">
+      <!-- `relative` contiene gli elementi `sr-only` (absolute) delle pagine: senza, allungano il documento e compare un secondo scroll. -->
+      <main class="relative flex-1 overflow-y-auto py-4 px-4 [scrollbar-gutter:stable]">
         <slot />
       </main>
     </div>

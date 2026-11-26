@@ -32,7 +32,7 @@ import { formattaDataItalianaConMese } from '@/utils/data'
 import { ETICHETTE_OBIETTIVO, formattaNumero } from '@/utils/visita'
 import { CLASSE_ESITO, esitoVariazione, type ParametroClinico } from '@/utils/obiettivo'
 import { inizialiPaziente } from '@/utils/paziente'
-import { AlertCircle, Archive, ArchiveRestore, ArrowDown, ArrowLeft, ArrowUp, CalendarCheck, CalendarPlus, CalendarX2, ClipboardPlus, Dumbbell, MoreHorizontal, Pencil, Percent, RotateCcw, Ruler, Scale, Utensils, X } from '@lucide/vue'
+import { AlertCircle, Archive, ArchiveRestore, ArrowDown, ArrowLeft, ArrowUp, CalendarCheck, CalendarPlus, CalendarX2, ChevronRight, ClipboardPlus, Dumbbell, MoreHorizontal, Pencil, Percent, RotateCcw, Ruler, Scale, Utensils, X } from '@lucide/vue'
 
 const TAB_DEFS = [
   { id: 'panoramica', label: 'Panoramica' },
@@ -225,25 +225,28 @@ onMounted(() => {
                 <Archive :size="16" />
                 Paziente archiviato
               </span>
-              <!-- Pillole cliccabili: la prossima visita apre quel giorno in Agenda; senza visita, il nuovo appuntamento. -->
+              <!-- Pillole cliccabili: la prossima visita apre quel giorno in Agenda; senza visita, il nuovo appuntamento.
+                   La freccia finale le distingue dagli stati non cliccabili (es. "Mai invitato"). -->
               <router-link
                 v-else-if="paziente.prossimaVisita"
                 :to="{ name: 'agenda', query: { data: paziente.prossimaVisita.slice(0, 10) } }"
                 data-test="pillola-prossima-visita"
-                class="inline-flex items-center gap-1.5 rounded-full bg-(--hero-pill) px-2.5 py-1 text-xs font-bold text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) transition-colors hover:bg-(--hero-pill-hover)"
+                class="group inline-flex items-center gap-1.5 rounded-full bg-(--hero-pill) px-2.5 py-1 text-xs font-bold text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) transition-colors hover:bg-(--hero-pill-hover)"
               >
                 <CalendarCheck :size="16" />
                 Prossima visita: {{ formattaDataItalianaConMese(paziente.prossimaVisita.slice(0, 10)) }} · {{ paziente.prossimaVisita.slice(11, 16) }}
+                <ChevronRight :size="14" class="-mr-1 shrink-0 opacity-70 transition-[translate,opacity] group-hover:translate-x-0.5 group-hover:opacity-100 motion-reduce:transition-none" aria-hidden="true" />
               </router-link>
               <router-link
                 v-else
                 :to="`/agenda?nuovo=visita&pazienteId=${paziente.id}`"
                 data-test="pillola-nessuna-visita"
-                class="inline-flex items-center gap-1.5 rounded-full bg-(--warn-bg) px-2.5 py-1 text-xs font-bold text-(--warn-fg) transition-[filter] hover:brightness-95"
+                class="group inline-flex items-center gap-1.5 rounded-full bg-(--warn-bg) px-2.5 py-1 text-xs font-bold text-(--warn-fg) transition-[filter] hover:brightness-95"
                 title="Nuovo appuntamento"
               >
                 <CalendarX2 :size="16" />
                 Nessuna visita programmata
+                <ChevronRight :size="14" class="-mr-1 shrink-0 opacity-70 transition-[translate,opacity] group-hover:translate-x-0.5 group-hover:opacity-100 motion-reduce:transition-none" aria-hidden="true" />
               </router-link>
             </div>
           </div>
@@ -297,15 +300,16 @@ onMounted(() => {
       <p v-if="erroreVisite" class="text-xs font-medium text-(--danger)">
         Non è stato possibile caricare i dati clinici del paziente.
       </p>
-      <div v-else class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4">
+      <!-- Fascia di indicatori appoggiata allo sfondo: i riquadri restano ai grafici sotto. -->
+      <div v-else class="grid grid-cols-2 gap-y-4 px-1 sm:grid-cols-4 sm:divide-x sm:divide-(--bd)">
+        <div class="pr-4 sm:px-5 sm:first:pl-0">
           <div class="flex items-center gap-1.5">
             <Scale :size="14" class="text-primary" />
             <p class="text-xs font-semibold text-(--fg3)">Peso attuale</p>
           </div>
           <div v-if="visiteInCaricamento" class="mt-2 h-6 w-16 animate-pulse rounded bg-(--hover)" />
           <template v-else>
-            <p class="mt-1 text-xl font-heading text-(--fg)">
+            <p class="mt-1 font-heading text-3xl leading-tight text-(--fg)">
               {{ andamento.peso.ultimo !== null ? `${formattaNumero(andamento.peso.ultimo)} kg` : '—' }}
             </p>
             <p
@@ -320,14 +324,14 @@ onMounted(() => {
           </template>
         </div>
 
-        <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4">
+        <div class="pr-4 sm:px-5 sm:first:pl-0">
           <div class="flex items-center gap-1.5">
             <Ruler :size="14" class="text-primary" />
             <p class="text-xs font-semibold text-(--fg3)">BMI</p>
           </div>
           <div v-if="visiteInCaricamento" class="mt-2 h-6 w-12 animate-pulse rounded bg-(--hover)" />
           <template v-else>
-            <p class="mt-1 text-xl font-heading text-(--fg)">
+            <p class="mt-1 font-heading text-3xl leading-tight text-(--fg)">
               {{ andamento.bmi.ultimo !== null ? formattaNumero(andamento.bmi.ultimo, 1) : '—' }}
             </p>
             <p
@@ -342,14 +346,14 @@ onMounted(() => {
           </template>
         </div>
 
-        <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4">
+        <div class="pr-4 sm:px-5 sm:first:pl-0">
           <div class="flex items-center gap-1.5">
             <Percent :size="14" class="text-primary" />
             <p class="text-xs font-semibold text-(--fg3)">Massa grassa</p>
           </div>
           <div v-if="visiteInCaricamento" class="mt-2 h-6 w-12 animate-pulse rounded bg-(--hover)" />
           <template v-else>
-            <p class="mt-1 text-xl font-heading text-(--fg)">
+            <p class="mt-1 font-heading text-3xl leading-tight text-(--fg)">
               {{ andamento.percentualeGrassoCorporeo.ultimo !== null ? `${formattaNumero(andamento.percentualeGrassoCorporeo.ultimo)}%` : '—' }}
             </p>
             <p
@@ -364,14 +368,14 @@ onMounted(() => {
           </template>
         </div>
 
-        <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4">
+        <div class="pr-4 sm:px-5 sm:first:pl-0">
           <div class="flex items-center gap-1.5">
             <Dumbbell :size="14" class="text-primary" />
             <p class="text-xs font-semibold text-(--fg3)">Massa magra</p>
           </div>
           <div v-if="visiteInCaricamento" class="mt-2 h-6 w-16 animate-pulse rounded bg-(--hover)" />
           <template v-else>
-            <p class="mt-1 text-xl font-heading text-(--fg)">
+            <p class="mt-1 font-heading text-3xl leading-tight text-(--fg)">
               {{ andamento.massaMagra.ultimo !== null ? `${formattaNumero(andamento.massaMagra.ultimo)} kg` : '—' }}
             </p>
             <p

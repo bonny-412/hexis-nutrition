@@ -49,14 +49,13 @@ function formattaTick(tick: number | Date): string {
   return formattaDataBreve(tick instanceof Date ? tick.getTime() : tick, conAnno.value)
 }
 
-/** Il valore più recente è quello che si cerca: più grande, con l'unità, nel colore del testo principale. */
+/** Il valore più recente è quello che si cerca: più grande e nel colore del testo principale. L'unità sta nel titolo. */
 // Confronto per data e non per identità: Unovis passa agli accessor copie dei dati.
 function eUltimo(d: PuntoGrafico): boolean {
   return d.timestamp === datiGrafico.value[datiGrafico.value.length - 1]?.timestamp
 }
 function etichettaPunto(d: PuntoGrafico): string {
-  const valore = formattaNumero(d.valore, props.decimali)
-  return eUltimo(d) && props.unita ? `${valore} ${props.unita}` : valore
+  return formattaNumero(d.valore, props.decimali)
 }
 const colorePunto = (d: PuntoGrafico) => (eUltimo(d) ? 'var(--fg)' : 'var(--fg3)')
 const dimensionePunto = (d: PuntoGrafico) => (eUltimo(d) ? 10 : 7)
@@ -68,10 +67,10 @@ const chartConfig = computed<ChartConfig>(() => ({
 </script>
 
 <template>
-  <Card>
+  <Card class="rounded-2xl shadow-(--elev)">
     <CardHeader>
       <CardTitle class="flex items-baseline justify-between gap-2 text-sm font-semibold text-(--fg2)">
-        {{ titolo }}
+        <span>{{ titolo }}<span v-if="unita" class="ml-1 text-xs font-normal text-(--fg3)">({{ unita }})</span></span>
         <span v-if="andamento.punti.length > 0" class="text-[10px] font-medium normal-case tracking-normal text-(--fg4)">
           {{ etichettaIntervallo }}
         </span>

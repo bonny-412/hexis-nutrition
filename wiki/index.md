@@ -17,5 +17,6 @@
 | [decisioni/0006-piano-attivo-modificabile](decisioni/0006-piano-attivo-modificabile.md) | Piano alimentare modificabile in bozza e da attivo, solo il concluso in sola lettura | stabile |
 | [decisioni/0009-palette-verde-petrolio-lime](decisioni/0009-palette-verde-petrolio-lime.md) | Palette petrolio + lime: token, regole d'uso, blocchi hero, hover, tema scuro neutro | in-discussione |
 | [decisioni/0010-toni-di-stato-badge-e-avatar](decisioni/0010-toni-di-stato-badge-e-avatar.md) | Tre toni per badge e avatar di stato (da fare, attivo, neutro); il rosso non è uno stato | stabile |
+| [decisioni/0011-gerarchia-dei-riquadri](decisioni/0011-gerarchia-dei-riquadri.md) | Protagonista con ombra, strumenti in card piatte, contesto senza riquadro (Dashboard e scheda paziente) | in-discussione |
 | [decisioni/0008-notifiche-agenda](decisioni/0008-notifiche-agenda.md) | Notifiche dell'agenda: scheduler nel backend, campanello, puntino in sidebar, Web Push generiche | stabile |
 | [decisioni/0007-appuntamenti-e-visite-registrate](decisioni/0007-appuntamenti-e-visite-registrate.md) | Agenda: appuntamento distinto dalla visita registrata, conclusione al salvataggio, avviso sulle sovrapposizioni, archiviazione elimina il futuro | stabile |

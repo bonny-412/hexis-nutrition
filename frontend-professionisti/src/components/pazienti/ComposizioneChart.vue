@@ -76,7 +76,7 @@ const chartConfig: ChartConfig = {
 </script>
 
 <template>
-  <Card>
+  <Card class="rounded-2xl shadow-(--elev)">
     <CardHeader>
       <CardTitle class="flex items-baseline justify-between gap-2 text-sm font-semibold text-(--fg2)">
         Composizione corporea

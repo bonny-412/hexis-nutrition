@@ -5,6 +5,7 @@ import { cerca as cercaAlimenti, type Alimento } from '@/api/alimenti'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { nomeAlimentoLeggibile } from '@/utils/testo'
 import { formattaNumero } from '@/utils/visita'
 import {
@@ -31,7 +32,12 @@ const emit = defineEmits<{
   }]
 }>()
 
-const modo = ref<'cerca' | 'manuale'>('cerca')
+type Modo = 'cerca' | 'manuale'
+const LINGUETTE: { valore: Modo; etichetta: string }[] = [
+  { valore: 'cerca', etichetta: 'Cerca dal database' },
+  { valore: 'manuale', etichetta: 'Alimento manuale' },
+]
+const modo = ref<Modo>('cerca')
 const query = ref('')
 const risultati = ref<Alimento[]>([])
 let debounceHandle: ReturnType<typeof setTimeout> | undefined
@@ -166,24 +172,20 @@ function aggiungiManuale() {
         <DialogTitle>Aggiungi alimento</DialogTitle>
       </DialogHeader>
 
-      <div class="flex shrink-0 gap-1 border-b border-(--div) px-1">
-        <button
-          data-test="tab-cerca"
-          class="border-b-2 px-1 py-2 text-sm font-bold"
-          :class="modo === 'cerca' ? 'border-(--green) text-(--green)' : 'border-transparent text-(--fg3)'"
-          @click="modo = 'cerca'"
-        >
-          Cerca dal database
-        </button>
-        <button
-          data-test="tab-manuale"
-          class="border-b-2 px-1 py-2 text-sm font-bold"
-          :class="modo === 'manuale' ? 'border-(--green) text-(--green)' : 'border-transparent text-(--fg3)'"
-          @click="modo = 'manuale'"
-        >
-          Alimento manuale
-        </button>
-      </div>
+      <!-- Le Tabs reggono solo le linguette: i due contenuti sotto restano legati a `modo`. -->
+      <Tabs :model-value="modo" class="shrink-0" @update:model-value="(v) => (modo = v as Modo)">
+        <TabsList variant="line" class="h-auto w-full justify-start gap-1 border-b border-(--div) px-1 py-0">
+          <TabsTrigger
+            v-for="t in LINGUETTE"
+            :key="t.valore"
+            :value="t.valore"
+            :data-test="`tab-${t.valore}`"
+            class="-mb-px h-auto flex-none rounded-none border-0 border-b-2 after:hidden border-transparent px-1 py-2 font-bold text-(color:--fg3) data-active:border-(--green) data-active:text-(color:--green) data-active:hover:text-(color:--green) dark:text-(color:--fg3) dark:data-active:hover:text-(color:--green) dark:group-data-[variant=line]/tabs-list:data-active:border-(--green) dark:data-active:text-(color:--green)"
+          >
+            {{ t.etichetta }}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <div v-if="modo === 'cerca'" class="flex min-h-0 flex-1 flex-col gap-3">
         <Input ref="inputCerca" v-model="query" class="shrink-0" autocomplete="off" placeholder="Cerca per nome o categoria…" />

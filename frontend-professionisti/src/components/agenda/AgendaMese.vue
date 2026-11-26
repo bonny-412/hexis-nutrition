@@ -8,7 +8,7 @@ import { barrato, classiEvento, eVisitaAttiva, titolo } from '@/utils/agendaStil
 const props = defineProps<{ riferimento: string; appuntamenti: Appuntamento[] }>()
 const emit = defineEmits<{ apriGiorno: [iso: string]; dettaglio: [appuntamento: Appuntamento] }>()
 
-const NOMI_GIORNI = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
+const NOMI_GIORNI = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom']
 const MAX_EVENTI = 2
 
 const celle = computed(() => {
@@ -39,7 +39,7 @@ const celle = computed(() => {
 <template>
   <section class="overflow-hidden rounded-2xl border border-(--bd) bg-(--surf)" data-test="agenda-mese">
     <div class="grid grid-cols-7 border-b border-(--bd)">
-      <div v-for="nome in NOMI_GIORNI" :key="nome" class="px-2.5 py-2 text-[10.5px] font-bold uppercase tracking-widest text-(--fg3) last:bg-(--agenda-domenica)">
+      <div v-for="nome in NOMI_GIORNI" :key="nome" class="px-2.5 py-2 text-xs font-semibold text-(--fg3) last:bg-(--agenda-domenica)">
         {{ nome }}
       </div>
     </div>

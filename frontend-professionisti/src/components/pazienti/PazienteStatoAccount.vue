@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Loader2, MailCheck, MailX, UserCheck } from '@lucide/vue'
+import { Button } from '@/components/ui/button'
 import type { Paziente } from '@/api/pazienti'
 import { CLASSI_STATO_ACCOUNT } from '@/utils/paziente'
 import { TONI_STATO } from '@/utils/toniStato'
@@ -47,15 +48,17 @@ const puoInvitare = computed(() => !props.solaLettura && !props.paziente.archivi
       <component :is="stato.icona" :size="hero ? 16 : 14" class="shrink-0" aria-hidden="true" />
       {{ stato.etichetta }}
     </span>
-    <button
+    <Button
       v-if="puoInvitare"
       type="button"
+      variant="link"
+      size="xs"
       data-test="pulsante-invita"
       :aria-label="`${stato.azione}: ${paziente.nome} ${paziente.cognome}`"
       :aria-busy="invitoInCorso"
       :disabled="invitoInCorso"
-      class="relative ml-0.5 inline-flex items-center gap-1 border-l border-current/25 px-2 underline-offset-2 transition-colors before:absolute before:-inset-x-1 before:-inset-y-3 before:content-[''] hover:underline focus-visible:rounded-full focus-visible:outline-2 focus-visible:outline-current disabled:cursor-not-allowed disabled:opacity-60"
+      class="relative ml-0.5 h-auto gap-1 rounded-none border-0 border-l border-current/25 px-2 py-0 text-xs font-bold text-current underline-offset-2 hover:text-current hover:underline focus-visible:rounded-full focus-visible:ring-0 focus-visible:outline-2 focus-visible:outline-current active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60 before:absolute before:-inset-x-1 before:-inset-y-3 before:content-['']"
       @click="emit('invita')"
-    ><Loader2 v-if="invitoInCorso" :size="12" class="shrink-0 animate-spin" aria-hidden="true" />{{ stato.azione }}</button>
+    ><Loader2 v-if="invitoInCorso" :size="12" class="shrink-0 animate-spin" aria-hidden="true" />{{ stato.azione }}</Button>
   </span>
 </template>

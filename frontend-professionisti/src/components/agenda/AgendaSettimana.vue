@@ -25,7 +25,7 @@ const props = defineProps<{
 }>()
 const emit = defineEmits<{ azione: [appuntamento: Appuntamento, azione: AzioneAppuntamento]; dettaglio: [appuntamento: Appuntamento]; nuovo: [data: string] }>()
 
-const NOMI_GIORNI = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
+const NOMI_GIORNI = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom']
 const ORA_FINE_MIN = 20 * 60
 const ORE = Array.from({ length: 13 }, (_, i) => 7 + i)
 /** Durata minima (minuti) con cui un evento resta visibile e cliccabile in griglia (anche i promemoria, senza durata). */
@@ -127,7 +127,7 @@ function testoEvento(a: Appuntamento): string {
           :data-test="`settimana-intestazione-${c.iso}`"
         >
           <div class="flex items-center gap-2">
-            <span class="text-[10.5px] font-bold uppercase tracking-widest" :class="c.eOggi ? 'text-(--green-d)' : 'text-(--fg3)'">
+            <span class="text-xs font-semibold" :class="c.eOggi ? 'text-(--green-d)' : 'text-(--fg3)'">
               {{ c.nome }}
             </span>
             <span

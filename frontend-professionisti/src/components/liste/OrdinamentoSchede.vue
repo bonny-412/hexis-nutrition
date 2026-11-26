@@ -32,14 +32,16 @@ function invertiDirezione() {
         <SelectItem v-for="o in opzioni" :key="o.valore" :value="o.valore">{{ o.etichetta }}</SelectItem>
       </SelectContent>
     </Select>
-    <button
+    <Button
       type="button"
+      variant="outline"
+      size="icon"
       :disabled="!ordinaPer"
       :aria-label="direzione === 'asc' ? 'Ordine crescente, passa a decrescente' : 'Ordine decrescente, passa a crescente'"
-      class="flex size-8 items-center justify-center rounded-lg border border-(--bd2) bg-(--surf) text-(--fg3) transition-colors hover:text-(--fg) disabled:opacity-40"
+      class="text-(--fg3) disabled:opacity-40"
       @click="invertiDirezione"
     >
       <component :is="direzione === 'asc' ? ArrowUp : ArrowDown" :size="14" />
-    </button>
+    </Button>
   </div>
 </template>

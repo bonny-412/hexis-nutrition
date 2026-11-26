@@ -11,8 +11,10 @@ withDefaults(
     compatto?: boolean
     /** Livello del titolo nella pagina, per chi naviga per titoli con uno screen reader. */
     livello?: 'h2' | 'h3' | 'h4'
+    /** `avviso` su sfondi ambra (giorno festivo in Agenda): il disco neutro risalterebbe come una toppa bianca. */
+    tono?: 'neutro' | 'avviso'
   }>(),
-  { compatto: false, livello: 'h3' },
+  { compatto: false, livello: 'h3', tono: 'neutro' },
 )
 </script>
 
@@ -23,8 +25,8 @@ withDefaults(
     :class="compatto ? 'gap-2 px-5 py-6' : 'gap-3 px-6 py-10'"
   >
     <span
-      class="flex items-center justify-center rounded-full bg-(--soft) text-(--fg4)"
-      :class="compatto ? 'size-10' : 'size-16'"
+      class="flex items-center justify-center rounded-full"
+      :class="[compatto ? 'size-10' : 'size-16', tono === 'avviso' ? 'bg-(--warn-fg)/10 text-(--warn-fg)/70' : 'bg-(--soft) text-(--fg4)']"
       aria-hidden="true"
     >
       <component :is="icona" :size="compatto ? 20 : 40" :stroke-width="1.5" />

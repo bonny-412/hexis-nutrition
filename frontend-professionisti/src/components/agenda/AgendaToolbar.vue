@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { CalendarCheck, ChevronLeft, ChevronRight } from '@lucide/vue'
+import { Calendar1, CalendarCheck, CalendarDays, CalendarRange, ChevronLeft, ChevronRight } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import SelettoreSegmentato from '@/components/ui/SelettoreSegmentato.vue'
 import {
@@ -20,16 +20,19 @@ const emit = defineEmits<{
   'update:filtro': [filtro: FiltroAgenda]
 }>()
 
-const filtri: { valore: FiltroAgenda; etichetta: string }[] = [
+// I filtri dicono COSA mostrare e portano il pallino del colore dell'evento, come la legenda e la Dashboard;
+// le viste dicono COME mostrarlo e restano il selettore a segmenti: così i due gruppi non si confondono.
+const filtri: { valore: FiltroAgenda; etichetta: string; pallino?: string }[] = [
   { valore: 'TUTTI', etichetta: 'Tutti' },
-  { valore: 'VISITE', etichetta: 'Visite' },
-  { valore: 'PROMEMORIA', etichetta: 'Promemoria' },
+  { valore: 'VISITE', etichetta: 'Visite', pallino: 'bg-(--green)' },
+  { valore: 'PROMEMORIA', etichetta: 'Promemoria', pallino: 'bg-(--warn-fg)' },
 ]
 
-const viste: { valore: VistaAgenda; etichetta: string }[] = [
-  { valore: 'MESE', etichetta: 'Mese' },
-  { valore: 'SETTIMANA', etichetta: 'Settimana' },
-  { valore: 'GIORNO', etichetta: 'Giorno' },
+// Con le icone, come l'interruttore Tabella/Schede delle liste: stesso componente, stessa resa.
+const viste: { valore: VistaAgenda; etichetta: string; icona: typeof CalendarDays }[] = [
+  { valore: 'MESE', etichetta: 'Mese', icona: CalendarDays },
+  { valore: 'SETTIMANA', etichetta: 'Settimana', icona: CalendarRange },
+  { valore: 'GIORNO', etichetta: 'Giorno', icona: Calendar1 },
 ]
 
 const etichetta = computed(() => etichettaPeriodo(props.vista, props.riferimento))
@@ -58,22 +61,23 @@ function sposta(direzione: 1 | -1) {
     <h2 class="min-w-44 font-heading text-xl italic text-(--fg)" data-test="agenda-etichetta">{{ etichetta }}</h2>
 
     <div class="ml-auto flex flex-wrap items-center gap-3">
-      <div class="flex gap-1.5">
-        <button
+      <div class="flex gap-1.5" role="group" aria-label="Mostra">
+        <Button
           v-for="f in filtri"
           :key="f.valore"
           type="button"
-          class="rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
-          :class="filtro === f.valore
-            ? 'border-(--sage) bg-(--mint) text-(--green-d)'
-            : 'border-(--bd2) bg-(--surf) text-(--fg2) hover:border-(--sage)'"
+          variant="chip"
+          size="chip"
           :aria-pressed="filtro === f.valore"
           :data-test="`agenda-filtro-${f.valore}`"
           @click="emit('update:filtro', f.valore)"
         >
+          <span v-if="f.pallino" class="size-1.5 rounded-full" :class="f.pallino" aria-hidden="true" />
           {{ f.etichetta }}
-        </button>
+        </Button>
       </div>
+
+      <span class="hidden h-6 w-px bg-(--bd2) sm:block" aria-hidden="true" />
 
       <SelettoreSegmentato
         :model-value="vista"

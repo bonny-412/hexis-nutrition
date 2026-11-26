@@ -2,8 +2,8 @@
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { useNotificheStore } from '@/stores/notifiche'
-import { disattivaPush, sincronizzaPush } from '@/utils/push'
-import { useRouter } from 'vue-router'
+import { sincronizzaPush } from '@/utils/push'
+import { useEsci } from '@/composables/useEsci'
 import { onMounted, onUnmounted } from 'vue'
 import { Menu, Bell, ChevronDown, LogOut, Moon } from '@lucide/vue'
 import CommandPalette from './CommandPalette.vue'
@@ -25,7 +25,6 @@ defineEmits<{ 'apri-menu': [] }>()
 
 const auth = useAuthStore()
 const tema = useThemeStore()
-const router = useRouter()
 const notifiche = useNotificheStore()
 
 onMounted(() => {
@@ -34,17 +33,13 @@ onMounted(() => {
 })
 onUnmounted(() => notifiche.fermaPolling())
 
-async function onLogout() {
-  // Prima del logout: serve ancora il token per togliere l'iscrizione push di questo dispositivo.
-  await disattivaPush()
-  auth.logout()
-  router.push({ name: 'login' })
-}
+const onLogout = useEsci()
 </script>
 
 <template>
+  <!-- Su mobile l'header è una barra marcata (filetto e ombra --elev) che stacca dal contenuto; da desktop resta velato e senza ombra. -->
   <header
-    class="sticky top-0 z-30 flex items-center justify-between bg-(--surf) py-3 px-2 dark:bg-(--side) lg:px-4 lg:bg-(--bg-blur) lg:dark:bg-(--bg-blur) lg:backdrop-blur-[10px]"
+    class="sticky top-0 z-30 flex items-center justify-between border-b border-(--bd) bg-(--surf) py-3 px-2 shadow-(--elev) dark:border-(--side-bd) dark:bg-(--side) lg:border-b-0 lg:px-4 lg:bg-(--bg-blur) lg:shadow-none lg:dark:bg-(--bg-blur) lg:backdrop-blur-[10px]"
   >
     <div class="flex items-center gap-2.5">
       <Button variant="ghost" size="icon" class="lg:hidden" aria-label="Apri menu" @click="$emit('apri-menu')">
@@ -82,12 +77,13 @@ async function onLogout() {
 
       <div class="mx-1 h-5.5 w-px bg-(--bd) hidden lg:flex"></div>
 
+      <!-- Su mobile il profilo (tema, uscita) sta in fondo al menu laterale: qui l'header resta a ☰ · Hexis · ricerca · notifiche. -->
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <button
             type="button"
             aria-label="Menu profilo"
-            class="group flex items-center gap-2 rounded-xl lg:border lg:border-(--bd2) lg:bg-(--surf) lg:py-1 lg:pl-1 lg:pr-2.5"
+            class="group hidden items-center gap-2 rounded-xl lg:flex lg:border lg:border-(--bd2) lg:bg-(--surf) lg:py-1 lg:pl-1 lg:pr-2.5"
           >
             <Avatar class="bg-(--mint)">
               <AvatarFallback class="bg-(--mint) text-xs font-bold text-(--green-d)">

@@ -91,14 +91,14 @@ describe('AlimentiListView', () => {
 
     const chipTutti = wrapper.findAll('button').find((b) => b.text() === 'Tutti')
     const chipBda = wrapper.findAll('button').find((b) => b.text() === 'BDA')
-    expect(chipTutti?.classes()).toContain('border-(--sage)')
-    expect(chipBda?.classes()).not.toContain('border-(--sage)')
+    expect(chipTutti?.attributes('aria-pressed')).toBe('true')
+    expect(chipBda?.attributes('aria-pressed')).toBe('false')
 
     await chipBda?.trigger('click')
     await flushPromises()
 
-    expect(chipBda?.classes()).toContain('border-(--sage)')
-    expect(chipTutti?.classes()).not.toContain('border-(--sage)')
+    expect(chipBda?.attributes('aria-pressed')).toBe('true')
+    expect(chipTutti?.attributes('aria-pressed')).toBe('false')
     expect(alimentiApi.cerca).toHaveBeenCalledWith(expect.objectContaining({ fonte: 'BDA', pagina: 0 }))
   })
 

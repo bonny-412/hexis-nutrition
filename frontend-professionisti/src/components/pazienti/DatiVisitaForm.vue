@@ -24,6 +24,7 @@ import type { CreaVisitaRequest, Visita } from '@/api/pazienti'
 import { oggiIso } from '@/utils/agenda'
 import { calcolaBmi, formattaNumero } from '@/utils/visita'
 import PlicometriaForm from './PlicometriaForm.vue'
+import BiaCaricamento from './BiaCaricamento.vue'
 
 import {
   numeroItaliano,
@@ -341,10 +342,7 @@ defineExpose({
       <p class="text-right text-xs text-(--fg3)">{{ note.length }}/500</p>
     </div>
 
-    <div class="mt-6 border-t border-(--bd) pt-5">
-      <h3 class="text-sm font-semibold text-(--fg2)">Misurazione BIA</h3>
-      <p class="mt-1.5 text-sm text-(--fg3)">Sarà disponibile a breve.</p>
-    </div>
+    <BiaCaricamento class="mt-6" />
 
     <Accordion v-model="accordionPlicometriaAperto" type="single" collapsible class="mt-6">
       <AccordionItem value="plicometria" class="overflow-hidden rounded-xl border border-(--bd)">

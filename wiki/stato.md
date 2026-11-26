@@ -45,6 +45,8 @@ Sessione del 25 novembre 2026 (parte finale): **chiusa tutta la sezione 6 della 
 
 Sessione del 26 novembre 2026: **terzo giro di revisione UI chiuso** ([`docs/ui-review-2026-11-26-giro3.md`](../docs/ui-review-2026-11-26-giro3.md)): nuove card Plicometria, Circonferenze e Profilo; toni di stato unici ([decisioni/0010](decisioni/0010-toni-di-stato-badge-e-avatar.md)); glossario delle azioni; intestazione delle tabelle fissa da 1280 px; Dashboard con la settimana a colpo d'occhio; `pazienteEmail` nella lista piani e campi calcolati nel dettaglio paziente (backend). In staging, non committato; **riavviare il backend**. Restano da verificare: tema scuro e mobile delle pagine oltre a Dashboard e scheda paziente, viste Mese e Giorno, dialog di creazione, accessibilità dei form.
 
+Sessione del 26 novembre 2026 (parte finale): rifiniture di Agenda e Dashboard (domeniche, festivi, pallini, legenda, filtri); **gerarchia dei riquadri** su Dashboard e scheda paziente ([decisioni/0011](decisioni/0011-gerarchia-dei-riquadri.md), in prova); revisione indipendente con Sonnet; header e profilo su mobile; poi doppio scroll eliminato in tutta l'app, verifica dei pulsanti shadcn, freccia sulle pillole cliccabili. Tutto in staging (anche il lavoro dell'altra sessione), non committato. **Prossima sessione: BIA**, vedi "Prossimo passo consigliato".
+
 Sessione del 25 novembre 2026 (seconda parte): **barra azioni flottante** nei form lunghi, **colori delle variazioni secondo l'obiettivo** del paziente, valori sui punti dei grafici, confronto A/B ridisegnato, **suite frontend 297/297 verde**. In staging, non committato. Vedi la sezione dedicata.
 
 ## Come far girare il backend su questa macchina
@@ -769,14 +771,74 @@ Sessione senza codice. Un amico di Andrea, che promuove e finanzia Hexis, chiede
 
 ## Prossimo passo consigliato
 
+**Aggiornato il 26 novembre 2026, BIA: primo brainstorming** (prevale sulla voce sotto per la BIA): **in pausa finché Andrea non ha uno o più CSV veri esportati da BodyGram**. Il formato del file, il modello dati e la UI si decidono dopo averli visti.
+
+Cosa sappiamo:
+- Il nutrizionista usa **Akern BodygramPlus** (1.2.2.8 nei referti di esempio). Secondo i manuali Akern esporta in CSV in più modi: l'archivio intero, la tabella dei test, un gruppo di pazienti, il singolo esame. I manuali non descrivono le colonne.
+- Andrea ha due PDF di esempio del 14/10/2022, non salvati nel repo perché contengono i suoi dati personali. Il primo, "Composizione Corporea", riporta peso, altezza, RZ, XC, PhA, idratazione (TBW/FFM), BMI, BCMI, BMR, BMR×PAL, BCM, FFM, FM, TBW, ECW, con i valori di riferimento. Il secondo, "Report confronto", riporta per ogni distretto (emisomi, quattro arti, tronco) RZ, XC, PhA e massa muscolare in kg e in percentuale.
+- Ipotesi di Claude, da verificare sui file: i due PDF sono due referti dello **stesso esame**. Il secondo verrebbe dal modulo Bodyscan per distretti, che ha una sua esportazione CSV separata. Andrea li considera due misurazioni diverse: da chiarire con i CSV.
+
+Decisioni di Andrea:
+- Il CSV si carica nel **form della visita**, al posto del segnaposto "Misurazione BIA" in `DatiVisitaForm.vue`, quindi anche in "Nuovo paziente". Dopo il caricamento i valori si possono modificare e la BIA si può togliere dalla visita.
+- Si possono caricare **uno o più file** per visita: per Andrea, uno per ciascun PDF.
+- **Non si sa se il report per distretti servirà**: per ora resta dentro.
+- I valori calcolati **si salvano come li dà BodyGram**, insieme a RZ e XC. L'idea iniziale (salvare solo RZ e XC e fare i calcoli noi) è scartata: le equazioni Akern non sono pubbliche e i numeri non coinciderebbero con il referto.
+- Se il file contiene **più misurazioni**: errore (provvisorio, da confermare sui file veri).
+- Se **peso o altezza** del file sono diversi da quelli della visita: si salvano comunque i dati e a video lo si segnala al nutrizionista.
+
+**Fatto subito, solo interfaccia (richiesta di Andrea):** il segnaposto in `DatiVisitaForm.vue` è sostituito da `components/pazienti/BiaCaricamento.vue`, una sezione a comparsa "Bioimpedenziometria (BIA)" come Plicometria e Circonferenze. Dentro ci sono un'area dove trascinare i file con il pulsante "Scegli i file" (più file, solo `.csv`, scarta i doppioni per nome e dimensione), l'elenco dei file (icona tipo avatar, pulsanti "Scarica" e "Togli" con la X rossa solo al passaggio del mouse) e una nota ambra: "per ora i file non vengono salvati con la visita". **Nessuna lettura e nessun invio al backend**: i file restano in memoria. Verifiche: `vue-tsc` pulito, `vitest` 305/305, browser in chiaro su "Nuovo paziente". Nessun test nuovo (da chiedere ad Andrea). Le righe BIA di Panoramica, Storico e Confronto sono invariate.
+
+Proposte di Claude non ancora confermate: controllare che nome e data di nascita del file corrispondano al paziente, con un avviso che non blocca il caricamento; se peso e altezza della visita sono vuoti, riempirli con i valori del file.
+
+**Aggiornato il 26 novembre 2026, a fine sessione (handoff finale)** (prevale sulle voci sotto): la revisione UI è chiusa. Andrea conferma che l'app è chiara, moderna, coerente e accattivante. Si torna alle funzionalità.
+
+Da fare a mano:
+1. **Commit** dei 49 file in staging: frontend e wiki, compresa la nuova `decisioni/0011`, insieme al lavoro dell'altra sessione del 26 novembre (pulsanti nativi → shadcn "gruppo A", `BiaCaricamento.vue`, componenti `switch/` e `tabs/`, `package.json` e `package-lock.json`). Non resta niente fuori dallo staging.
+2. Non serve riavviare il backend: in questa sessione non è cambiato.
+
+**Ultima parte della sessione (dopo l'handoff precedente)**, dettaglio nel log del 26 novembre:
+- **Doppio scroll eliminato in tutta l'app**: `relative` sul `<main>` di `AppShell.vue` contiene ogni testo `sr-only` delle pagine (la causa era in `PlicometriaCard.vue`, FMI/FFMI). Controllate tutte le pagine a 375, 746 e 1440 px. **Regola per il futuro:** un elemento `absolute` fuori da `main` (portali esclusi) deve avere un antenato posizionato.
+- **Gruppo A verificato nel browser** (occhio della password, "Vedi note", tema scuro). Corretta la sottolineatura della linguetta attiva di "Aggiungi alimento" nel tema scuro. Il **gruppo B** (aree cliccabili native) resta così, confermato da Andrea.
+- "Close" → "Chiudi" nelle etichette nascoste di `SheetContent` e `DialogScrollContent`.
+- **Pillole cliccabili del dettaglio paziente** ("Prossima visita", "Nessuna visita programmata"): freccia `›` finale, per distinguerle da "Mai invitato". Se piace, lo stesso segno andrà usato per le altre pillole cliccabili dell'app.
+- `vue-tsc` pulito, `vitest` 305/305 (dopo la freccia rilanciati solo i 70 test di `views/pazienti`).
+
+I dati di prova restano, per decisione di Andrea: non vanno più segnalati come da eliminare.
+
+Fatto in questa sessione, dettaglio nel log del 26 novembre:
+- **Agenda e Dashboard.** Domeniche in un grigio-verde della palette; festivi in ambra anche nella striscia; disco ambra sullo stato vuoto dei festivi; un pallino per tipo nella striscia. In Agenda: giorni in minuscolo, legenda più leggibile, filtri con il pallino e separati dalle viste, icone su Mese/Settimana/Giorno.
+- **Gerarchia dei riquadri** ([decisioni/0011](decisioni/0011-gerarchia-dei-riquadri.md), `in-discussione`), su Dashboard e scheda paziente. Il protagonista ha l'ombra `--elev`. Gli strumenti restano card piatte: tra questi "Pazienti da richiamare", perché i blocchi con azioni per riga restano in card. Il contesto (contatori, indicatori del paziente) sta senza riquadro; le sezioni vuote sono tratteggiate. **Da chiedere ad Andrea com'è andata la demo di stasera**: se la decisione regge, passa a `stabile` e va estesa alle altre pagine; se no, si torna indietro.
+- **Revisione indipendente** (agente Sonnet con frontend-design): niente di bloccante. Applicati il grafico Peso ("(kg)" nel titolo), il sottotitolo della modifica visita e la legenda.
+- **Header mobile.** Niente avatar; il profilo è nel menu laterale come menu a comparsa (`conProfilo`, `useEsci`); filetto e ombra sotto l'header.
+
+Verifiche finali: `vue-tsc` pulito, `vitest` 305/305, browser in chiaro, scuro e mobile.
+
+Aperti di UI, piccoli:
+- "Composizione corporea" con un solo dato: il sottotitolo "Variazione % rispetto alla prima visita" non ha senso.
+- Tooltip: restano i `title=` nativi. Il Tooltip di shadcn è stato scartato da Andrea.
+
+**Prossima funzionalità: la BIA (bioimpedenziometria)**, in una nuova sessione con il flusso superpowers: brainstorming, design, piano, esecuzione, revisione indipendente. Per la UI va usato frontend-design. Prima di scrivere test bisogna chiedere ad Andrea. Oggi la BIA è solo un segnaposto, senza dati né backend:
+- form della visita: `DatiVisitaForm.vue:345`, blocco "Misurazione BIA" con "Sarà disponibile a breve";
+- Panoramica: `PazienteTabPanoramica.vue:85`, una riga "la bioimpedenziometria non è ancora supportata";
+- Storico visite: `PazienteTabStoricoVisite.vue:254`, sezione BIA nel dettaglio della visita;
+- Confronto visite: `PazienteTabConfrontoVisite.vue:202`, intestazione di gruppo "BIA";
+- test che richiedono il testo "BIA": `PazienteTabPanoramica.spec.ts:126`, `PazienteTabStoricoVisite.spec.ts:105`, `PazienteTabConfrontoVisite.spec.ts:71`. Andranno adeguati quando il segnaposto diventa vero.
+
+Da decidere nel brainstorming:
+- quali grandezze registrare (es. resistenza/reattanza grezze o solo i valori calcolati dall'apparecchio: massa magra, massa grassa, acqua totale/extra/intracellulare, angolo di fase, metabolismo basale…);
+- se si inseriscono a mano o si importano dall'apparecchio;
+- come convivono con la % grasso della plicometria nei grafici di Panoramica e Confronto.
+
+L'altro aperto collegato è l'**anteprima live della % grasso** nella visita: oggi la calcola solo il backend al salvataggio. Servirebbe un endpoint di anteprima, oppure le formule duplicate nel frontend. Restano aperti anche `frontend-cliente` (con app Flutter accanto) e il modello di vendita.
+
 **Aggiornato il 26 novembre 2026 (terzo giro di revisione UI), a fine sessione** (prevale sulle voci sotto): il terzo giro è chiuso, dettaglio in [`docs/ui-review-2026-11-26-giro3.md`](../docs/ui-review-2026-11-26-giro3.md). Giudizio: l'app è **chiara, moderna, accattivante e coerente** tra sezioni, componenti e pagine; restano rifiniture, non incoerenze di sistema. Si può tornare allo sviluppo di funzionalità.
 
 Da fare a mano: (1) ~~commit~~ (fatto da Andrea, `79b62a3`); (2) **riavviare il backend**: `GET /pazienti/{id}` ora restituisce obiettivo, ultima visita e ultimo piano (Dashboard), `pazienteEmail` nella lista piani; poi provare la Dashboard con Beatrice De Luca (deve dire "Ultima visita 25 nov" e "Piano in bozza", non "Prima visita").
 
 Da fare in UI, decisi da Andrea il 26 novembre (piccoli, si possono fare all'inizio della prossima sessione):
-1. **Dashboard, promemoria nei prossimi impegni — fatto**. Per ogni giorno, la card mostra i promemoria da fare in ordine di orario tra le visite e quelli senza orario in fondo. Anche la striscia dei sette giorni indica i promemoria, con pallini ambra accanto ai pallini delle visite. Le righe aprono l'Agenda sulla data dell'evento con il dialog di dettaglio aperto. Il completamento del promemoria si fa in Agenda.
+1. **Dashboard, promemoria nei prossimi impegni — fatto**. Per ogni giorno, la card mostra i promemoria da fare in ordine di orario tra le visite e quelli senza orario in fondo. Anche la striscia dei sette giorni indica i promemoria: un solo pallino per tipo (verde per le visite, ambra per i promemoria), qualunque sia il numero, come deciso da Andrea il 26 novembre. Le righe aprono l'Agenda sulla data dell'evento con il dialog di dettaglio aperto. Il completamento del promemoria si fa in Agenda.
 2. **Dashboard, pazienti da richiamare — implementato**. La card sotto "Prossimi impegni" mostra fino a cinque pazienti non archiviati con ultima visita di almeno sei settimane fa e nessuna prossima visita. La soglia è indicata nella card. Il filtro lato server precede la paginazione e "Nuovo appuntamento" apre l'Agenda con il paziente preselezionato. Riavviare il backend per usare il filtro aggiornato.
-3. **Domeniche in Agenda e Dashboard — resa visiva da ricontrollare**. Stesso grigio ardesia nelle viste Settimana e Mese e nella striscia dei sette giorni in Dashboard. Se oggi è domenica, prevale il verde del giorno corrente. Le altre domeniche festive mantengono l'indicazione in ambra.
+3. **Domeniche in Agenda e Dashboard — fatto** (ricontrollate il 26 novembre con frontend-design). Il grigio ardesia tendeva al blu, fuori dalla palette, e pesava più dei festivi. Ora `--agenda-domenica` è un grigio-verde della palette: #EDF3F0 in chiaro, #0F1A18 in scuro. Gerarchia: oggi (menta), poi festivo (ambra), poi domenica (riposo). La striscia della Dashboard ora colora i festivi in ambra come l'Agenda; prima non avevano sfondo. Nella vista Giorno di un festivo, il disco dell'icona dello stato vuoto è ambra (`StatoVuoto` con `tono="avviso"`), non più bianco.
 4. **Pulsanti testo con icona — fatto**. "Vedi l'agenda" e i link di ritorno in Pazienti, Visite e Piani usano la variante condivisa `ghost-primary` del `Button`, con sfondo menta al passaggio del mouse.
 
 Rifiniture successive: la Dashboard distingue il caricamento dagli errori per gli impegni e il conteggio pazienti e permette di riprovare. La ricerca globale mostra l'email sotto il nome del paziente. I selettori di vista di Agenda, Pazienti e Piani condividono lo stesso gruppo radio e la navigazione con le frecce. Dai colori CSS, il testo secondario raggiunge almeno 4,69:1 sulle superfici verificate nei due temi. Resta la verifica in browser.

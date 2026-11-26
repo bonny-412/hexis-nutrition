@@ -25,7 +25,11 @@ export const buttonVariants = cva(
         // Sui blocchi petrolio (hero): pillola secondaria e azione principale lime, una per blocco.
         hero: 'border-transparent bg-(--hero-pill) text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring) hover:bg-(--hero-pill-hover) aria-expanded:bg-(--hero-pill-hover)',
         accent: 'bg-(--lime) text-(--on-lime) hover:bg-(--lime-d) aria-expanded:bg-(--lime-d)',
-        'destructive-neutral': 'border-border bg-card text-destructive hover:bg-destructive/10 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:hover:bg-destructive/15 dark:focus-visible:ring-destructive/40',
+        // Filtri a pillola delle liste e dell'Agenda: lo stato acceso viene da aria-pressed.
+        chip: 'rounded-full border-(--bd2) bg-(--surf) text-xs font-bold text-(--fg2) hover:border-(--sage) aria-pressed:border-(--sage) aria-pressed:bg-(--mint) aria-pressed:text-(--green-d) active:translate-y-0',
+        // Azione secondaria in coda ai filtri ("Pulisci filtri").
+        tratteggiato: 'border-dashed border-(--dash) text-xs font-bold text-(--fg3) hover:border-(--fg4) hover:text-(--fg)',
+        'destructive-neutral':'border-border bg-card text-destructive hover:bg-destructive/10 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:hover:bg-destructive/15 dark:focus-visible:ring-destructive/40',
       },
       size: {
         'default': 'h-8 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',
@@ -36,6 +40,7 @@ export const buttonVariants = cva(
         'icon-xs': 'size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*=size-])]:size-3',
         'icon-sm': 'size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg',
         'icon-lg': 'size-9',
+        'chip': 'h-auto gap-1.5 px-3 py-1.5',
       },
     },
     defaultVariants: {

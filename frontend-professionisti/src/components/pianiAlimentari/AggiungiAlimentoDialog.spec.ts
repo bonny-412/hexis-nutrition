@@ -71,7 +71,7 @@ describe('AggiungiAlimentoDialog', () => {
   it('richiede nome e i 4 macro obbligatori nella modalità manuale', async () => {
     const wrapper = mount(AggiungiAlimentoDialog, { props: { open: true }, attachTo: document.body })
     await flushPromises()
-    await campo('[data-test="tab-manuale"]').trigger('click')
+    await campo('[data-test="tab-manuale"]').trigger('mousedown')
 
     await campo('[data-test="aggiungi-manuale"]').trigger('click')
 
@@ -82,7 +82,7 @@ describe('AggiungiAlimentoDialog', () => {
   it('in modalità manuale emette aggiunto con i valori inseriti e alimentoId nullo', async () => {
     const wrapper = mount(AggiungiAlimentoDialog, { props: { open: true }, attachTo: document.body })
     await flushPromises()
-    await campo('[data-test="tab-manuale"]').trigger('click')
+    await campo('[data-test="tab-manuale"]').trigger('mousedown')
     await campo('[data-test="manuale-nome"]').setValue('Insalata mista')
     await campo('[data-test="manuale-kcal"]').setValue('50')
     await campo('[data-test="manuale-proteine"]').setValue('2')

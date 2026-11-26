@@ -842,3 +842,75 @@ Dettaglio in [stato](stato.md#sessione-del-15-novembre-2026--agenda-implementata
 - Stato finale: `vue-tsc` pulito, `vitest` 301/301, `mvn test` senza errori; tutto non committato.
 - Rivisto con Andrea: promemoria di oggi dentro "Prossime visite" (gruppo "Oggi") e pazienti da richiamare come card sotto "Prossime visite", non come quarta scheda di "Da fare" (troppo pesante).
 
+
+## [2026-11-26] handoff | Domeniche e festivi in Agenda e Dashboard
+
+- Ricontrollo a occhio con frontend-design, in chiaro e in scuro: il grigio ardesia delle domeniche (#E5E8EE / #29323D) tendeva al blu ed era più evidente dei festivi. `--agenda-domenica` ora è #EDF3F0 in chiaro e #0F1A18 in scuro.
+- `SettimanaStrip.vue`: i festivi hanno lo sfondo ambra come in Agenda, con la stessa precedenza tra oggi, festivo e domenica.
+- Su richiesta di Andrea: nella vista Giorno di un festivo, il disco dell'icona dello stato vuoto non è più bianco su ambra. `StatoVuoto` ha il nuovo prop `tono` (`neutro` | `avviso`).
+- Verifiche: `vue-tsc` pulito, `vitest` 305/305, browser in chiaro e in scuro. Nessun commit.
+- Su richiesta di Andrea: nella striscia della settimana in Dashboard c'è **un solo pallino per tipo** (verde se ci sono visite, ambra se ci sono promemoria), qualunque sia il numero. Tolti `MAX_PALLINI` e il "+n". I conteggi restano nel testo sotto (da 640 px) e nell'`aria-label`. La vista Mese compatta dell'Agenda aveva già un pallino per tipo con il numero accanto: invariata.
+
+## [2026-11-26] handoff | Fine sessione: rifiniture agenda, si passa alla BIA
+
+- Fatte in questa sessione: tinta delle domeniche nella palette, festivi in ambra nella striscia della Dashboard, disco ambra dello stato vuoto sui festivi, un pallino per tipo nella striscia. `vue-tsc` pulito, `vitest` 305/305 prima dell'ultima modifica e test Dashboard verdi dopo; browser in chiaro, scuro e mobile. Nessun commit.
+- Decisioni di Andrea: l'app è chiara, moderna, coerente e accattivante, si torna alle funzionalità; i dati di prova restano; backend già riavviato.
+- Prossimo passo: BIA in una nuova sessione. In `stato.md` ci sono i punti del codice dove oggi c'è il segnaposto e le domande da porre nel brainstorming.
+- Dopo l'handoff, su richiesta di Andrea, tre rifiniture dell'Agenda: (1) giorni della settimana in minuscolo ("lun") nelle viste Mese e Settimana, come nella striscia della Dashboard; prima erano in maiuscolo spaziato. (2) Legenda più leggibile: testo `--fg2`, campioni da 14 px, lista accessibile. (3) Barra: i filtri Visite/Promemoria hanno il pallino del colore dell'evento e sono separati dal selettore delle viste da un divisore, così i due gruppi non si confondono. `vue-tsc` pulito, `vitest` 305/305, browser in chiaro e scuro.
+
+## [2026-11-26] handoff | Gerarchia dei riquadri su Dashboard e scheda paziente
+
+- Su richiesta di Andrea (punto 4 del suo giudizio sull'app: "card ovunque"), proposta mia applicata senza giro di domande, con frontend-design. Nuova [decisione 0011](decisioni/0011-gerarchia-dei-riquadri.md), `in-discussione`.
+- Dashboard: "Prossimi impegni" con ombra `--elev`; contatori senza riquadro, numeri in Fraunces, divisi da un filetto; "Pazienti da richiamare" appoggiata allo sfondo; "Visite Lun-Dom" diventa "Visite lun-dom".
+- Scheda paziente: fascia dei quattro indicatori senza riquadri, numeri più grandi; grafici della Panoramica con ombra; Plicometria e Circonferenze vuote in un riquadro tratteggiato come la BIA.
+- Verifiche: `vue-tsc` pulito, `vitest` 305/305, browser in chiaro, scuro e mobile. Nessun commit.
+- Andrea non approva "Pazienti da richiamare" senza riquadro: torna card piatta (file riportato alla versione committata). Regola aggiunta alla decisione 0011: i blocchi con azioni per riga restano in card, il livello contesto è solo per numeri e informazioni da leggere.
+- Segnalato da Andrea: il selettore Mese/Settimana/Giorno dell'Agenda non aveva icone, mentre Tabella/Schede delle liste sì (stesso `SelettoreSegmentato`). Aggiunte `CalendarDays`, `CalendarRange` e `Calendar1` in `AgendaToolbar.vue`. L'Agenda non ha test (scelta del 15 novembre); `vue-tsc` pulito.
+
+## [2026-11-26] handoff | Revisione indipendente (Sonnet) e rifiniture prima della demo
+
+- Revisione indipendente con un agente Sonnet e frontend-design, in sola lettura, su tutte le pagine comprese le visite. Niente di bloccante. Applicati: etichette del grafico Peso (unità tolta dai punti, ora nel titolo "Peso (kg)", come chiesto da Andrea); sottotitolo della modifica visita ("visita del 25 nov 2026" invece di "ultima visita…", che si confondeva col riepilogo della precedente); campioni della legenda dell'Agenda più visibili. Rimandato: "Composizione corporea" con un solo dato (sottotitolo "Variazione %" senza senso). Scartati: titoli troncati in Settimana (dati di prova), "Mai invitato" ambra (ADR 0010).
+- Header mobile, su indicazione di Andrea: avatar tolto sotto i 1024 px (troppe icone); il profilo (tema scuro, uscita) sta in fondo al menu laterale come menu a comparsa, con la freccia verso il basso come nell'header desktop (`AppSidebar` prop `conProfilo`, logica di uscita in `composables/useEsci.ts`). Header mobile con filetto e ombra `--elev`.
+- Verifiche: `vue-tsc` pulito, `vitest` 305/305, browser desktop e mobile. Nessun commit.
+- Tooltip shadcn al posto dei ~30 `title=` nativi: proposto da Andrea, poi **scartato** da lui. Troppo lavoro per il beneficio, e c'era il rischio di incastri con i menu a comparsa prima della demo.
+
+## [2026-11-26] handoff | Chiusura sessione: rifiniture UI, gerarchia dei riquadri, verso la BIA
+
+- `stato.md`: voce finale in cima a "Prossimo passo consigliato". Contiene: commit dei 23 file in staging, nessun riavvio del backend, il riepilogo della sessione, i due aperti piccoli ("Composizione corporea" con un solo dato; tooltip nativi, scelta definitiva) e la domanda da fare ad Andrea sulla demo di stasera, che decide lo stato della decisione 0011.
+- Prossimo passo: BIA in una nuova sessione. Punto di partenza e domande del brainstorming in `stato.md`.
+
+## [2026-11-26] query | BIA: primo brainstorming sull'importazione da BodyGram
+
+- Il nutrizionista usa Akern BodygramPlus. Andrea ha fornito due PDF di esempio, non salvati nel repo perché contengono dati personali: "Composizione Corporea" e "Report confronto" per distretti. Dai manuali Akern online: l'esportazione CSV esiste (archivio, tabella dei test, gruppo, singolo esame), ma le colonne non sono documentate.
+- Decisioni di Andrea: si carica uno o più CSV dal form della visita; i valori calcolati da BodyGram si salvano così come sono, niente formule nostre; i valori si possono modificare e la BIA si può cancellare; se il file contiene più misurazioni, errore (provvisorio); se peso o altezza non coincidono con la visita, si salva e lo si segnala. Non si sa ancora se il report per distretti servirà.
+- In pausa finché non arrivano CSV veri. Dettaglio in `stato.md`, "Prossimo passo consigliato".
+- Su richiesta di Andrea, fatta subito **solo l'interfaccia**: `BiaCaricamento.vue` (sezione a comparsa con area di caricamento di più CSV, elenco con rimozione, nota "per ora i file non vengono salvati") al posto del segnaposto in `DatiVisitaForm.vue`. Nessuna lettura, nessun backend. `vue-tsc` pulito, `vitest` 305/305, verificato nel browser. Nessun commit.
+- Rifiniture chieste da Andrea in `BiaCaricamento.vue`: icona del file in un cerchio menta tipo avatar, pulsante "Scarica" per ogni file (scarica la copia locale, `URL.createObjectURL`), X grigia che diventa rossa solo al passaggio del mouse (variante `rimuovi`, come per gli alimenti del piano). `vue-tsc` pulito.
+- Proposta di Claude approvata da Andrea: quando c'è almeno un file, l'area grande di caricamento sparisce e resta una riga "Aggiungi altri file · o trascinali qui". Si può trascinare su tutta la sezione. Nella sezione a comparsa i testi sono in `<div>`, non in `<p>`: `AccordionContent` aggiunge `mb-4` ai `<p>` che non sono ultimi e lo spazio si sommava al gap. `vue-tsc` pulito, verificato nel browser.
+- Bug segnalato da Andrea: in "Nuovo paziente" il link "Torna alla lista pazienti" andava a capo rispetto alla freccia e aveva il testo troppo grande. Causa: `PazienteNuovoView.vue` usava `<Button as-child>` senza importare `Button` (dal commit `18c59b2`), quindi Vue lo mostrava come un `<button>` nativo senza stili. Aggiunto l'import; nessun'altra vista ha lo stesso problema (controllate tutte le `.vue` che usano `<Button`).
+
+## [2026-11-26] lint | Componenti shadcn al posto dei pulsanti nativi, doppio scroll
+
+- **Doppio scroll** (segnalato da Andrea in "Nuovo paziente", aprendo le sezioni): il campo file nascosto (`sr-only`, quindi `position: absolute`) di `BiaCaricamento.vue` non aveva un antenato posizionato e allungava il documento. Aggiunto `relative` al contenitore. Le altre pagine principali non allungano il documento.
+- **Componenti usati senza import**: controllate tutte le `.vue`. L'unico caso era `Button` in `PazienteNuovoView.vue`, già corretto.
+- **Pulsanti nativi → shadcn (gruppo A, scelto da Andrea)**: filtri a pillola di Pazienti, Piani, Alimenti e Agenda (nuove varianti `chip` per variante e dimensione, stato acceso da `aria-pressed`); "Filtri avanzati" (`ghost`, con `aria-expanded`) e "Pulisci filtri" (nuova variante `tratteggiato`) in Pazienti e Piani; intestazioni ordinabili delle tabelle (`ghost` `xs`); freccia di ordinamento delle schede (`outline` `icon`); occhio della password al login; "Esc" della ricerca globale; "Vedi note" del piano (`link`); "Invita" nella pillola dello stato account (`link` con le classi della pillola); "Comprimi" della sidebar. "Mostra pazienti archiviati" diventa uno `Switch` con `Label`; le linguette di "Aggiungi alimento" diventano `Tabs`.
+- Aggiunti i componenti shadcn `switch` e `tabs`. La CLI più recente richiede Node ≥ 22.15 (qui c'è 22.12): lanciata con `npx -p node@24`. La CLI aveva importato `cn` da un pacchetto npm sbagliato invece che da `@/lib/utils` e modificato `main.css` (font Geist da Google, stili base): corretto e ripristinato. Restano aggiornati `reka-ui` (2.11) e `@lucide/vue` (1.81) in `package.json`.
+- Restano nativi, per scelta, 20 pulsanti che sono aree cliccabili e non pulsanti: celle e appuntamenti della vista Mese, risultati della ricerca globale e degli alimenti, notifiche, righe dello storico visite, voci della scelta paziente, nome nella lista alimenti, campo che apre la ricerca, menu del profilo.
+- Bug trovato durante il lavoro: nella lista Piani il badge dei filtri avanzati mostrava " attivi" senza il numero. Corretto.
+- Test adeguati (non nuovi): `AlimentiListView.spec.ts` verifica `aria-pressed` invece della classe del bordo; `AggiungiAlimentoDialog.spec.ts` usa `mousedown` sulle linguette, perché le Tabs di reka si attivano lì. `vue-tsc` pulito, `vitest` 305/305, browser: Pazienti, Piani, dialog alimento, ricerca globale. Non provati nel browser: login (occhio della password), "Vedi note" (solo piani in sola lettura), tema scuro. Nessun commit.
+
+## [2026-11-26] lint | Doppio scroll, verifica dei pulsanti convertiti in shadcn
+
+- **Doppio scroll nel dettaglio paziente** (segnalato da Andrea su Beatrice De Luca, scheda Panoramica): i testi `sr-only` di FMI e FFMI in `PlicometriaCard.vue` sono `position: absolute` e, senza un antenato posizionato, allungavano il documento (1110 px su 622). Stessa causa del caso di `BiaCaricamento.vue`. Corretto alla radice: `relative` sul `<main>` di `AppShell.vue`, che ora contiene tutti gli `sr-only` delle pagine, e anche sulla card. Controllate tutte le pagine dell'app a 375, 746 e 1440 px, con ogni scheda e ogni sezione aperta: nessun doppio scroll, né verticale né orizzontale.
+- **Verifica nel browser del "gruppo A"** (pulsanti nativi convertiti in shadcn), rimasta in sospeso: l'occhio della password al login mostra e nasconde e cambia l'etichetta per lo screen reader, con il focus visibile nei due temi; "Vedi note" di un piano in sola lettura apre il pannello delle note (stato "concluso" simulato solo nella pagina, nessun dato modificato); nel tema scuro filtri a pillola, "Pulisci filtri", `Switch`, "Invita" e "Comprimi" sono leggibili.
+- **Difetto trovato**: nel tema scuro la linguetta attiva di "Aggiungi alimento" perdeva la sottolineatura verde, perché la regola shadcn `dark:group-data-[variant=line]/tabs-list:data-active:border-transparent` è più specifica della nostra. Corretto in `AggiungiAlimentoDialog.vue` con lo stesso selettore. Le linguette della Dashboard e del dettaglio paziente non avevano il problema.
+- Etichetta nascosta del pulsante di chiusura di `SheetContent` e `DialogScrollContent` tradotta: "Close" → "Chiudi".
+- Il "gruppo B" (aree cliccabili rimaste `<button>` nativi) resta così, confermato da Andrea.
+- `vue-tsc` pulito, `vitest` 305/305. Nessun commit.
+- Pillole cliccabili del dettaglio paziente ("Prossima visita", "Nessuna visita programmata"): aggiunta una freccia `›` finale che si sposta un poco al passaggio del mouse (ferma con `prefers-reduced-motion`). Le distingue dagli stati non cliccabili come "Mai invitato" e "Paziente archiviato". Scelta di Andrea tra freccia e pillola a segmenti. Verificato in chiaro e mobile.
+
+## [2026-11-26] handoff | Fine sessione: doppio scroll, verifica shadcn, pillole cliccabili
+
+- `stato.md` aggiornato: conteggio dei file in staging (26), avviso sulle modifiche non in staging dell'altra sessione del 26 novembre (gruppo A, `BiaCaricamento.vue`, `switch`/`tabs`, `package.json`), riepilogo dell'ultima parte e regola sugli elementi `absolute`.
+- Prossima sessione: BIA, in pausa finché non arrivano CSV veri da BodyGram. Da chiedere ad Andrea com'è andata la demo, per lo stato della decisione 0011.
+- Nessun commit.

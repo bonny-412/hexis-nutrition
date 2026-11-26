@@ -101,15 +101,17 @@ async function onSubmit() {
             placeholder="••••••••"
             class="h-11 w-full rounded-xl border-(--bd) bg-(--surf) dark:bg-(--surf) pl-3.5 pr-10 text-sm transition-all focus-visible:ring-2 focus-visible:ring-(--green)"
           />
-          <button
+          <Button
             type="button"
-            class="absolute right-3 text-(--fg3) transition-colors hover:text-(--fg)"
+            variant="ghost"
+            size="icon-sm"
+            class="absolute right-1.5 text-(--fg3) hover:bg-transparent hover:text-(--fg) dark:hover:bg-transparent"
             :aria-label="passwordVisibile ? 'Nascondi password' : 'Mostra password'"
             @click="passwordVisibile = !passwordVisibile"
           >
             <EyeOff v-if="passwordVisibile" :size="18" />
             <Eye v-else :size="18" />
-          </button>
+          </Button>
         </div>
         <p v-if="errori.password" class="text-xs font-medium text-(--danger)">{{ errori.password }}</p>
       </div>

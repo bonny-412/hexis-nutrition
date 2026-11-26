@@ -1,10 +1,26 @@
 <script setup lang="ts">
 import { RouterLink, useRoute } from 'vue-router'
-import { LayoutGrid, Calendar, Users, MessageSquare, BarChart3, Apple, Lock, PanelLeftOpen, PanelLeftClose, Utensils } from '@lucide/vue'
+import { LayoutGrid, Calendar, Users, MessageSquare, BarChart3, Apple, Lock, PanelLeftOpen, PanelLeftClose, Utensils, Moon, LogOut, ChevronDown } from '@lucide/vue'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+} from '@/components/ui/dropdown-menu'
 import { useNotificheStore } from '@/stores/notifiche'
+import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
+import { useEsci } from '@/composables/useEsci'
 
 const notifiche = useNotificheStore()
-const props = withDefaults(defineProps<{ class?: string }>(), { class: '' })
+/** `conProfilo`: nel menu mobile, dove l'header non mostra l'avatar, il profilo (tema, uscita) sta qui in fondo. */
+const props = withDefaults(defineProps<{ class?: string; conProfilo?: boolean }>(), { class: '', conProfilo: false })
+const auth = useAuthStore()
+const tema = useThemeStore()
+const esci = useEsci()
 
 const isCollapsed = defineModel<boolean>('compressed', { default: false })
 
@@ -101,13 +117,53 @@ const route = useRoute()
           </RouterLink>
       </div>
 
+      <!-- Profilo come nel menu dell'header da desktop: un pulsante che apre tema e uscita, verso l'alto. -->
+      <div v-if="conProfilo" class="border-t border-(--side-bd) pt-3" data-test="sidebar-profilo">
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <button
+              type="button"
+              aria-label="Menu profilo"
+              class="group flex w-full items-center gap-2.5 rounded-[9px] px-1.5 py-1.5 text-left transition-colors hover:bg-(--side-act-bg)/50"
+            >
+              <span class="flex size-8 flex-none items-center justify-center rounded-full bg-(--mint) text-xs font-bold text-(--green-d)" aria-hidden="true">
+                {{ auth.professionista?.nome?.[0] }}{{ auth.professionista?.cognome?.[0] }}
+              </span>
+              <span class="min-w-0 flex-1 leading-tight">
+                <span class="block truncate text-[13px] font-semibold text-white">{{ auth.professionista?.nome }} {{ auth.professionista?.cognome }}</span>
+                <span class="block truncate text-[11px] text-(--side-fg2)">Professionista</span>
+              </span>
+              <!-- Come il menu profilo dell'header da desktop: verso il basso da chiuso, ruota da aperto. -->
+              <ChevronDown :size="14" class="flex-none text-(--side-fg2) transition-transform duration-200 group-data-[state=open]:rotate-180" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent side="top" align="start" class="w-(--reka-dropdown-menu-trigger-width) min-w-56">
+            <DropdownMenuLabel class="font-normal">
+              <div class="text-xs font-bold text-(--fg)">{{ auth.professionista?.nome }} {{ auth.professionista?.cognome }}</div>
+              <div class="mt-0.5 text-[11px] font-normal text-(--fg3)">{{ auth.professionista?.email }}</div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuCheckboxItem class="cursor-pointer" data-test="sidebar-tema" :model-value="tema.isDark" @update:model-value="tema.toggleTheme">
+              <Moon :size="14" />
+              Tema scuro
+            </DropdownMenuCheckboxItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem class="cursor-pointer" variant="destructive" data-test="sidebar-esci" @click="esci">
+              <LogOut :size="14" />
+              Esci dall'account
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       <!-- Bottone Toggle Collapse -->
-      <button
+      <Button
         type="button"
+        variant="ghost"
         @click="toggleSidebar"
         :title="isCollapsed ? 'Espandi sidebar' : 'Rimpicciolisci sidebar'"
         :aria-label="isCollapsed ? 'Espandi sidebar' : 'Comprimi sidebar'"
-        class="hidden items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium text-(--side-fg2) transition-colors hover:bg-(--side-act-bg) hover:text-white lg:flex"
+        class="hidden h-auto justify-start gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium text-(--side-fg2) hover:bg-(--side-act-bg) hover:text-white active:translate-y-0 lg:flex dark:hover:bg-(--side-act-bg)"
         :class="{ 'lg:justify-center lg:px-0': isCollapsed }"
       >
         <component
@@ -117,7 +173,7 @@ const route = useRoute()
           class="shrink-0"
         />
         <span class="truncate" :class="{ 'lg:hidden': isCollapsed }">Comprimi</span>
-      </button>
+      </Button>
     </div>
   </div>
 </template>

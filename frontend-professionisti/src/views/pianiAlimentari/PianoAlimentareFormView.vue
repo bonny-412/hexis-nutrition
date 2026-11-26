@@ -1171,9 +1171,9 @@ function stampaPdf() {
           class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-xl border border-(--bd) bg-(--surf) px-4 py-3 text-sm text-(--fg2) print:hidden"
         >
           <span>{{ testoRiquadroSolaLettura }}</span>
-          <button type="button" data-test="link-note" class="font-semibold text-(--green) transition-colors hover:text-(--green-d)" @click="noteAperte = true">
+          <Button type="button" variant="link" data-test="link-note" class="h-auto px-0 font-semibold" @click="noteAperte = true">
             Vedi note
-          </button>
+          </Button>
         </div>
 
         <!-- Su mobile resta su una riga e scorre di lato (senza barra visibile) invece di andare a capo voce per voce. -->

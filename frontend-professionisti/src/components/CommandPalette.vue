@@ -209,14 +209,16 @@ function vediTuttiRisultati() {
             autocomplete="off" placeholder="Cerca pazienti o un'azione…"
             class="flex-1 border-0 bg-transparent shadow-none focus-visible:ring-0"
           />
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="xs"
             aria-label="Chiudi ricerca"
-            class="rounded-md border border-(--bd2) px-1.5 py-0.5 text-[10px] font-semibold text-(--fg3)"
+            class="h-auto rounded-md border-(--bd2) px-1.5 py-0.5 text-[10px] font-semibold text-(--fg3)"
             @click="chiudi"
           >
             <kbd>Esc</kbd>
-          </button>
+          </Button>
         </div>
 
         <div :id="idRisultati" ref="listaRisultati" role="listbox" aria-label="Risultati di ricerca" class="max-h-80 overflow-y-auto p-2" @pointermove="evidenziaConPuntatore">

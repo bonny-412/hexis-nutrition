@@ -255,7 +255,8 @@ onMounted(() => Promise.all([caricaConteggio(), caricaAgenda(), caricaDaFare()])
 
     <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
       <div class="min-w-0 space-y-4">
-        <section class="overflow-clip rounded-2xl border border-(--bd) bg-(--surf)" data-test="dashboard-prossime-visite">
+        <!-- Protagonista della pagina: l'unico riquadro con elevazione. -->
+        <section class="overflow-clip rounded-2xl border border-(--bd) bg-(--surf) shadow-(--elev)" data-test="dashboard-prossime-visite">
           <header class="flex items-baseline justify-between gap-3 px-5 pt-4 pb-3">
             <h2 class="font-heading text-lg italic text-(--fg)">Prossimi impegni</h2>
             <Button as-child variant="ghost-primary" size="sm" class="group font-semibold">
@@ -331,14 +332,15 @@ onMounted(() => Promise.all([caricaConteggio(), caricaAgenda(), caricaDaFare()])
       </div>
 
       <div class="space-y-4">
-        <div class="grid grid-cols-2 gap-4">
-          <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4">
+        <!-- Contatori di contesto: appoggiati allo sfondo, senza riquadro, per non competere con gli impegni. -->
+        <div class="grid grid-cols-2 divide-x divide-(--bd) px-1">
+          <div class="pr-4">
             <p class="text-xs font-semibold text-(--fg3)">Pazienti attivi</p>
             <div v-if="pazientiAttivi === null && !erroreCaricamento" role="status" class="mt-1 flex h-9 items-center">
               <span class="sr-only">Caricamento del conteggio dei pazienti</span>
               <div aria-hidden="true" class="h-7 w-12 rounded bg-(--hover) motion-safe:animate-pulse" />
             </div>
-            <p v-else class="mt-1 text-3xl font-semibold text-(--green-d) tabular-nums">
+            <p v-else class="mt-1 font-heading text-4xl leading-none text-(--green-d) tabular-nums">
               {{ erroreCaricamento ? '—' : pazientiAttivi }}
             </p>
             <div v-if="erroreCaricamento" class="mt-2 space-y-2">
@@ -346,13 +348,13 @@ onMounted(() => Promise.all([caricaConteggio(), caricaAgenda(), caricaDaFare()])
               <Button type="button" variant="neutral" size="sm" aria-label="Riprova a caricare il conteggio dei pazienti" @click="caricaConteggio"><RotateCcw /> Riprova</Button>
             </div>
           </div>
-          <div class="rounded-2xl border border-(--bd) bg-(--surf) p-4">
-            <p class="text-xs font-semibold text-(--fg3)">Visite Lun-Dom</p>
+          <div class="pl-5">
+            <p class="text-xs font-semibold text-(--fg3)">Visite lun-dom</p>
             <div v-if="visiteSettimana === null && !erroreAgenda" role="status" class="mt-1 flex h-9 items-center">
               <span class="sr-only">Caricamento del conteggio delle visite</span>
               <div aria-hidden="true" class="h-7 w-12 rounded bg-(--hover) motion-safe:animate-pulse" />
             </div>
-            <p v-else class="mt-1 text-3xl font-semibold text-(--green-d) tabular-nums" data-test="dashboard-visite-settimana">
+            <p v-else class="mt-1 font-heading text-4xl leading-none text-(--green-d) tabular-nums" data-test="dashboard-visite-settimana">
               {{ erroreAgenda ? '—' : visiteSettimana }}
             </p>
             <p class="mt-1 text-xs text-(--fg3)">Programmate e concluse</p>

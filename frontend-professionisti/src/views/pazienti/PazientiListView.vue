@@ -20,10 +20,11 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import { DatePicker } from '@/components/ui/date-picker'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table'
-import { Archive, ArrowDown, ArrowUp, ArrowUpDown, Check, ChevronLeft, ChevronRight, FilterX, SearchX, UserPlus, Users } from '@lucide/vue'
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, FilterX, SearchX, UserPlus, Users } from '@lucide/vue'
 import StatoVuoto from '@/components/StatoVuoto.vue'
 import ErroreLista from '@/components/liste/ErroreLista.vue'
 import CaricamentoLista from '@/components/liste/CaricamentoLista.vue'
@@ -352,27 +353,28 @@ const conteggioTesto = computed(() => {
           class="min-w-70 flex-1"
         />
         <div class="flex flex-wrap gap-1.5">
-          <button
+          <Button
             v-for="chip in chipStatoAccount"
             :key="chip.valore"
             type="button"
+            variant="chip"
+            size="chip"
             :aria-pressed="statoAccount === chip.valore"
-            class="rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
-            :class="statoAccount === chip.valore
-              ? 'border-(--sage) bg-(--mint) text-(--green-d)'
-              : 'border-(--bd2) bg-(--surf) text-(--fg2) hover:border-(--sage)'"
             @click="selezionaStato(chip.valore)"
           >
             {{ chip.etichetta }}
-          </button>
+          </Button>
         </div>
       </div>
 
       <div class="my-3 h-px bg-(--div)" />
 
-      <button
+      <Button
         type="button"
-        class="flex items-center gap-2 text-xs font-bold text-(--fg2) hover:text-(--fg)"
+        variant="ghost"
+        size="sm"
+        class="-ml-2 gap-2 text-xs font-bold text-(--fg2) aria-expanded:bg-transparent"
+        :aria-expanded="filtriAvanzatiAperti"
         @click="filtriAvanzatiAperti = !filtriAvanzatiAperti"
       >
         <ChevronRight :size="14" class="transition-transform" :class="{ 'rotate-90': filtriAvanzatiAperti }" />
@@ -380,7 +382,7 @@ const conteggioTesto = computed(() => {
         <Badge :variant="filtriAvanzatiAttivi > 0 ? 'secondary' : 'outline'">
           {{ filtriAvanzatiAttivi > 0 ? `${filtriAvanzatiAttivi} attivi` : 'Nessuno attivo' }}
         </Badge>
-      </button>
+      </Button>
 
       <div v-if="filtriAvanzatiAperti" class="mt-3 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] items-end gap-2.5">
         <div class="flex flex-col gap-1.5">
@@ -414,31 +416,13 @@ const conteggioTesto = computed(() => {
             </SelectContent>
           </Select>
         </div>
-        <div class="flex items-end pb-px">
-          <button
-            id="filtro-mostra-archiviati"
-            type="button"
-            role="switch"
-            :aria-checked="mostraArchiviati"
-            class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-bold whitespace-nowrap transition-colors"
-            :class="mostraArchiviati
-              ? 'border-(--sage) bg-(--mint) text-(--green-d)'
-              : 'border-(--bd2) bg-(--surf) text-(--fg2) hover:border-(--sage)'"
-            @click="onMostraArchiviatiChange(!mostraArchiviati)"
-          >
-            <!-- Stesso stato attivo dei chip di stato, più la spunta: acceso/spento si legge anche senza il colore. -->
-            <Check v-if="mostraArchiviati" :size="14" aria-hidden="true" />
-            <Archive v-else :size="14" aria-hidden="true" />
-            Mostra pazienti archiviati
-          </button>
+        <div class="flex h-8 items-center gap-2">
+          <Switch id="filtro-mostra-archiviati" :model-value="mostraArchiviati" @update:model-value="onMostraArchiviatiChange" />
+          <Label for="filtro-mostra-archiviati" class="text-xs font-bold whitespace-nowrap text-(--fg2)">Mostra pazienti archiviati</Label>
         </div>
-        <button
-          type="button"
-          class="rounded-lg border border-dashed border-(--dash) px-3 py-2 text-xs font-bold text-(--fg3) hover:border-(--fg4) hover:text-(--fg)"
-          @click="pulisciFiltri"
-        >
+        <Button type="button" variant="tratteggiato" @click="pulisciFiltri">
           Pulisci filtri
-        </button>
+        </Button>
       </div>
     </section>
 
@@ -545,30 +529,30 @@ const conteggioTesto = computed(() => {
             <TableHeader>
               <TableRow>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 text-(--fg3)" @click="ordina('cognome')">
+                  <Button type="button" variant="ghost" size="xs" class="-ml-2 text-[length:inherit] font-medium text-(--fg3)" @click="ordina('cognome')">
                     Paziente
                     <component :is="iconaOrdinamento('cognome')" :size="12" :class="ordinaPer === 'cognome' ? 'text-(--fg)' : 'text-(--fg4)'" />
-                  </button>
+                  </Button>
                 </TableHead>
                 <TableHead class="text-(--fg3)">Obiettivo</TableHead>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 text-(--fg3)" @click="ordina('dataUltimaVisita')">
+                  <Button type="button" variant="ghost" size="xs" class="-ml-2 text-[length:inherit] font-medium text-(--fg3)" @click="ordina('dataUltimaVisita')">
                     Ultima visita
                     <component :is="iconaOrdinamento('dataUltimaVisita')" :size="12" :class="ordinaPer === 'dataUltimaVisita' ? 'text-(--fg)' : 'text-(--fg4)'" />
-                  </button>
+                  </Button>
                 </TableHead>
                 <TableHead class="text-(--fg3)">Prossima visita</TableHead>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 text-(--fg3)" @click="ordina('piano')">
+                  <Button type="button" variant="ghost" size="xs" class="-ml-2 text-[length:inherit] font-medium text-(--fg3)" @click="ordina('piano')">
                     Piano alimentare
                     <component :is="iconaOrdinamento('piano')" :size="12" :class="ordinaPer === 'piano' ? 'text-(--fg)' : 'text-(--fg4)'" />
-                  </button>
+                  </Button>
                 </TableHead>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 text-(--fg3)" @click="ordina('statoAccount')">
+                  <Button type="button" variant="ghost" size="xs" class="-ml-2 text-[length:inherit] font-medium text-(--fg3)" @click="ordina('statoAccount')">
                     Stato account
                     <component :is="iconaOrdinamento('statoAccount')" :size="12" :class="ordinaPer === 'statoAccount' ? 'text-(--fg)' : 'text-(--fg4)'" />
-                  </button>
+                  </Button>
                 </TableHead>
                 <TableHead class="text-right text-(--fg3)">Azioni</TableHead>
               </TableRow>

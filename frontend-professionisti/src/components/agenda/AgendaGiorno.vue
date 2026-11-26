@@ -41,8 +41,8 @@ const daFare = computed(() => delGiorno.value.filter((a) => a.tipo === 'PROMEMOR
     </h3>
 
     <div v-if="delGiorno.length === 0" data-test="agenda-giornata-libera">
-      <StatoVuoto v-if="filtroAttivo" :icona="CalendarCheck" titolo="Nessun impegno di questo tipo" testo="Gli altri impegni del giorno sono nascosti dal filtro." />
-      <StatoVuoto v-else :icona="CalendarCheck" titolo="Giornata libera" testo="Nessun impegno in agenda per questo giorno.">
+      <StatoVuoto v-if="filtroAttivo" :icona="CalendarCheck" :tono="festa ? 'avviso' : 'neutro'" titolo="Nessun impegno di questo tipo" testo="Gli altri impegni del giorno sono nascosti dal filtro." />
+      <StatoVuoto v-else :icona="CalendarCheck" :tono="festa ? 'avviso' : 'neutro'" titolo="Giornata libera" testo="Nessun impegno in agenda per questo giorno.">
         <Button @click="emit('nuovo', giorno)"><CalendarPlus :size="16" /> Nuovo appuntamento</Button>
       </StatoVuoto>
     </div>

@@ -50,8 +50,10 @@ const pliche = computed(() => {
 </script>
 
 <template>
+  <!-- `relative`: i testi `sr-only` sono `position: absolute`; senza un antenato posizionato allungano la pagina (doppio scroll). -->
   <div
-    :class="annidata ? 'rounded-xl bg-(--soft) p-4' : 'rounded-2xl border border-(--bd) bg-(--surf) p-5'"
+    class="relative"
+    :class="annidata ? 'rounded-xl bg-(--soft) p-4' : plicometria ? 'rounded-2xl border border-(--bd) bg-(--surf) p-5' : 'rounded-2xl border border-dashed border-(--bd2) px-5 py-3.5'"
     data-test="card-plicometria">
     <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
       <h3 class="font-heading text-base italic text-(--fg)">Plicometria</h3>

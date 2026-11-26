@@ -14,9 +14,6 @@ const props = defineProps<{
   errore: boolean
 }>()
 
-/** Oltre questo numero di pallini si mostra "+n": il giorno resta leggibile anche se è pieno. */
-const MAX_PALLINI = 6
-
 const GIORNI_BREVI = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab']
 
 const giorni = computed(() =>
@@ -24,8 +21,6 @@ const giorni = computed(() =>
     const eventi = props.appuntamenti?.filter((a) => a.data === iso) ?? []
     const visite = eventi.filter(eVisitaAttiva).length
     const promemoria = eventi.filter((a) => a.tipo === 'PROMEMORIA' && !a.fatto).length
-    const palliniVisite = Math.min(visite, MAX_PALLINI - (promemoria > 0 ? 1 : 0))
-    const palliniPromemoria = Math.min(promemoria, MAX_PALLINI - palliniVisite)
     const giornoSettimana = (indice + 1) % 7
     const oggi = iso === props.oggi
     return {
@@ -35,9 +30,6 @@ const giorni = computed(() =>
       numero: Number(iso.slice(8, 10)),
       visite,
       promemoria,
-      palliniVisite,
-      palliniPromemoria,
-      altri: visite + promemoria - palliniVisite - palliniPromemoria,
       festa: festivitaDelGiorno(iso),
       domenica: giornoSettimana === 0,
       weekend: giornoSettimana === 0 || giornoSettimana === 6,
@@ -67,7 +59,7 @@ function descrizione(g: (typeof giorni.value)[number]): string {
       :aria-label="descrizione(g)"
       :title="g.festa ?? undefined"
       class="group flex min-w-0 flex-col items-center gap-1 border-l border-(--div) px-1 py-3 transition-colors first:border-l-0 sm:items-start sm:px-4"
-      :class="g.oggi ? 'bg-(--mint)' : g.domenica && !g.festa ? 'bg-(--agenda-domenica) hover:brightness-95 dark:hover:brightness-110' : 'hover:bg-(--soft)'"
+      :class="g.oggi && (!g.festa || g.domenica) ? 'bg-(--mint)' : g.festa ? 'bg-(--warn-bg) hover:brightness-95 dark:hover:brightness-110' : g.domenica ? 'bg-(--agenda-domenica) hover:brightness-95 dark:hover:brightness-110' : 'hover:bg-(--soft)'"
       :data-test="`dashboard-giorno-${g.iso}`"
     >
       <span
@@ -80,17 +72,9 @@ function descrizione(g: (typeof giorni.value)[number]): string {
       >{{ g.numero }}</span>
       <span v-if="appuntamenti !== null" class="mt-1 flex min-h-2 flex-wrap items-center justify-center gap-0.5 sm:justify-start sm:gap-1" aria-hidden="true">
         <template v-if="g.visite || g.promemoria">
-          <span
-            v-for="n in g.palliniVisite"
-            :key="`visita-${n}`"
-            class="size-1.5 rounded-full bg-(--green)"
-          />
-          <span
-            v-for="n in g.palliniPromemoria"
-            :key="`promemoria-${n}`"
-            class="size-1.5 rounded-full bg-(--warn-fg)"
-          />
-          <span v-if="g.altri" class="text-[10px] font-semibold text-(--fg3)">+{{ g.altri }}</span>
+          <!-- Un pallino per tipo, qualunque sia il numero: i conteggi stanno nel testo sotto e nell'aria-label. -->
+          <span v-if="g.visite" class="size-1.5 rounded-full bg-(--green)" />
+          <span v-if="g.promemoria" class="size-1.5 rounded-full bg-(--warn-fg)" />
         </template>
         <span v-else class="h-px w-3 bg-(--bd2)" />
       </span>

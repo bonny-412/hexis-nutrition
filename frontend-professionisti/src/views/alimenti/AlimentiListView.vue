@@ -201,18 +201,17 @@ const conteggioTesto = computed(() => {
       <div class="flex flex-wrap items-center gap-2.5">
         <Input v-model="ricercaInput" type="search" autocomplete="off" aria-label="Cerca alimento o categoria" placeholder="Cerca alimento o categoria…" class="min-w-70 flex-1" />
         <div class="flex flex-wrap gap-1.5">
-          <button
+          <Button
             v-for="chip in chipFonte"
             :key="chip.valore"
             type="button"
-            class="rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
-            :class="fonte === chip.valore
-              ? 'border-(--sage) bg-(--mint) text-(--green-d)'
-              : 'border-(--bd2) bg-(--surf) text-(--fg2) hover:border-(--sage)'"
+            variant="chip"
+            size="chip"
+            :aria-pressed="fonte === chip.valore"
             @click="selezionaFonte(chip.valore)"
           >
             {{ chip.etichetta }}
-          </button>
+          </Button>
         </div>
       </div>
     </section>
@@ -265,10 +264,10 @@ const conteggioTesto = computed(() => {
             <TableHeader>
               <TableRow>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 text-(--fg3)" @click="ordina('nome')">
+                  <Button type="button" variant="ghost" size="xs" class="-ml-2 text-[length:inherit] font-medium text-(--fg3)" @click="ordina('nome')">
                     Alimento
                     <component :is="iconaOrdinamento('nome')" :size="12" :class="ordinaPer === 'nome' ? 'text-(--fg)' : 'text-(--fg4)'" />
-                  </button>
+                  </Button>
                 </TableHead>
                 <TableHead class="text-(--fg3)">Fonte</TableHead>
                 <TableHead class="text-right text-(--fg3)">kcal</TableHead>

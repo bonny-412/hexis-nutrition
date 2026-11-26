@@ -152,6 +152,10 @@ onMounted(() => {
 const sottotitolo = computed(() => {
   if (!paziente.value) return pazienteIdRoute ? '' : 'Seleziona il paziente per cui registrare la nuova visita.'
   const base = `${paziente.value.nome} ${paziente.value.cognome}`
+  // In modifica la visita di riferimento è quella aperta: "ultima visita" la confondeva con il riepilogo della precedente.
+  if (modalitaModifica.value) {
+    return visitaEsistente.value ? `${base} · visita del ${formattaDataItalianaConMese(visitaEsistente.value.dataVisita)}` : base
+  }
   if (!ultimaVisita.value) return base
   return `${base} · ultima visita ${formattaDataItalianaConMese(ultimaVisita.value.dataVisita)} con peso ${formattaNumero(ultimaVisita.value.pesoKg)} kg`
 })

@@ -16,7 +16,7 @@
   --div: #EAF1EE;
   --soft: #FAFCFB;
   --hover: #E8F0ED;
-  --agenda-domenica: #E5E8EE;
+  --agenda-domenica: #EDF3F0;
   --fg: #183C3A;
   --fg2: #4A6663;
   --fg3: #506B68;
@@ -54,6 +54,8 @@
   --chart-4: #3A6CC2;
   --bg-blur: rgba(245, 248, 246, 0.88);
   --shadow: 0 1px 2px rgba(24, 60, 58, 0.05);
+  /* Elevazione del riquadro protagonista di una pagina (uno solo): il resto è piatto o appoggiato allo sfondo. */
+  --elev: 0 1px 2px rgba(24, 60, 58, 0.05), 0 14px 32px -18px rgba(24, 60, 58, 0.28);
 
   /* Sidebar: variante "Scura tenue", vedi Opzioni Dashboard nei mockup */
   --side: #183C3A;
@@ -112,7 +114,7 @@
   --div: #203230;
   --soft: #1A2926;
   --hover: #1E2E2B;
-  --agenda-domenica: #29323D;
+  --agenda-domenica: #0F1A18;
 
   /* Testi */
   --fg: #E4EDEB;
@@ -163,6 +165,7 @@
   /* Effetti */
   --bg-blur: rgba(11, 20, 19, 0.88);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --elev: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 36px -16px rgba(0, 0, 0, 0.7);
 
   /* Sidebar */
   --side: #060E0D;

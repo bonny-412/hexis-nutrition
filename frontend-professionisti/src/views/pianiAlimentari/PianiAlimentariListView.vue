@@ -271,34 +271,33 @@ const conteggioTesto = computed(() => {
       <div class="flex flex-wrap items-center gap-2.5">
         <Input v-model="ricercaInput" type="search" autocomplete="off" aria-label="Cerca paziente o piano" placeholder="Cerca paziente o piano…" class="min-w-70 flex-1" />
         <div class="flex flex-wrap gap-1.5">
-          <button
-            v-for="chip in CHIP_STATI" :key="chip.valore" type="button" :data-test="`chip-stato-${chip.valore}`"
+          <Button
+            v-for="chip in CHIP_STATI" :key="chip.valore" type="button" variant="chip" size="chip" :data-test="`chip-stato-${chip.valore}`"
             :aria-pressed="statoFiltro === chip.valore"
-            class="rounded-full border px-3 py-1.5 text-xs font-bold transition-colors"
-            :class="statoFiltro === chip.valore
-              ? 'border-(--sage) bg-(--mint) text-(--green-d)'
-              : 'border-(--bd2) bg-(--surf) text-(--fg2) hover:border-(--sage)'"
             @click="selezionaStato(chip.valore)"
           >
             {{ chip.etichetta }}
-          </button>
+          </Button>
         </div>
       </div>
 
       <div class="my-3 h-px bg-(--div)" />
 
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="sm"
         data-test="filtri-avanzati-toggle"
-        class="flex items-center gap-2 text-xs font-bold text-(--fg2) hover:text-(--fg)"
+        class="-ml-2 gap-2 text-xs font-bold text-(--fg2) aria-expanded:bg-transparent"
+        :aria-expanded="filtriAvanzatiAperti"
         @click="filtriAvanzatiAperti = !filtriAvanzatiAperti"
       >
         <ChevronRight :size="14" class="transition-transform" :class="{ 'rotate-90': filtriAvanzatiAperti }" />
         Filtri avanzati
         <Badge :variant="filtriAvanzatiAttivi > 0 ? 'secondary' : 'outline'">
-          {{ filtriAvanzatiAttivi > 0 ? ` attivi` : 'Nessuno attivo' }}
+          {{ filtriAvanzatiAttivi > 0 ? `${filtriAvanzatiAttivi} attivi` : 'Nessuno attivo' }}
         </Badge>
-      </button>
+      </Button>
 
       <div v-if="filtriAvanzatiAperti" class="mt-3 grid grid-cols-[repeat(auto-fit,minmax(170px,1fr))] items-end gap-2.5">
         <div class="flex flex-col gap-1.5">
@@ -317,13 +316,9 @@ const conteggioTesto = computed(() => {
           <Label class="text-xs font-medium text-(--fg3)">Data scadenza a</Label>
           <DatePicker id="data-fine-a" :model-value="dataFineA" :min="dataFineDa" @update:model-value="(v) => cambiaData('dataFineA', v)" />
         </div>
-        <button
-          type="button"
-          class="rounded-lg border border-dashed border-(--dash) px-3 py-2 text-xs font-bold text-(--fg3) hover:border-(--fg4) hover:text-(--fg)"
-          @click="pulisciFiltri"
-        >
+        <Button type="button" variant="tratteggiato" @click="pulisciFiltri">
           Pulisci filtri
-        </button>
+        </Button>
       </div>
     </section>
 
@@ -405,24 +400,24 @@ const conteggioTesto = computed(() => {
               <TableRow>
                 <TableHead class="text-(--fg3)">Paziente</TableHead>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 text-(--fg3)" @click="ordina('nome')">
+                  <Button type="button" variant="ghost" size="xs" class="-ml-2 text-[length:inherit] font-medium text-(--fg3)" @click="ordina('nome')">
                     Piano
                     <component :is="iconaOrdinamento('nome')" :size="12" :class="ordinaPer === 'nome' ? 'text-(--fg)' : 'text-(--fg4)'" />
-                  </button>
+                  </Button>
                 </TableHead>
                 <TableHead class="text-(--fg3)">Stato</TableHead>
                 <TableHead class="text-(--fg3)">Obiettivo</TableHead>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 text-(--fg3)" @click="ordina('dataInizio')">
+                  <Button type="button" variant="ghost" size="xs" class="-ml-2 text-[length:inherit] font-medium text-(--fg3)" @click="ordina('dataInizio')">
                     Inizio
                     <component :is="iconaOrdinamento('dataInizio')" :size="12" :class="ordinaPer === 'dataInizio' ? 'text-(--fg)' : 'text-(--fg4)'" />
-                  </button>
+                  </Button>
                 </TableHead>
                 <TableHead>
-                  <button type="button" class="flex items-center gap-1 text-(--fg3)" @click="ordina('dataFine')">
+                  <Button type="button" variant="ghost" size="xs" class="-ml-2 text-[length:inherit] font-medium text-(--fg3)" @click="ordina('dataFine')">
                     Scadenza
                     <component :is="iconaOrdinamento('dataFine')" :size="12" :class="ordinaPer === 'dataFine' ? 'text-(--fg)' : 'text-(--fg4)'" />
-                  </button>
+                  </Button>
                 </TableHead>
                 <TableHead class="text-right text-(--fg3)">Azioni</TableHead>
               </TableRow>

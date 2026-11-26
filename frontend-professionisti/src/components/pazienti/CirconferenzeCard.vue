@@ -101,7 +101,7 @@ const indici = computed(() => {
 
 <template>
   <div
-    :class="annidata ? 'rounded-xl bg-(--soft) p-4' : 'rounded-2xl border border-(--bd) bg-(--surf) p-5'"
+    :class="annidata ? 'rounded-xl bg-(--soft) p-4' : haCirconferenze ? 'rounded-2xl border border-(--bd) bg-(--surf) p-5' : 'rounded-2xl border border-dashed border-(--bd2) px-5 py-3.5'"
     data-test="card-circonferenze">
     <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
       <h3 class="font-heading text-base italic text-(--fg)">Circonferenze</h3>
