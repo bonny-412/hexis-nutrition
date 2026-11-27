@@ -1004,3 +1004,15 @@ Dettaglio in [stato](stato.md#sessione-del-15-novembre-2026--agenda-implementata
 
 - `stato.md`: l'elenco da committare include la pulizia di `domande-aperte.md`. Nient'altro di nuovo rispetto all'handoff precedente: prossimo passo il brainstorming di "Sostituisci alimento", poi Google Calendar, poi Docker.
 - Tutto in staging, nessun commit.
+
+## [2026-11-27] ingest | Bug del collaudo
+
+- Andrea ha fornito il report di un collaudo con 22 bug (`bug-hexis-nutrition.md`), da discutere prima della messa online. Salvato così com'è in `sorgenti/2026-11-27-collaudo-bug.md`.
+- Nuova pagina `collaudo-bug.md` (in-discussione): tabella dei 22 bug con area e livello, due punti da decidere (piano con inizio futuro, ruolo sulle rotte dei piani), verifiche prima del rilascio. Aggiornati `index.md` e `domande-aperte.md`.
+- Nessun bug verificato nel codice né corretto.
+
+## [2026-11-27] handoff | Chiusura sessione dopo l'ingest dei bug del collaudo
+
+- `stato.md`: nuovo blocco in "Prossimo passo consigliato" e voce in "Dove siamo". Lo staging della sera risulta committato (`60e4329`, `95e33ef`).
+- Prossimo passo: invariato ("Sostituisci alimento", Google Calendar, Docker), con una sessione dedicata ai bug del collaudo prima della messa online.
+- In staging solo la wiki, nessun commit.

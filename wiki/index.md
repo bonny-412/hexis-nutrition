@@ -9,6 +9,7 @@
 | [moduli/inviti-e-token](moduli/inviti-e-token.md) | `token_azione`: invito paziente e reset password | stabile |
 | [glossario](glossario.md) | Terminologia di dominio | in-discussione |
 | [domande-aperte](domande-aperte.md) | Punti da chiarire | stabile |
+| [collaudo-bug](collaudo-bug.md) | 22 bug del collaudo del 27 novembre 2026, da discutere prima della messa online | in-discussione |
 | [decisioni/0001-stack-tecnologico](decisioni/0001-stack-tecnologico.md) | Scelta dello stack tecnico | stabile |
 | [decisioni/0002-autenticazione-e-onboarding](decisioni/0002-autenticazione-e-onboarding.md) | Auth, onboarding, modello di account | stabile |
 | [decisioni/0003-repo-unico-per-progetto](decisioni/0003-repo-unico-per-progetto.md) | Un solo repo git per ogni progetto del workspace | stabile |
