@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { LIMITI_CAMPI } from '@/config/limitiCampi'
+import ContatoreCaratteri from '@/components/form/ContatoreCaratteri.vue'
 import { computed, nextTick, ref, type Ref } from 'vue'
 import type { AcceptableValue } from 'reka-ui'
 import { Input } from '@/components/ui/input'
@@ -338,8 +340,8 @@ defineExpose({
 
     <div class="mt-5 flex flex-col gap-1.5">
       <Label for="note-visita" class="text-[13px] font-medium text-(--fg2)">Note</Label>
-      <Textarea id="note-visita" v-model="note" maxlength="500" placeholder="Note operative, piccoli obiettivi fino alla prossima visita..." />
-      <p class="text-right text-xs text-(--fg3)">{{ note.length }}/500</p>
+      <Textarea id="note-visita" v-model="note" placeholder="Note operative, piccoli obiettivi fino alla prossima visita..." :maxlength="LIMITI_CAMPI.noteVisita" />
+      <ContatoreCaratteri :valore="note" :max="LIMITI_CAMPI.noteVisita" sempre />
     </div>
 
     <BiaCaricamento class="mt-6" />

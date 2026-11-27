@@ -1036,3 +1036,19 @@ Ordine cronologico delle visite (data, poi `creato_il`) applicato a storico pagi
 ## [2026-11-27] handoff | Fine sessione: bug del collaudo, gruppi 1-3
 
 Sessione dedicata ai bug del collaudo: verificati nel codice, divisi in sei gruppi, corretti i gruppi 1 (concorrenza e due schede, V35), 2 (sessioni dopo il reset e ruolo sui piani, V36) e 3 (visite nello stesso giorno), più il piano con inizio futuro non attivabile e il bug 09. Tutto provato, in staging, non committato. Ambiente di Andrea già riavviato con V35 e V36. Prossima sessione: gruppo 4 (validazioni e vincoli `CHECK`). `stato.md` aggiornato con il riepilogo e il prossimo passo.
+
+## [2026-11-27] handoff | Bug del collaudo, gruppo 4 e test di regressione
+
+Gruppo 4 corretto nel backend: validazioni (10, 11, 14, 15, 16, 02, 07) e migrazione V37 con i `CHECK` (17), provata prima su `hexis` dentro una transazione annullata. Su proposta di Andrea, `@Size(max)` su tutti i campi di testo, uguale alla colonna (5000 per i `TEXT`), e `@DecimalMax` sui numeri. La somma dei macronutrienti resta solo nell'API: 4 alimenti BDA superano i 100 g. Andrea ha chiesto a Claude di scrivere i test di regressione: 30 nuovi (18, 19, 21, 22 e gruppo 4), suite 226/226; controprova sul 22 senza lock (fallisce). Aggiornati collaudo-bug, api-contracts, modello-dati, stato. Non committato. Prossimo: gruppo 5 (form del frontend, conteggio dei caratteri).
+
+## [2026-11-27] handoff | Bug del collaudo, gruppo 5 (form del frontend)
+
+Gruppo 5 corretto: orari e date scritti male segnalati come non validi (`v-model:non-valido` sui selettori, 01 e 08), obiettivo maggiore di 0 (10), grammi negativi incollati o a zero bloccati con l'errore sotto la riga (06, 07), somma dei macronutrienti nel form alimento (02), `maxlength` e contatore dei caratteri su tutti i campi di testo (16, proposta di Andrea), conferma di uscita su ogni navigazione con `useConfermaUscita` (13). 15 test di regressione, vitest 322/322; provato nel browser senza salvare. Non committato. Prossimo: gruppo 6 (stampa PDF).
+
+## [2026-11-27] handoff | Bug del collaudo, gruppo 6 (stampa PDF)
+
+Bug 04: la stampa del piano ora è un documento A4 dedicato (`PianoStampa.vue`, Teleport sul body), l'unica cosa visibile in stampa. Sempre bianco anche col tema scuro (richiesta di Andrea), con logo accanto a "Hexis" (richiesta di Andrea), intestazione completa, giorni e pasti con i grammi su una linea di puntini, tabella per i macronutrienti, esempi per pasto. Corretti anche i contatori doppi sotto le textarea. vitest 326/326. Tutti i gruppi del collaudo chiusi, tranne il 20 rimandato. Non committato.
+
+## [2026-11-27] handoff | Fine sessione: bug del collaudo, gruppi 4-6
+
+Chiusi i gruppi 4 (validazioni backend e V37), 5 (form del frontend) e 6 (stampa PDF). In più: limiti di lunghezza su tutti i campi con contatore (proposta di Andrea), contatori doppi sotto le textarea tolti, stampa sempre bianca con logo (richieste di Andrea). Test di regressione scritti da Claude, anche per 18, 19, 21 e 22: backend 226/226, frontend 326/326. Provato nel browser sull'ambiente di Andrea senza salvare nulla. Tutto in staging, non committato (lo fa Andrea); V37 si applica al riavvio di STS. Da provare a mano: anteprima di stampa vera (Ctrl+P, chiaro e scuro). Prossimo: verifiche prima del rilascio (permessi sulle singole risorse, errori durante il salvataggio), poi richieste di Edoardo.

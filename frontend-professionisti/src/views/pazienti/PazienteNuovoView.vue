@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { LIMITI_CAMPI } from '@/config/limitiCampi'
+import ContatoreCaratteri from '@/components/form/ContatoreCaratteri.vue'
+import { useConfermaUscita } from '@/composables/useConfermaUscita'
 import { scorriAlPrimoErrore } from '@/utils/form'
 import { computed, nextTick, ref, type Ref } from 'vue'
 import type { AcceptableValue } from 'reka-ui'
@@ -71,7 +74,6 @@ const datiVisitaForm = ref<InstanceType<typeof DatiVisitaForm>>()
 
 const inCorso = ref(false)
 const errori = ref<Record<string, string>>({})
-const mostraConfermaAnnulla = ref(false)
 
 const router = useRouter()
 
@@ -157,17 +159,17 @@ function tornaIndietro() {
   }
 }
 
-function onAnnullaClick() {
-  if (formValorizzata()) {
-    mostraConfermaAnnulla.value = true
-  } else {
-    tornaIndietro()
-  }
-}
+// "Uscire senza salvare?" su ogni uscita dalla pagina, sidebar compresa (bug 13 del collaudo).
+const {
+  aperta: mostraConfermaAnnulla,
+  chiedi: chiediUscita,
+  esciSenzaSalvare,
+  consentiUscita,
+} = useConfermaUscita(() => formValorizzata())
 
-function confermaAnnulla() {
-  mostraConfermaAnnulla.value = false
-  tornaIndietro()
+/** "Annulla": esce subito se non è stato cambiato nulla, altrimenti chiede conferma. */
+function onAnnullaClick() {
+  chiediUscita(tornaIndietro)
 }
 
 // --- VALIDAZIONE E SUBMIT ---
@@ -219,6 +221,7 @@ async function onSubmit() {
       visita: datiVisitaForm.value!.ottieniDati(),
     })
     toast.success('Paziente creato.')
+    consentiUscita()
     router.push(`/pazienti/${paziente.id}`)
   } catch {
     toast.error('Non è stato possibile creare il paziente. Controlla i dati e riprova.')
@@ -255,14 +258,16 @@ async function onSubmit() {
         <div class="mt-5 grid gap-5 sm:grid-cols-2">
           <div class="flex flex-col gap-1.5">
             <Label for="nome" class="text-[13px] font-medium text-(--fg2)">Nome*</Label>
-            <Input id="nome" :model-value="nome" @update:model-value="onNomeInput" type="text" :aria-invalid="!!errori.nome" :aria-describedby="errori.nome ? 'nuovo-paziente-errore-nome' : undefined" placeholder="Es. Mario" />
+            <Input id="nome" :model-value="nome" @update:model-value="onNomeInput" type="text" :aria-invalid="!!errori.nome" :aria-describedby="errori.nome ? 'nuovo-paziente-errore-nome' : undefined" placeholder="Es. Mario" :maxlength="LIMITI_CAMPI.nomePersona" />
             <p id="nuovo-paziente-errore-nome" v-if="errori.nome" class="text-xs font-medium text-(--danger)">{{ errori.nome }}</p>
+            <ContatoreCaratteri :valore="nome" :max="LIMITI_CAMPI.nomePersona" />
           </div>
 
           <div class="flex flex-col gap-1.5">
             <Label for="cognome" class="text-[13px] font-medium text-(--fg2)">Cognome*</Label>
-            <Input id="cognome" :model-value="cognome" @update:model-value="onCognomeInput" type="text" :aria-invalid="!!errori.cognome" :aria-describedby="errori.cognome ? 'nuovo-paziente-errore-cognome' : undefined" placeholder="Es. Rossi" />
+            <Input id="cognome" :model-value="cognome" @update:model-value="onCognomeInput" type="text" :aria-invalid="!!errori.cognome" :aria-describedby="errori.cognome ? 'nuovo-paziente-errore-cognome' : undefined" placeholder="Es. Rossi" :maxlength="LIMITI_CAMPI.nomePersona" />
             <p id="nuovo-paziente-errore-cognome" v-if="errori.cognome" class="text-xs font-medium text-(--danger)">{{ errori.cognome }}</p>
+            <ContatoreCaratteri :valore="cognome" :max="LIMITI_CAMPI.nomePersona" />
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -299,8 +304,9 @@ async function onSubmit() {
 
           <div class="flex flex-col gap-1.5">
             <Label for="email" class="text-[13px] font-medium text-(--fg2)">Email*</Label>
-            <Input id="email" :model-value="email" @update:model-value="onEmailInput" type="text" :aria-invalid="!!errori.email" :aria-describedby="errori.email ? 'nuovo-paziente-errore-email' : undefined" placeholder="Es. mariorossi@gmail.com" />
+            <Input id="email" :model-value="email" @update:model-value="onEmailInput" type="text" :aria-invalid="!!errori.email" :aria-describedby="errori.email ? 'nuovo-paziente-errore-email' : undefined" placeholder="Es. mariorossi@gmail.com" :maxlength="LIMITI_CAMPI.email" />
             <p id="nuovo-paziente-errore-email" v-if="errori.email" class="text-xs font-medium text-(--danger)">{{ errori.email }}</p>
+            <ContatoreCaratteri :valore="email" :max="LIMITI_CAMPI.email" />
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -317,12 +323,14 @@ async function onSubmit() {
 
           <div class="flex flex-col gap-1.5">
             <Label for="lavoro" class="text-[13px] font-medium text-(--fg2)">Lavoro</Label>
-            <Input id="lavoro" :model-value="lavoro" @update:model-value="onLavoroInput" type="text" placeholder="Es. Impiegato" />
+            <Input id="lavoro" :model-value="lavoro" @update:model-value="onLavoroInput" type="text" placeholder="Es. Impiegato" :maxlength="LIMITI_CAMPI.lavoro" />
+            <ContatoreCaratteri :valore="lavoro" :max="LIMITI_CAMPI.lavoro" />
           </div>
 
           <div class="flex flex-col gap-1.5">
             <Label for="medico-riferimento" class="text-[13px] font-medium text-(--fg2)">Medico di riferimento</Label>
-            <Input id="medico-riferimento" :model-value="medicoRiferimento" @update:model-value="onMedicoRiferimentoInput" type="text" placeholder="Es. Dott. Mario Bianchi" />
+            <Input id="medico-riferimento" :model-value="medicoRiferimento" @update:model-value="onMedicoRiferimentoInput" type="text" placeholder="Es. Dott. Mario Bianchi" :maxlength="LIMITI_CAMPI.medicoRiferimento" />
+            <ContatoreCaratteri :valore="medicoRiferimento" :max="LIMITI_CAMPI.medicoRiferimento" />
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -346,14 +354,14 @@ async function onSubmit() {
 
         <div class="mt-5 flex flex-col gap-1.5">
           <Label for="note" class="text-[13px] font-medium text-(--fg2)">Storia del paziente</Label>
-          <Textarea id="note" v-model="note" maxlength="2000" placeholder="Es. vive da solo, fuma, beve, è autonomo, allergie, patologie…" />
-          <p class="text-right text-xs text-(--fg3)">{{ note.length }}/2000</p>
+          <Textarea id="note" v-model="note" placeholder="Es. vive da solo, fuma, beve, è autonomo, allergie, patologie…" :maxlength="LIMITI_CAMPI.notePaziente" />
+          <ContatoreCaratteri :valore="note" :max="LIMITI_CAMPI.notePaziente" sempre />
         </div>
 
         <div class="mt-5 flex flex-col gap-1.5">
           <Label for="trattamenti" class="text-[13px] font-medium text-(--fg2)">Terapie in corso</Label>
-          <Textarea id="trattamenti" v-model="trattamenti" maxlength="2000" placeholder="Es. terapie farmacologiche in corso, integratori, trattamenti…" />
-          <p class="text-right text-xs text-(--fg3)">{{ trattamenti.length }}/2000</p>
+          <Textarea id="trattamenti" v-model="trattamenti" placeholder="Es. terapie farmacologiche in corso, integratori, trattamenti…" :maxlength="LIMITI_CAMPI.trattamenti" />
+          <ContatoreCaratteri :valore="trattamenti" :max="LIMITI_CAMPI.trattamenti" sempre />
         </div>
       </div>
 
@@ -379,7 +387,7 @@ async function onSubmit() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel data-test="conferma-annulla-continua"><Pencil /> Continua a compilare</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-annulla-esci" @click="confermaAnnulla"><LogOut /> Esci senza salvare</AlertDialogAction>
+          <AlertDialogAction data-test="conferma-annulla-esci" @click="esciSenzaSalvare"><LogOut /> Esci senza salvare</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

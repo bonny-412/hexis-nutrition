@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { LIMITI_CAMPI } from '@/config/limitiCampi'
+import ContatoreCaratteri from '@/components/form/ContatoreCaratteri.vue'
 import { computed, nextTick, ref, watch } from 'vue'
 import type { AcceptableValue } from 'reka-ui'
 import { toast } from 'vue-sonner'
@@ -60,7 +62,8 @@ const DURATE = [15, 30, 45, 60, 90, 120]
 const INIZIO_MIN = 7 * 60
 const FINE_MIN = 20 * 60
 const REGEX_ORA = /^([01]\d|2[0-3]):[0-5]\d$/
-const REGEX_LINK = /^https?:\/\/\S+$/
+// Come il backend: http o https con un host vero, porta e percorso facoltativi, niente credenziali (bug 14).
+const REGEX_LINK = /^https?:\/\/[^\s/?#@:]+(:\d{1,5})?([/?#]\S*)?$/
 const MAX_TESTO = 500
 const MAX_GIORNI_BLOCCO = 62
 const REGEX_DATA = /^\d{4}-\d{2}-\d{2}$/
@@ -71,6 +74,12 @@ const data = ref('')
 const ora = ref('')
 const dataFine = ref('')
 const oraFine = ref('')
+// Testo scritto nei selettori che non è una data o un orario valido (bug 01 e 08 del collaudo): il valore
+// resta vuoto, ma il campo non va trattato come "senza orario" né come "obbligatorio".
+const dataNonValida = ref(false)
+const oraNonValida = ref(false)
+const dataFineNonValida = ref(false)
+const oraFineNonValida = ref(false)
 const giornataIntera = ref(false)
 const durata = ref('30')
 const testo = ref('')
@@ -154,6 +163,10 @@ async function inizializza() {
   anticipo.value = String(a?.anticipoNotificaMinuti ?? ANTICIPO_NOTIFICA_DEFAULT)
   paziente.value = null
   errori.value = {}
+  dataNonValida.value = false
+  oraNonValida.value = false
+  dataFineNonValida.value = false
+  oraFineNonValida.value = false
   inCorso.value = false
   firmaBase.value = null
   pazienteInCaricamento.value = false
@@ -225,12 +238,16 @@ function erroreCampo(chiave: string): string | undefined {
     case 'paziente':
       return eVisita.value && !paziente.value ? 'Seleziona un paziente.' : undefined
     case 'data':
+      if (dataNonValida.value) return 'Data non valida.'
       return data.value ? undefined : 'La data è obbligatoria.'
     case 'ora':
+      if (oraNonValida.value && !(eBlocco.value && giornataIntera.value)) return 'Orario non valido.'
       return erroreOra()
     case 'dataFine':
+      if (eBlocco.value && dataFineNonValida.value) return 'Data non valida.'
       return erroreDataFine()
     case 'oraFine':
+      if (eBlocco.value && !giornataIntera.value && oraFineNonValida.value) return 'Orario non valido.'
       return erroreOraFine()
     case 'testo':
       if (ePromemoria.value && !testo.value.trim()) return 'Il testo del promemoria è obbligatorio.'
@@ -251,7 +268,8 @@ function erroreCampo(chiave: string): string | undefined {
 const CHIAVI = ['paziente', 'data', 'ora', 'dataFine', 'oraFine', 'testo', 'link']
 
 // Gli errori spariscono non appena il campo viene corretto.
-watch([tipo, paziente, data, ora, dataFine, oraFine, giornataIntera, durata, testo, link], () => {
+watch([tipo, paziente, data, ora, dataFine, oraFine, giornataIntera, durata, testo, link,
+  dataNonValida, oraNonValida, dataFineNonValida, oraFineNonValida], () => {
   if (Object.keys(errori.value).length === 0) return
   const nuovi = { ...errori.value }
   for (const chiave of Object.keys(nuovi)) {
@@ -487,13 +505,14 @@ const titoloSovrapposizione = computed(() => {
               <Label for="appuntamento-data" class="text-[13px] font-medium text-(--fg2)">Inizio*</Label>
               <div class="grid gap-3 sm:grid-cols-2">
                 <div class="flex flex-col gap-1.5">
-                  <DatePicker id="appuntamento-data" v-model="data" digitabile class="w-full" aria-label="Data di inizio" :aria-invalid="!!errori.data" :aria-describedby="errori.data ? 'appuntamento-errore-data' : undefined" />
+                  <DatePicker id="appuntamento-data" v-model="data" v-model:non-valido="dataNonValida" digitabile class="w-full" aria-label="Data di inizio" :aria-invalid="!!errori.data" :aria-describedby="errori.data ? 'appuntamento-errore-data' : undefined" />
                   <p v-if="errori.data" id="appuntamento-errore-data" class="text-xs font-medium text-(--danger)">{{ errori.data }}</p>
                 </div>
                 <div v-if="!giornataIntera" class="flex flex-col gap-1.5">
                   <TimePicker
                     id="appuntamento-ora"
                     v-model="ora"
+                    v-model:non-valido="oraNonValida"
                     min="07:00"
                     max="20:00"
                     aria-label="Ora di inizio"
@@ -509,13 +528,14 @@ const titoloSovrapposizione = computed(() => {
               <Label for="appuntamento-data-fine" class="text-[13px] font-medium text-(--fg2)">Fine*</Label>
               <div class="grid gap-3 sm:grid-cols-2">
                 <div class="flex flex-col gap-1.5">
-                  <DatePicker id="appuntamento-data-fine" v-model="dataFine" digitabile class="w-full" aria-label="Data di fine" :aria-invalid="!!errori.dataFine" :aria-describedby="errori.dataFine ? 'appuntamento-errore-data-fine' : undefined" />
+                  <DatePicker id="appuntamento-data-fine" v-model="dataFine" v-model:non-valido="dataFineNonValida" digitabile class="w-full" aria-label="Data di fine" :aria-invalid="!!errori.dataFine" :aria-describedby="errori.dataFine ? 'appuntamento-errore-data-fine' : undefined" />
                   <p v-if="errori.dataFine" id="appuntamento-errore-data-fine" class="text-xs font-medium text-(--danger)">{{ errori.dataFine }}</p>
                 </div>
                 <div v-if="!giornataIntera" class="flex flex-col gap-1.5">
                   <TimePicker
                     id="appuntamento-ora-fine"
                     v-model="oraFine"
+                    v-model:non-valido="oraFineNonValida"
                     min="07:00"
                     max="20:00"
                     aria-label="Ora di fine"
@@ -537,7 +557,7 @@ const titoloSovrapposizione = computed(() => {
             <div class="grid gap-3 sm:grid-cols-2">
               <div class="flex flex-col gap-1.5">
                 <Label for="appuntamento-data" class="text-[13px] font-medium text-(--fg2)">Data*</Label>
-                <DatePicker id="appuntamento-data" v-model="data" digitabile class="w-full" :aria-invalid="!!errori.data" :aria-describedby="errori.data ? 'appuntamento-errore-data' : undefined" />
+                <DatePicker id="appuntamento-data" v-model="data" v-model:non-valido="dataNonValida" digitabile class="w-full" :aria-invalid="!!errori.data" :aria-describedby="errori.data ? 'appuntamento-errore-data' : undefined" />
                 <p v-if="errori.data" id="appuntamento-errore-data" class="text-xs font-medium text-(--danger)">{{ errori.data }}</p>
               </div>
               <div class="flex flex-col gap-1.5">
@@ -547,6 +567,7 @@ const titoloSovrapposizione = computed(() => {
                 <TimePicker
                   id="appuntamento-ora"
                   v-model="ora"
+                  v-model:non-valido="oraNonValida"
                   min="07:00"
                   max="20:00"
                   :aria-invalid="!!errori.ora" :aria-describedby="errori.ora ? 'appuntamento-errore-ora' : undefined"
@@ -579,9 +600,9 @@ const titoloSovrapposizione = computed(() => {
               rows="3"
               :aria-invalid="!!errori.testo" :aria-describedby="errori.testo ? 'appuntamento-errore-testo' : undefined"
               :placeholder="ePromemoria ? 'Es. Richiamare per i risultati delle analisi' : eBlocco ? 'Es. Pausa pranzo' : 'Es. Controllo mensile'"
-              data-test="appuntamento-testo"
-            />
+              data-test="appuntamento-testo" :maxlength="LIMITI_CAMPI.testoAgenda" />
             <p id="appuntamento-errore-testo" v-if="errori.testo" class="text-xs font-medium text-(--danger)">{{ errori.testo }}</p>
+            <ContatoreCaratteri :valore="testo" :max="LIMITI_CAMPI.testoAgenda" sempre />
           </div>
 
           <div v-if="sezioneNotifica" class="flex flex-col gap-3 rounded-lg border border-(--bd) p-3" data-test="appuntamento-notifica-sezione">
@@ -611,9 +632,9 @@ const titoloSovrapposizione = computed(() => {
               inputmode="url"
               :aria-invalid="!!errori.link" :aria-describedby="errori.link ? 'appuntamento-errore-link' : undefined"
               placeholder="https://"
-              data-test="appuntamento-link"
-            />
+              data-test="appuntamento-link" :maxlength="LIMITI_CAMPI.linkVideo" />
             <p id="appuntamento-errore-link" v-if="errori.link" class="text-xs font-medium text-(--danger)">{{ errori.link }}</p>
+            <ContatoreCaratteri :valore="link" :max="LIMITI_CAMPI.linkVideo" />
           </div>
         </div>
 

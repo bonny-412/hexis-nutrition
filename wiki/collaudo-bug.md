@@ -20,11 +20,34 @@ Verificati nel codice il 27/11: tutti confermati; il 13 è più ampio (nessuna g
 1. **Concorrenza e due schede (21, 22, 18)**: **corretti il 27/11**, non ancora provati a mano. 21: indice unico parziale (V35). 22: advisory lock per professionista in `AgendaService.crea`/`aggiorna`. 18: `@Version` sul piano, `versione` nel `PUT`, 409 `PIANO_MODIFICATO_ALTROVE` con toast.
 2. **Sicurezza (19, ruolo sui piani)**: **corretti il 27/11**. 19: contatore `versione_sessione` su professionisti e pazienti (V36) nel claim `sv` del JWT, incrementato dal reset, verificato dal filtro a ogni richiesta (scelto al posto di una data di cambio password perché l'`iat` del JWT è arrotondato al secondo). Ruolo: `hasRole("PROFESSIONISTA")` su `/piani-alimentari/**` in `SecurityConfig`. Provati da Claude su backend di prova (`hexis_test`): dopo il reset il token vecchio riceve 401 su `/auth/me` e `/pazienti`, la password vecchia non entra, il nuovo login e il nuovo token funzionano; un paziente riceve 403 su ricerca e dettaglio dei piani, il professionista 200.
 3. **Visite nello stesso giorno (03, 12)**: **corretti il 27/11**, `creato_il` come secondo criterio d'ordine ovunque (storico, precedente, ultima visita, data dell'obiettivo, suggerimento del piano, filtro con `NOT EXISTS` di una visita successiva; nel frontend il riepilogo «Ultima visita» usa la posizione nella lista). Verificati da Claude sull'ambiente di Andrea con le due visite di Elio Collaudo del 27/11: panoramica e storico mostrano 75,80 kg come più recente con −0,70 kg; il filtro verificato in SQL in una transazione annullata (con obiettivi diversi il vecchio filtro trovava il paziente in entrambi, il nuovo solo nell'obiettivo dell'ultima).
-4. **Validazioni backend e vincoli DB (09, 10, 11, 14, 15, 16, 02, 07, 17)**, con una migrazione di `CHECK`.
-5. **Form del frontend (01, 06, 08, 10, 16, 02, 07, 13)**, convenzione delle form; il 13 come guardia di rotta comune.
-6. **Stampa PDF (04)**, lavoro di UI a parte.
+4. **Validazioni backend e vincoli DB (09, 10, 11, 14, 15, 16, 02, 07, 17)**: **corretti il 27/11** (il 09 già con il gruppo 1). 10: `obiettivoKcal` `@Positive`, `dataFine` prima della `dataInizio` → 400 (`PianoAlimentareNonValidoException`). 11: `fatto` `@NotNull`. 14: il link del videoconsulto richiede un host. 15: `accept-float-as-int: false`, un decimale in un campo intero è 400. 16: `@Size(max)` su **tutti** i campi di testo delle richieste, uguale alla colonna (5000 per i `TEXT`), su proposta di Andrea; `@DecimalMax` sui numeri. 02: somma dei macronutrienti ≤ `quantitaG` per gli alimenti personalizzati (non nel DB: 4 alimenti BDA la superano). 07: `grammi` `@Positive`. 17: migrazione **V37** con i `CHECK` (provata prima sul DB `hexis` in una transazione annullata: nessuna riga in violazione). Dettagli in [api-contracts](api-contracts.md#limiti-dei-campi-dal-2026-11-27-collaudo-gruppo-4) e [modello-dati](modello-dati.md).
+5. **Form del frontend (01, 06, 08, 10, 16, 02, 07, 13)**: **corretti il 27/11**.
+   - 01 e 08: `TimePicker` e `DatePicker` hanno un secondo modello, `v-model:non-valido`, vero quando nel campo c'è testo che non è un orario o una data valida. I form lo usano per dire "Orario non valido." o "La data di fine non è valida." invece di salvare senza orario o di dire "obbligatoria" (agenda, date del piano).
+   - 10: obiettivo calorico maggiore di 0 (`erroreObiettivoKcal`).
+   - 06 e 07: grammi delle righe del piano. Un meno incollato resta visibile con "La quantità non può essere negativa." e una porzione 0 o vuota blocca il salvataggio, con l'errore sotto la riga. Se l'errore è in un altro giorno, l'editor passa a quel giorno (`erroreGrammiPorzione`, `validaGrammi`).
+   - 02: nel form alimento la somma di proteine, grassi e carboidrati non può superare la quantità di riferimento, che deve essere maggiore di 0.
+   - 16 e limiti di lunghezza (proposta di Andrea): `maxlength` su tutti i campi di testo da `config/limitiCampi.ts`, sempre uguale o minore del backend, e `components/form/ContatoreCaratteri.vue`. Il contatore è sempre visibile sulle note e compare dall'80% sui campi brevi; al limite mostra "Massimo N caratteri".
+   - 13: `composables/useConfermaUscita.ts`, una guardia globale (`router.beforeEach`) attiva finché la pagina è montata, più l'avviso del browser alla chiusura della scheda. Usata da editor del piano, visita e nuovo paziente: "Uscire senza salvare?" vale anche per sidebar, header, Ctrl+K e indietro del browser. Dopo un salvataggio riuscito `consentiUscita()` lascia passare la navigazione successiva.
+   - Anche `scorriAlPrimoErrore` ora sceglie il primo errore visibile (mobile e desktop sono entrambi nel DOM).
+   - Il link del videoconsulto nel frontend usa la stessa regola del backend (bug 14).
+6. **Stampa PDF (04)**: **corretto il 27/11**. "Stampa PDF" non stampa più la pagina dell'editor ma `components/pianiAlimentari/PianoStampa.vue`, un documento A4 montato sul `body` con un Teleport. A schermo è nascosto; in stampa è l'unica cosa visibile (`body > :not(.stampa-piano)` nascosto, regole in fondo a `main.css`), così niente comandi e niente taglio al primo foglio.
+   - Contenuto: intestazione con logo, "Hexis" e nome del professionista; nome del piano, paziente, periodo e obiettivo. Poi, a seconda della modalità: giorni e pasti con gli alimenti e i grammi su una linea di puntini; la tabella degli obiettivi del giorno; oppure gli esempi per pasto. In fondo "Stampato il …".
+   - Si saltano pasti e giorni vuoti; i pasti non si spezzano tra due fogli.
+   - **Sempre su carta bianca, anche con il tema scuro** (indicazione di Andrea): il documento usa colori propri, non i token del tema, e in stampa `html`/`body` sono forzati in chiaro.
+   - Il documento riflette ciò che è a schermo, comprese le modifiche non salvate.
+   - Il logo accanto a "Hexis" l'ha chiesto Andrea.
+   - Test: `PianoStampa.spec.ts` (4 casi). Provato nel browser rendendo visibile il documento con uno stile temporaneo: piano a pasti, piano a macronutrienti e tema scuro. Una settimana piena (stato locale riempito per prova, non salvato) occupa circa quattro fogli e mezzo. L'anteprima di stampa vera di Chrome non è stata aperta da Claude.
 
-Rimandato il **20** (inviti nascosti). Da decidere: se i test di regressione di 18, 19, 21, 22 li scrive Claude o Andrea.
+Rimandato il **20** (inviti nascosti). **Test di regressione: li scrive Claude** (deciso da Andrea il 27/11). Scritti il 27/11, 30 test nuovi, suite 226/226:
+
+- `PianoAlimentareRegressioniCollaudoTest`: 18 (seconda scheda con versione vecchia → 409, nessuna sovrascrittura), 21 (due attivazioni in parallelo, ripetuto 5 volte: un solo piano attivo, mai 500), 10, 07, nome oltre 200, ruolo (paziente → 403).
+- `AgendaRegressioniCollaudoTest`: 22 (due visite sovrapposte in parallelo, 5 volte: una 201 e una 409), 11, 14, 15.
+- `SessioneDopoResetCollaudoTest`: 19 (token vecchio → 401 su `/auth/me` e `/pazienti`, vecchia password rifiutata, nuovo login valido).
+- `VincoliDatabaseCollaudoTest`: 17, scritture dirette con `JdbcTemplate` respinte dai `CHECK`, con casi validi di controllo.
+- In coda ai test esistenti: 16 (`PazienteControllerTest`) e 02 (`AlimentoControllerTest`).
+- Controprova: senza l'advisory lock dell'agenda il test del 22 fallisce 5 volte su 5. Helper `support/Concorrenza.inParallelo`.
+- Frontend (gruppo 5, 15 test nuovi, vitest 322/322): `useConfermaUscita.spec.ts` (13), `TimePicker.spec.ts` (01), un caso in `DatePicker.spec.ts` (08), `utils/validators.spec.ts` (10, 06, 07, 08), due casi in `AlimentoFormDialog.spec.ts` (02).
+- Provati da Claude nel browser sull'ambiente di Andrea, senza salvare nulla: bozza "QA-2711 Piano collaudo (copia)" con obiettivo 0, fine 31/02/2027 e -10 g incollato (tre errori, nessun PUT); clic su Agenda nella sidebar con modifiche aperte (compare la conferma, "Esci senza salvare" porta in Agenda); nuovo promemoria alle 25:99 ("Orario non valido.", nessun POST).
 
 **Piano con inizio futuro**: deciso il 27/11 con Andrea, non si attiva finché la data non arriva (409 `PIANO_NON_ATTIVABILE`, voce del menu disabilitata con "Dal …"). Insieme è stato corretto anche il **09** (si attivano solo le bozze, stesso 409), anticipato dal gruppo 4 perché sta nello stesso metodo.
 
@@ -66,7 +89,7 @@ Rimandato il **20** (inviti nascosti). Da decidere: se i test di regressione di 
 
 Dal report:
 
-1. Test di regressione ripetibili per i casi 18, 19, 21 e 22 dopo le correzioni.
+1. ~~Test di regressione ripetibili per i casi 18, 19, 21 e 22 dopo le correzioni.~~ Fatti il 27/11 (vedi sopra).
 2. Permessi sulle **singole risorse** (lettura e modifica di pazienti, visite, piani e note di un altro professionista): finora sono provate solo le liste.
 3. Errori durante il salvataggio: rete interrotta, risposta lenta, doppio clic su "Salva" (al massimo un salvataggio, dati recuperabili).
 4. Consegna reale degli inviti, quando la funzione sarà riattivata.

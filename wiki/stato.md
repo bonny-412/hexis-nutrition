@@ -55,6 +55,8 @@ Sessione del 27 novembre 2026 (chiusura): tutto il lavoro della sera è **commit
 
 Sessione del 27 novembre 2026 (notte): **correzione dei bug del collaudo, gruppi 1-3 fatti** su sei ([collaudo-bug](collaudo-bug.md)): concorrenza e due schede (21, 22, 18, migrazione **V35**), piano con inizio futuro non attivabile e bug 09, sessioni chiuse dopo il reset della password e ruolo sui piani (19, migrazione **V36**), visite nello stesso giorno (03, 12). Tutto provato (in parte da Claude sul backend di prova con `hexis_test`, in parte sull'ambiente di Andrea, già riavviato con V35 e V36). In staging, **non committato**. Prossimo: gruppo 4.
 
+Sessione del 27 novembre 2026 (notte, seconda sessione): **bug del collaudo chiusi, gruppi 4, 5 e 6** (tranne il 20, rimandato). Gruppo 4 nel backend (validazioni, `@Size` su tutti i testi, migrazione **V37** con i `CHECK`); gruppo 5 nel frontend (date e orari non validi, grammi negativi o a zero, obiettivo 0, macronutrienti, `maxlength` con contatore, conferma di uscita su ogni navigazione); gruppo 6, stampa PDF del piano come documento A4 sempre bianco, con logo. Test di regressione scritti da Claude su richiesta di Andrea: backend **226/226**, frontend **326/326**. Tutto **in staging, non committato**; V37 si applica al riavvio del backend. Vedi "Prossimo passo consigliato" e [collaudo-bug](collaudo-bug.md).
+
 Sessione del 25 novembre 2026 (seconda parte): **barra azioni flottante** nei form lunghi, **colori delle variazioni secondo l'obiettivo** del paziente, valori sui punti dei grafici, confronto A/B ridisegnato, **suite frontend 297/297 verde**. In staging, non committato. Vedi la sezione dedicata.
 
 ## Come far girare il backend su questa macchina
@@ -798,6 +800,35 @@ Sessione senza codice. Andrea riporta la conversazione del 26 novembre con Edoar
 **Non verificato in browser**: colori con obiettivi direzionali su dati reali (tutti i pazienti con più visite hanno "Mantenimento"; Dimagrimento e Aumento peso provati simulando la risposta solo nel browser, nessun dato cambiato); piano in sola lettura senza barra azioni (solo per codice, `v-if`).
 
 ## Prossimo passo consigliato
+
+**Aggiornato il 27 novembre 2026, notte (seconda sessione, parte 3) — Gruppo 6, bug del collaudo chiusi** (prevale sulle voci sotto):
+
+- **Bug 04 corretto**: "Stampa PDF" stampa un documento A4 dedicato (`PianoStampa.vue`), sempre bianco anche col tema scuro, con logo, intestazione completa e tutti i giorni. Dettagli in [collaudo-bug](collaudo-bug.md#piano-di-correzione-deciso-il-27-novembre-2026).
+- Corretti nella stessa sessione anche i **contatori doppi** sotto le textarea (c'erano i vecchi `{{ note.length }}/2000` scritti a mano).
+- vitest **326/326**, `vue-tsc` pulito. Gruppi 4, 5 e 6 **non committati** (lo fa Andrea).
+- **Tutti e sei i gruppi del collaudo sono corretti.** Resta rimandato il 20 (inviti nascosti).
+
+**Prossimo passo:** da provare a mano da Andrea l'anteprima di stampa vera (Ctrl+P sul piano, chiaro e scuro). Poi le verifiche prima del rilascio in fondo a [collaudo-bug](collaudo-bug.md): permessi sulle singole risorse, errori durante il salvataggio. Poi si torna alle richieste di Edoardo ("Sostituisci alimento", Google Calendar) e alla messa online.
+
+
+**Aggiornato il 27 novembre 2026, notte (seconda sessione, parte 2) — Gruppo 5** (prevale sulle voci sotto):
+
+- **Gruppo 5 corretto** nel frontend (01, 06, 08, 10, 16, 02, 07, 13): dettagli in [collaudo-bug](collaudo-bug.md#piano-di-correzione-deciso-il-27-novembre-2026). Novità riusabili: `useConfermaUscita` (conferma di uscita su ogni navigazione), `v-model:non-valido` su `DatePicker` e `TimePicker`, `ContatoreCaratteri` con i limiti in `config/limitiCampi.ts`.
+- Test di regressione scritti da Claude: 15 nuovi, `vue-tsc` pulito, vitest **322/322**. Prove nel browser sull'ambiente di Andrea, senza salvare nulla.
+- Tutto **non committato** (lo fa Andrea), insieme al gruppo 4.
+
+**Prossimo passo: gruppo 6**, la stampa PDF del piano (bug 04: anteprima con i comandi dell'editor, senza intestazione, contenuto tagliato), lavoro di UI a parte. Poi restano solo il 20 (rimandato) e le verifiche prima del rilascio in fondo a [collaudo-bug](collaudo-bug.md).
+
+
+**Aggiornato il 27 novembre 2026, notte (seconda sessione) — Gruppo 4 e test di regressione** (prevale sulle voci sotto):
+
+- **Gruppo 4 corretto** (10, 11, 14, 15, 16, 02, 07, 17), dettagli in [collaudo-bug](collaudo-bug.md#piano-di-correzione-deciso-il-27-novembre-2026). Migrazione **V37** con i `CHECK`; si applica da sola al riavvio di STS (provata prima su `hexis` in una transazione annullata, nessuna riga in violazione).
+- Su proposta di Andrea, **limite di lunghezza su tutti i campi di testo** delle richieste, uguale alla colonna del DB (5000 per i `TEXT`), con 400 se superato; nel frontend arriverà il conteggio dei caratteri (gruppo 5). Tabella in [api-contracts](api-contracts.md#limiti-dei-campi-dal-2026-11-27-collaudo-gruppo-4).
+- **Test di regressione scritti da Claude** (scelta di Andrea) per 18, 19, 21, 22 e per il gruppo 4: 30 test nuovi, `mvn test` **226/226**. Corretti due dati di partenza di test esistenti che avevano la fine del piano prima dell'inizio.
+- Nessun cambio nel frontend. Tutto **non committato** (lo fa Andrea).
+
+**Prossimo passo: gruppo 5**, form del frontend (01, 06, 08, 10, 16, 02, 07, 13), con la convenzione delle form, il **conteggio dei caratteri** sui campi con limite (allineato alla tabella di api-contracts: oggi la nota della visita ha 500 nel form e 5000 nel backend) e il 13 come protezione comune sulle rotte. Il frontend deve anche mostrare gli errori 400 nuovi (somma dei macronutrienti, porzione 0, fine prima dell'inizio). Poi il gruppo 6 (stampa PDF).
+
 
 **Aggiornato il 27 novembre 2026, notte (handoff) — Correzione dei bug del collaudo** (prevale sulle voci sotto):
 

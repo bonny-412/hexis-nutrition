@@ -25,6 +25,12 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{ (e: 'update:modelValue', value: string): void }>()
 
+/**
+ * Vero quando nel campo c'è del testo che non è un orario valido (es. 25:99 o 9:3): il modello resta vuoto,
+ * e senza questo il form non distinguerebbe "nessun orario" da "orario sbagliato" (bug 01 del collaudo).
+ */
+const nonValido = defineModel<boolean>('nonValido', { default: false })
+
 const aperto = ref(false)
 const ancora = ref<HTMLElement | null>(null)
 const colonnaOre = ref<HTMLElement | null>(null)
@@ -55,7 +61,10 @@ function formattaTesto(grezzo: string): string {
 const testo = ref(props.modelValue)
 
 watch(() => props.modelValue, (ora) => {
-  if (ora !== oraDaTesto(testo.value)) testo.value = ora
+  if (ora !== oraDaTesto(testo.value)) {
+    testo.value = ora
+    nonValido.value = false
+  }
 })
 
 const MARCATORE_INVISIBILE = '​'
@@ -69,6 +78,7 @@ async function onTestoInput(valore: string | number) {
   }
   testo.value = filtrato
   const ora = oraDaTesto(filtrato)
+  nonValido.value = filtrato !== '' && ora === ''
   if (ora !== props.modelValue) emit('update:modelValue', ora)
 }
 

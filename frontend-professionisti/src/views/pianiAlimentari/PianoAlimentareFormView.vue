@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { LIMITI_CAMPI } from '@/config/limitiCampi'
+import ContatoreCaratteri from '@/components/form/ContatoreCaratteri.vue'
 import CaricamentoLista from '@/components/liste/CaricamentoLista.vue'
 import { scorriAlPrimoErrore } from '@/utils/form'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -31,15 +33,18 @@ import {
 } from '@/api/pianiAlimentari'
 import {
   filtraDecimaleItaliano, numeroItalianoOpzionale, bloccaTastoNonNumerico,
-  erroreDataInizioPiano, erroreDataFinePiano, erroreNumeroDecimaleObbligatorio,
+  erroreDataInizioPiano, erroreDataFinePiano, erroreObiettivoKcal, erroreGrammiPorzione,
 } from '@/utils/validators'
 import { formattaDataItalianaConMese } from '@/utils/data'
 import { ArrowLeft, CalendarRange, CircleCheck, Copy, CopyCheck, LogOut, MoreHorizontal, Pencil, Plus, Printer, Repeat, StickyNote, Trash2, X } from '@lucide/vue'
 import PianoNoteSheet from '@/components/pianiAlimentari/PianoNoteSheet.vue'
+import PianoStampa from '@/components/pianiAlimentari/PianoStampa.vue'
+import { useAuthStore } from '@/stores/auth'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { nomeAlimentoLeggibile } from '@/utils/testo'
 import { inizialiPaziente } from '@/utils/paziente'
 import { TONI_STATO } from '@/utils/toniStato'
+import { useConfermaUscita } from '@/composables/useConfermaUscita'
 
 function oggiIso(): string {
   const oggi = new Date()
@@ -145,21 +150,30 @@ function pulisciErroreSeCorretto(chiave: string, valida: (valore: string) => str
     errori.value = nuovi
   }
 }
+// Testo scritto nelle date che non è una data valida (bug 08 del collaudo): vedi DatePicker.
+const dataInizioNonValida = ref(false)
+const dataFineNonValida = ref(false)
 function onDataInizioChange(valore: string) {
   dataInizioInput.value = valore
-  pulisciErroreSeCorretto('dataInizio', erroreDataInizioPiano, valore)
+  pulisciErroreSeCorretto('dataInizio', (v) => erroreDataInizioPiano(v, dataInizioNonValida.value), valore)
 }
+watch(dataInizioNonValida, () => {
+  pulisciErroreSeCorretto('dataInizio', (v) => erroreDataInizioPiano(v, dataInizioNonValida.value), dataInizioInput.value)
+})
+watch(dataFineNonValida, () => {
+  pulisciErroreSeCorretto('dataFine', (v) => erroreDataFinePiano(v, dataInizioEffettiva.value, dataFineNonValida.value), dataFineInput.value)
+})
 // Vero quando l'utente ha digitato la data di fine: da lì in poi non viene più precompilata dalla prossima visita.
 const dataFineModificataDallUtente = ref(false)
 function onDataFineChange(valore: string) {
   dataFineModificataDallUtente.value = true
   dataFineInput.value = valore
-  pulisciErroreSeCorretto('dataFine', (v) => erroreDataFinePiano(v, dataInizioEffettiva.value), valore)
+  pulisciErroreSeCorretto('dataFine', (v) => erroreDataFinePiano(v, dataInizioEffettiva.value, dataFineNonValida.value), valore)
 }
 function onObiettivoKcalInput(valore: string | number) {
   const filtrato = filtraDecimaleItaliano(String(valore))
   obiettivoKcalInput.value = filtrato
-  pulisciErroreSeCorretto('obiettivoKcal', erroreNumeroDecimaleObbligatorio, filtrato)
+  pulisciErroreSeCorretto('obiettivoKcal', erroreObiettivoKcal, filtrato)
 }
 
 // Un paziente scelto (o un piano già caricato) basta per mostrare il builder.
@@ -585,11 +599,16 @@ function fissaBase() {
   firmaBase.value = firmaCorrente.value
 }
 
-const confermaAnnullaAperta = ref(false)
+// "Uscire senza salvare?" su ogni uscita dalla pagina, sidebar compresa (bug 13 del collaudo).
+const {
+  aperta: confermaAnnullaAperta,
+  chiedi: chiediUscita,
+  esciSenzaSalvare,
+  consentiUscita,
+} = useConfermaUscita(() => modificato.value)
 /** "Annulla": esce subito se non ci sono modifiche, altrimenti chiede conferma. */
 function annulla() {
-  if (modificato.value) confermaAnnullaAperta.value = true
-  else tornaIndietro()
+  chiediUscita(tornaIndietro)
 }
 
 /** Riempie i campi locali dal piano dato, senza considerarlo il piano aperto (usato anche per le copie). */
@@ -917,25 +936,71 @@ function rimuoviRiga(pastoClientId: string, rigaClientId: string) {
 // (con virgola) finché l'utente scrive, invece di rimbalzare sul numero parsato a ogni
 // tasto — altrimenti non si riesce mai a digitare la virgola decimale (es. "62,5").
 const grammiInputPerRiga = ref<Record<string, string>>({})
+// Errori dei grammi per riga (clientId → messaggio). Un meno incollato resta visibile e blocca il
+// salvataggio invece di sparire (bug 06); una porzione da 0 g non si salva (bug 07).
+const erroriGrammi = ref<Record<string, string>>({})
+const grammiNegativi = new Set<string>()
 
 function grammiVisualizzati(riga: RigaLocale) {
   return grammiInputPerRiga.value[riga.clientId] ?? String(riga.grammi).replace('.', ',')
 }
-function onGrammiInput(pastoClientId: string, rigaClientId: string, valore: string | number) {
-  const filtrato = filtraDecimaleItaliano(String(valore))
-  grammiInputPerRiga.value[rigaClientId] = filtrato
-  const pasto = pastiLocali.value.find((p) => p.clientId === pastoClientId)
-  const riga = pasto?.righe.find((r) => r.clientId === rigaClientId)
+function erroreGrammiRiga(riga: RigaLocale): string | undefined {
+  return erroreGrammiPorzione(grammiVisualizzati(riga).replace(/^-/, ''), grammiNegativi.has(riga.clientId))
+}
+function aggiornaGrammi(riga: RigaLocale | undefined, rigaClientId: string, valore: string | number) {
+  const grezzo = String(valore)
+  const negativo = grezzo.includes('-')
+  const filtrato = filtraDecimaleItaliano(grezzo)
+  grammiInputPerRiga.value[rigaClientId] = negativo ? `-${filtrato}` : filtrato
+  if (negativo) grammiNegativi.add(rigaClientId)
+  else grammiNegativi.delete(rigaClientId)
+  if (!riga) return
   const numero = numeroItalianoOpzionale(filtrato)
-  if (riga && numero !== undefined && Number.isFinite(numero)) riga.grammi = numero
+  if (!negativo && numero !== undefined && Number.isFinite(numero)) riga.grammi = numero
+  // Il meno si segnala subito; gli altri errori compaiono al salvataggio e spariscono appena corretti.
+  const errore = erroreGrammiRiga(riga)
+  const nuovi = { ...erroriGrammi.value }
+  if (errore && (negativo || nuovi[rigaClientId])) nuovi[rigaClientId] = errore
+  else if (!errore) delete nuovi[rigaClientId]
+  erroriGrammi.value = nuovi
+}
+function onGrammiInput(pastoClientId: string, rigaClientId: string, valore: string | number) {
+  const pasto = pastiLocali.value.find((p) => p.clientId === pastoClientId)
+  aggiornaGrammi(pasto?.righe.find((r) => r.clientId === rigaClientId), rigaClientId, valore)
 }
 function onGrammiInputEsempio(esempioClientId: string, rigaClientId: string, valore: string | number) {
-  const filtrato = filtraDecimaleItaliano(String(valore))
-  grammiInputPerRiga.value[rigaClientId] = filtrato
   const esempio = esempiLocali.value.find((e) => e.clientId === esempioClientId)
-  const riga = esempio?.righe.find((r) => r.clientId === rigaClientId)
-  const numero = numeroItalianoOpzionale(filtrato)
-  if (riga && numero !== undefined && Number.isFinite(numero)) riga.grammi = numero
+  aggiornaGrammi(esempio?.righe.find((r) => r.clientId === rigaClientId), rigaClientId, valore)
+}
+/**
+ * Controlla i grammi di tutte le righe della modalità attiva. Le righe dei pasti stanno in sette giorni e se
+ * ne vede uno alla volta: se l'errore è in un altro giorno si passa a quel giorno, così l'errore è in vista.
+ */
+function validaGrammi(): boolean {
+  const nuovi: Record<string, string> = {}
+  let primoGiorno: GiornoSettimana | null = null
+  if (modalitaAttiva.value === 'PASTI') {
+    for (const pasto of pastiLocali.value) {
+      for (const riga of pasto.righe) {
+        const errore = erroreGrammiRiga(riga)
+        if (!errore) continue
+        nuovi[riga.clientId] = errore
+        if (primoGiorno === null) primoGiorno = pasto.giornoSettimana
+      }
+    }
+  } else if (modalitaAttiva.value === 'ESEMPI') {
+    for (const riga of esempiLocali.value.flatMap((e) => e.righe)) {
+      const errore = erroreGrammiRiga(riga)
+      if (errore) nuovi[riga.clientId] = errore
+    }
+  }
+  erroriGrammi.value = nuovi
+  const giornoConErrore = primoGiorno as GiornoSettimana | null
+  if (giornoConErrore && !pastiLocali.value.some((p) => p.giornoSettimana === giornoSelezionato.value
+    && p.righe.some((r) => nuovi[r.clientId]))) {
+    giornoSelezionato.value = giornoConErrore
+  }
+  return Object.keys(nuovi).length === 0
 }
 
 const salvataggioInCorso = ref(false)
@@ -948,12 +1013,13 @@ function validaCampi(): boolean {
     if (messaggio) nuoviErrori[chiave] = messaggio
   }
 
-  if (!piano.value) assegna('dataInizio', erroreDataInizioPiano(dataInizioInput.value))
-  assegna('dataFine', erroreDataFinePiano(dataFineInput.value, dataInizioEffettiva.value))
-  assegna('obiettivoKcal', erroreNumeroDecimaleObbligatorio(obiettivoKcalInput.value))
+  if (!piano.value) assegna('dataInizio', erroreDataInizioPiano(dataInizioInput.value, dataInizioNonValida.value))
+  assegna('dataFine', erroreDataFinePiano(dataFineInput.value, dataInizioEffettiva.value, dataFineNonValida.value))
+  assegna('obiettivoKcal', erroreObiettivoKcal(obiettivoKcalInput.value))
 
   errori.value = nuoviErrori
-  const valido = Object.keys(nuoviErrori).length === 0
+  const grammiValidi = validaGrammi()
+  const valido = Object.keys(nuoviErrori).length === 0 && grammiValidi
   // I campi validati stanno in cima alla pagina e "Salva" in fondo: senza questo, il clic sembrava
   // non fare nulla. Si porta in vista il primo campo con errore.
   if (!valido) scorriAlPrimoErrore()
@@ -979,6 +1045,8 @@ async function salva(): Promise<boolean> {
       })
       id = creato.id
       versione = creato.versione
+      // Stessa pagina, nuovo indirizzo: non è un'uscita, anche se le modifiche non sono ancora salvate.
+      consentiUscita()
       router.replace(`/piani-alimentari/${id}`)
     }
     const aggiornato = await aggiorna(id, {
@@ -1052,9 +1120,13 @@ async function attivaPiano() {
 async function duplicaPiano() {
   if (!piano.value) return
   const idOrigine = piano.value.id
-  await router.push(`/piani-alimentari/nuovo?duplicaDa=${idOrigine}${pazienteIdQuery ? `&pazienteId=${pazienteIdQuery}` : ''}`)
-  // Cambia solo la rotta, il componente è lo stesso e Vue lo riusa: la copia si carica a mano.
-  await caricaCopia(idOrigine)
+  // Le modifiche non salvate del piano aperto andrebbero perse: prima si chiede, poi si naviga.
+  chiediUscita(async () => {
+    consentiUscita()
+    await router.push(`/piani-alimentari/nuovo?duplicaDa=${idOrigine}${pazienteIdQuery ? `&pazienteId=${pazienteIdQuery}` : ''}`)
+    // Cambia solo la rotta, il componente è lo stesso e Vue lo riusa: la copia si carica a mano.
+    await caricaCopia(idOrigine)
+  })
 }
 
 const confermaEliminaAperta = ref(false)
@@ -1065,6 +1137,7 @@ async function confermaElimina() {
   try {
     await eliminaApi(piano.value.id)
     toast.success('Piano eliminato.')
+    consentiUscita()
     router.push('/piani-alimentari')
   } catch {
     toast.error('Non è stato possibile eliminare il piano.')
@@ -1074,6 +1147,12 @@ async function confermaElimina() {
   }
 }
 
+// "Stampa PDF" stampa PianoStampa (documento a parte, sempre chiaro), non la pagina dell'editor: bug 04.
+// Riflette ciò che è a schermo, comprese le modifiche non ancora salvate.
+const auth = useAuthStore()
+const professionistaStampa = computed(() =>
+  auth.professionista ? `${auth.professionista.nome} ${auth.professionista.cognome}` : null,
+)
 function stampaPdf() {
   window.print()
 }
@@ -1121,7 +1200,7 @@ function stampaPdf() {
             </router-link>
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
               <div class="flex min-w-0 max-w-full items-center gap-2">
-                <Input v-model="nome" aria-label="Nome del piano" :readonly="solaLettura" class="w-auto max-w-full field-sizing-content font-heading! text-2xl! sm:text-3xl! italic! text-(--fg)! border-0 p-0" />
+                <Input v-model="nome" :maxlength="LIMITI_CAMPI.nomePiano" aria-label="Nome del piano" :readonly="solaLettura" class="w-auto max-w-full field-sizing-content font-heading! text-2xl! sm:text-3xl! italic! text-(--fg)! border-0 p-0" />
                 <Pencil v-if="!solaLettura" :size="16" class="shrink-0 text-(--fg4)" />
               </div>
               <span
@@ -1210,6 +1289,7 @@ function stampaPdf() {
             <span v-else class="text-xs font-medium text-(--green-d)">Data di partenza</span>
             <DatePicker
               v-if="!piano" id="data-inizio" digitabile :model-value="dataInizioInput" @update:model-value="onDataInizioChange"
+              v-model:non-valido="dataInizioNonValida"
               :aria-invalid="!!errori.dataInizio"
               :aria-describedby="errori.dataInizio ? 'piano-errore-data-inizio' : undefined"
               class="border-(--sage) dark:border-(--sage) bg-(--surf) dark:bg-(--surf) hover:bg-(--surf) dark:hover:bg-(--surf) aria-expanded:bg-(--surf) dark:aria-expanded:bg-(--surf) text-base font-semibold"
@@ -1247,6 +1327,7 @@ function stampaPdf() {
             <label for="data-fine" class="text-xs font-medium text-(--green-d)">Fine piano*</label>
             <DatePicker
               id="data-fine" digitabile :model-value="dataFineInput" @update:model-value="onDataFineChange"
+              v-model:non-valido="dataFineNonValida"
               :aria-invalid="!!errori.dataFine"
               :aria-describedby="errori.dataFine ? 'piano-errore-data-fine' : undefined"
               class="border-(--sage) dark:border-(--sage) bg-(--surf) dark:bg-(--surf) hover:bg-(--surf) dark:hover:bg-(--surf) aria-expanded:bg-(--surf) dark:aria-expanded:bg-(--surf) text-base font-semibold"
@@ -1284,6 +1365,7 @@ function stampaPdf() {
                   <div class="flex min-w-0 flex-1 items-center gap-1.5">
                     <Input
                       v-model="esempio.nome"
+                      :maxlength="LIMITI_CAMPI.nomePasto"
                       :readonly="solaLettura"
                       aria-label="Nome dell'esempio"
                       class="w-auto max-w-full min-w-0 field-sizing-content border-0 bg-transparent p-0 text-sm! font-semibold text-(--fg) focus-visible:ring-0"
@@ -1311,7 +1393,7 @@ function stampaPdf() {
 
                 <!-- Alimenti: nome, grammi e kcal della riga -->
                 <ul v-if="esempio.righe.length" class="divide-y divide-(--div) border-t border-(--div)">
-                  <li v-for="riga in esempio.righe" :key="riga.clientId" class="flex items-center gap-2 px-4 py-2">
+                  <li v-for="riga in esempio.righe" :key="riga.clientId" class="flex flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2">
                     <span class="min-w-0 flex-1 truncate text-sm text-(--fg)">{{ nomeAlimentoLeggibile(riga.nome) }}</span>
                     <span class="flex shrink-0 items-center gap-1">
                       <Input
@@ -1319,6 +1401,8 @@ function stampaPdf() {
                         :readonly="solaLettura"
                         :aria-label="`Grammi di ${nomeAlimentoLeggibile(riga.nome)}`"
                         :model-value="grammiVisualizzati(riga)" @keydown="bloccaTastoNonNumerico"
+                        :aria-invalid="!!erroriGrammi[riga.clientId]"
+                        :aria-describedby="erroriGrammi[riga.clientId] ? `errore-grammi-${riga.clientId}` : undefined"
                         @update:model-value="(v) => onGrammiInputEsempio(esempio.clientId, riga.clientId, v)"
                       />
                       <span class="text-xs text-(--fg3)">g</span>
@@ -1334,6 +1418,10 @@ function stampaPdf() {
                     >
                       <X :size="14" />
                     </Button>
+                    <p
+                      v-if="erroriGrammi[riga.clientId]" :id="`errore-grammi-${riga.clientId}`"
+                      data-errore class="basis-full text-xs font-medium text-(--danger)"
+                    >{{ erroriGrammi[riga.clientId] }}</p>
                   </li>
                 </ul>
 
@@ -1355,6 +1443,7 @@ function stampaPdf() {
                     data-test="esempio-nota"
                     :aria-label="`Nota di ${esempio.nome || 'questo esempio'}`"
                     :model-value="esempio.nota ?? ''"
+                    :maxlength="LIMITI_CAMPI.notaPiano"
                     @update:model-value="(v) => (esempio.nota = String(v).trim() ? String(v) : null)"
                     rows="1"
                     placeholder="Sostituti, varianti…"
@@ -1506,12 +1595,14 @@ function stampaPdf() {
             <span class="text-xs font-medium text-(--fg3)">Nota</span>
             <Textarea
               data-test="macro-target-nota"
+              :maxlength="LIMITI_CAMPI.notaPiano"
               :model-value="macroDelGiornoSelezionato.nota ?? ''"
               @update:model-value="(v) => (macroDelGiornoSelezionato!.nota = String(v).trim() ? String(v) : null)"
               rows="2"
               placeholder="Indicazioni per questo giorno…"
               class="resize-y text-xs"
             />
+            <ContatoreCaratteri :valore="macroDelGiornoSelezionato.nota" :max="LIMITI_CAMPI.notaPiano" />
           </label>
         </div>
         </fieldset>
@@ -1579,6 +1670,7 @@ function stampaPdf() {
                 <!-- Largo quanto il testo: la matita resta accanto al nome invece di finire vicino alle kcal. -->
                 <Input
                   v-model="pasto.nome"
+                  :maxlength="LIMITI_CAMPI.nomePasto"
                   :readonly="solaLettura"
                   aria-label="Nome del pasto"
                   class="w-auto max-w-full min-w-0 field-sizing-content border-0 bg-transparent p-0 font-heading text-sm! font-semibold text-(--fg) focus-visible:ring-0"
@@ -1626,6 +1718,8 @@ function stampaPdf() {
                       :readonly="solaLettura"
                       :aria-label="`Grammi di ${nomeAlimentoLeggibile(riga.nome)}`"
                       :model-value="grammiVisualizzati(riga)" @keydown="bloccaTastoNonNumerico"
+                      :aria-invalid="!!erroriGrammi[riga.clientId]"
+                      :aria-describedby="erroriGrammi[riga.clientId] ? `errore-grammi-mobile-${riga.clientId}` : undefined"
                       @update:model-value="(v) => onGrammiInput(pasto.clientId, riga.clientId, v)"
                     />
                     <span class="text-xs text-(--fg3)">g</span>
@@ -1644,6 +1738,10 @@ function stampaPdf() {
                   <span>Carb. {{ Math.round(macroRiga(riga).carboidrati) }} g</span>
                   <span>Grassi {{ Math.round(macroRiga(riga).grassi) }} g</span>
                 </div>
+                <p
+                  v-if="erroriGrammi[riga.clientId]" :id="`errore-grammi-mobile-${riga.clientId}`"
+                  data-errore class="mt-1 text-xs font-medium text-(--danger)"
+                >{{ erroriGrammi[riga.clientId] }}</p>
               </li>
             </ul>
 
@@ -1673,8 +1771,14 @@ function stampaPdf() {
                         type="text" inputmode="decimal" class="h-7 w-16 text-right text-xs"
                         :aria-label="`Grammi di ${nomeAlimentoLeggibile(riga.nome)}`"
                         :model-value="grammiVisualizzati(riga)" @keydown="bloccaTastoNonNumerico"
+                        :aria-invalid="!!erroriGrammi[riga.clientId]"
+                        :aria-describedby="erroriGrammi[riga.clientId] ? `errore-grammi-${riga.clientId}` : undefined"
                         @update:model-value="(v) => onGrammiInput(pasto.clientId, riga.clientId, v)"
                       />
+                      <p
+                        v-if="erroriGrammi[riga.clientId]" :id="`errore-grammi-${riga.clientId}`"
+                        data-errore class="mt-1 whitespace-nowrap text-xs font-medium text-(--danger)"
+                      >{{ erroriGrammi[riga.clientId] }}</p>
                     </td>
                     <td class="p-2 text-right text-xs font-bold text-(--fg)">{{ Math.round(macroRiga(riga).kcal) }}</td>
                     <td class="p-2 text-right text-xs text-(--fg2)">{{ Math.round(macroRiga(riga).proteine) }}</td>
@@ -1713,6 +1817,7 @@ function stampaPdf() {
               <Textarea
                 :aria-label="`Nota di ${pasto.nome || 'questo pasto'}`"
                 :model-value="pasto.nota ?? ''"
+                :maxlength="LIMITI_CAMPI.notaPiano"
                 @update:model-value="(v) => (pasto.nota = String(v).trim() ? String(v) : null)"
                 rows="1"
                 placeholder="Cottura, preferenze, sostituti…"
@@ -1751,6 +1856,20 @@ function stampaPdf() {
 
     <AggiungiAlimentoDialog v-model:open="addModalAperto" @aggiunto="onAlimentoAggiunto" />
 
+    <PianoStampa
+      v-if="pronto"
+      :nome="nome"
+      :paziente="nomePazienteVisualizzato"
+      :professionista="professionistaStampa"
+      :data-inizio="dataInizioEffettiva"
+      :data-fine="dataFineInput || null"
+      :obiettivo-kcal="obiettivoKcalInput"
+      :modalita="modalitaAttiva"
+      :pasti="pastiLocali"
+      :giorni-macro="giorniMacroLocali"
+      :esempi="esempiLocali"
+    />
+
     <PianoNoteSheet
       v-if="piano && statoPagina !== 'BOZZA'"
       v-model:open="noteAperte"
@@ -1770,7 +1889,7 @@ function stampaPdf() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel data-test="conferma-annulla-continua"><Pencil /> Continua a modificare</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-annulla-esci" @click="tornaIndietro">
+          <AlertDialogAction data-test="conferma-annulla-esci" @click="esciSenzaSalvare">
             <LogOut />
             Esci senza salvare
           </AlertDialogAction>

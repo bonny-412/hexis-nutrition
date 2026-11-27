@@ -341,3 +341,37 @@ input:-webkit-autofill:focus {
     var(--tw-ring-shadow, 0 0 #0000) !important;
   transition: background-color 99999s ease-out 0s, color 150ms, box-shadow 150ms !important;
 }
+
+/* Stampa del piano alimentare (bug 04 del collaudo, 27/11/2026). In stampa si vede solo il documento
+   PianoStampa.vue, montato direttamente sul body: l'app (#app), i toast e i dialog sono nascosti, così
+   niente comandi dell'editor e niente contenuto tagliato dal riquadro scorrevole dell'AppShell.
+   Sempre su carta bianca, anche con il tema scuro (indicazione di Andrea): sfondo, colori e color-scheme
+   sono forzati in chiaro, il documento usa colori propri e non i token del tema. */
+.stampa-piano {
+  display: none;
+}
+
+@page {
+  size: A4;
+  margin: 16mm 15mm 18mm;
+}
+
+@media print {
+  html,
+  html.dark,
+  body {
+    color-scheme: light !important;
+    background: #fff !important;
+    color: #17302e !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  body > :not(.stampa-piano) {
+    display: none !important;
+  }
+  .stampa-piano {
+    display: block;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

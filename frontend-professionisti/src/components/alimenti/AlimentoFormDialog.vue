@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { LIMITI_CAMPI } from '@/config/limitiCampi'
+import ContatoreCaratteri from '@/components/form/ContatoreCaratteri.vue'
 import { ref, computed, watch, nextTick, type Ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { crea, aggiorna, elimina, duplica, type Alimento, type CreaAlimentoRequest } from '@/api/alimenti'
@@ -149,7 +151,37 @@ function onCategoriaInput(valore: string | number) {
   pulisciErroreSeCorretto('categoria', erroreCategoriaAlimento, categoria.value)
 }
 
-const onQuantitaInput = conFiltroDecimale(quantitaG, 'quantitaG', erroreNumeroDecimaleObbligatorio)
+const onQuantitaInput = conFiltroDecimale(quantitaG, 'quantitaG', erroreQuantita)
+
+/** La quantità di riferimento è il peso a cui si riferiscono i valori: deve essere maggiore di 0, come nel backend. */
+function erroreQuantita(valore: string): string | undefined {
+  const errore = erroreNumeroDecimaleObbligatorio(valore)
+  if (errore) return errore
+  return numeroItaliano(valore) > 0 ? undefined : 'La quantità deve essere maggiore di 0 g.'
+}
+
+/**
+ * Proteine, grassi e carboidrati insieme non possono pesare più della quantità di riferimento (bug 02 del
+ * collaudo, stesso controllo del backend). Si controlla solo quando i quattro valori sono numeri validi.
+ */
+function erroreMacro(): string | undefined {
+  const testi = [quantitaG.value, valori.value.proteineG, valori.value.grassiG, valori.value.carboidratiG]
+  if (testi.some((t) => erroreNumeroDecimaleObbligatorio(t))) return undefined
+  const [quantita, ...macro] = testi.map(numeroItaliano)
+  const somma = macro.reduce((a, b) => a + b, 0)
+  if (somma <= quantita!) return undefined
+  const g = (n: number) => `${String(Math.round(n * 100) / 100).replace('.', ',')} g`
+  return `Proteine, grassi e carboidrati insieme (${g(somma)}) superano la quantità di riferimento (${g(quantita!)}).`
+}
+
+// L'errore della somma sparisce appena i valori tornano coerenti.
+watch([quantitaG, () => valori.value.proteineG, () => valori.value.grassiG, () => valori.value.carboidratiG], () => {
+  if (errori.value.macro && !erroreMacro()) {
+    const nuovi = { ...errori.value }
+    delete nuovi.macro
+    errori.value = nuovi
+  }
+})
 
 function onCampoNutrienteInput(campo: CampoNutriente) {
   const valida = campo.obbligatorio ? erroreNumeroDecimaleObbligatorio : erroreNumeroDecimale
@@ -171,11 +203,12 @@ function valida(): boolean {
 
   assegna('nome', erroreNomeAlimento(nome.value))
   assegna('categoria', erroreCategoriaAlimento(categoria.value))
-  assegna('quantitaG', erroreNumeroDecimaleObbligatorio(quantitaG.value))
+  assegna('quantitaG', erroreQuantita(quantitaG.value))
   for (const campo of CAMPI_NUTRIENTI) {
     const validatore = campo.obbligatorio ? erroreNumeroDecimaleObbligatorio : erroreNumeroDecimale
     assegna(campo.chiave, validatore(valori.value[campo.chiave]))
   }
+  assegna('macro', erroreMacro())
 
   errori.value = nuoviErrori
   return Object.keys(nuoviErrori).length === 0
@@ -286,9 +319,9 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
               type="text"
               :disabled="soloLettura"
               :aria-invalid="!!errori.nome" :aria-describedby="errori.nome ? 'alimento-errore-nome' : undefined"
-              placeholder="Es. Petto di pollo, crudo"
-            />
+              placeholder="Es. Petto di pollo, crudo" :maxlength="LIMITI_CAMPI.nomeAlimento" />
             <p id="alimento-errore-nome" v-if="errori.nome" class="text-xs font-medium text-(--danger)">{{ errori.nome }}</p>
+            <ContatoreCaratteri :valore="nome" :max="LIMITI_CAMPI.nomeAlimento" />
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -300,9 +333,9 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
               type="text"
               :disabled="soloLettura"
               :aria-invalid="!!errori.categoria" :aria-describedby="errori.categoria ? 'alimento-errore-categoria' : undefined"
-              placeholder="Es. Carni"
-            />
+              placeholder="Es. Carni" :maxlength="LIMITI_CAMPI.categoriaAlimento" />
             <p id="alimento-errore-categoria" v-if="errori.categoria" class="text-xs font-medium text-(--danger)">{{ errori.categoria }}</p>
+            <ContatoreCaratteri :valore="categoria" :max="LIMITI_CAMPI.categoriaAlimento" />
           </div>
 
           <div class="flex flex-col gap-1.5">
@@ -342,6 +375,7 @@ const titolo = computed(() => (modo.value === 'create' ? 'Nuovo alimento' : nome
                 <p v-if="errori[campo.chiave]" :id="`${campo.id}-errore`" class="text-xs font-medium text-(--danger)">{{ errori[campo.chiave] }}</p>
               </div>
             </div>
+            <p v-if="errori.macro" id="alimento-errore-macro" data-test="errore-macro" class="mt-2 text-xs font-medium text-(--danger)">{{ errori.macro }}</p>
           </div>
         </div>
 

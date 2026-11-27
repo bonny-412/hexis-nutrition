@@ -33,6 +33,8 @@ class PianoAlimentareSpecificationsTest extends AbstractIntegrationTest {
 
         PianoAlimentare scaduto = new PianoAlimentare(paziente.getId(), professionista.getId(), null, "Scaduto",
                 ModalitaPiano.MACRO);
+        // Inizio nel passato: la fine non può precedere l'inizio (CHECK di V37).
+        scaduto.setDataInizio(LocalDate.now().minusDays(30));
         scaduto.setStato(StatoPiano.ATTIVO);
         scaduto.setDataFine(LocalDate.now().minusDays(1));
         pianoAlimentareRepository.save(scaduto);

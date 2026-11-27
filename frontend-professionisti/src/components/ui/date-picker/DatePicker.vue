@@ -29,6 +29,13 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{ (e: 'update:modelValue', value: string): void }>()
 
+/**
+ * Solo in modalità digitabile: vero quando nel campo c'è del testo che non è una data valida (incompleta,
+ * inesistente come 31/02, o fuori da min/max). Il modello resta vuoto, e senza questo il form segnalerebbe
+ * "obbligatoria" su un campo visibilmente compilato (bug 08 del collaudo).
+ */
+const nonValido = defineModel<boolean>('nonValido', { default: false })
+
 const formatter = new DateFormatter('it-IT', { dateStyle: 'long' })
 
 const valore = computed<DateValue | undefined>({
@@ -96,7 +103,10 @@ const testoMostrato = computed(() => {
 
 /** Aggiorna il testo solo per cambi esterni (calendario, reset): mentre si scrive il valore è '' finché la data non è completa. */
 watch(() => props.modelValue, (iso) => {
-  if (iso !== isoDaTesto(testo.value)) testo.value = testoDaIso(iso)
+  if (iso !== isoDaTesto(testo.value)) {
+    testo.value = testoDaIso(iso)
+    nonValido.value = false
+  }
 })
 
 const MARCATORE_INVISIBILE = '​'
@@ -116,6 +126,7 @@ async function onTestoInput(valore: string | number) {
   let iso = isoDaTesto(filtrato)
   // Una data scritta a mano fuori dall'intervallo ammesso non è valida, come se fosse incompleta.
   if ((props.min && iso < props.min) || (props.max && iso > props.max)) iso = ''
+  nonValido.value = filtrato !== '' && iso === ''
   if (iso !== props.modelValue) emit('update:modelValue', iso)
 }
 </script>

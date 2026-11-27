@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { LIMITI_CAMPI } from '@/config/limitiCampi'
+import ContatoreCaratteri from '@/components/form/ContatoreCaratteri.vue'
 import { ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { aggiungiNota, eliminaNota, type NotaPiano } from '@/api/pianiAlimentari'
@@ -113,9 +115,9 @@ async function confermaElimina() {
           <div class="flex flex-col gap-1.5">
             <Label class="text-xs font-medium text-(--fg3)" for="nota-testo">Nota</Label>
             <Textarea
-              id="nota-testo" v-model="testo" data-test="nota-testo" rows="4" maxlength="5000"
-              placeholder="Cosa è cambiato rispetto al piano…" class="resize-y text-sm"
-            />
+              id="nota-testo" v-model="testo" data-test="nota-testo" rows="4"
+              placeholder="Cosa è cambiato rispetto al piano…" class="resize-y text-sm" :maxlength="LIMITI_CAMPI.notaAggiornamento" />
+            <ContatoreCaratteri :valore="testo" :max="LIMITI_CAMPI.notaAggiornamento" sempre />
           </div>
           <Button type="submit" data-test="aggiungi-nota" :disabled="!testo.trim() || !data || salvataggioInCorso">
             <Plus />

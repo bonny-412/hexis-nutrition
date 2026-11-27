@@ -151,4 +151,46 @@ describe('AlimentoFormDialog', () => {
 
     expect(document.body.textContent).not.toContain('Il nome è obbligatorio.')
   })
+  // Bug 02 del collaudo (27/11/2026): 90 + 80 + 70 g su 100 g di riferimento venivano salvati.
+  it('non salva se proteine, grassi e carboidrati superano la quantità di riferimento', async () => {
+    vi.mocked(alimentiApi.crea).mockClear()
+    await montaDialog(null)
+
+    await campo('#alimento-nome').setValue('Alimento impossibile')
+    await campo('#alimento-categoria').setValue('Test')
+    await campo('#alimento-quantita').setValue('100')
+    await campo('#alimento-kcal').setValue('400')
+    await campo('#alimento-proteine').setValue('90')
+    await campo('#alimento-grassi').setValue('80')
+    await campo('#alimento-carboidrati').setValue('70')
+    await campo('form').trigger('submit')
+    await flushPromises()
+
+    expect(alimentiApi.crea).not.toHaveBeenCalled()
+    expect(document.querySelector('[data-test="errore-macro"]')?.textContent).toContain('240 g')
+
+    // Correggendo i valori l'errore sparisce subito.
+    await campo('#alimento-proteine').setValue('10')
+    await campo('#alimento-grassi').setValue('10')
+    await flushPromises()
+    expect(document.querySelector('[data-test="errore-macro"]')).toBeNull()
+  })
+
+  it('non salva una quantità di riferimento pari a 0', async () => {
+    vi.mocked(alimentiApi.crea).mockClear()
+    await montaDialog(null)
+
+    await campo('#alimento-nome').setValue('Alimento')
+    await campo('#alimento-categoria').setValue('Test')
+    await campo('#alimento-quantita').setValue('0')
+    await campo('#alimento-kcal').setValue('0')
+    await campo('#alimento-proteine').setValue('0')
+    await campo('#alimento-grassi').setValue('0')
+    await campo('#alimento-carboidrati').setValue('0')
+    await campo('form').trigger('submit')
+    await flushPromises()
+
+    expect(alimentiApi.crea).not.toHaveBeenCalled()
+    expect(document.body.textContent).toContain('La quantità deve essere maggiore di 0 g.')
+  })
 })

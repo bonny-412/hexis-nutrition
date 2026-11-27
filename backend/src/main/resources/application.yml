@@ -16,6 +16,10 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
+  jackson:
+    deserialization:
+      # Un decimale in un campo intero (durata 15.9) è un errore 400, non un troncamento silenzioso (bug 15 del collaudo).
+      accept-float-as-int: false
 
 server:
   error:

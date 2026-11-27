@@ -11,7 +11,8 @@ export function scorriAlPrimoErrore() {
     const candidati = [
       ...document.querySelectorAll<HTMLElement>('[aria-invalid="true"], [data-errore], p[class*="text-(--danger)"]'),
     ]
-    const primo = candidati[0]
+    // Mobile e desktop possono avere entrambi il proprio campo nel DOM, uno dei due nascosto: conta quello visibile.
+    const primo = candidati.find((el) => el.getClientRects().length > 0) ?? candidati[0]
     if (!primo) return
     primo.scrollIntoView({ behavior: 'smooth', block: 'center' })
     if (primo.matches('input, textarea, button, [tabindex]')) primo.focus({ preventScroll: true })

@@ -92,7 +92,7 @@ class PianoAlimentareControllerTest extends AbstractIntegrationTest {
         String bodyAggiornamento = """
                 {
                   "nome": "Piano aggiornato",
-                  "dataFine": "2026-10-10",
+                  "dataFine": "%s",
                   "obiettivoKcal": 2500,
                   "pasti": [
                     {
@@ -109,7 +109,7 @@ class PianoAlimentareControllerTest extends AbstractIntegrationTest {
                   "giorniMacroTarget": null,
                   "esempi": null
                 }
-                """;
+                """.formatted(LocalDate.now().plusMonths(1));
 
         mockMvc.perform(put("/piani-alimentari/" + pianoId)
                         .header("Authorization", "Bearer " + token)

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useConfermaUscita } from '@/composables/useConfermaUscita'
 import CaricamentoLista from '@/components/liste/CaricamentoLista.vue'
 import { scorriAlPrimoErrore } from '@/utils/form'
 import { computed, onMounted, ref, watch } from 'vue'
@@ -191,20 +192,18 @@ function tornaIndietro() {
   }
 }
 
-const mostraConfermaAnnulla = ref(false)
+
+// "Uscire senza salvare?" su ogni uscita dalla pagina, sidebar compresa (bug 13 del collaudo).
+const {
+  aperta: mostraConfermaAnnulla,
+  chiedi: chiediUscita,
+  esciSenzaSalvare,
+  consentiUscita,
+} = useConfermaUscita(() => datiVisitaForm.value?.modificato() ?? false)
 
 /** "Annulla": esce subito se non è stato cambiato nulla, altrimenti chiede conferma. */
 function onAnnullaClick() {
-  if (datiVisitaForm.value?.modificato()) {
-    mostraConfermaAnnulla.value = true
-  } else {
-    tornaIndietro()
-  }
-}
-
-function confermaAnnulla() {
-  mostraConfermaAnnulla.value = false
-  tornaIndietro()
+  chiediUscita(tornaIndietro)
 }
 
 async function onSubmit() {
@@ -225,6 +224,7 @@ async function onSubmit() {
       await creaVisita(paziente.value.id, dati, appuntamentoId)
       toast.success('Visita registrata.')
     }
+    consentiUscita()
     router.push(`/pazienti/${paziente.value.id}`)
   } catch (errore) {
     if (appuntamentoId && errore instanceof ApiError && (errore.status === 400 || errore.status === 404)) {
@@ -328,7 +328,7 @@ async function onSubmit() {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel data-test="conferma-annulla-continua"><Pencil /> Continua a compilare</AlertDialogCancel>
-          <AlertDialogAction data-test="conferma-annulla-esci" @click="confermaAnnulla"><LogOut /> Esci senza salvare</AlertDialogAction>
+          <AlertDialogAction data-test="conferma-annulla-esci" @click="esciSenzaSalvare"><LogOut /> Esci senza salvare</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

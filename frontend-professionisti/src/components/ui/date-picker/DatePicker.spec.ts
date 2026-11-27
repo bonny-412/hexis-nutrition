@@ -35,4 +35,18 @@ describe('DatePicker', () => {
 
     expect(popover(wrapper).props('open')).toBe(true)
   })
+
+  // Bug 08 del collaudo (27/11/2026): 31/02/2027 era segnalata come "obbligatoria".
+  it('una data scritta ma inesistente lascia il modello vuoto e segnala il testo non valido', async () => {
+    const wrapper = mount(DatePicker, { props: { modelValue: '', digitabile: true } })
+
+    await wrapper.find('input').setValue('31022027')
+
+    expect(wrapper.emitted('update:nonValido')?.at(-1)).toEqual([true])
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+
+    await wrapper.find('input').setValue('28022027')
+    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['2027-02-28'])
+    expect(wrapper.emitted('update:nonValido')?.at(-1)).toEqual([false])
+  })
 })

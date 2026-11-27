@@ -446,4 +446,34 @@ class AlimentoControllerTest extends AbstractIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.quantitaG").value(bda.getQuantitaG().doubleValue()));
     }
+
+    // Bug 02 del collaudo (27/11/2026): 90 + 80 + 70 g di macronutrienti su 100 g di riferimento erano accettati.
+    @Test
+    void creaAlimentoConMacronutrientiOltreLaQuantitaRisponde400() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-macro@example.com", "hash", "Anna", "Bianchi"));
+
+        mockMvc.perform(post("/alimenti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Alimento impossibile","categoria":"Test","quantitaG":100,
+                                 "kcal":400,"proteineG":90,"grassiG":80,"carboidratiG":70}
+                                """))
+                .andExpect(status().isBadRequest());
+
+        // Al limite esatto (somma uguale alla quantità) è accettato.
+        mockMvc.perform(post("/alimenti")
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"Olio al limite","categoria":"Test","quantitaG":100,
+                                 "kcal":899,"proteineG":0,"grassiG":100,"carboidratiG":0}
+                                """))
+                .andExpect(status().isCreated());
+
+        assertThat(alimentoRepository.findAll().stream()
+                .filter(a -> professionista.getId().equals(a.getProfessionistaId()))
+                .map(Alimento::getNome)).containsExactly("Olio al limite");
+    }
 }

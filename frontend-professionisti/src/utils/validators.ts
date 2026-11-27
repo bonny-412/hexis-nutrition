@@ -118,12 +118,15 @@ export function erroreDataNascita(valore: string): string | undefined {
     return undefined
 }
 
-export function erroreDataInizioPiano(valore: string): string | undefined {
+export function erroreDataInizioPiano(valore: string, nonValida = false): string | undefined {
+    if (nonValida) return 'La data di partenza non è valida.'
     if (!valore.trim()) return 'La data di partenza è obbligatoria.'
     return undefined
 }
 
-export function erroreDataFinePiano(valore: string, dataInizio?: string): string | undefined {
+export function erroreDataFinePiano(valore: string, dataInizio?: string, nonValida = false): string | undefined {
+    // Testo scritto che non è una data (31/02/2027): non è un campo vuoto (bug 08 del collaudo).
+    if (nonValida) return 'La data di fine non è valida.'
     if (!valore.trim()) return 'La data di fine è obbligatoria.'
     if (dataInizio && valore <= dataInizio) return 'La data di fine deve essere successiva alla data di partenza.'
     return undefined
@@ -169,5 +172,25 @@ export function erroreNomeAlimento(valore: string): string | undefined {
 
 export function erroreCategoriaAlimento(valore: string): string | undefined {
     if (!valore.trim()) return 'La categoria è obbligatoria.'
+    return undefined
+}
+
+/** Obiettivo calorico del piano: obbligatorio e maggiore di zero, come nel backend (bug 10 del collaudo). */
+export function erroreObiettivoKcal(valore: string): string | undefined {
+    const errore = erroreNumeroDecimaleObbligatorio(valore)
+    if (errore) return errore
+    if (numeroItaliano(valore) <= 0) return "L'obiettivo deve essere maggiore di 0 kcal."
+    return undefined
+}
+
+/**
+ * Grammi di un alimento nel piano. `negativo` è vero quando nel testo incollato c'era un meno: il filtro lo
+ * toglierebbe e -10 diventerebbe 10 senza avviso (bug 06). Una porzione deve essere maggiore di 0 (bug 07).
+ */
+export function erroreGrammiPorzione(valore: string, negativo = false): string | undefined {
+    if (negativo) return 'La quantità non può essere negativa.'
+    if (!valore.trim()) return 'Inserisci la quantità.'
+    if (!REGEX_NUMERO_DECIMALE_ITALIANO.test(valore)) return 'Inserisci un numero valido (es. 62,5).'
+    if (numeroItaliano(valore) <= 0) return 'La quantità deve essere maggiore di 0 g.'
     return undefined
 }

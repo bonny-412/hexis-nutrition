@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -27,7 +28,7 @@ public record VisitaRequest(
         @Positive @Digits(integer = 4, fraction = 2) BigDecimal circonferenzaBraccioContrattoDominanteCm,
         @Positive @Digits(integer = 4, fraction = 2) BigDecimal circonferenzaCosciaDominanteCm,
         @Positive @Digits(integer = 4, fraction = 2) BigDecimal circonferenzaPolpaccioDominanteCm,
-        String note,
+        @Size(max = 5000) String note,
         ObiettivoVisita obiettivo,
         @Valid PlicometriaRequest plicometria
 ) {

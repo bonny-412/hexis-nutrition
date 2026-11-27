@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { LIMITI_CAMPI } from '@/config/limitiCampi'
+import ContatoreCaratteri from '@/components/form/ContatoreCaratteri.vue'
 import { nextTick, ref, watch, type Ref } from 'vue'
 import type { AcceptableValue } from 'reka-ui'
 import { toast } from 'vue-sonner'
@@ -206,14 +208,16 @@ async function onSubmit() {
           <div class="grid gap-5 sm:grid-cols-2">
             <div class="flex flex-col gap-1.5">
               <Label for="modifica-nome" class="text-[13px] font-medium text-(--fg2)">Nome*</Label>
-              <Input id="modifica-nome" :model-value="nome" @update:model-value="onNomeInput" type="text" :aria-invalid="!!errori.nome" :aria-describedby="errori.nome ? 'modifica-paziente-errore-nome' : undefined" placeholder="Es. Mario" />
+              <Input id="modifica-nome" :model-value="nome" @update:model-value="onNomeInput" type="text" :aria-invalid="!!errori.nome" :aria-describedby="errori.nome ? 'modifica-paziente-errore-nome' : undefined" placeholder="Es. Mario" :maxlength="LIMITI_CAMPI.nomePersona" />
               <p id="modifica-paziente-errore-nome" v-if="errori.nome" class="text-xs font-medium text-(--danger)">{{ errori.nome }}</p>
+              <ContatoreCaratteri :valore="nome" :max="LIMITI_CAMPI.nomePersona" />
             </div>
 
             <div class="flex flex-col gap-1.5">
               <Label for="modifica-cognome" class="text-[13px] font-medium text-(--fg2)">Cognome*</Label>
-              <Input id="modifica-cognome" :model-value="cognome" @update:model-value="onCognomeInput" type="text" :aria-invalid="!!errori.cognome" :aria-describedby="errori.cognome ? 'modifica-paziente-errore-cognome' : undefined" placeholder="Es. Rossi" />
+              <Input id="modifica-cognome" :model-value="cognome" @update:model-value="onCognomeInput" type="text" :aria-invalid="!!errori.cognome" :aria-describedby="errori.cognome ? 'modifica-paziente-errore-cognome' : undefined" placeholder="Es. Rossi" :maxlength="LIMITI_CAMPI.nomePersona" />
               <p id="modifica-paziente-errore-cognome" v-if="errori.cognome" class="text-xs font-medium text-(--danger)">{{ errori.cognome }}</p>
+              <ContatoreCaratteri :valore="cognome" :max="LIMITI_CAMPI.nomePersona" />
             </div>
 
             <div class="flex flex-col gap-1.5">
@@ -245,8 +249,9 @@ async function onSubmit() {
 
             <div class="flex flex-col gap-1.5">
               <Label for="modifica-email" class="text-[13px] font-medium text-(--fg2)">Email*</Label>
-              <Input id="modifica-email" :model-value="email" @update:model-value="onEmailInput" type="text" :aria-invalid="!!errori.email" :aria-describedby="errori.email ? 'modifica-paziente-errore-email' : undefined" placeholder="Es. mariorossi@gmail.com" />
+              <Input id="modifica-email" :model-value="email" @update:model-value="onEmailInput" type="text" :aria-invalid="!!errori.email" :aria-describedby="errori.email ? 'modifica-paziente-errore-email' : undefined" placeholder="Es. mariorossi@gmail.com" :maxlength="LIMITI_CAMPI.email" />
               <p id="modifica-paziente-errore-email" v-if="errori.email" class="text-xs font-medium text-(--danger)">{{ errori.email }}</p>
+              <ContatoreCaratteri :valore="email" :max="LIMITI_CAMPI.email" />
             </div>
 
             <div class="flex flex-col gap-1.5">
@@ -263,12 +268,14 @@ async function onSubmit() {
 
             <div class="flex flex-col gap-1.5">
               <Label for="modifica-lavoro" class="text-[13px] font-medium text-(--fg2)">Lavoro</Label>
-              <Input id="modifica-lavoro" :model-value="lavoro" @update:model-value="onLavoroInput" type="text" placeholder="Es. Impiegato" />
+              <Input id="modifica-lavoro" :model-value="lavoro" @update:model-value="onLavoroInput" type="text" placeholder="Es. Impiegato" :maxlength="LIMITI_CAMPI.lavoro" />
+              <ContatoreCaratteri :valore="lavoro" :max="LIMITI_CAMPI.lavoro" />
             </div>
 
             <div class="flex flex-col gap-1.5">
               <Label for="modifica-medico-riferimento" class="text-[13px] font-medium text-(--fg2)">Medico di riferimento</Label>
-              <Input id="modifica-medico-riferimento" :model-value="medicoRiferimento" @update:model-value="onMedicoRiferimentoInput" type="text" placeholder="Es. Dott. Mario Bianchi" />
+              <Input id="modifica-medico-riferimento" :model-value="medicoRiferimento" @update:model-value="onMedicoRiferimentoInput" type="text" placeholder="Es. Dott. Mario Bianchi" :maxlength="LIMITI_CAMPI.medicoRiferimento" />
+              <ContatoreCaratteri :valore="medicoRiferimento" :max="LIMITI_CAMPI.medicoRiferimento" />
             </div>
 
             <div class="flex flex-col gap-1.5">
@@ -291,14 +298,14 @@ async function onSubmit() {
 
           <div class="flex flex-col gap-1.5">
             <Label for="modifica-note" class="text-[13px] font-medium text-(--fg2)">Storia del paziente</Label>
-            <Textarea id="modifica-note" v-model="note" maxlength="2000" placeholder="Es. vive da solo, fuma, beve, è autonomo, allergie, patologie…" />
-            <p class="text-right text-xs text-(--fg3)">{{ note.length }}/2000</p>
+            <Textarea id="modifica-note" v-model="note" placeholder="Es. vive da solo, fuma, beve, è autonomo, allergie, patologie…" :maxlength="LIMITI_CAMPI.notePaziente" />
+            <ContatoreCaratteri :valore="note" :max="LIMITI_CAMPI.notePaziente" sempre />
           </div>
 
           <div class="flex flex-col gap-1.5">
             <Label for="modifica-trattamenti" class="text-[13px] font-medium text-(--fg2)">Terapie in corso</Label>
-            <Textarea id="modifica-trattamenti" v-model="trattamenti" maxlength="2000" placeholder="Es. terapie farmacologiche in corso, integratori, trattamenti…" />
-            <p class="text-right text-xs text-(--fg3)">{{ trattamenti.length }}/2000</p>
+            <Textarea id="modifica-trattamenti" v-model="trattamenti" placeholder="Es. terapie farmacologiche in corso, integratori, trattamenti…" :maxlength="LIMITI_CAMPI.trattamenti" />
+            <ContatoreCaratteri :valore="trattamenti" :max="LIMITI_CAMPI.trattamenti" sempre />
           </div>
         </div>
 

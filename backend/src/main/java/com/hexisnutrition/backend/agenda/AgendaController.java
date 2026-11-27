@@ -1,6 +1,7 @@
 package com.hexisnutrition.backend.agenda;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,7 @@ import java.util.UUID;
 @RequestMapping("/agenda")
 public class AgendaController {
 
-    public record FattoRequest(boolean fatto) {
+    public record FattoRequest(@NotNull Boolean fatto) {
     }
 
     private final AgendaService agendaService;
@@ -66,7 +67,7 @@ public class AgendaController {
 
     @PutMapping("/{id}/fatto")
     public AppuntamentoResponse fatto(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id,
-                                      @RequestBody FattoRequest request) {
+                                      @Valid @RequestBody FattoRequest request) {
         return agendaService.impostaFatto(professionistaId, id, request.fatto());
     }
 

@@ -1147,4 +1147,25 @@ class PazienteControllerTest extends AbstractIntegrationTest {
         mockMvc.perform(get("/pazienti/" + UUID.randomUUID() + "/visite"))
                 .andExpect(status().isUnauthorized());
     }
+
+    // Bug 16 del collaudo (27/11/2026): il DTO di modifica non dichiarava il limite di 100 caratteri del DB.
+    @Test
+    void aggiornaPazienteConNomeOltre100CaratteriRisponde400ENonModifica() throws Exception {
+        Professionista professionista = professionistaRepository.save(
+                new Professionista("prof-nome-lungo@example.com", "hash", "Anna", "Bianchi"));
+        Paziente paziente = pazienteRepository.save(new Paziente(professionista.getId(), "Elio", "Collaudo",
+                "RSSMRA80A01H501U", "elio@example.com", null, LocalDate.of(1990, 1, 1), Sesso.M,
+                null, null, null));
+
+        mockMvc.perform(put("/pazienti/" + paziente.getId())
+                        .header("Authorization", "Bearer " + tokenPer(professionista))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"nome":"%s","cognome":"Collaudo","codiceFiscale":"RSSMRA80A01H501U",
+                                 "email":"elio@example.com","dataNascita":"1990-01-01","sesso":"M"}
+                                """.formatted("E".repeat(101))))
+                .andExpect(status().isBadRequest());
+
+        assertThat(pazienteRepository.findById(paziente.getId()).orElseThrow().getNome()).isEqualTo("Elio");
+    }
 }

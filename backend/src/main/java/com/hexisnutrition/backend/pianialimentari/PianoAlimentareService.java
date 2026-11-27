@@ -199,6 +199,9 @@ public class PianoAlimentareService {
         if (request.versione() != null && request.versione() != piano.getVersione()) {
             throw new PianoModificatoAltroveException();
         }
+        if (request.dataFine() != null && request.dataFine().isBefore(piano.getDataInizio())) {
+            throw new PianoAlimentareNonValidoException("La data di fine non può precedere la data di inizio");
+        }
         if (request.modalita() != null && request.modalita() != piano.getModalita()) {
             // Solo la struttura della modalità attiva è persistita: quella lasciata va svuotata, poi sotto
             // viene popolata la nuova con il contenuto della richiesta.
