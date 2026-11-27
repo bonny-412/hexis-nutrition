@@ -3,8 +3,8 @@ title: Architettura
 tags: [architettura]
 stato: in-discussione
 creato: 2026-08-08
-aggiornato: 2026-08-09
-fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-docker-solo-in-produzione.md]
+aggiornato: 2026-11-27
+fonti: [sorgenti/2026-11-26-accordo-con-edoardo.md, sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-docker-solo-in-produzione.md]
 ---
 
 # Architettura — hexis-nutrition
@@ -13,7 +13,7 @@ fonti: [sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brain
 
 - **backend** (Spring Boot): API consumata da entrambi i frontend, autenticazione JWT unica con ruoli, PostgreSQL con migrazioni Flyway, integrazione email (Resend) dietro un'interfaccia `EmailSender`.
 - **frontend-professionisti** (Vue 3 + shadcn-vue + Tailwind): interfaccia per il professionista — gestione pazienti, piani alimentari, monitoraggio.
-- **frontend-cliente** (Vue 3 + shadcn-vue + Tailwind): interfaccia per il paziente — consultazione piani, chat, auto-registrazione misurazioni.
+- **frontend-cliente** (Vue 3 + shadcn-vue + Tailwind): interfaccia per il paziente — consultazione piani, chat, auto-registrazione misurazioni. Non ancora costruita e fuori dal primo rilascio ([decisioni/0012](decisioni/0012-primo-rilascio-solo-area-professionista.md)).
 
 ## Perché due frontend separati invece di uno con ruoli
 
@@ -31,6 +31,8 @@ Lo scope funzionale è stato diviso in 4 sotto-progetti sequenziali (vedi [stato
 2. Piano alimentare — database alimenti, costruzione/assegnazione piani.
 3. Monitoraggio — misurazioni e appuntamenti (l'agenda del professionista è implementata dal 2026-11-15, vedi [decisioni/0007](decisioni/0007-appuntamenti-e-visite-registrate.md); restano le misurazioni e il lato paziente).
 4. Chat — messaggistica professionista-paziente.
+
+**Primo rilascio (deciso il 2026-11-27)**: solo l'area del professionista. La chat e tutto il lato paziente (`frontend-cliente/` e app Flutter) sono rimandati, vedi [decisioni/0012](decisioni/0012-primo-rilascio-solo-area-professionista.md).
 
 ## Ambienti
 

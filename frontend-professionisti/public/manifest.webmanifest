@@ -1,0 +1,18 @@
+{
+  "id": "/",
+  "name": "Hexis Nutrition",
+  "short_name": "Hexis",
+  "description": "Gestione dello studio per dietisti e nutrizionisti: pazienti, visite, piani alimentari e agenda.",
+  "lang": "it",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#F5F8F6",
+  "background_color": "#F5F8F6",
+  "icons": [
+    { "src": "/icone/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icone/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icone/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

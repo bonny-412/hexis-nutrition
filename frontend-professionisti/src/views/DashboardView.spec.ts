@@ -8,6 +8,8 @@ import * as pazientiApi from '@/api/pazienti'
 import * as agendaApi from '@/api/agenda'
 import { aggiungiGiorni, inizioSettimana, oggiIso } from '@/utils/agenda'
 
+// Questi test coprono anche inviti e stato account: si provano con l'area paziente accesa (decisione 0012).
+vi.mock('@/config/funzioni', () => ({ AREA_PAZIENTE_ATTIVA: true }))
 vi.mock('@/api/pazienti')
 vi.mock('@/api/agenda')
 

@@ -38,4 +38,4 @@ La testata petrolio (Dashboard e paziente) resta com'è: è l'identità della pa
 
 ## Stato
 
-`in-discussione`: provato da Andrea stasera mostrando l'app all'amico che finanzia il progetto. Se regge, si estende ad Agenda, liste Pazienti/Piani, editor della visita e del piano.
+`in-discussione`: provato da Andrea stasera mostrando l'app a Edoardo, l'amico che finanzia il progetto. Se regge, si estende ad Agenda, liste Pazienti/Piani, editor della visita e del piano.

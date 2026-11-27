@@ -9,6 +9,7 @@ import StatoVuoto from '@/components/StatoVuoto.vue'
 import { CircleCheck, ChevronRight, Copy, Mail, Pencil } from '@lucide/vue'
 import { aggiungiGiorni } from '@/utils/agenda'
 import { formattaDataItalianaConMese } from '@/utils/data'
+import { AREA_PAZIENTE_ATTIVA } from '@/config/funzioni'
 
 /** Una lista per gruppo (null se il caricamento è fallito) con il totale reale, per "Vedi tutti". */
 export interface GruppoDaFare<T> {
@@ -33,17 +34,17 @@ function quandoScade(dataFine: string | null): string {
   return `Scade il ${formattaDataItalianaConMese(dataFine)}`
 }
 
-const caricamentoFallito = computed(() => [props.inScadenza, props.bozze, props.maiInvitati].some((g) => g.voci === null))
-const tuttoFallito = computed(() => [props.inScadenza, props.bozze, props.maiInvitati].every((g) => g.voci === null))
-const nienteInSospeso = computed(
-  () => !caricamentoFallito.value && [props.inScadenza, props.bozze, props.maiInvitati].every((g) => g.voci!.length === 0),
-)
-
+// Senza area paziente (decisione 0012) gli inviti non esistono: la linguetta e il suo gruppo spariscono.
 const categorie = computed(() => [
   { id: 'scadenze', nome: 'Scadenze', gruppo: props.inScadenza },
   { id: 'bozze', nome: 'Bozze', gruppo: props.bozze },
-  { id: 'inviti', nome: 'Inviti', gruppo: props.maiInvitati },
+  ...(AREA_PAZIENTE_ATTIVA ? [{ id: 'inviti', nome: 'Inviti', gruppo: props.maiInvitati }] : []),
 ])
+const gruppi = computed(() => categorie.value.map(({ gruppo }) => gruppo))
+
+const caricamentoFallito = computed(() => gruppi.value.some((g) => g.voci === null))
+const tuttoFallito = computed(() => gruppi.value.every((g) => g.voci === null))
+const nienteInSospeso = computed(() => !caricamentoFallito.value && gruppi.value.every((g) => g.voci!.length === 0))
 const categoriaIniziale = computed(() => categorie.value.find(({ gruppo }) => gruppo.voci?.length)?.id ?? 'scadenze')
 
 /** Pazienti per cui l'invio dell'invito è in corso: il pulsante resta disabilitato fino alla risposta. */
@@ -77,7 +78,7 @@ async function onInvita(p: Paziente) {
       compatto
       :icona="CircleCheck"
       titolo="Niente in sospeso"
-      testo="Nessun piano in scadenza o in bozza, tutti i pazienti sono stati invitati."
+      :testo="AREA_PAZIENTE_ATTIVA ? 'Nessun piano in scadenza o in bozza, tutti i pazienti sono stati invitati.' : 'Nessun piano in scadenza o in bozza.'"
     />
 
     <TabsRoot v-else :default-value="categoriaIniziale" class="px-2 pb-3 pt-2">
@@ -140,7 +141,7 @@ async function onInvita(p: Paziente) {
         >Vedi tutti <ChevronRight :size="14" aria-hidden="true" class="transition-transform duration-150 motion-safe:group-hover:translate-x-0.5" /></router-link>
       </TabsContent>
 
-      <TabsContent value="inviti" data-test="da-fare-inviti" class="pt-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--green-d)">
+      <TabsContent v-if="AREA_PAZIENTE_ATTIVA" value="inviti" data-test="da-fare-inviti" class="pt-2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--green-d)">
         <p v-if="maiInvitati.voci === null" class="px-3 py-4 text-sm text-(--fg3)">Non è stato possibile caricare i pazienti da invitare.</p>
         <p v-else-if="!maiInvitati.voci.length" class="px-3 py-4 text-sm text-(--fg3)">Tutti i pazienti sono stati invitati.</p>
         <ul v-else>

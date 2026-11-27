@@ -16,6 +16,7 @@ import {
 } from '@/api/pazienti'
 import PazienteRigaAzioni from '@/components/pazienti/PazienteRigaAzioni.vue'
 import PazienteStatoAccount from '@/components/pazienti/PazienteStatoAccount.vue'
+import { AREA_PAZIENTE_ATTIVA } from '@/config/funzioni'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -41,7 +42,7 @@ const OPZIONI_ORDINAMENTO: { valore: CampoOrdinamento; etichetta: string }[] = [
   { valore: 'cognome', etichetta: 'Cognome' },
   { valore: 'dataUltimaVisita', etichetta: 'Ultima visita' },
   { valore: 'piano', etichetta: 'Piano alimentare' },
-  { valore: 'statoAccount', etichetta: 'Stato account' },
+  ...(AREA_PAZIENTE_ATTIVA ? [{ valore: 'statoAccount' as const, etichetta: 'Stato account' }] : []),
 ]
 
 type CampoOrdinamento = NonNullable<CriteriRicercaPazienti['ordinaPer']>
@@ -336,7 +337,7 @@ const conteggioTesto = computed(() => {
     <div class="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 class="font-heading text-3xl italic text-(--fg)">Pazienti</h1>
-        <p class="mt-1 text-sm text-(--fg3)">Cartelle cliniche, inviti all'app e prossime visite.</p>
+        <p class="mt-1 text-sm text-(--fg3)">{{ AREA_PAZIENTE_ATTIVA ? "Cartelle cliniche, inviti all'app e prossime visite." : 'Cartelle cliniche e prossime visite.' }}</p>
       </div>
       <Button as-child>
         <router-link to="/pazienti/nuovo"><UserPlus :size="16" /> Nuovo paziente</router-link>
@@ -352,7 +353,7 @@ const conteggioTesto = computed(() => {
           autocomplete="off" placeholder="Cerca per nome, email o codice fiscale…"
           class="min-w-70 flex-1"
         />
-        <div class="flex flex-wrap gap-1.5">
+        <div v-if="AREA_PAZIENTE_ATTIVA" class="flex flex-wrap gap-1.5">
           <Button
             v-for="chip in chipStatoAccount"
             :key="chip.valore"
@@ -471,8 +472,9 @@ const conteggioTesto = computed(() => {
                 <div class="truncate text-xs text-(--fg3)">{{ paziente.email }}</div>
               </div>
             </div>
-            <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2" :class="AREA_PAZIENTE_ATTIVA ? 'justify-between' : 'absolute right-3 top-3'">
               <PazienteStatoAccount
+                v-if="AREA_PAZIENTE_ATTIVA"
                 class="[&>button]:z-10"
                 :paziente="paziente"
                 :sola-lettura="mostraArchiviati"
@@ -548,7 +550,7 @@ const conteggioTesto = computed(() => {
                     <component :is="iconaOrdinamento('piano')" :size="12" :class="ordinaPer === 'piano' ? 'text-(--fg)' : 'text-(--fg4)'" />
                   </Button>
                 </TableHead>
-                <TableHead>
+                <TableHead v-if="AREA_PAZIENTE_ATTIVA">
                   <Button type="button" variant="ghost" size="xs" class="-ml-2 text-[length:inherit] font-medium text-(--fg3)" @click="ordina('statoAccount')">
                     Stato account
                     <component :is="iconaOrdinamento('statoAccount')" :size="12" :class="ordinaPer === 'statoAccount' ? 'text-(--fg)' : 'text-(--fg4)'" />
@@ -606,7 +608,7 @@ const conteggioTesto = computed(() => {
                   </template>
                   <span v-else class="text-(--fg3)">—</span>
                 </TableCell>
-                <TableCell>
+                <TableCell v-if="AREA_PAZIENTE_ATTIVA">
                   <PazienteStatoAccount
                     :paziente="paziente"
                     :sola-lettura="mostraArchiviati"
@@ -628,7 +630,7 @@ const conteggioTesto = computed(() => {
         </div>
       </template>
 
-      <StatoVuoto v-else-if="!filtriAttivi" :icona="Users" titolo="Nessun paziente presente" testo="Inizia aggiungendo il primo paziente per consultare la sua scheda o invitarlo." livello="h2">
+      <StatoVuoto v-else-if="!filtriAttivi" :icona="Users" titolo="Nessun paziente presente" :testo="AREA_PAZIENTE_ATTIVA ? 'Inizia aggiungendo il primo paziente per consultare la sua scheda o invitarlo.' : 'Inizia aggiungendo il primo paziente per consultare la sua scheda.'" livello="h2">
         <Button as-child class="active:not-aria-[haspopup]:translate-y-0.5"><UserPlus /> <router-link to="/pazienti/nuovo">Nuovo paziente</router-link></Button>
       </StatoVuoto>
       <StatoVuoto v-else :icona="SearchX" titolo="Nessun risultato trovato" testo="Prova a modificare o resettare i filtri applicati." livello="h2">

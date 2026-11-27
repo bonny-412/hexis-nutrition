@@ -26,6 +26,7 @@ import PazienteTabStoricoVisite from '@/components/pazienti/PazienteTabStoricoVi
 import PazienteTabConfrontoVisite from '@/components/pazienti/PazienteTabConfrontoVisite.vue'
 import PazienteTabPianiAlimentari from '@/components/pazienti/PazienteTabPianiAlimentari.vue'
 import PazienteStatoAccount from '@/components/pazienti/PazienteStatoAccount.vue'
+import { AREA_PAZIENTE_ATTIVA } from '@/config/funzioni'
 import ModificaPazienteDialog from '@/components/pazienti/ModificaPazienteDialog.vue'
 import { prepareAndamento } from '@/utils/andamento'
 import { formattaDataItalianaConMese } from '@/utils/data'
@@ -217,7 +218,7 @@ onMounted(() => {
               <span v-if="primaVisita" class="hidden sm:inline">paziente dal {{ formattaDataItalianaConMese(primaVisita.dataVisita) }}</span>
             </div>
             <div class="mt-2.5 flex flex-wrap items-center gap-2">
-              <PazienteStatoAccount :paziente="paziente" hero :invito-in-corso="invitoInCorso" @invita="onInvita" />
+              <PazienteStatoAccount v-if="AREA_PAZIENTE_ATTIVA" :paziente="paziente" hero :invito-in-corso="invitoInCorso" @invita="onInvita" />
               <span
                 v-if="paziente.archiviato"
                 class="inline-flex items-center gap-1.5 rounded-full bg-(--hero-pill) px-2.5 py-1 text-xs font-bold text-(--hero-pill-fg) ring-1 ring-(--hero-pill-ring)"

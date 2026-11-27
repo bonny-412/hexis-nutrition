@@ -8,6 +8,8 @@ import { DatePicker } from '@/components/ui/date-picker'
 import * as pazientiApi from '@/api/pazienti'
 import type { PaginaPazienti, Paziente } from '@/api/pazienti'
 
+// Questi test coprono anche inviti e stato account: si provano con l'area paziente accesa (decisione 0012).
+vi.mock('@/config/funzioni', () => ({ AREA_PAZIENTE_ATTIVA: true }))
 vi.mock('@/api/pazienti')
 vi.mock('vue-sonner', () => ({
   toast: { error: vi.fn(), success: vi.fn() },

@@ -20,3 +20,4 @@
 | [decisioni/0011-gerarchia-dei-riquadri](decisioni/0011-gerarchia-dei-riquadri.md) | Protagonista con ombra, strumenti in card piatte, contesto senza riquadro (Dashboard e scheda paziente) | in-discussione |
 | [decisioni/0008-notifiche-agenda](decisioni/0008-notifiche-agenda.md) | Notifiche dell'agenda: scheduler nel backend, campanello, puntino in sidebar, Web Push generiche | stabile |
 | [decisioni/0007-appuntamenti-e-visite-registrate](decisioni/0007-appuntamenti-e-visite-registrate.md) | Agenda: appuntamento distinto dalla visita registrata, conclusione al salvataggio, avviso sulle sovrapposizioni, archiviazione elimina il futuro | stabile |
+| [decisioni/0012-primo-rilascio-solo-area-professionista](decisioni/0012-primo-rilascio-solo-area-professionista.md) | Primo rilascio solo area professionista: chat e lato paziente (web e Flutter) rimandati | stabile |

@@ -10,6 +10,8 @@ import { ApiError } from '@/api/client'
 import type { Visita } from '@/api/pazienti'
 import { Select, SelectTrigger } from '@/components/ui/select'
 
+// Questi test coprono anche inviti e stato account: si provano con l'area paziente accesa (decisione 0012).
+vi.mock('@/config/funzioni', () => ({ AREA_PAZIENTE_ATTIVA: true }))
 vi.mock('@/api/pazienti')
 vi.mock('@/api/pianiAlimentari')
 vi.mock('vue-sonner', () => ({

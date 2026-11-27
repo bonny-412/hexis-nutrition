@@ -20,6 +20,7 @@ import { eVisitaAttiva, nomePaziente } from '@/utils/agendaStile'
 import { formattaDataItalianaConMese } from '@/utils/data'
 import { TONI_STATO } from '@/utils/toniStato'
 import { riepilogoOggi } from '@/utils/riepilogoOggi'
+import { AREA_PAZIENTE_ATTIVA } from '@/config/funzioni'
 
 /** Numero massimo di visite nella card "Prossimi impegni". */
 const MAX_PROSSIME_VISITE = 6
@@ -174,7 +175,10 @@ async function caricaDaFare() {
   const [scadenza, bozze, inviti] = await Promise.allSettled([
     cercaPiani({ stato: 'ATTIVO', dataFineDa: oggi, dataFineA: fineFinestraScadenze, ordinaPer: 'dataFine', direzione: 'asc', dimensione: MAX_DA_FARE }),
     cercaPiani({ stato: 'BOZZA', ordinaPer: 'aggiornatoIl', direzione: 'desc', dimensione: MAX_DA_FARE }),
-    cercaPazienti({ statoAccount: 'MAI_INVITATO', archiviato: false, ordinaPer: 'cognome', direzione: 'asc', dimensione: MAX_DA_FARE }),
+    // Senza area paziente gli inviti non si mostrano: niente richiesta.
+    AREA_PAZIENTE_ATTIVA
+      ? cercaPazienti({ statoAccount: 'MAI_INVITATO', archiviato: false, ordinaPer: 'cognome', direzione: 'asc', dimensione: MAX_DA_FARE })
+      : Promise.resolve<{ contenuto: Paziente[]; totaleElementi: number }>({ contenuto: [], totaleElementi: 0 }),
   ])
   pianiInScadenza.value = gruppo(scadenza)
   pianiInBozza.value = gruppo(bozze)

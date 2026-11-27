@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink, useRoute } from 'vue-router'
-import { LayoutGrid, Calendar, Users, MessageSquare, BarChart3, Apple, Lock, PanelLeftOpen, PanelLeftClose, Utensils, Moon, LogOut, ChevronDown } from '@lucide/vue'
+import { LayoutGrid, Calendar, Users, MessageSquare, Apple, Lock, PanelLeftOpen, PanelLeftClose, Utensils, Moon, LogOut, ChevronDown } from '@lucide/vue'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -14,6 +14,7 @@ import { useNotificheStore } from '@/stores/notifiche'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { useEsci } from '@/composables/useEsci'
+import { AREA_PAZIENTE_ATTIVA } from '@/config/funzioni'
 
 const notifiche = useNotificheStore()
 /** `conProfilo`: nel menu mobile, dove l'header non mostra l'avatar, il profilo (tema, uscita) sta qui in fondo. */
@@ -33,8 +34,8 @@ const voci = [
   { nome: 'Agenda', routeName: 'agenda', routeNamesAttivi: ['agenda'], icona: Calendar },
   { nome: 'Pazienti', routeName: 'pazienti', routeNamesAttivi: ['pazienti', 'paziente-nuovo', 'paziente-dettaglio'], icona: Users },
   { nome: 'Piani alimentari', routeName: 'piani-alimentari', routeNamesAttivi: ['piani-alimentari', 'piano-alimentare-nuovo', 'piano-alimentare-modifica'], icona: Utensils },
-  { nome: 'Chat', icona: MessageSquare },
-  { nome: 'Analytics', icona: BarChart3 },
+  // La chat arriva con l'area paziente (decisione 0012). Analytics tolta: non è in programma.
+  ...(AREA_PAZIENTE_ATTIVA ? [{ nome: 'Chat', icona: MessageSquare }] : []),
 ]
 
 const route = useRoute()

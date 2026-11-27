@@ -914,3 +914,49 @@ Dettaglio in [stato](stato.md#sessione-del-15-novembre-2026--agenda-implementata
 - `stato.md` aggiornato: conteggio dei file in staging (26), avviso sulle modifiche non in staging dell'altra sessione del 26 novembre (gruppo A, `BiaCaricamento.vue`, `switch`/`tabs`, `package.json`), riepilogo dell'ultima parte e regola sugli elementi `absolute`.
 - Prossima sessione: BIA, in pausa finché non arrivano CSV veri da BodyGram. Da chiedere ad Andrea com'è andata la demo, per lo stato della decisione 0011.
 - Nessun commit.
+
+## [2026-11-27] ingest | Accordo con Edoardo: primo rilascio solo area professionista, 30 €/h
+
+- Fonte: [sorgenti/2026-11-26-accordo-con-edoardo.md](sorgenti/2026-11-26-accordo-con-edoardo.md), conversazione di Andrea con Edoardo, l'amico che finanzia Hexis del 26 novembre.
+- Nuova ADR [decisioni/0012](decisioni/0012-primo-rilascio-solo-area-professionista.md): si pubblica solo l'area del professionista. Chat, webapp e app mobile del paziente rimandate.
+- Compenso: 30 €/h, 100 h dichiarate per la prima parte (3.000 €). Diverso dalla proposta "soci" consigliata il 17 novembre: segnalato in `stato.md`.
+- Aggiornati `stato.md` (riga in "Dove siamo", sezione dedicata, "Prossimo passo consigliato"), `domande-aperte.md` (Flutter rimandata, accordo in parte deciso, nuove voci su invito paziente e messa online), `architettura.md`, `index.md`.
+- Nessun codice. `docs/proposta-collaborazione-hexis.html` non toccato.
+
+## [2026-11-27] lint | Nascosti invito, stato account e voci Chat/Analytics
+
+- Richiesta di Andrea dopo la [decisioni/0012](decisioni/0012-primo-rilascio-solo-area-professionista.md): nascondere il pulsante "Invita", la colonna e il badge dello stato account, e le voci "Chat" e "Analytics" della sidebar.
+- Nuovo `frontend-professionisti/src/config/funzioni.ts` con `AREA_PAZIENTE_ATTIVA = false`. Lo usano `AppSidebar.vue` (Chat; Analytics tolta del tutto), `PazientiListView.vue` (pillole di filtro, ordinamento, colonna, badge nelle schede, testi), `PazienteDettaglioView.vue` (badge nella testata), `DaFareCard.vue` e `DashboardView.vue` (linguetta e richiesta "Inviti", testo dello stato vuoto), `utils/paziente.ts` (avatar tutti `attivo`, archiviati `neutro`).
+- Test esistenti adeguati, non nuovi: `vi.mock('@/config/funzioni')` con l'interruttore acceso nei tre spec che provano gli inviti. `vue-tsc` pulito, `vitest` 305/305.
+- Non provato nel browser: backend non avviato. Nessun commit.
+
+## [2026-11-27] ingest | Richieste di Edoardo: Google Calendar, blocco su più giorni, sostituzione alimento
+
+- Fonte: [sorgenti/2026-11-26-richieste-di-edoardo.md](sorgenti/2026-11-26-richieste-di-edoardo.md). Andrea dice "due cose", ma le richieste elencate sono tre.
+- Registrate in `domande-aperte.md` (nuova sezione "Richieste di Edoardo da discutere") con le domande da chiarire per ciascuna, e in `stato.md`. Da discutere con Andrea prima di qualsiasi design: nessuna decisione, nessun codice.
+- Nessuna contraddizione con le pagine esistenti. Il blocco su più giorni cambia una regola di [decisioni/0007](decisioni/0007-appuntamenti-e-visite-registrate.md) e di `api-contracts.md` (blocco in un solo giorno, 5–480 minuti, 07:00–20:00), da aggiornare quando si decide.
+
+## [2026-11-27] ingest | Da fare per la messa online: GDPR, log, email di recupero password
+
+- Fonte: [sorgenti/2026-11-27-da-fare-gdpr-log-email.md](sorgenti/2026-11-27-da-fare-gdpr-log-email.md).
+- Registrati in `domande-aperte.md` (nuova sezione "Da fare per la messa online") e in `stato.md`, con quello che c'è oggi nel codice: nessuna configurazione dei log, tre classi che loggano solo `warn`; email di reset di una riga con mittente segnaposto; `server.error.include-message: always` da rivedere. Nessuna decisione, nessun codice.
+
+## [2026-11-27] ingest | Da fare per la messa online: dominio, email, Docker, accesso a log e DB, prova di 7 giorni
+
+- Fonte: [sorgenti/2026-11-27-da-fare-dominio-docker-admin.md](sorgenti/2026-11-27-da-fare-dominio-docker-admin.md).
+- Aggiunte cinque voci alla sezione "Da fare per la messa online" di `domande-aperte.md`, con le domande per ciascuna; aggiornato `stato.md`. Nessun `Dockerfile` né `docker-compose` nel repo oggi.
+- Da segnalare: l'app di amministrazione con account di prova cambia [decisioni/0002](decisioni/0002-autenticazione-e-onboarding.md) (professionisti creati solo a mano) e dipende dal modello di vendita non ancora deciso. Nessuna decisione, nessun codice.
+
+## [2026-11-27] ingest | Webapp installabile sul Mac, pagina Privacy da fare, nome di Edoardo
+
+- Fonte: [sorgenti/2026-11-27-webapp-mac-e-privacy.md](sorgenti/2026-11-27-webapp-mac-e-privacy.md).
+- Su richiesta di Andrea "l'amico che finanzia" / "il finanziatore" diventa **Edoardo** in tutte le pagine e nelle voci di log di oggi; rinominate le fonti in `2026-11-26-accordo-con-edoardo.md` e `2026-11-26-richieste-di-edoardo.md`. Le voci di log precedenti restano com'erano.
+- App per Mac: per ora no (Andrea). Fatto subito: manifest, icone PNG e meta tag per installare `frontend-professionisti` come webapp (Dock del Mac, Home dell'iPhone, "Installa" di Chrome). Manifest e icone verificati nel browser; installazione vera non provata (serve l'HTTPS). Dettagli in `stato.md`.
+- Pagina Privacy: segnata in `domande-aperte.md` ("Da fare per la messa online"), dipende dalle decisioni GDPR. Annotato che i font da Google Fonts mandano l'IP del visitatore a Google.
+
+## [2026-11-27] handoff | Fine sessione: accordo con Edoardo, area paziente nascosta, webapp, lista di cose da discutere
+
+- `stato.md`: riscritto il "Prossimo passo consigliato" con decisioni, codice fatto, cose segnate e ordine suggerito.
+- Nessuna domanda nuova oltre a quelle già registrate oggi in `domande-aperte.md`.
+- Tutto in staging, nessun commit.
+

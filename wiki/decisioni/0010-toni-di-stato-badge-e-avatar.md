@@ -31,6 +31,8 @@ Un solo codice colori per badge e avatar di stato in tutte le liste, in `fronten
 
 ## Conseguenze
 
+- **Dal 2026-11-27** lo stato account è nascosto finché non c'è l'area paziente ([0012](0012-primo-rilascio-solo-area-professionista.md)): nella lista Pazienti, nella ricerca globale e nella scelta paziente gli avatar sono tutti `attivo` (archiviati `neutro`). La lista Piani non cambia.
+
 - Nuovi stati di lista vanno mappati su uno dei tre toni, non su colori nuovi.
 - Le card Plicometria e Circonferenze usano la menta per i riquadri degli indici: è un accento di sezione, non uno stato, e resta l'unico colore della card.
 - Collegata a [0009](0009-palette-verde-petrolio-lime.md), che definisce i token usati qui.
