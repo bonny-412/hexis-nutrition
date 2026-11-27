@@ -320,10 +320,10 @@ async function confermaElimina() {
   if (!a) return
   try {
     await elimina(a.id)
-    toast.success(a.tipo === 'PROMEMORIA' ? 'Promemoria eliminato.' : 'Fascia bloccata eliminata.')
+    toast.success(a.tipo === 'PROMEMORIA' ? 'Promemoria eliminato.' : 'Indisponibilità eliminata.')
     await carica()
   } catch {
-    toast.error(a.tipo === 'PROMEMORIA' ? 'Non è stato possibile eliminare il promemoria.' : 'Non è stato possibile eliminare la fascia bloccata.')
+    toast.error(a.tipo === 'PROMEMORIA' ? 'Non è stato possibile eliminare il promemoria.' : "Non è stato possibile eliminare l'indisponibilità.")
   }
 }
 
@@ -335,12 +335,12 @@ async function confermaSpostamento() {
 
 function etichettaConflitto(c: Appuntamento): string {
   const nome = [c.pazienteNome, c.pazienteCognome].filter(Boolean).join(' ')
-  const descrizione = nome || c.testo || (c.tipo === 'BLOCCO' ? 'Fascia bloccata' : 'Appuntamento')
+  const descrizione = nome || c.testo || (c.tipo === 'BLOCCO' ? 'Indisponibilità' : 'Appuntamento')
   return c.oraInizio ? `${c.oraInizio} · ${descrizione}` : descrizione
 }
 
 function titoloEliminazione(a: Appuntamento | null): string {
-  return a?.tipo === 'PROMEMORIA' ? 'Eliminare il promemoria?' : 'Eliminare la fascia bloccata?'
+  return a?.tipo === 'PROMEMORIA' ? 'Eliminare il promemoria?' : "Eliminare l'indisponibilità?"
 }
 </script>
 
@@ -360,7 +360,7 @@ function titoloEliminazione(a: Appuntamento | null): string {
         <DropdownMenuContent align="end" class="w-52">
           <DropdownMenuItem class="cursor-pointer" data-test="aggiungi-appuntamento" @select="apriCreazione('VISITA_STUDIO')"><CalendarPlus /> Nuovo appuntamento</DropdownMenuItem>
           <DropdownMenuItem class="cursor-pointer" data-test="aggiungi-promemoria" @select="apriCreazione('PROMEMORIA')"><StickyNote /> Nuovo promemoria</DropdownMenuItem>
-          <DropdownMenuItem class="cursor-pointer" data-test="aggiungi-blocco" @select="apriCreazione('BLOCCO')"><Lock /> Blocca fascia oraria</DropdownMenuItem>
+          <DropdownMenuItem class="cursor-pointer" data-test="aggiungi-blocco" @select="apriCreazione('BLOCCO')"><Lock /> Aggiungi indisponibilità</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
@@ -463,7 +463,7 @@ function titoloEliminazione(a: Appuntamento | null): string {
           <AlertDialogCancel variant="neutral"><X /> Annulla</AlertDialogCancel>
           <AlertDialogAction variant="destructive" data-test="conferma-elimina-appuntamento" @click="confermaElimina">
             <Trash2 />
-            {{ daEliminare?.tipo === 'PROMEMORIA' ? 'Elimina promemoria' : 'Elimina fascia bloccata' }}
+            {{ daEliminare?.tipo === 'PROMEMORIA' ? 'Elimina promemoria' : 'Elimina indisponibilità' }}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -21,7 +21,7 @@ const AZIONI: AzionePalette[] = [
   { id: 'nuovo-paziente', etichetta: 'Nuovo paziente', icona: UserPlus, href: '/pazienti/nuovo' },
   { id: 'nuovo-appuntamento', etichetta: 'Nuovo appuntamento', icona: CalendarPlus, href: '/agenda?nuovo=visita' },
   { id: 'nuovo-promemoria', etichetta: 'Nuovo promemoria', icona: StickyNote, href: '/agenda?nuovo=promemoria' },
-  { id: 'blocca-fascia-oraria', etichetta: 'Blocca fascia oraria', icona: CalendarOff, href: '/agenda?nuovo=blocco' },
+  { id: 'blocca-fascia-oraria', etichetta: 'Aggiungi indisponibilità', icona: CalendarOff, href: '/agenda?nuovo=blocco' },
   { id: 'nuova-visita', etichetta: 'Nuova visita', icona: ClipboardPlus, href: '/pazienti/visite/nuova' },
   { id: 'nuovo-piano-alimentare', etichetta: 'Nuovo piano', alias: 'nuovo piano alimentare', icona: Utensils, href: '/piani-alimentari/nuovo' },
   { id: 'nuovo-alimento', etichetta: 'Nuovo alimento', icona: Apple, href: '/alimenti?azione=nuovo' },

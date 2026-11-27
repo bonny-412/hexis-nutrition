@@ -75,7 +75,7 @@ describe('AgendaView — conferme', () => {
 
     wrapper.getComponent(AgendaGiorno).vm.$emit('azione', blocco, 'ELIMINA')
     await flushPromises()
-    clicca('Elimina fascia bloccata')
+    clicca('Elimina indisponibilità')
     await flushPromises()
 
     expect(agendaApi.elimina).toHaveBeenCalledWith('blocco-1')

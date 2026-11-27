@@ -58,7 +58,7 @@ const rigaDataOra = computed(() => {
 const titoloDialog = computed(() => {
   if (!a.value) return ''
   if (ePromemoria.value) return 'Promemoria'
-  if (eBlocco.value) return 'Fascia bloccata'
+  if (eBlocco.value) return 'Indisponibilità'
   return titolo(a.value)
 })
 

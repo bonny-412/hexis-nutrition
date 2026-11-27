@@ -95,7 +95,7 @@ const sezioneNotifica = computed(() => eVisita.value || (ePromemoria.value && RE
 
 const titolo = computed(() => {
   if (ePromemoria.value) return inModifica.value ? 'Modifica promemoria' : 'Nuovo promemoria'
-  if (eBlocco.value) return inModifica.value ? 'Modifica fascia bloccata' : 'Blocca fascia oraria'
+  if (eBlocco.value) return inModifica.value ? 'Modifica indisponibilità' : 'Aggiungi indisponibilità'
   return inModifica.value ? 'Modifica appuntamento' : 'Nuovo appuntamento'
 })
 
@@ -202,7 +202,7 @@ function erroreDataFine(): string | undefined {
   const fine = giorniDa(dataFine.value)
   if (inizio === null || fine === null) return undefined
   if (fine < inizio) return "La fine deve seguire l'inizio."
-  if (fine - inizio > MAX_GIORNI_BLOCCO) return `Un blocco può durare al massimo ${MAX_GIORNI_BLOCCO} giorni.`
+  if (fine - inizio > MAX_GIORNI_BLOCCO) return `Un periodo di indisponibilità può durare al massimo ${MAX_GIORNI_BLOCCO} giorni.`
   return undefined
 }
 
@@ -368,7 +368,8 @@ async function invia(richiesta: AppuntamentoRichiesta, conferma: boolean) {
       ? await aggiorna(appuntamento.id, richiesta, conferma)
       : await crea(richiesta, conferma)
     const evento = richiesta.tipo === 'PROMEMORIA' ? 'Promemoria' : 'Appuntamento'
-    toast.success(`${evento} ${appuntamento ? 'aggiornato' : 'creato'}.`)
+    if (richiesta.tipo === 'BLOCCO') toast.success(appuntamento ? 'Indisponibilità aggiornata.' : 'Indisponibilità aggiunta.')
+    else toast.success(`${evento} ${appuntamento ? 'aggiornato' : 'creato'}.`)
     emit('salvato', salvato)
     emit('update:aperto', false)
   } catch (errore) {
@@ -377,7 +378,9 @@ async function invia(richiesta: AppuntamentoRichiesta, conferma: boolean) {
       richiestaInAttesa.value = richiesta
       sovrapposizioneAperta.value = true
     } else {
-      toast.error("Non è stato possibile salvare l'appuntamento.")
+      toast.error(richiesta.tipo === 'BLOCCO'
+        ? "Non è stato possibile salvare l'indisponibilità."
+        : "Non è stato possibile salvare l'appuntamento.")
     }
   } finally {
     inCorso.value = false
@@ -428,10 +431,10 @@ function onDurataChange(valore: AcceptableValue) {
 
 function etichettaConflitto(c: Appuntamento): string {
   const nome = [c.pazienteNome, c.pazienteCognome].filter(Boolean).join(' ')
-  const descrizione = nome || c.testo || (c.tipo === 'BLOCCO' ? 'Fascia bloccata' : 'Appuntamento')
+  const descrizione = nome || c.testo || (c.tipo === 'BLOCCO' ? 'Indisponibilità' : 'Appuntamento')
   const prefisso = eBlocco.value ? `${formattaDataBreve(c.data)} · ` : ''
   if (c.tipo === 'BLOCCO' && !eBlocco.value) {
-    // Un blocco può durare più giorni: si mostra il tratto del giorno della visita, non l'orario del primo giorno.
+    // Un periodo di indisponibilità può durare più giorni: si mostra il tratto del giorno della visita, non l'orario del primo giorno.
     const tratto = trattoNelGiorno(c, data.value)
     if (tratto) return `${tratto.inizio}–${tratto.fine} · ${descrizione}`
   }
@@ -444,7 +447,7 @@ function etichettaConflitto(c: Appuntamento): string {
 const titoloSovrapposizione = computed(() => {
   if (!eBlocco.value) return 'Sovrapposizione'
   const n = conflitti.value.length
-  return `Questo blocco copre ${n} ${n === 1 ? 'visita' : 'visite'}`
+  return `Il periodo di indisponibilità si sovrappone a ${n} ${n === 1 ? 'visita' : 'visite'}`
 })
 </script>
 
@@ -649,7 +652,8 @@ const titoloSovrapposizione = computed(() => {
       <AlertDialogHeader>
         <AlertDialogTitle>{{ titoloSovrapposizione }}</AlertDialogTitle>
         <AlertDialogDescription>
-          L'orario scelto si sovrappone a {{ conflitti.length === 1 ? 'un altro impegno' : 'altri impegni' }}.
+          <template v-if="eBlocco">Controlla le visite qui sotto prima di confermare.</template>
+          <template v-else>L'orario scelto si sovrappone a {{ conflitti.length === 1 ? 'un altro impegno' : 'altri impegni' }}.</template>
         </AlertDialogDescription>
       </AlertDialogHeader>
       <ul v-if="conflitti.length > 0" class="space-y-1 text-sm text-(--fg2)">
