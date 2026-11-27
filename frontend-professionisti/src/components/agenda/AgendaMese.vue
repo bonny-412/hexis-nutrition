@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Lock } from '@lucide/vue'
 import type { Appuntamento } from '@/api/agenda'
 import { festivitaDelGiorno } from '@/utils/festivita'
+import { eventiDelGiorno } from '@/utils/blocchi'
 import { celleDelMese, minutiDaOra, oggiIso } from '@/utils/agenda'
 import { barrato, classiEvento, eVisitaAttiva, titolo } from '@/utils/agendaStile'
 
@@ -15,8 +17,7 @@ const celle = computed(() => {
   const oggi = oggiIso()
   const mese = props.riferimento.slice(0, 7)
   return celleDelMese(props.riferimento).map((iso, indice) => {
-    const eventi = props.appuntamenti
-      .filter((a) => a.data === iso)
+    const eventi = eventiDelGiorno(props.appuntamenti, iso)
       // Prima gli eventi con orario in ordine, poi quelli senza.
       .sort((a, b) => (a.oraInizio === null ? 1 : 0) - (b.oraInizio === null ? 1 : 0) || minutiDaOra(a.oraInizio ?? '00:00') - minutiDaOra(b.oraInizio ?? '00:00'))
     return {
@@ -81,7 +82,8 @@ const celle = computed(() => {
           :data-test="`agenda-evento-${a.id}`"
           @click.stop="emit('dettaglio', a)"
         >
-          <span v-if="a.oraInizio" class="flex-none font-bold">{{ a.oraInizio }}</span>
+          <Lock v-if="a.tipo === 'BLOCCO'" :size="10" class="flex-none text-(--fg3)" aria-hidden="true" />
+          <span v-else-if="a.oraInizio" class="flex-none font-bold">{{ a.oraInizio }}</span>
           <span class="truncate font-semibold">{{ titolo(a) }}</span>
         </button>
         <div v-if="c.altri > 0" class="hidden px-1 text-[10.5px] font-bold text-(--fg3) md:block">+{{ c.altri }} altri</div>

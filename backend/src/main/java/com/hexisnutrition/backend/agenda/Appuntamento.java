@@ -47,6 +47,15 @@ public class Appuntamento {
     @Column(name = "durata_minuti")
     private Integer durataMinuti;
 
+    @Column(name = "data_fine")
+    private LocalDate dataFine;
+
+    @Column(name = "ora_fine")
+    private LocalTime oraFine;
+
+    @Column(name = "giornata_intera", nullable = false)
+    private boolean giornataIntera;
+
     private String testo;
 
     @Column(name = "link_video")
@@ -108,6 +117,15 @@ public class Appuntamento {
 
     public Integer getDurataMinuti() { return durataMinuti; }
     public void setDurataMinuti(Integer durataMinuti) { this.durataMinuti = durataMinuti; }
+
+    public LocalDate getDataFine() { return dataFine; }
+    public void setDataFine(LocalDate dataFine) { this.dataFine = dataFine; }
+
+    public LocalTime getOraFine() { return oraFine; }
+    public void setOraFine(LocalTime oraFine) { this.oraFine = oraFine; }
+
+    public boolean isGiornataIntera() { return giornataIntera; }
+    public void setGiornataIntera(boolean giornataIntera) { this.giornataIntera = giornataIntera; }
 
     public String getTesto() { return testo; }
     public void setTesto(String testo) { this.testo = testo; }

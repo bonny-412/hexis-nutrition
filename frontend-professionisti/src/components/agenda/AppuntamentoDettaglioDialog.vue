@@ -6,6 +6,7 @@ import type { AzioneAppuntamento } from '@/components/agenda/AppuntamentoMenu.vu
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { etichettaTipo, nomePaziente, oraFine, titolo } from '@/utils/agendaStile'
+import { formattaDataBreve } from '@/utils/data'
 
 const props = defineProps<{ aperto: boolean; appuntamento: Appuntamento | null }>()
 const emit = defineEmits<{
@@ -31,6 +32,27 @@ const orario = computed(() => {
   if (!a.value?.oraInizio) return 'Senza orario'
   const fine = oraFine(a.value)
   return fine ? `${a.value.oraInizio}–${fine} · ${a.value.durataMinuti} min` : a.value.oraInizio
+})
+
+const MESI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre']
+
+// Riga "Data e ora": i blocchi possono durare più giorni o intere giornate.
+const rigaDataOra = computed(() => {
+  const b = a.value
+  if (!b) return ''
+  if (b.tipo !== 'BLOCCO') return `${dataEstesa.value} · ${orario.value}`
+  const unGiorno = !b.dataFine || b.dataFine === b.data
+  if (b.giornataIntera) {
+    if (unGiorno) return `${dataEstesa.value} · giornata intera`
+    const [, meseI, giornoI] = b.data.split('-').map(Number)
+    const [, meseF, giornoF] = b.dataFine!.split('-').map(Number)
+    const intervallo = meseI === meseF
+      ? `Dal ${giornoI} al ${giornoF} ${MESI[meseF - 1]}`
+      : `Dal ${formattaDataBreve(b.data)} al ${formattaDataBreve(b.dataFine!)}`
+    return `${intervallo} · giornate intere`
+  }
+  if (unGiorno) return `${dataEstesa.value} · ${b.oraInizio}–${b.oraFine}`
+  return `Dal ${formattaDataBreve(b.data)}, ${b.oraInizio} al ${formattaDataBreve(b.dataFine!)}, ${b.oraFine}`
 })
 
 const titoloDialog = computed(() => {
@@ -76,7 +98,7 @@ function esegui(azione: AzioneAppuntamento) {
         <dl class="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-1 py-1 text-sm">
           <div>
             <dt class="text-[13px] font-medium text-(--fg2)">Data e ora</dt>
-            <dd class="mt-0.5 text-(--fg)" data-test="dettaglio-data">{{ dataEstesa }} · {{ orario }}</dd>
+            <dd class="mt-0.5 text-(--fg)" data-test="dettaglio-data">{{ rigaDataOra }}</dd>
           </div>
           <div v-if="paziente && !eVisita">
             <dt class="text-[13px] font-medium text-(--fg2)">Paziente</dt>

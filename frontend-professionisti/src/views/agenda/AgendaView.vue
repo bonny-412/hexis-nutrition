@@ -155,7 +155,7 @@ function nuovoDalloStatoVuoto(data: string) {
 
 function apriModifica(a: Appuntamento) {
   dialogTipo.value = a.tipo
-  dialogAppuntamento.value = a
+  dialogAppuntamento.value = appuntamenti.value.find((x) => x.id === a.id) ?? a
   dialogPazienteId.value = null
   dialogAperto.value = true
 }
@@ -206,12 +206,14 @@ watch(
 )
 
 // `?data=YYYY-MM-DD` da solo (es. dalla pillola "Prossima visita" della scheda paziente): mostra quel giorno.
+// Con `&vista=giorno` (dalla striscia della Dashboard) apre anche la vista Giorno su quella data.
 watch(
   () => route.query.data,
   (data) => {
     if (route.query.evento || typeof data !== 'string' || !REGEX_DATA.test(data)) return
     riferimento.value = data
-    router.replace({ query: { ...route.query, data: undefined } })
+    if (route.query.vista === 'giorno') vista.value = 'GIORNO'
+    router.replace({ query: { ...route.query, data: undefined, vista: undefined } })
   },
   { immediate: true },
 )
@@ -231,23 +233,16 @@ async function onSalvato() {
 }
 
 // --- Conferme ---
+// L'apertura sta in un flag a parte: `AlertDialogAction` chiude il dialog (v-model:open = false) PRIMA di
+// eseguire il nostro @click, quindi azzerare l'elemento alla chiusura lo perderebbe prima della conferma.
 const daAnnullare = ref<Appuntamento | null>(null)
 const daEliminare = ref<Appuntamento | null>(null)
-const annullaAperto = computed({
-  get: () => daAnnullare.value !== null,
-  set: (v: boolean) => { if (!v) daAnnullare.value = null },
-})
-const eliminaAperto = computed({
-  get: () => daEliminare.value !== null,
-  set: (v: boolean) => { if (!v) daEliminare.value = null },
-})
+const annullaAperto = ref(false)
+const eliminaAperto = ref(false)
 
 // --- Sovrapposizione su "Sposta a domani" ---
 const spostamento = ref<{ appuntamento: Appuntamento; conflitti: Appuntamento[] } | null>(null)
-const spostamentoAperto = computed({
-  get: () => spostamento.value !== null,
-  set: (v: boolean) => { if (!v) spostamento.value = null },
-})
+const spostamentoAperto = ref(false)
 
 function richiestaDa(a: Appuntamento, data: string): AppuntamentoRichiesta {
   return {
@@ -271,6 +266,7 @@ async function spostaDomani(a: Appuntamento, conferma = false) {
   } catch (errore) {
     if (errore instanceof SovrapposizioneError) {
       spostamento.value = { appuntamento: a, conflitti: errore.conflitti }
+      spostamentoAperto.value = true
     } else {
       toast.error('Non è stato possibile spostare il promemoria.')
     }
@@ -293,8 +289,10 @@ async function onAzione(a: Appuntamento, azione: AzioneAppuntamento) {
       apriModifica(a)
     } else if (azione === 'ANNULLA') {
       daAnnullare.value = a
+      annullaAperto.value = true
     } else if (azione === 'ELIMINA') {
-      daEliminare.value = a
+      daEliminare.value = appuntamenti.value.find((x) => x.id === a.id) ?? a
+      eliminaAperto.value = true
     } else if (azione === 'SPOSTA_DOMANI') {
       await spostaDomani(a)
     }
@@ -305,7 +303,7 @@ async function onAzione(a: Appuntamento, azione: AzioneAppuntamento) {
 
 async function confermaAnnulla() {
   const a = daAnnullare.value
-  daAnnullare.value = null
+  annullaAperto.value = false
   if (!a) return
   try {
     await annulla(a.id)
@@ -318,7 +316,7 @@ async function confermaAnnulla() {
 
 async function confermaElimina() {
   const a = daEliminare.value
-  daEliminare.value = null
+  eliminaAperto.value = false
   if (!a) return
   try {
     await elimina(a.id)
@@ -331,7 +329,7 @@ async function confermaElimina() {
 
 async function confermaSpostamento() {
   const s = spostamento.value
-  spostamento.value = null
+  spostamentoAperto.value = false
   if (s) await spostaDomani(s.appuntamento, true)
 }
 

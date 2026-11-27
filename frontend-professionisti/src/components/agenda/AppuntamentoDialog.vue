@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import type { AcceptableValue } from 'reka-ui'
 import { toast } from 'vue-sonner'
 import { CalendarClock, Check, LogOut, Pencil, Save, X } from '@lucide/vue'
@@ -13,6 +13,8 @@ import {
 } from '@/api/agenda'
 import { dettaglio, type Paziente } from '@/api/pazienti'
 import { ANTICIPI_NOTIFICA, ANTICIPO_NOTIFICA_DEFAULT, minutiDaOra } from '@/utils/agenda'
+import { formattaDataBreve } from '@/utils/data'
+import { trattoNelGiorno } from '@/utils/blocchi'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import { DatePicker } from '@/components/ui/date-picker'
@@ -60,11 +62,16 @@ const FINE_MIN = 20 * 60
 const REGEX_ORA = /^([01]\d|2[0-3]):[0-5]\d$/
 const REGEX_LINK = /^https?:\/\/\S+$/
 const MAX_TESTO = 500
+const MAX_GIORNI_BLOCCO = 62
+const REGEX_DATA = /^\d{4}-\d{2}-\d{2}$/
 
 const tipo = ref<TipoAppuntamento>('VISITA_STUDIO')
 const paziente = ref<Paziente | null>(null)
 const data = ref('')
 const ora = ref('')
+const dataFine = ref('')
+const oraFine = ref('')
+const giornataIntera = ref(false)
 const durata = ref('30')
 const testo = ref('')
 const link = ref('')
@@ -99,7 +106,7 @@ const opzioniDurata = computed(() => {
 })
 
 const firmaCorrente = computed(() =>
-  JSON.stringify([tipo.value, paziente.value?.id ?? null, data.value, ora.value, durata.value, testo.value, link.value, notifica.value, anticipo.value]),
+  JSON.stringify([tipo.value, paziente.value?.id ?? null, data.value, ora.value, dataFine.value, oraFine.value, giornataIntera.value, durata.value, testo.value, link.value, notifica.value, anticipo.value]),
 )
 const modificato = computed(() => firmaBase.value !== null && firmaCorrente.value !== firmaBase.value)
 
@@ -107,15 +114,39 @@ function fissaBase() {
   firmaBase.value = firmaCorrente.value
 }
 
+function oraDaMinuti(minuti: number): string {
+  return `${String(Math.floor(minuti / 60)).padStart(2, '0')}:${String(minuti % 60).padStart(2, '0')}`
+}
+
+// Numero di giorni dall'epoca per una data ISO valida, altrimenti null.
+function giorniDa(iso: string): number | null {
+  if (!REGEX_DATA.test(iso)) return null
+  const [anno, mese, giorno] = iso.split('-').map(Number)
+  const t = Date.UTC(anno, mese - 1, giorno)
+  return Number.isNaN(t) ? null : Math.round(t / 86400000)
+}
+
+function dataDaGiorni(giorni: number): string {
+  return new Date(giorni * 86400000).toISOString().slice(0, 10)
+}
+
 let sequenza = 0
+// Durante l'inizializzazione i watcher di coerenza tra inizio e fine non devono toccare il form.
+let inizializzando = false
 const pazienteInCaricamento = ref(false)
 
 async function inizializza() {
   const token = ++sequenza
+  inizializzando = true
   const a = props.appuntamento ?? null
   tipo.value = a ? a.tipo : props.tipoIniziale
   data.value = a ? a.data : (props.dataIniziale ?? '')
   ora.value = a?.oraInizio ?? ''
+  dataFine.value = a ? (a.dataFine ?? a.data) : data.value
+  oraFine.value = a
+    ? (a.oraFine ?? '')
+    : REGEX_ORA.test(ora.value) ? oraDaMinuti(Math.min(minutiDaOra(ora.value) + 60, FINE_MIN)) : ''
+  giornataIntera.value = a?.giornataIntera ?? false
   durata.value = String(a?.durataMinuti ?? (tipo.value === 'BLOCCO' ? 60 : 30))
   testo.value = a?.testo ?? ''
   link.value = a?.linkVideo ?? ''
@@ -126,6 +157,7 @@ async function inizializza() {
   inCorso.value = false
   firmaBase.value = null
   pazienteInCaricamento.value = false
+  void nextTick(() => { inizializzando = false })
 
   const pazienteId = a ? a.pazienteId : (props.pazienteIdIniziale ?? null)
   if (!pazienteId) {
@@ -149,16 +181,42 @@ async function inizializza() {
 watch(() => props.aperto, (valore) => { if (valore) void inizializza() }, { immediate: true })
 
 function erroreOra(): string | undefined {
+  if (eBlocco.value && giornataIntera.value) return undefined
   const obbligatoria = !ePromemoria.value
   const valore = ora.value.trim()
   if (!valore) return obbligatoria ? "L'ora di inizio è obbligatoria." : undefined
   if (!REGEX_ORA.test(valore)) return 'Inserisci un orario valido (es. 09:30).'
   const inizio = minutiDaOra(valore)
   if (inizio < INIZIO_MIN) return "L'orario deve essere compreso tra le 07:00 e le 20:00."
-  if (ePromemoria.value) {
+  if (ePromemoria.value || eBlocco.value) {
     return inizio >= FINE_MIN ? "L'orario deve essere compreso tra le 07:00 e le 20:00." : undefined
   }
   if (inizio + Number(durata.value) > FINE_MIN) return "L'appuntamento deve terminare entro le 20:00."
+  return undefined
+}
+
+function erroreDataFine(): string | undefined {
+  if (!eBlocco.value) return undefined
+  if (!dataFine.value) return 'La data di fine è obbligatoria.'
+  const inizio = giorniDa(data.value)
+  const fine = giorniDa(dataFine.value)
+  if (inizio === null || fine === null) return undefined
+  if (fine < inizio) return "La fine deve seguire l'inizio."
+  if (fine - inizio > MAX_GIORNI_BLOCCO) return `Un blocco può durare al massimo ${MAX_GIORNI_BLOCCO} giorni.`
+  return undefined
+}
+
+function erroreOraFine(): string | undefined {
+  if (!eBlocco.value || giornataIntera.value) return undefined
+  const valore = oraFine.value.trim()
+  if (!valore) return 'Ora di inizio e di fine sono obbligatorie.'
+  if (!REGEX_ORA.test(valore)) return 'Inserisci un orario valido (es. 09:30).'
+  const fineMin = minutiDaOra(valore)
+  if (fineMin <= INIZIO_MIN || fineMin > FINE_MIN) return "L'orario deve essere compreso tra le 07:00 e le 20:00."
+  const inizio = giorniDa(data.value)
+  const fine = giorniDa(dataFine.value)
+  if (inizio === null || fine === null || fine < inizio || !REGEX_ORA.test(ora.value.trim())) return undefined
+  if (inizio * 1440 + minutiDaOra(ora.value.trim()) >= fine * 1440 + fineMin) return "La fine deve seguire l'inizio."
   return undefined
 }
 
@@ -170,6 +228,10 @@ function erroreCampo(chiave: string): string | undefined {
       return data.value ? undefined : 'La data è obbligatoria.'
     case 'ora':
       return erroreOra()
+    case 'dataFine':
+      return erroreDataFine()
+    case 'oraFine':
+      return erroreOraFine()
     case 'testo':
       if (ePromemoria.value && !testo.value.trim()) return 'Il testo del promemoria è obbligatorio.'
       if (testo.value.length > MAX_TESTO) return `Massimo ${MAX_TESTO} caratteri.`
@@ -186,16 +248,56 @@ function erroreCampo(chiave: string): string | undefined {
   }
 }
 
-const CHIAVI = ['paziente', 'data', 'ora', 'testo', 'link']
+const CHIAVI = ['paziente', 'data', 'ora', 'dataFine', 'oraFine', 'testo', 'link']
 
 // Gli errori spariscono non appena il campo viene corretto.
-watch([tipo, paziente, data, ora, durata, testo, link], () => {
+watch([tipo, paziente, data, ora, dataFine, oraFine, giornataIntera, durata, testo, link], () => {
   if (Object.keys(errori.value).length === 0) return
   const nuovi = { ...errori.value }
   for (const chiave of Object.keys(nuovi)) {
     if (!erroreCampo(chiave)) delete nuovi[chiave]
   }
   errori.value = nuovi
+})
+
+// Mantiene coerenti inizio e fine di un blocco quando l'utente cambia data o ora di inizio.
+watch([data, ora], ([nuovaData, nuovaOra], [vecchiaData, vecchiaOra]) => {
+  if (!eBlocco.value || inizializzando) return
+  const orario = (o: string) => REGEX_ORA.test(o.trim())
+  // Prima ora di inizio inserita: la fine proposta è un'ora dopo (al massimo 20:00), se è lo stesso giorno.
+  if (!giornataIntera.value && orario(nuovaOra) && !oraFine.value.trim() && dataFine.value === nuovaData) {
+    oraFine.value = oraDaMinuti(Math.min(minutiDaOra(nuovaOra.trim()) + 60, FINE_MIN))
+    return
+  }
+  const giornoNuovo = giorniDa(nuovaData)
+  const giornoFine = giorniDa(dataFine.value)
+  if (giornoNuovo === null || giornoFine === null) return
+  const giornoVecchio = giorniDa(vecchiaData)
+  const conOrari = !giornataIntera.value && orario(nuovaOra) && orario(vecchiaOra) && orario(oraFine.value)
+  if (!conOrari) {
+    // Senza orari (o con "Giornate intere") scorrono solo le date: se l'inizio supera la fine, la fine lo segue.
+    if (giornoNuovo <= giornoFine) return
+    const spostata = giornoVecchio === null ? giornoNuovo : giornoFine + (giornoNuovo - giornoVecchio)
+    dataFine.value = dataDaGiorni(Math.max(spostata, giornoNuovo))
+    return
+  }
+  if (giornoVecchio === null) return
+  const nuovo = giornoNuovo * 1440 + minutiDaOra(nuovaOra.trim())
+  const vecchio = giornoVecchio * 1440 + minutiDaOra(vecchiaOra.trim())
+  const fine = giornoFine * 1440 + minutiDaOra(oraFine.value.trim())
+  if (nuovo <= fine) return
+  const spostata = fine + (nuovo - vecchio)
+  dataFine.value = dataDaGiorni(Math.floor(spostata / 1440))
+  oraFine.value = oraDaMinuti(Math.min(spostata % 1440, FINE_MIN))
+})
+
+// Togliendo "Giornate intere" da un blocco senza orari si propone l'intera fascia 07:00-20:00.
+watch(giornataIntera, (attiva) => {
+  if (attiva || !eBlocco.value || inizializzando) return
+  if (!ora.value.trim() && !oraFine.value.trim()) {
+    ora.value = oraDaMinuti(INIZIO_MIN)
+    oraFine.value = oraDaMinuti(FINE_MIN)
+  }
 })
 
 function valida(): boolean {
@@ -238,8 +340,11 @@ function costruisciRichiestaBase(): AppuntamentoRichiesta {
       tipo: 'BLOCCO',
       pazienteId: null,
       data: data.value,
-      oraInizio: ora.value,
-      durataMinuti: Number(durata.value),
+      oraInizio: giornataIntera.value ? null : ora.value,
+      dataFine: dataFine.value,
+      oraFine: giornataIntera.value ? null : oraFine.value,
+      giornataIntera: giornataIntera.value,
+      durataMinuti: null,
       testo: testoPulito,
       linkVideo: null,
     }
@@ -324,11 +429,23 @@ function onDurataChange(valore: AcceptableValue) {
 function etichettaConflitto(c: Appuntamento): string {
   const nome = [c.pazienteNome, c.pazienteCognome].filter(Boolean).join(' ')
   const descrizione = nome || c.testo || (c.tipo === 'BLOCCO' ? 'Fascia bloccata' : 'Appuntamento')
-  if (!c.oraInizio) return descrizione
+  const prefisso = eBlocco.value ? `${formattaDataBreve(c.data)} · ` : ''
+  if (c.tipo === 'BLOCCO' && !eBlocco.value) {
+    // Un blocco può durare più giorni: si mostra il tratto del giorno della visita, non l'orario del primo giorno.
+    const tratto = trattoNelGiorno(c, data.value)
+    if (tratto) return `${tratto.inizio}–${tratto.fine} · ${descrizione}`
+  }
+  if (!c.oraInizio) return `${prefisso}${descrizione}`
   const fine = c.durataMinuti ? minutiDaOra(c.oraInizio) + c.durataMinuti : null
-  const fineTesto = fine === null ? '' : `–${String(Math.floor(fine / 60)).padStart(2, '0')}:${String(fine % 60).padStart(2, '0')}`
-  return `${c.oraInizio}${fineTesto} · ${descrizione}`
+  const fineTesto = fine === null ? '' : `–${oraDaMinuti(fine)}`
+  return `${prefisso}${c.oraInizio}${fineTesto} · ${descrizione}`
 }
+
+const titoloSovrapposizione = computed(() => {
+  if (!eBlocco.value) return 'Sovrapposizione'
+  const n = conflitti.value.length
+  return `Questo blocco copre ${n} ${n === 1 ? 'visita' : 'visite'}`
+})
 </script>
 
 <template>
@@ -362,39 +479,92 @@ function etichettaConflitto(c: Appuntamento): string {
             <p v-if="errori.paziente" id="appuntamento-errore-paziente" class="text-xs font-medium text-(--danger)">{{ errori.paziente }}</p>
           </div>
 
-          <div class="grid gap-3 sm:grid-cols-2">
+          <template v-if="eBlocco">
             <div class="flex flex-col gap-1.5">
-              <Label for="appuntamento-data" class="text-[13px] font-medium text-(--fg2)">Data*</Label>
-              <DatePicker id="appuntamento-data" v-model="data" digitabile class="w-full" :aria-invalid="!!errori.data" :aria-describedby="errori.data ? 'appuntamento-errore-data' : undefined" />
-              <p v-if="errori.data" id="appuntamento-errore-data" class="text-xs font-medium text-(--danger)">{{ errori.data }}</p>
+              <Label for="appuntamento-data" class="text-[13px] font-medium text-(--fg2)">Inizio*</Label>
+              <div class="grid gap-3 sm:grid-cols-2">
+                <div class="flex flex-col gap-1.5">
+                  <DatePicker id="appuntamento-data" v-model="data" digitabile class="w-full" aria-label="Data di inizio" :aria-invalid="!!errori.data" :aria-describedby="errori.data ? 'appuntamento-errore-data' : undefined" />
+                  <p v-if="errori.data" id="appuntamento-errore-data" class="text-xs font-medium text-(--danger)">{{ errori.data }}</p>
+                </div>
+                <div v-if="!giornataIntera" class="flex flex-col gap-1.5">
+                  <TimePicker
+                    id="appuntamento-ora"
+                    v-model="ora"
+                    min="07:00"
+                    max="20:00"
+                    aria-label="Ora di inizio"
+                    :aria-invalid="!!errori.ora" :aria-describedby="errori.ora ? 'appuntamento-errore-ora' : undefined"
+                    data-test="appuntamento-ora"
+                  />
+                  <p v-if="errori.ora" id="appuntamento-errore-ora" class="text-xs font-medium text-(--danger)">{{ errori.ora }}</p>
+                </div>
+              </div>
             </div>
-            <div class="flex flex-col gap-1.5">
-              <Label for="appuntamento-ora" class="text-[13px] font-medium text-(--fg2)">
-                Ora{{ ePromemoria ? ' (facoltativa)' : '*' }}
-              </Label>
-              <TimePicker
-                id="appuntamento-ora"
-                v-model="ora"
-                min="07:00"
-                max="20:00"
-                :aria-invalid="!!errori.ora" :aria-describedby="errori.ora ? 'appuntamento-errore-ora' : undefined"
-                data-test="appuntamento-ora"
-              />
-              <p id="appuntamento-errore-ora" v-if="errori.ora" class="text-xs font-medium text-(--danger)">{{ errori.ora }}</p>
-            </div>
-          </div>
 
-          <div v-if="!ePromemoria" class="flex flex-col gap-1.5">
-            <Label for="appuntamento-durata" class="text-[13px] font-medium text-(--fg2)">Durata</Label>
-            <Select :model-value="durata" @update:model-value="onDurataChange">
-              <SelectTrigger id="appuntamento-durata" class="w-full" data-test="appuntamento-durata">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="o in opzioniDurata" :key="o.valore" :value="o.valore">{{ o.etichetta }}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            <div class="flex flex-col gap-1.5">
+              <Label for="appuntamento-data-fine" class="text-[13px] font-medium text-(--fg2)">Fine*</Label>
+              <div class="grid gap-3 sm:grid-cols-2">
+                <div class="flex flex-col gap-1.5">
+                  <DatePicker id="appuntamento-data-fine" v-model="dataFine" digitabile class="w-full" aria-label="Data di fine" :aria-invalid="!!errori.dataFine" :aria-describedby="errori.dataFine ? 'appuntamento-errore-data-fine' : undefined" />
+                  <p v-if="errori.dataFine" id="appuntamento-errore-data-fine" class="text-xs font-medium text-(--danger)">{{ errori.dataFine }}</p>
+                </div>
+                <div v-if="!giornataIntera" class="flex flex-col gap-1.5">
+                  <TimePicker
+                    id="appuntamento-ora-fine"
+                    v-model="oraFine"
+                    min="07:00"
+                    max="20:00"
+                    aria-label="Ora di fine"
+                    :aria-invalid="!!errori.oraFine" :aria-describedby="errori.oraFine ? 'appuntamento-errore-ora-fine' : undefined"
+                    data-test="appuntamento-ora-fine"
+                  />
+                  <p v-if="errori.oraFine" id="appuntamento-errore-ora-fine" class="text-xs font-medium text-(--danger)">{{ errori.oraFine }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2.5">
+              <Checkbox id="appuntamento-giornata-intera" v-model="giornataIntera" data-test="appuntamento-giornata-intera" />
+              <Label for="appuntamento-giornata-intera" class="cursor-pointer text-sm font-medium text-(--fg)">Giornate intere</Label>
+            </div>
+          </template>
+
+          <template v-else>
+            <div class="grid gap-3 sm:grid-cols-2">
+              <div class="flex flex-col gap-1.5">
+                <Label for="appuntamento-data" class="text-[13px] font-medium text-(--fg2)">Data*</Label>
+                <DatePicker id="appuntamento-data" v-model="data" digitabile class="w-full" :aria-invalid="!!errori.data" :aria-describedby="errori.data ? 'appuntamento-errore-data' : undefined" />
+                <p v-if="errori.data" id="appuntamento-errore-data" class="text-xs font-medium text-(--danger)">{{ errori.data }}</p>
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <Label for="appuntamento-ora" class="text-[13px] font-medium text-(--fg2)">
+                  Ora{{ ePromemoria ? ' (facoltativa)' : '*' }}
+                </Label>
+                <TimePicker
+                  id="appuntamento-ora"
+                  v-model="ora"
+                  min="07:00"
+                  max="20:00"
+                  :aria-invalid="!!errori.ora" :aria-describedby="errori.ora ? 'appuntamento-errore-ora' : undefined"
+                  data-test="appuntamento-ora"
+                />
+                <p id="appuntamento-errore-ora" v-if="errori.ora" class="text-xs font-medium text-(--danger)">{{ errori.ora }}</p>
+              </div>
+            </div>
+
+            <div v-if="!ePromemoria" class="flex flex-col gap-1.5">
+              <Label for="appuntamento-durata" class="text-[13px] font-medium text-(--fg2)">Durata</Label>
+              <Select :model-value="durata" @update:model-value="onDurataChange">
+                <SelectTrigger id="appuntamento-durata" class="w-full" data-test="appuntamento-durata">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="o in opzioniDurata" :key="o.valore" :value="o.valore">{{ o.etichetta }}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </template>
 
           <div class="flex flex-col gap-1.5">
             <Label for="appuntamento-testo" class="text-[13px] font-medium text-(--fg2)">
@@ -477,7 +647,7 @@ function etichettaConflitto(c: Appuntamento): string {
   <AlertDialog v-model:open="sovrapposizioneAperta">
     <AlertDialogContent data-test="sovrapposizione-dialog">
       <AlertDialogHeader>
-        <AlertDialogTitle>Sovrapposizione</AlertDialogTitle>
+        <AlertDialogTitle>{{ titoloSovrapposizione }}</AlertDialogTitle>
         <AlertDialogDescription>
           L'orario scelto si sovrappone a {{ conflitti.length === 1 ? 'un altro impegno' : 'altri impegni' }}.
         </AlertDialogDescription>

@@ -6,7 +6,7 @@ const voci = [
   { etichetta: 'Promemoria', classe: 'bg-(--warn-bg) border-l-(--warn-fg)' },
   { etichetta: 'Conclusa', classe: 'bg-(--hover) border-l-(--fg4)' },
   { etichetta: 'Annullata', classe: 'bg-(--hover) border-l-(--danger)/70' },
-  { etichetta: 'Blocco', classe: 'border border-dashed border-(--fg4) bg-(--soft)' },
+  { etichetta: 'Blocco', classe: 'border-l-(--fg3) tratteggio-blocco' },
   { etichetta: 'Festività', classe: 'border border-(--warn-fg)/50 bg-(--warn-bg)' },
 ]
 </script>

@@ -960,3 +960,47 @@ Dettaglio in [stato](stato.md#sessione-del-15-novembre-2026--agenda-implementata
 - Nessuna domanda nuova oltre a quelle già registrate oggi in `domande-aperte.md`.
 - Tutto in staging, nessun commit.
 
+
+## [2026-11-27] ingest | Area paziente nascosta provata nel browser, ordine dei lavori
+
+- Provate nel browser, con backend acceso: Dashboard, sidebar (desktop e mobile), lista Pazienti (tabella, schede, filtri, ordinamento, menu azioni), scheda paziente, tema scuro. Niente di legato a inviti, stato account, Chat o Analytics resta visibile; nessun errore in console. Nessun codice cambiato.
+- Fonte: [sorgenti/2026-11-27-ordine-dei-lavori.md](sorgenti/2026-11-27-ordine-dei-lavori.md). Il dominio lo compra Edoardo; intanto si prepara Docker. Le tre richieste di Edoardo si fanno tutte. Aggiornati `stato.md` e `domande-aperte.md`.
+
+## [2026-11-27] ingest | Blocco su più giorni
+
+- Prima richiesta di Edoardo, fatta con brainstorming, spec e piano ([spec](../docs/superpowers/specs/2026-11-27-blocco-su-piu-giorni-design.md)). Un blocco ha inizio e fine con data e ora, anche su giorni diversi, e "Giornate intere"; avvisa (409) delle visite programmate che copre, solo se in modifica cambia l'intervallo.
+- Codice: migrazione V34 (`data_fine`, `ora_fine`, `giornata_intera`), `/agenda` con i campi nuovi e `GET` che include i blocchi iniziati prima di `da`, `TrattoBlocco` nel backend, `utils/blocchi.ts` e viste, form e dettaglio nel frontend. In staging, non committato, nessun test nuovo; backend 196/196, frontend `vue-tsc` pulito e `vitest` 305/305. **Riavviare il backend (V34).** Non provato a mano: i 5 controlli da fare sono in `stato.md`. Revisione finale del ramo ancora da fare.
+- Aggiornati [modello-dati](modello-dati.md), [api-contracts](api-contracts.md), [domande-aperte](domande-aperte.md) (voce spostata in "Risolte") e [stato](stato.md).
+- Fuori dal piano: su mobile il logo "Hexis" dell'header è un link alla Dashboard (richiesta di Andrea, verificato nel browser).
+- Revisione finale dell'intero ramo fatta (modello Opus): un problema importante (nel form la fine non seguiva l'inizio) e quattro minori corretti in un giro; aggiornati anche il contratto delle sovrapposizioni in [api-contracts](api-contracts.md) e un Javadoc del backend.
+
+## [2026-11-27] ingest | Blocco su più giorni provato a mano
+
+- Andrea ha riavviato il backend (V34 applicata) e fatto le cinque prove a mano della Review Focus: "mi sembra tutto ok". Aggiornato `stato.md`. Resta il commit, che fa Andrea.
+
+## [2026-11-27] ingest | Blocchi più leggibili, striscia della Dashboard che apre il giorno
+
+- Su richiesta di Andrea: righe diagonali, lucchetto e "Tutto il giorno" per i blocchi in tutte le viste e nella striscia; clic su un giorno della striscia → Agenda in vista Giorno. Verificato nel browser (chiaro e scuro). Aggiornato `stato.md`. In staging, non committato.
+
+## [2026-11-27] ingest | Bug: le conferme dell'agenda non facevano nulla
+
+- Segnalato da Andrea: eliminare una fascia bloccata non funzionava. Causa: `AlertDialogAction` di reka-ui chiude il dialog (`v-model:open = false`) prima di eseguire il `@click`; in `AgendaView.vue` il setter dell'apertura azzerava l'elemento scelto, quindi la conferma trovava `null` e non chiamava il backend. Colpiva anche "Annulla appuntamento" e "Conferma comunque" di "Sposta a domani", fin dall'introduzione dell'agenda. Corretto con flag di apertura separati. Verificato nel browser (DELETE 204, blocco sparito, toast); `vue-tsc` pulito, `vitest` 305/305. **Regola per il futuro:** mai legare il dato di un AlertDialog al suo `v-model:open` se la conferma usa `AlertDialogAction`.
+- Aggiunto `src/views/agenda/AgendaView.spec.ts` (su richiesta di Andrea): due test di regressione su "Elimina fascia bloccata" e "Annulla appuntamento"; falliscono con il codice di prima, passano con la correzione. Suite 307/307.
+- Trovato nei test: `AppSidebar.vue` usava `<Button>` ("Comprimi sidebar") senza importarlo, quindi veniva disegnato come `<button>` nativo. Aggiunto l'import; verificato nel browser che comprime ed espande come prima.
+- Su richiesta di Andrea: il pulsante di conferma dei dialog distruttivi (variante `destructive` di `buttonVariants`: Elimina, Annulla appuntamento, Rimuovi…) è ora **rosso pieno** (`--danger`, hover `--danger-d`) con testo `--on-danger` (bianco in chiaro, scuro al buio), così pesa più di "Annulla". Le voci di menu rosse non cambiano. Verificato nel browser in chiaro e scuro.
+
+## [2026-11-27] handoff | Fine sessione: blocco su più giorni, rifiniture agenda, bug delle conferme
+
+- `stato.md`: aggiornato il blocco "Aggiornato il 27 novembre 2026, sera" con l'ultima parte della sessione (bug delle conferme e test, import in `AppSidebar`, conferme distruttive in rosso pieno), l'elenco completo da committare e le rifiniture minori lasciate stare.
+- Decisioni della sessione: ordine dei lavori (dominio a carico di Edoardo, intanto Docker; tutte e tre le richieste di Edoardo si fanno); blocco su più giorni con approccio "una riga con data e ora di fine"; subagent su Sonnet, revisione finale sul modello più potente (memoria di Claude).
+- Prossimo passo: brainstorming di "Sostituisci alimento", poi Google Calendar, poi la preparazione Docker.
+- Tutto in staging, nessun commit.
+
+## [2026-11-27] lint | Domande aperte superate
+
+- `domande-aperte.md`: spostate tra le risolte "colore del delta fisso" (risolto il 25 novembre con i colori secondo l'obiettivo) e "perché Spring Boot" (chiusa, la scelta sta nell'ADR 0001); aggiornata la voce "Inviato al paziente" agli stati attuali del piano (Bozza / Attivo / Concluso).
+
+## [2026-11-27] handoff | Chiusura sessione dopo la pulizia delle domande aperte
+
+- `stato.md`: l'elenco da committare include la pulizia di `domande-aperte.md`. Nient'altro di nuovo rispetto all'handoff precedente: prossimo passo il brainstorming di "Sostituisci alimento", poi Google Calendar, poi Docker.
+- Tutto in staging, nessun commit.

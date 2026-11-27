@@ -9,9 +9,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,7 +52,7 @@ public class AgendaService {
             throw new AppuntamentoNonValidoException("Intervallo troppo ampio (massimo 62 giorni)");
         }
         List<Appuntamento> appuntamenti = appuntamentoRepository
-                .findAllByProfessionistaIdAndDataBetweenOrderByDataAscOraInizioAsc(professionistaId, da, a);
+                .elencoNelPeriodo(professionistaId, da, a);
         return rispondi(appuntamenti);
     }
 
@@ -69,27 +73,57 @@ public class AgendaService {
     }
 
     /**
-     * Se l'appuntamento è una visita, cerca visite programmate/concluse e blocchi dello stesso giorno che si
-     * sovrappongono (intervalli semiaperti [inizio, fine)). Va chiamato prima di salvare: l'eccezione fa
+     * Se l'appuntamento è un blocco, cerca le visite programmate che copre (solo se in modifica cambia
+     * l'intervallo); se è una visita, cerca visite programmate/concluse e blocchi (anche su più giorni, per il
+     * tratto di quel giorno) che si sovrappongono (intervalli semiaperti [inizio, fine)). Va chiamato prima di salvare: l'eccezione fa
      * rollback della transazione, quindi nulla viene persistito.
      */
     private void verificaSovrapposizione(UUID professionistaId, Appuntamento app, boolean confermaSovrapposizione) {
-        if (confermaSovrapposizione || !app.getTipo().isVisita()) {
+        if (confermaSovrapposizione) {
+            return;
+        }
+        if (app.getTipo() == TipoAppuntamento.BLOCCO) {
+            verificaBloccoControVisite(professionistaId, app);
+            return;
+        }
+        if (!app.getTipo().isVisita()) {
             return;
         }
         LocalTime inizio = app.getOraInizio();
         LocalTime fine = inizio.plusMinutes(app.getDurataMinuti());
-        List<Appuntamento> conflitti = appuntamentoRepository
+        List<Appuntamento> conflitti = new ArrayList<>(appuntamentoRepository
                 .findAllByProfessionistaIdAndData(professionistaId, app.getData()).stream()
                 .filter(a -> !a.getId().equals(app.getId()))
-                .filter(a -> a.getTipo() == TipoAppuntamento.BLOCCO
-                        || (a.getTipo().isVisita()
-                            && (a.getStato() == StatoAppuntamento.PROGRAMMATA
-                                || a.getStato() == StatoAppuntamento.CONCLUSA)))
+                .filter(a -> a.getTipo().isVisita()
+                        && (a.getStato() == StatoAppuntamento.PROGRAMMATA
+                            || a.getStato() == StatoAppuntamento.CONCLUSA))
                 .filter(a -> a.getOraInizio() != null && a.getDurataMinuti() != null)
                 .filter(a -> inizio.isBefore(a.getOraInizio().plusMinutes(a.getDurataMinuti()))
                         && a.getOraInizio().isBefore(fine))
-                .sorted(java.util.Comparator.comparing(Appuntamento::getOraInizio))
+                .toList());
+        appuntamentoRepository.blocchiCheCopronoIlGiorno(professionistaId, app.getData()).stream()
+                .filter(b -> !b.getId().equals(app.getId()))
+                .filter(b -> TrattoBlocco.nelGiorno(b, app.getData())
+                        .map(t -> t.siSovrappone(inizio, fine)).orElse(false))
+                .forEach(conflitti::add);
+        conflitti.sort(Comparator.comparing(Appuntamento::getData)
+                .thenComparing(a -> a.getOraInizio() == null ? AgendaTempo.INIZIO_GRIGLIA : a.getOraInizio()));
+        if (!conflitti.isEmpty()) {
+            throw new SovrapposizioneException(rispondi(conflitti));
+        }
+    }
+
+    /** Un blocco che copre visite programmate: le restituisce come conflitti, ordinate per data e ora. */
+    private void verificaBloccoControVisite(UUID professionistaId, Appuntamento blocco) {
+        List<Appuntamento> conflitti = appuntamentoRepository
+                .elencoNelPeriodo(professionistaId, blocco.getData(), blocco.getDataFine()).stream()
+                .filter(a -> !a.getId().equals(blocco.getId()))
+                .filter(a -> a.getTipo().isVisita() && a.getStato() == StatoAppuntamento.PROGRAMMATA)
+                .filter(a -> a.getOraInizio() != null && a.getDurataMinuti() != null)
+                .filter(a -> TrattoBlocco.nelGiorno(blocco, a.getData())
+                        .map(t -> t.siSovrappone(a.getOraInizio(), a.getOraInizio().plusMinutes(a.getDurataMinuti())))
+                        .orElse(false))
+                .sorted(Comparator.comparing(Appuntamento::getData).thenComparing(Appuntamento::getOraInizio))
                 .toList();
         if (!conflitti.isEmpty()) {
             throw new SovrapposizioneException(rispondi(conflitti));
@@ -116,11 +150,23 @@ public class AgendaService {
         if (app.getTipo().isVisita() && app.getStato() != StatoAppuntamento.PROGRAMMATA) {
             throw new AppuntamentoNonValidoException("Solo le visite programmate sono modificabili");
         }
+        boolean eraBlocco = app.getTipo() == TipoAppuntamento.BLOCCO;
+        LocalDate vecchiaData = app.getData();
+        LocalTime vecchiaOraInizio = app.getOraInizio();
+        LocalDate vecchiaDataFine = app.getDataFine();
+        LocalTime vecchiaOraFine = app.getOraFine();
+        boolean vecchiaGiornataIntera = app.isGiornataIntera();
         app.setTipo(r.tipo());
         app.setData(r.data());
         Paziente paziente = applica(professionistaId, app, r);
+        boolean intervalloInvariato = eraBlocco
+                && Objects.equals(vecchiaData, app.getData())
+                && Objects.equals(vecchiaOraInizio, app.getOraInizio())
+                && Objects.equals(vecchiaDataFine, app.getDataFine())
+                && Objects.equals(vecchiaOraFine, app.getOraFine())
+                && vecchiaGiornataIntera == app.isGiornataIntera();
         // L'entità è già modificata ma l'eccezione fa rollback: nulla viene persistito.
-        verificaSovrapposizione(professionistaId, app, confermaSovrapposizione);
+        verificaSovrapposizione(professionistaId, app, confermaSovrapposizione || intervalloInvariato);
         Appuntamento salvato = appuntamentoRepository.save(app);
         notificheService.riallinea(salvato);
         return AppuntamentoResponse.da(salvato, paziente);
@@ -184,6 +230,7 @@ public class AgendaService {
                 paziente = pazienteAttivo(professionistaId, r.pazienteId());
                 verificaFascia(r.oraInizio(), r.durataMinuti());
                 app.setStato(StatoAppuntamento.PROGRAMMATA);
+                azzeraIntervallo(app);
                 app.setPazienteId(paziente.getId());
                 app.setOraInizio(r.oraInizio());
                 app.setDurataMinuti(r.durataMinuti());
@@ -191,14 +238,38 @@ public class AgendaService {
                 app.setTesto(r.testo());
             }
             case BLOCCO -> {
-                if (r.oraInizio() == null || r.durataMinuti() == null) {
-                    throw new AppuntamentoNonValidoException("Ora di inizio e durata sono obbligatorie");
+                if (r.dataFine() == null) {
+                    throw new AppuntamentoNonValidoException("La data di fine è obbligatoria");
                 }
-                verificaFascia(r.oraInizio(), r.durataMinuti());
+                if (r.dataFine().isBefore(r.data())) {
+                    throw new AppuntamentoNonValidoException("La fine deve seguire l'inizio");
+                }
+                if (ChronoUnit.DAYS.between(r.data(), r.dataFine()) > GIORNI_MASSIMI) {
+                    throw new AppuntamentoNonValidoException("Un blocco può durare al massimo 62 giorni");
+                }
+                boolean giornataIntera = Boolean.TRUE.equals(r.giornataIntera());
+                if (!giornataIntera) {
+                    if (r.oraInizio() == null || r.oraFine() == null) {
+                        throw new AppuntamentoNonValidoException("Ora di inizio e di fine sono obbligatorie");
+                    }
+                    if (r.oraInizio().isBefore(AgendaTempo.INIZIO_GRIGLIA)
+                            || !r.oraInizio().isBefore(AgendaTempo.FINE_GRIGLIA)
+                            || !r.oraFine().isAfter(AgendaTempo.INIZIO_GRIGLIA)
+                            || r.oraFine().isAfter(AgendaTempo.FINE_GRIGLIA)) {
+                        throw new AppuntamentoNonValidoException("L'orario deve essere compreso tra le 07:00 e le 20:00");
+                    }
+                    if (!LocalDateTime.of(r.data(), r.oraInizio())
+                            .isBefore(LocalDateTime.of(r.dataFine(), r.oraFine()))) {
+                        throw new AppuntamentoNonValidoException("La fine deve seguire l'inizio");
+                    }
+                }
                 app.setStato(null);
                 app.setPazienteId(null);
-                app.setOraInizio(r.oraInizio());
-                app.setDurataMinuti(r.durataMinuti());
+                app.setDataFine(r.dataFine());
+                app.setGiornataIntera(giornataIntera);
+                app.setOraInizio(giornataIntera ? null : r.oraInizio());
+                app.setOraFine(giornataIntera ? null : r.oraFine());
+                app.setDurataMinuti(null);
                 app.setLinkVideo(null);
                 app.setTesto(r.testo());
             }
@@ -214,6 +285,7 @@ public class AgendaService {
                     paziente = pazienteAttivo(professionistaId, r.pazienteId());
                 }
                 app.setStato(null);
+                azzeraIntervallo(app);
                 app.setPazienteId(paziente == null ? null : paziente.getId());
                 app.setOraInizio(ora);
                 app.setDurataMinuti(null);
@@ -242,6 +314,12 @@ public class AgendaService {
             throw new PazienteArchiviatoException();
         }
         return paziente;
+    }
+
+    private static void azzeraIntervallo(Appuntamento app) {
+        app.setDataFine(null);
+        app.setOraFine(null);
+        app.setGiornataIntera(false);
     }
 
     private static void verificaFascia(LocalTime inizio, int durataMinuti) {

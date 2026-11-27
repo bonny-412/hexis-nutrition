@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
+import { Button } from '@/components/ui/button'
 import { useNotificheStore } from '@/stores/notifiche'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'

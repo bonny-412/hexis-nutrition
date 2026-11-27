@@ -47,13 +47,16 @@ const onLogout = useEsci()
       </Button>
     </div>
 
-    <div
+    <!-- Su mobile logo e nome riportano alla Dashboard, come in molte app. -->
+    <router-link
+      to="/"
+      aria-label="Hexis, vai alla Dashboard"
       data-test="brand-mobile"
-      class="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2.5 lg:hidden"
+      class="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--green) lg:hidden"
     >
-      <img src="@/assets/hexis-logo.svg" alt="Hexis" class="h-9 w-9" />
+      <img src="@/assets/hexis-logo.svg" alt="" class="h-9 w-9" />
       <span class="font-heading text-xl font-semibold text-(--fg)">Hexis</span>
-    </div>
+    </router-link>
 
     <div class="flex items-center gap-2.5">
       <CommandPalette />

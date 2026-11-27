@@ -6,6 +6,17 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Fascia bloccata dell'agenda: righe diagonali sottili, il segno comune di "non disponibile".
+   Usa i token del tema, quindi vale anche al buio. */
+@utility tratteggio-blocco {
+  background-color: var(--soft);
+  background-image: repeating-linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--fg4) 28%, transparent) 0 1px,
+    transparent 1px 7px
+  );
+}
+
 :root {
   /* Palette "Verde petrolio + Lime": petrolio #087F74 (pulsanti), lime #C7F36B (solo segnali),
      sfondo #F5F8F6, verde scuro #183C3A (testo e sidebar). Errori in rosso lampone (#B82E47) e avvisi in ambra (#855600 su #FFF4D9), scelti per stare con petrolio e lime. */
@@ -44,6 +55,7 @@
   --danger-fixed: #B82E47; /* rosso per testo sulle pillole hero */
   --danger: #B82E47;
   --danger-d: #98233A;
+  --on-danger: #FFFFFF; /* testo sul rosso pieno delle conferme distruttive */
   --warn-bg: #FFF4D9;
   --warn-fg: #855600;
   /* Grafici: quattro tinte ben distinte (non quattro verdi), con il petrolio del brand come prima serie.
@@ -150,6 +162,7 @@
   /* Errori */
   --danger: #EF8A98;
   --danger-d: #F7AFB9;
+  --on-danger: #2A0A10; /* rosso schiarito al buio: testo scuro sopra, come --on-green */
   --danger-fixed: #F59AA7;
 
   /* Avvisi */

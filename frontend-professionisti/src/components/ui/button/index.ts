@@ -13,7 +13,9 @@ export const buttonVariants = cva(
         outline: 'border-border bg-background hover:bg-muted hover:text-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 aria-expanded:bg-muted aria-expanded:text-foreground',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-[color-mix(in_srgb,var(--mint),var(--green)_12%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
         ghost: 'hover:bg-muted hover:text-foreground dark:hover:bg-muted/50 aria-expanded:bg-muted aria-expanded:text-foreground',
-        destructive: 'bg-destructive/10 hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/20 text-destructive focus-visible:border-destructive/40 dark:hover:bg-destructive/30',
+        // Conferma di un'azione distruttiva (dialog "Elimina…"): rosso pieno, deve pesare più di "Annulla".
+        // Hover come il primario: rosso più scuro (--danger-d), non un'opacità.
+        destructive: 'bg-(--danger) text-(--on-danger) hover:bg-(--danger-d) aria-expanded:bg-(--danger-d) focus-visible:border-(--danger) focus-visible:ring-destructive/30 dark:focus-visible:ring-destructive/40',
         'destructive-outline': 'border-destructive/30 text-destructive bg-background hover:bg-destructive/10 hover:border-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:border-destructive/40 dark:hover:bg-destructive/20',
         // Pulsante testo: niente sottolineatura né effetto di pressione (quello è solo dei pulsanti azione).
         link: 'text-primary hover:text-(--green-d) active:translate-y-0',

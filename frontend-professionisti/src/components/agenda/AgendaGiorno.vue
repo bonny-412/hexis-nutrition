@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { CalendarCheck, CalendarPlus, Video } from '@lucide/vue'
+import { CalendarCheck, CalendarPlus, Lock, Video } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import StatoVuoto from '@/components/StatoVuoto.vue'
 import type { Appuntamento } from '@/api/agenda'
@@ -8,7 +8,8 @@ import { Checkbox } from '@/components/ui/checkbox'
 import AppuntamentoMenu, { type AzioneAppuntamento } from '@/components/agenda/AppuntamentoMenu.vue'
 import { festivitaDelGiorno } from '@/utils/festivita'
 import { minutiDaOra } from '@/utils/agenda'
-import { barrato, classiEvento, etichettaTipo, oraFine, sottotitolo, titolo } from '@/utils/agendaStile'
+import { eventiDelGiorno } from '@/utils/blocchi'
+import { barrato, classiEvento, etichettaTipo, oraFine, orarioBlocco, sottotitolo, titolo } from '@/utils/agendaStile'
 
 const props = defineProps<{
   giorno: string
@@ -21,7 +22,7 @@ const emit = defineEmits<{ azione: [appuntamento: Appuntamento, azione: AzioneAp
 const festa = computed(() => festivitaDelGiorno(props.giorno))
 
 // Impegni con orario, in ordine; i promemoria senza ora vanno nel pannello "Da fare oggi".
-const delGiorno = computed(() => props.appuntamenti.filter((a) => a.data === props.giorno))
+const delGiorno = computed(() => eventiDelGiorno(props.appuntamenti, props.giorno))
 const impegni = computed(() =>
   delGiorno.value
     .filter((a) => a.oraInizio !== null)
@@ -58,12 +59,18 @@ const daFare = computed(() => delGiorno.value.filter((a) => a.tipo === 'PROMEMOR
           :data-test="`agenda-evento-${a.id}`"
           @click="emit('dettaglio', a)"
         >
-          <div class="w-14 flex-none text-xs text-(--fg2) sm:w-20">
+          <div v-if="a.tipo === 'BLOCCO' && orarioBlocco(a) === 'Tutto il giorno'" class="w-14 flex-none text-xs font-bold leading-tight text-(--fg) sm:w-20">
+            Tutto il giorno
+          </div>
+          <div v-else class="w-14 flex-none text-xs text-(--fg2) sm:w-20">
             <div class="text-sm font-bold text-(--fg)">{{ a.oraInizio }}</div>
-            <div v-if="oraFine(a)">{{ oraFine(a) }} · {{ a.durataMinuti }} min</div>
+            <div v-if="oraFine(a)">{{ oraFine(a) }}<template v-if="a.tipo !== 'BLOCCO'"> · {{ a.durataMinuti }} min</template></div>
           </div>
           <div class="min-w-0 flex-1" :class="{ 'line-through': barrato(a) }">
-            <div class="truncate text-sm font-semibold text-(--fg)">{{ titolo(a) }}</div>
+            <div class="flex items-center gap-1.5 text-sm font-semibold text-(--fg)">
+              <Lock v-if="a.tipo === 'BLOCCO'" :size="14" class="flex-none text-(--fg3)" aria-hidden="true" />
+              <span class="truncate">{{ titolo(a) }}</span>
+            </div>
             <div v-if="sottotitolo(a)" class="truncate text-xs text-(--fg3)">{{ sottotitolo(a) }}</div>
           </div>
           <!-- Da mobile il tipo lo dicono il colore del bordo e la legenda: lo spazio va al titolo. -->

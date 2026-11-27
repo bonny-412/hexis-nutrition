@@ -13,8 +13,31 @@ import java.util.UUID;
 
 public interface AppuntamentoRepository extends JpaRepository<Appuntamento, UUID> {
 
-    List<Appuntamento> findAllByProfessionistaIdAndDataBetweenOrderByDataAscOraInizioAsc(
-            UUID professionistaId, LocalDate da, LocalDate a);
+    /** Appuntamenti del periodo; i blocchi (multi-giorno) compaiono se il loro intervallo tocca il periodo. */
+    @Query("""
+            select a from Appuntamento a
+            where a.professionistaId = :professionistaId
+              and (
+                (a.tipo <> com.hexisnutrition.backend.agenda.TipoAppuntamento.BLOCCO
+                 and a.data between :da and :a)
+                or (a.tipo = com.hexisnutrition.backend.agenda.TipoAppuntamento.BLOCCO
+                    and a.data <= :a and a.dataFine >= :da)
+              )
+            order by a.data asc, a.oraInizio asc
+            """)
+    List<Appuntamento> elencoNelPeriodo(@Param("professionistaId") UUID professionistaId,
+                                        @Param("da") LocalDate da,
+                                        @Param("a") LocalDate a);
+
+    /** Blocchi del professionista il cui intervallo [data, dataFine] contiene il giorno. */
+    @Query("""
+            select a from Appuntamento a
+            where a.professionistaId = :professionistaId
+              and a.tipo = com.hexisnutrition.backend.agenda.TipoAppuntamento.BLOCCO
+              and a.data <= :giorno and a.dataFine >= :giorno
+            """)
+    List<Appuntamento> blocchiCheCopronoIlGiorno(@Param("professionistaId") UUID professionistaId,
+                                                 @Param("giorno") LocalDate giorno);
 
     /** Tutti i professionisti: serve allo scheduler delle notifiche. */
     List<Appuntamento> findAllByDataBetweenAndNotificaTrue(LocalDate da, LocalDate a);

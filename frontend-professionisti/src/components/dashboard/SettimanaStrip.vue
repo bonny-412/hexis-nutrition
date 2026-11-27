@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Lock } from '@lucide/vue'
 import type { Appuntamento } from '@/api/agenda'
 import { giorniDellaSettimana } from '@/utils/agenda'
 import { eVisitaAttiva } from '@/utils/agendaStile'
+import { coperturaIntera, eventiDelGiorno } from '@/utils/blocchi'
 import { festivitaDelGiorno } from '@/utils/festivita'
 
 // Colpo d'occhio sulla settimana corrente: visite e promemoria da fare.
-// Ogni giorno apre l'Agenda su quella data (`?data=`).
+// Ogni giorno apre l'Agenda nella vista Giorno su quella data (`?data=…&vista=giorno`).
 const props = defineProps<{
   oggi: string
   /** Appuntamenti nella finestra del riepilogo; `null` finché i dati non sono disponibili. */
@@ -18,7 +20,8 @@ const GIORNI_BREVI = ['dom', 'lun', 'mar', 'mer', 'gio', 'ven', 'sab']
 
 const giorni = computed(() =>
   giorniDellaSettimana(props.oggi).map((iso, indice) => {
-    const eventi = props.appuntamenti?.filter((a) => a.data === iso) ?? []
+    const eventi = props.appuntamenti ? eventiDelGiorno(props.appuntamenti, iso) : []
+    const bloccoIntero = eventi.find((a) => a.tipo === 'BLOCCO' && coperturaIntera(a, iso))
     const visite = eventi.filter(eVisitaAttiva).length
     const promemoria = eventi.filter((a) => a.tipo === 'PROMEMORIA' && !a.fatto).length
     const giornoSettimana = (indice + 1) % 7
@@ -30,6 +33,7 @@ const giorni = computed(() =>
       numero: Number(iso.slice(8, 10)),
       visite,
       promemoria,
+      blocco: bloccoIntero ? bloccoIntero.testo || 'Bloccato' : null,
       festa: festivitaDelGiorno(iso),
       domenica: giornoSettimana === 0,
       weekend: giornoSettimana === 0 || giornoSettimana === 6,
@@ -42,7 +46,8 @@ function descrizione(g: (typeof giorni.value)[number]): string {
   if (props.appuntamenti === null) return giorno
   const visite = g.visite === 0 ? 'nessuna visita' : g.visite === 1 ? '1 visita' : `${g.visite} visite`
   const promemoria = g.promemoria > 0 ? `, ${g.promemoria} promemoria da fare` : ''
-  return `${giorno}: ${visite}${promemoria}`
+  const blocco = g.blocco ? `, bloccato: ${g.blocco}` : ''
+  return `${giorno}: ${visite}${promemoria}${blocco}`
 }
 </script>
 
@@ -55,11 +60,11 @@ function descrizione(g: (typeof giorni.value)[number]): string {
     <router-link
       v-for="g in giorni"
       :key="g.iso"
-      :to="{ name: 'agenda', query: { data: g.iso } }"
+      :to="{ name: 'agenda', query: { data: g.iso, vista: 'giorno' } }"
       :aria-label="descrizione(g)"
       :title="g.festa ?? undefined"
       class="group flex min-w-0 flex-col items-center gap-1 border-l border-(--div) px-1 py-3 transition-colors first:border-l-0 sm:items-start sm:px-4"
-      :class="g.oggi && (!g.festa || g.domenica) ? 'bg-(--mint)' : g.festa ? 'bg-(--warn-bg) hover:brightness-95 dark:hover:brightness-110' : g.domenica ? 'bg-(--agenda-domenica) hover:brightness-95 dark:hover:brightness-110' : 'hover:bg-(--soft)'"
+      :class="g.oggi && (!g.festa || g.domenica) ? 'bg-(--mint)' : g.festa ? 'bg-(--warn-bg) hover:brightness-95 dark:hover:brightness-110' : g.blocco ? 'tratteggio-blocco hover:brightness-95 dark:hover:brightness-110' : g.domenica ? 'bg-(--agenda-domenica) hover:brightness-95 dark:hover:brightness-110' : 'hover:bg-(--soft)'"
       :data-test="`dashboard-giorno-${g.iso}`"
     >
       <span
@@ -76,13 +81,16 @@ function descrizione(g: (typeof giorni.value)[number]): string {
           <span v-if="g.visite" class="size-1.5 rounded-full bg-(--green)" />
           <span v-if="g.promemoria" class="size-1.5 rounded-full bg-(--warn-fg)" />
         </template>
-        <span v-else class="h-px w-3 bg-(--bd2)" />
+        <span v-else-if="!g.blocco" class="h-px w-3 bg-(--bd2)" />
+        <!-- Giorno bloccato: lucchetto come nell'agenda, il fondo a righe dice "non disponibile". -->
+        <Lock v-if="g.blocco" :size="10" class="text-(--fg3)" />
       </span>
-      <span v-if="appuntamenti !== null" class="hidden text-[11px] text-(--fg3) sm:flex sm:flex-wrap sm:gap-x-1.5">
+      <span v-if="appuntamenti !== null" class="hidden min-w-0 max-w-full text-[11px] text-(--fg3) sm:flex sm:flex-wrap sm:gap-x-1.5">
         <span v-if="g.visite">{{ g.visite === 1 ? '1 visita' : `${g.visite} visite` }}</span>
         <span v-if="g.promemoria">{{ g.promemoria }} promemoria</span>
         <span v-if="g.festa">Festivo</span>
-        <span v-else-if="!g.visite && !g.promemoria">Libero</span>
+        <span v-if="g.blocco" class="min-w-0 max-w-full truncate" :title="g.blocco">{{ g.blocco }}</span>
+        <span v-else-if="!g.festa && !g.visite && !g.promemoria">Libero</span>
       </span>
     </router-link>
     <p v-if="appuntamenti === null" class="col-span-full border-t border-(--div) px-3 py-2 text-xs text-(--fg3)" role="status">

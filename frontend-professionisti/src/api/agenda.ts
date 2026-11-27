@@ -25,6 +25,12 @@ export interface Appuntamento {
   notifica: boolean
   /** 15, 30, 45, 60 o 120. */
   anticipoNotificaMinuti: number
+  /** Solo BLOCCO: ultimo giorno (`YYYY-MM-DD`). */
+  dataFine: string | null
+  /** Solo BLOCCO: `HH:mm` di fine; null se giornata intera. */
+  oraFine: string | null
+  /** Solo BLOCCO: copre le giornate intere da `data` a `dataFine`. */
+  giornataIntera: boolean
 }
 
 export interface AppuntamentoRichiesta {
@@ -37,6 +43,9 @@ export interface AppuntamentoRichiesta {
   linkVideo?: string | null
   notifica?: boolean
   anticipoNotificaMinuti?: number
+  dataFine?: string | null
+  oraFine?: string | null
+  giornataIntera?: boolean
 }
 
 export class SovrapposizioneError extends Error {

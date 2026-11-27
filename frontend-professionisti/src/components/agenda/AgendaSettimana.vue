@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { CalendarPlus, Video } from '@lucide/vue'
+import { CalendarPlus, Lock, Video } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import type { Appuntamento } from '@/api/agenda'
 import AppuntamentoMenu, { type AzioneAppuntamento } from '@/components/agenda/AppuntamentoMenu.vue'
 import { festivitaDelGiorno } from '@/utils/festivita'
+import { eventiDelGiorno } from '@/utils/blocchi'
 import {
   giorniDellaSettimana,
   impaginaSovrapposizioni,
@@ -15,7 +16,7 @@ import {
   PX_PER_ORA,
   stileCorsia,
 } from '@/utils/agenda'
-import { barrato, classiEvento, eVisitaAttiva, etichettaTipo, nomePaziente, titolo } from '@/utils/agendaStile'
+import { barrato, classiEvento, eVisitaAttiva, etichettaTipo, nomePaziente, orarioBlocco, titolo } from '@/utils/agendaStile'
 
 const props = defineProps<{
   riferimento: string
@@ -54,7 +55,7 @@ function oraDaMinuti(min: number): string {
 
 const colonne = computed(() =>
   giorniDellaSettimana(props.riferimento).map((iso, i) => {
-    const delGiorno = props.appuntamenti.filter((a) => a.data === iso)
+    const delGiorno = eventiDelGiorno(props.appuntamenti, iso)
     // Eventi in griglia, ritagliati nella fascia 07:00-20:00 (mai fuori dalla griglia).
     const inGriglia = delGiorno
       .filter((a) => a.oraInizio !== null)
@@ -94,8 +95,9 @@ const lineaAdessoPx = computed(() =>
 )
 
 function testoEvento(a: Appuntamento): string {
+  if (a.tipo === 'BLOCCO') return `${titolo(a)} · ${orarioBlocco(a)} · Bloccato`
   const base = `${a.oraInizio ?? ''} ${titolo(a)} · ${etichettaTipo(a)}`
-  const paz = a.tipo === 'PROMEMORIA' || a.tipo === 'BLOCCO' ? nomePaziente(a) : ''
+  const paz = a.tipo === 'PROMEMORIA' ? nomePaziente(a) : ''
   return paz ? `${base} · ${paz}` : base
 }
 </script>
@@ -192,7 +194,14 @@ function testoEvento(a: Appuntamento): string {
             :data-test="`agenda-evento-${e.a.id}`"
             @click="emit('dettaglio', e.a)"
           >
-            <div class="flex items-center gap-1 pr-5 text-[10.5px] font-bold leading-tight text-(--fg)" :class="{ 'line-through': barrato(e.a) }">
+            <template v-if="e.a.tipo === 'BLOCCO'">
+              <div class="flex items-center gap-1 pr-5 text-[10.5px] font-bold leading-tight text-(--fg)">
+                <Lock :size="11" class="flex-none text-(--fg3)" aria-hidden="true" />
+                <span class="truncate">{{ titolo(e.a) }}</span>
+              </div>
+              <div class="truncate text-[10px] font-medium text-(--fg3)">{{ orarioBlocco(e.a) }}</div>
+            </template>
+            <div v-else class="flex items-center gap-1 pr-5 text-[10.5px] font-bold leading-tight text-(--fg)" :class="{ 'line-through': barrato(e.a) }">
               <Video v-if="e.a.tipo === 'VIDEOCONSULTO'" :size="12" class="flex-none" />
               <span class="truncate">{{ e.a.oraInizio }} {{ titolo(e.a) }}</span>
             </div>
