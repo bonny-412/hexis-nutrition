@@ -37,7 +37,10 @@ class PianoAlimentareSpecificationsTest extends AbstractIntegrationTest {
         scaduto.setDataFine(LocalDate.now().minusDays(1));
         pianoAlimentareRepository.save(scaduto);
 
-        PianoAlimentare ancoraAttivo = new PianoAlimentare(paziente.getId(), professionista.getId(), null, "Attivo",
+        // Un altro paziente: lo stesso non può avere due piani ATTIVO (indice unico, V35).
+        Paziente altroPaziente = pazienteRepository.save(new Paziente(professionista.getId(), "Luca", "Verdi",
+                "VRDLCU80A01H501U", "luca@test.it", null, LocalDate.of(1990, 1, 1), Sesso.M, null, null, null));
+        PianoAlimentare ancoraAttivo = new PianoAlimentare(altroPaziente.getId(), professionista.getId(), null, "Attivo",
                 ModalitaPiano.MACRO);
         ancoraAttivo.setStato(StatoPiano.ATTIVO);
         ancoraAttivo.setDataFine(LocalDate.now().plusDays(10));

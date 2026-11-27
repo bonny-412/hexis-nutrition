@@ -26,7 +26,7 @@ import {
 import { dettaglio as dettaglioPaziente, visite, type Paziente, type Visita } from '@/api/pazienti'
 import { ETICHETTE_OBIETTIVO } from '@/utils/visita'
 import {
-  crea, dettaglio, aggiorna, attiva as attivaApi, elimina as eliminaApi, cerca as cercaPiani, noteDelPiano,
+  crea, dettaglio, aggiorna, attiva as attivaApi, ConflittoPianoError, elimina as eliminaApi, cerca as cercaPiani, noteDelPiano,
   type PianoAlimentare, type NotaPiano, type StatoPiano, type ModalitaPiano, type GiornoSettimana, type TipoPasto,
 } from '@/api/pianiAlimentari'
 import {
@@ -967,6 +967,7 @@ async function salva(): Promise<boolean> {
   salvataggioInCorso.value = true
   try {
     let id = piano.value?.id
+    let versione = piano.value?.versione
     if (!id) {
       // Primo salvataggio: il piano non esiste ancora sul server, lo si crea ora
       // (non alla scelta di paziente/modalità) e gli si applica subito il resto sotto.
@@ -977,9 +978,11 @@ async function salva(): Promise<boolean> {
         dataInizio: dataInizioInput.value || undefined,
       })
       id = creato.id
+      versione = creato.versione
       router.replace(`/piani-alimentari/${id}`)
     }
     const aggiornato = await aggiorna(id, {
+      versione,
       modalita: modalitaAttiva.value,
       nome: nome.value.trim(),
       dataFine: dataFineInput.value || null,
@@ -1015,13 +1018,18 @@ async function salva(): Promise<boolean> {
     applicaPiano(aggiornato)
     toast.success('Piano salvato.')
     return true
-  } catch {
-    toast.error('Non è stato possibile salvare il piano.')
+  } catch (errore) {
+    // Conflitto con un'altra scheda: il messaggio del backend dice di ricaricare; le modifiche
+    // restano nei campi, così si possono ricopiare dopo aver ricaricato.
+    toast.error(errore instanceof ConflittoPianoError ? errore.message : 'Non è stato possibile salvare il piano.')
     return false
   } finally {
     salvataggioInCorso.value = false
   }
 }
+
+// Un piano con inizio futuro resta in bozza: si attiva da quel giorno (la data di un piano salvato non cambia più).
+const inizioFuturo = computed(() => (piano.value?.dataInizio ?? dataInizioInput.value) > oggiIso())
 
 const attivazioneInCorso = ref(false)
 async function attivaPiano() {
@@ -1033,8 +1041,8 @@ async function attivaPiano() {
     await attivaApi(piano.value.id)
     applicaPiano(await dettaglio(piano.value.id))
     toast.success('Piano attivato.')
-  } catch {
-    toast.error('Non è stato possibile attivare il piano.')
+  } catch (errore) {
+    toast.error(errore instanceof ConflittoPianoError ? errore.message : 'Non è stato possibile attivare il piano.')
   } finally {
     attivazioneInCorso.value = false
   }
@@ -1140,9 +1148,12 @@ function stampaPdf() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" class="w-56">
-                <DropdownMenuItem v-if="statoPagina === 'BOZZA'" data-test="attiva-piano" class="cursor-pointer" :disabled="attivazioneInCorso" @click="attivaPiano">
+                <DropdownMenuItem v-if="statoPagina === 'BOZZA'" data-test="attiva-piano" class="cursor-pointer" :disabled="attivazioneInCorso || inizioFuturo" @click="attivaPiano">
                   <CircleCheck />
-                  Attiva piano
+                  <span class="flex flex-col">
+                    Attiva piano
+                    <span v-if="inizioFuturo" class="text-xs text-(--fg3)">Dal {{ formattaDataItalianaConMese(piano?.dataInizio ?? dataInizioInput) }}</span>
+                  </span>
                 </DropdownMenuItem>
                 <DropdownMenuItem data-test="duplica-piano" class="cursor-pointer" @click="duplicaPiano">
                   <Copy />

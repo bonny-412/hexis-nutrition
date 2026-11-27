@@ -25,6 +25,7 @@ public record PianoAlimentareResponse(
         boolean sottoSogliaSicurezza,
         List<PastoResponse> pasti,
         List<GiornoMacroTargetResponse> giorniMacroTarget,
-        List<EsempioResponse> esempi
+        List<EsempioResponse> esempi,
+        long versione
 ) {
 }

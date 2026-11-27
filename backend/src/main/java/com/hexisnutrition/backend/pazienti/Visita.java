@@ -126,6 +126,15 @@ public class Visita {
         }
     }
 
+    public java.time.Instant getCreatoIl() {
+        return creatoIl;
+    }
+
+    /** Ordine cronologico delle visite: data, poi creazione (due visite nello stesso giorno, collaudo bug 03 e 12). */
+    public static final java.util.Comparator<Visita> ORDINE_CRONOLOGICO = java.util.Comparator
+            .comparing(Visita::getDataVisita)
+            .thenComparing(Visita::getCreatoIl);
+
     public UUID getId() {
         return id;
     }

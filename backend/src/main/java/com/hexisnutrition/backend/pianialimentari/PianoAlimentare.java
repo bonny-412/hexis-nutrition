@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -73,6 +74,11 @@ public class PianoAlimentare {
 
     @Column(name = "aggiornato_il", nullable = false)
     private Instant aggiornatoIl = Instant.now();
+
+    /** Blocco ottimistico: ogni salvataggio la incrementa (vedi {@link #segnaAggiornato()}), il client la rimanda. */
+    @Version
+    @Column(nullable = false)
+    private long versione;
 
     protected PianoAlimentare() {
     }
@@ -207,6 +213,10 @@ public class PianoAlimentare {
 
     public Instant getAggiornatoIl() {
         return aggiornatoIl;
+    }
+
+    public long getVersione() {
+        return versione;
     }
 
     /** Segna il piano come modificato anche quando cambia solo la struttura (pasti, macro, esempi). */

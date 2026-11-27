@@ -77,7 +77,7 @@ class PazienteVisiteControllerTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.pesoKg").value(85.0))
                 .andExpect(jsonPath("$.dataVisita").value("2026-03-01"));
 
-        List<Visita> visite = visitaRepository.findAllByPazienteIdOrderByDataVisitaAsc(paziente.getId());
+        List<Visita> visite = visitaRepository.findAllByPazienteIdOrderByDataVisitaAscCreatoIlAsc(paziente.getId());
         assertThat(visite).hasSize(1);
         assertThat(visite.get(0).getPazienteId()).isEqualTo(paziente.getId());
     }

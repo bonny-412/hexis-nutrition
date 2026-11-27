@@ -15,6 +15,8 @@ public record AggiornaPianoAlimentareRequest(
         @Valid List<GiornoMacroTargetRequest> giorniMacroTarget,
         @Valid List<EsempioRequest> esempi,
         /** Opzionale: se presente e diversa da quella attuale cambia la modalità, ammesso solo per piani in bozza. */
-        ModalitaPiano modalita
+        ModalitaPiano modalita,
+        /** Versione del piano letta dal client: se è cambiata nel frattempo (un'altra scheda ha salvato) il PUT risponde 409. Assente = nessun controllo. */
+        Long versione
 ) {
 }

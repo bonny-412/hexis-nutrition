@@ -47,7 +47,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtService jwtService) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtService jwtService,
+                                                   VerificaSessione verificaSessione) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
@@ -63,9 +64,10 @@ public class SecurityConfig {
                         .requestMatchers("/alimenti/**").hasRole("PROFESSIONISTA")
                         .requestMatchers("/agenda/**").hasRole("PROFESSIONISTA")
                         .requestMatchers("/notifiche/**").hasRole("PROFESSIONISTA")
+                        .requestMatchers("/piani-alimentari/**").hasRole("PROFESSIONISTA")
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtAuthenticationFilter(jwtService, verificaSessione), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }

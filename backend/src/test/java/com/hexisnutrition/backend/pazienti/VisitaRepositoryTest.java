@@ -68,7 +68,7 @@ class VisitaRepositoryTest extends AbstractIntegrationTest {
         visitaRepository.save(piuRecente);
         visitaRepository.save(piuVecchia);
 
-        List<Visita> visite = visitaRepository.findAllByPazienteIdOrderByDataVisitaAsc(paziente.getId());
+        List<Visita> visite = visitaRepository.findAllByPazienteIdOrderByDataVisitaAscCreatoIlAsc(paziente.getId());
 
         assertThat(visite).hasSize(2);
         assertThat(visite.get(0).getDataVisita()).isEqualTo(LocalDate.of(2026, 6, 1));

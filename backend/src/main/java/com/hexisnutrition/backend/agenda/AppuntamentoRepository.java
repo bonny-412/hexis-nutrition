@@ -65,4 +65,13 @@ public interface AppuntamentoRepository extends JpaRepository<Appuntamento, UUID
     void eliminaFuturiDelPaziente(@Param("pazienteId") UUID pazienteId,
                                   @Param("oggi") LocalDate oggi,
                                   @Param("ora") LocalTime ora);
+
+    /**
+     * Lock di transazione (PostgreSQL advisory lock) sull'agenda di un professionista: le scritture
+     * che controllano le sovrapposizioni passano una alla volta, così due visite create nello stesso
+     * istante non superano entrambe il controllo. Si rilascia da solo a fine transazione.
+     */
+    @Query(value = "select 1 from (select pg_advisory_xact_lock(hashtextextended(cast(:chiave as text), 0))) l",
+            nativeQuery = true)
+    Integer bloccaAgenda(@Param("chiave") String chiave);
 }

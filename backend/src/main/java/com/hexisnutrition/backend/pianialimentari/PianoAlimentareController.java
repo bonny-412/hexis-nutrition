@@ -4,11 +4,13 @@ import com.hexisnutrition.backend.pazienti.PazienteRepository;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -102,5 +104,24 @@ public class PianoAlimentareController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void elimina(@AuthenticationPrincipal UUID professionistaId, @PathVariable UUID id) {
         pianoAlimentareService.elimina(professionistaId, id);
+    }
+
+    /** 409 con un codice leggibile dal frontend, distinto dal 409 di piano non modificabile. */
+    @ExceptionHandler(PianoModificatoAltroveException.class)
+    public ResponseEntity<Map<String, String>> pianoModificatoAltrove(PianoModificatoAltroveException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("codice", "PIANO_MODIFICATO_ALTROVE", "message", e.getMessage()));
+    }
+
+    @ExceptionHandler(PianoNonAttivabileException.class)
+    public ResponseEntity<Map<String, String>> pianoNonAttivabile(PianoNonAttivabileException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("codice", "PIANO_NON_ATTIVABILE", "message", e.getMessage()));
+    }
+
+    @ExceptionHandler(PianoGiaAttivoException.class)
+    public ResponseEntity<Map<String, String>> pianoGiaAttivo(PianoGiaAttivoException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("codice", "PIANO_GIA_ATTIVO", "message", e.getMessage()));
     }
 }

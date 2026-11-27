@@ -1016,3 +1016,23 @@ Dettaglio in [stato](stato.md#sessione-del-15-novembre-2026--agenda-implementata
 - `stato.md`: nuovo blocco in "Prossimo passo consigliato" e voce in "Dove siamo". Lo staging della sera risulta committato (`60e4329`, `95e33ef`).
 - Prossimo passo: invariato ("Sostituisci alimento", Google Calendar, Docker), con una sessione dedicata ai bug del collaudo prima della messa online.
 - In staging solo la wiki, nessun commit.
+
+## [2026-11-27] handoff | Bug del collaudo: piano di correzione e gruppo 1 (concorrenza)
+
+Verificati nel codice i bug del collaudo (tutti confermati; il 13 vale per tutta l'app, non c'è nessuna guardia di rotta). Proposti sei gruppi con un ordine, scritti in `collaudo-bug.md`. Corretto il gruppo 1: bug 21 (indice unico parziale sul piano `ATTIVO`, V35, flush dei precedenti prima dell'attivazione, 409 `PIANO_GIA_ATTIVO`), 22 (advisory lock per professionista in `AgendaService.crea`/`aggiorna`), 18 (`@Version` sul piano, `versione` nel `PUT`, 409 `PIANO_MODIFICATO_ALTROVE`, toast nell'editor). Aggiornati `modello-dati.md`, `api-contracts.md`, `stato.md`. Non committato, nessun test nuovo, non provato a mano.
+
+## [2026-11-27] handoff | Piano con inizio futuro, bug 09 e prove a mano del gruppo 1
+
+Andrea ha deciso che un piano con inizio futuro non si attiva finché la data non arriva: `attiva` risponde 409 `PIANO_NON_ATTIVABILE` (anche per i piani non in bozza, bug 09), e nell'editor "Attiva piano" è disabilitato con "Dal …". Su richiesta di Andrea, Claude ha fatto le prove a mano del gruppo 1 con backend e Vite di prova (8081/5174, `hexis_test`, professionista di prova creato apposta, `launch.json` ripristinato dopo): due schede (toast di conflitto, nessuna sovrascrittura), attivazione con piano già attivo (il precedente diventa concluso), rifiuti 409 da API. Suite: backend verde, vitest dei piani 49/49, `vue-tsc` pulito. Aggiornati `collaudo-bug.md`, `domande-aperte.md`, `api-contracts.md`, `stato.md`.
+
+## [2026-11-27] handoff | Bug del collaudo, gruppo 2: sessioni dopo il reset e ruolo sui piani
+
+Bug 19: contatore `versione_sessione` (V36) su professionisti e pazienti, nel claim `sv` del JWT, incrementato dal reset della password e controllato da `JwtAuthenticationFilter` tramite `VerificaSessione`. Scelto al posto di una data di cambio password perché l'`iat` è arrotondato al secondo. Ruolo `PROFESSIONISTA` su `/piani-alimentari/**`. Suite backend verde. Prove via API su backend di prova (`hexis_test`, porta 8081, credenziali generate e poi cancellate, `launch.json` ripristinato): token vecchio 401 dopo il reset, nuovo login ok, paziente 403 sulle rotte dei piani. Non committato.
+
+## [2026-11-27] handoff | Bug del collaudo, gruppo 3: visite nello stesso giorno
+
+Ordine cronologico delle visite (data, poi `creato_il`) applicato a storico paginato e visita precedente (`precedentiDi`), lista visite, ultima visita per paziente, data di inizio dell'obiettivo, suggerimento del piano e filtro «Obiettivo ultima visita» (ora `NOT EXISTS` di una visita successiva). Nel frontend il riepilogo «Ultima visita» di `VisitaFormView` usa la posizione nella lista. Scartato `id` come terzo criterio: Java e PostgreSQL ordinano gli UUID in modo diverso. Verificato sull'ambiente di Andrea (Elio Collaudo) e con una transazione annullata per il filtro. Non committato.
+
+## [2026-11-27] handoff | Fine sessione: bug del collaudo, gruppi 1-3
+
+Sessione dedicata ai bug del collaudo: verificati nel codice, divisi in sei gruppi, corretti i gruppi 1 (concorrenza e due schede, V35), 2 (sessioni dopo il reset e ruolo sui piani, V36) e 3 (visite nello stesso giorno), più il piano con inizio futuro non attivabile e il bug 09. Tutto provato, in staging, non committato. Ambiente di Andrea già riavviato con V35 e V36. Prossima sessione: gruppo 4 (validazioni e vincoli `CHECK`). `stato.md` aggiornato con il riepilogo e il prossimo passo.

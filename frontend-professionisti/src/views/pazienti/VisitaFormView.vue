@@ -68,13 +68,14 @@ async function caricaUltimaVisita(pazienteId: string) {
   }
 }
 
-// "Ultima visita" del riepilogo: l'ultima con data precedente a quella corrente. In modifica è la
-// visita prima di quella aperta (non la più recente in assoluto), in inserimento l'ultima registrata.
+// "Ultima visita" del riepilogo: in modifica è la visita che precede quella aperta (non la più recente
+// in assoluto), in inserimento l'ultima registrata. La lista arriva dal backend già in ordine cronologico
+// (data, poi inserimento): si usa la posizione, così vale anche per due visite nello stesso giorno.
 const visitaPrecedente = computed<Visita | null>(() => {
   const corrente = visitaEsistente.value
-  const candidate = corrente
-    ? visiteDelPaziente.value.filter((v) => v.id !== corrente.id && v.dataVisita < corrente.dataVisita)
-    : visiteDelPaziente.value
+  const lista = visiteDelPaziente.value
+  const fine = corrente ? lista.findIndex((v) => v.id === corrente.id) : lista.length
+  const candidate = fine >= 0 ? lista.slice(0, fine) : lista.filter((v) => v.dataVisita < corrente!.dataVisita)
   return candidate.length > 0 ? candidate[candidate.length - 1] : null
 })
 

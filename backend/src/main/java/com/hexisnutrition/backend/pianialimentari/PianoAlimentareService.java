@@ -7,9 +7,12 @@ import com.hexisnutrition.backend.pazienti.Plicometria;
 import com.hexisnutrition.backend.pazienti.PlicometriaRepository;
 import com.hexisnutrition.backend.pazienti.Visita;
 import com.hexisnutrition.backend.pazienti.VisitaRepository;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -65,8 +68,8 @@ public class PianoAlimentareService {
     }
 
     private Optional<Visita> ultimaVisita(UUID pazienteId) {
-        return visitaRepository.findAllByPazienteIdOrderByDataVisitaAsc(pazienteId).stream()
-                .max(Comparator.comparing(Visita::getDataVisita));
+        return visitaRepository.findAllByPazienteIdOrderByDataVisitaAscCreatoIlAsc(pazienteId).stream()
+                .max(Visita.ORDINE_CRONOLOGICO);
     }
 
     @Transactional
@@ -183,7 +186,8 @@ public class PianoAlimentareService {
                 piano.getNome(), piano.getModalita(),
                 piano.statoEffettivo(), piano.getDataInizio(), piano.getDataFine(), piano.getObiettivoKcal(),
                 piano.getObiettivoKcalSuggerito(), piano.getBmrCalcolato(), piano.getTdeeCalcolato(),
-                piano.getFormulaBmrUsata(), piano.isSottoSogliaSicurezza(), pasti, giorniMacroTarget, esempi);
+                piano.getFormulaBmrUsata(), piano.isSottoSogliaSicurezza(), pasti, giorniMacroTarget, esempi,
+                piano.getVersione());
     }
 
     @Transactional
@@ -191,6 +195,9 @@ public class PianoAlimentareService {
         PianoAlimentare piano = pianoDiProprieta(professionistaId, pianoId);
         if (piano.statoEffettivo() == StatoPianoVisualizzato.CONCLUSO) {
             throw new PianoAlimentareNonModificabileException();
+        }
+        if (request.versione() != null && request.versione() != piano.getVersione()) {
+            throw new PianoModificatoAltroveException();
         }
         if (request.modalita() != null && request.modalita() != piano.getModalita()) {
             // Solo la struttura della modalità attiva è persistita: quella lasciata va svuotata, poi sotto
@@ -202,7 +209,13 @@ public class PianoAlimentareService {
         piano.setDataFine(request.dataFine());
         piano.setObiettivoKcal(request.obiettivoKcal());
         piano.segnaAggiornato();
-        pianoAlimentareRepository.save(piano);
+        // Flush subito: l'UPDATE con "where versione = ?" fallisce qui se un salvataggio concorrente è
+        // arrivato prima, e la risposta riporta la versione già incrementata.
+        try {
+            pianoAlimentareRepository.saveAndFlush(piano);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            throw new PianoModificatoAltroveException();
+        }
 
         switch (piano.getModalita()) {
             case PASTI -> sostituisciPasti(pianoId, request.pasti() != null ? request.pasti() : List.of());
@@ -254,13 +267,29 @@ public class PianoAlimentareService {
     @Transactional
     public void attiva(UUID professionistaId, UUID pianoId) {
         PianoAlimentare piano = pianoDiProprieta(professionistaId, pianoId);
-        pianoAlimentareRepository.findAllByPazienteIdAndStato(piano.getPazienteId(), StatoPiano.ATTIVO)
-                .forEach(precedente -> {
-                    precedente.setStato(StatoPiano.TERMINATO);
-                    pianoAlimentareRepository.save(precedente);
-                });
-        piano.setStato(StatoPiano.ATTIVO);
-        pianoAlimentareRepository.save(piano);
+        if (piano.getStato() != StatoPiano.BOZZA) {
+            throw new PianoNonAttivabileException("Si possono attivare solo i piani in bozza.");
+        }
+        if (piano.getDataInizio().isAfter(LocalDate.now())) {
+            throw new PianoNonAttivabileException("Il piano inizia in una data futura: potrai attivarlo da quel giorno.");
+        }
+        try {
+            pianoAlimentareRepository.findAllByPazienteIdAndStato(piano.getPazienteId(), StatoPiano.ATTIVO)
+                    .forEach(precedente -> {
+                        precedente.setStato(StatoPiano.TERMINATO);
+                        pianoAlimentareRepository.save(precedente);
+                    });
+            // Gli UPDATE dei precedenti devono arrivare al DB prima di quello che attiva il nuovo piano:
+            // l'indice unico uq_piani_alimentari_un_attivo_per_paziente (V35) non è differibile, e Hibernate
+            // altrimenti li ordinerebbe come le entità sono entrate nel contesto (il nuovo piano per primo).
+            pianoAlimentareRepository.flush();
+            piano.setStato(StatoPiano.ATTIVO);
+            pianoAlimentareRepository.saveAndFlush(piano);
+        } catch (DataIntegrityViolationException | ObjectOptimisticLockingFailureException e) {
+            // Un'attivazione concorrente per lo stesso paziente: o ha già terminato il precedente
+            // (versione cambiata) o ha già un piano ATTIVO (indice unico). Questa si annulla.
+            throw new PianoGiaAttivoException();
+        }
     }
 
     @Transactional

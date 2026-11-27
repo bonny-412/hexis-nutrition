@@ -11,7 +11,24 @@ fonti: [sorgenti/2026-11-27-collaudo-bug.md]
 
 Andrea ha collaudato l'app (Chrome su `localhost:5173`, Spring Boot, PostgreSQL `hexis_test`) e ha trovato 22 bug. Il report completo, con passaggi, risultati e prove, è in [sorgenti/2026-11-27-collaudo-bug.md](sorgenti/2026-11-27-collaudo-bug.md).
 
-**Da discutere con Andrea prima della messa online** ([decisioni/0012](decisioni/0012-primo-rilascio-solo-area-professionista.md)). Nessuno è ancora corretto né confermato nel codice: questa pagina li riassume e basta. Priorità e correzioni si decidono insieme.
+**Da correggere prima della messa online** ([decisioni/0012](decisioni/0012-primo-rilascio-solo-area-professionista.md)).
+
+## Piano di correzione (deciso il 27 novembre 2026)
+
+Verificati nel codice il 27/11: tutti confermati; il 13 è più ampio (nessuna guardia di rotta in tutta l'app: anche visita e nuovo paziente perdono le modifiche uscendo dalla sidebar). Ordine proposto da Claude e avviato da Andrea:
+
+1. **Concorrenza e due schede (21, 22, 18)**: **corretti il 27/11**, non ancora provati a mano. 21: indice unico parziale (V35). 22: advisory lock per professionista in `AgendaService.crea`/`aggiorna`. 18: `@Version` sul piano, `versione` nel `PUT`, 409 `PIANO_MODIFICATO_ALTROVE` con toast.
+2. **Sicurezza (19, ruolo sui piani)**: **corretti il 27/11**. 19: contatore `versione_sessione` su professionisti e pazienti (V36) nel claim `sv` del JWT, incrementato dal reset, verificato dal filtro a ogni richiesta (scelto al posto di una data di cambio password perché l'`iat` del JWT è arrotondato al secondo). Ruolo: `hasRole("PROFESSIONISTA")` su `/piani-alimentari/**` in `SecurityConfig`. Provati da Claude su backend di prova (`hexis_test`): dopo il reset il token vecchio riceve 401 su `/auth/me` e `/pazienti`, la password vecchia non entra, il nuovo login e il nuovo token funzionano; un paziente riceve 403 su ricerca e dettaglio dei piani, il professionista 200.
+3. **Visite nello stesso giorno (03, 12)**: **corretti il 27/11**, `creato_il` come secondo criterio d'ordine ovunque (storico, precedente, ultima visita, data dell'obiettivo, suggerimento del piano, filtro con `NOT EXISTS` di una visita successiva; nel frontend il riepilogo «Ultima visita» usa la posizione nella lista). Verificati da Claude sull'ambiente di Andrea con le due visite di Elio Collaudo del 27/11: panoramica e storico mostrano 75,80 kg come più recente con −0,70 kg; il filtro verificato in SQL in una transazione annullata (con obiettivi diversi il vecchio filtro trovava il paziente in entrambi, il nuovo solo nell'obiettivo dell'ultima).
+4. **Validazioni backend e vincoli DB (09, 10, 11, 14, 15, 16, 02, 07, 17)**, con una migrazione di `CHECK`.
+5. **Form del frontend (01, 06, 08, 10, 16, 02, 07, 13)**, convenzione delle form; il 13 come guardia di rotta comune.
+6. **Stampa PDF (04)**, lavoro di UI a parte.
+
+Rimandato il **20** (inviti nascosti). Da decidere: se i test di regressione di 18, 19, 21, 22 li scrive Claude o Andrea.
+
+**Piano con inizio futuro**: deciso il 27/11 con Andrea, non si attiva finché la data non arriva (409 `PIANO_NON_ATTIVABILE`, voce del menu disabilitata con "Dal …"). Insieme è stato corretto anche il **09** (si attivano solo le bozze, stesso 409), anticipato dal gruppo 4 perché sta nello stesso metodo.
+
+**Prove a mano del gruppo 1, fatte da Claude il 27/11** (backend e Vite di prova sulle porte 8081/5174, database `hexis_test`, professionista di prova): stessa bozza in due schede, la seconda salva e la prima riceve il toast "modificato in un'altra scheda" senza sovrascrivere (sul server restano i valori della seconda, `versione` 1); attivazione di una bozza con un piano già attivo, il precedente passa a `CONCLUSO`; da API, riattivare un piano non in bozza e attivare una bozza con inizio futuro rispondono 409. Nessun errore in console oltre al 409 atteso.
 
 ## Elenco
 
@@ -42,7 +59,7 @@ Andrea ha collaudato l'app (Chrome su `localhost:5173`, Spring Boot, PostgreSQL 
 
 ## Da decidere
 
-- **Attivare un piano con data di inizio futura** lo rende subito attivo e conclude quello corrente. Il report lo segnala come comportamento da confrontare con le regole prima di chiamarlo bug: va deciso se un piano futuro debba restare in attesa fino alla data di inizio.
+- ~~**Attivare un piano con data di inizio futura**~~ Deciso il 27/11: non si attiva finché la data non arriva (vedi sopra).
 - **Ruolo sulle rotte dei piani**: `SecurityConfig` limita pazienti, agenda, alimenti e notifiche al ruolo `PROFESSIONISTA`, i piani no (solo autenticazione). Un paziente riceve 200 con lista vuota o 404, nessun dato esposto. Differenza di configurazione da allineare.
 
 ## Verifiche da fare prima del rilascio

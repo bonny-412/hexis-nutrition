@@ -21,6 +21,10 @@ public class Professionista {
     @Column(nullable = false, unique = true)
     private String email;
 
+    /** Va nel claim "sv" del JWT; il reset della password la incrementa (V36, collaudo bug 19). */
+    @Column(name = "versione_sessione", nullable = false)
+    private int versioneSessione;
+
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
@@ -57,6 +61,16 @@ public class Professionista {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    /** Nuova password scelta dall'utente (reset): i token emessi prima smettono di valere. */
+    public void cambiaPassword(String passwordHash) {
+        this.passwordHash = passwordHash;
+        this.versioneSessione++;
+    }
+
+    public int getVersioneSessione() {
+        return versioneSessione;
     }
 
     public String getNome() {

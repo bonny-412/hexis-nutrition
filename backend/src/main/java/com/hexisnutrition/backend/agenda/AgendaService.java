@@ -132,6 +132,7 @@ public class AgendaService {
 
     @Transactional
     public AppuntamentoResponse crea(UUID professionistaId, AppuntamentoRequest r, boolean confermaSovrapposizione) {
+        bloccaAgenda(professionistaId);
         Appuntamento app = new Appuntamento(professionistaId, r.tipo(), r.data());
         Paziente paziente = applica(professionistaId, app, r);
         verificaSovrapposizione(professionistaId, app, confermaSovrapposizione);
@@ -143,6 +144,7 @@ public class AgendaService {
     @Transactional
     public AppuntamentoResponse aggiorna(UUID professionistaId, UUID id, AppuntamentoRequest r,
                                          boolean confermaSovrapposizione) {
+        bloccaAgenda(professionistaId);
         Appuntamento app = trova(professionistaId, id);
         if (famiglia(app.getTipo()) != famiglia(r.tipo())) {
             throw new AppuntamentoNonValidoException("Il tipo di appuntamento non può cambiare famiglia");
@@ -202,6 +204,11 @@ public class AgendaService {
             throw new AppuntamentoNonValidoException("Le visite si annullano, non si eliminano");
         }
         appuntamentoRepository.delete(app);
+    }
+
+    /** Va chiamato prima di leggere gli appuntamenti per il controllo di sovrapposizione (collaudo, bug 22). */
+    private void bloccaAgenda(UUID professionistaId) {
+        appuntamentoRepository.bloccaAgenda("agenda:" + professionistaId);
     }
 
     private Appuntamento trova(UUID professionistaId, UUID id) {

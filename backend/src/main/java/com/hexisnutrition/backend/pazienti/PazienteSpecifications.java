@@ -61,11 +61,24 @@ public final class PazienteSpecifications {
         return (root, query, cb) -> {
             Subquery<UUID> visitaConObiettivo = query.subquery(UUID.class);
             var visita = visitaConObiettivo.from(Visita.class);
+            // L'ultima visita è quella senza visite successive nell'ordine (data, creazione): con due visite
+            // nello stesso giorno conta la seconda inserita, non entrambe (collaudo, bug 12).
+            Subquery<UUID> successiva = query.subquery(UUID.class);
+            var dopo = successiva.from(Visita.class);
+            successiva.select(dopo.get("id"))
+                    .where(cb.and(
+                            cb.equal(dopo.get("pazienteId"), root.get("id")),
+                            cb.or(
+                                    cb.greaterThan(dopo.<LocalDate>get("dataVisita"), visita.<LocalDate>get("dataVisita")),
+                                    cb.and(
+                                            cb.equal(dopo.get("dataVisita"), visita.get("dataVisita")),
+                                            cb.greaterThan(dopo.<java.time.Instant>get("creatoIl"),
+                                                    visita.<java.time.Instant>get("creatoIl"))))));
             visitaConObiettivo.select(visita.get("id"))
                     .where(cb.and(
                             cb.equal(visita.get("pazienteId"), root.get("id")),
                             cb.equal(visita.get("obiettivo"), obiettivo),
-                            cb.equal(visita.get("dataVisita"), dataUltimaVisita(root, query, cb))));
+                            cb.not(cb.exists(successiva))));
 
             return cb.exists(visitaConObiettivo);
         };

@@ -53,6 +53,8 @@ Sessione del 27 novembre 2026 (sera): **blocco su più giorni** (prima richiesta
 
 Sessione del 27 novembre 2026 (chiusura): tutto il lavoro della sera è **committato** (`60e4329`, `95e33ef`). Andrea ha fatto un **collaudo** dell'app e trovato **22 bug**: report salvato in [sorgenti](sorgenti/2026-11-27-collaudo-bug.md) e riassunto in [collaudo-bug](collaudo-bug.md). **Da discutere insieme prima della messa online**, nessuno corretto. Vedi "Prossimo passo consigliato".
 
+Sessione del 27 novembre 2026 (notte): **correzione dei bug del collaudo, gruppi 1-3 fatti** su sei ([collaudo-bug](collaudo-bug.md)): concorrenza e due schede (21, 22, 18, migrazione **V35**), piano con inizio futuro non attivabile e bug 09, sessioni chiuse dopo il reset della password e ruolo sui piani (19, migrazione **V36**), visite nello stesso giorno (03, 12). Tutto provato (in parte da Claude sul backend di prova con `hexis_test`, in parte sull'ambiente di Andrea, già riavviato con V35 e V36). In staging, **non committato**. Prossimo: gruppo 4.
+
 Sessione del 25 novembre 2026 (seconda parte): **barra azioni flottante** nei form lunghi, **colori delle variazioni secondo l'obiettivo** del paziente, valori sui punti dei grafici, confronto A/B ridisegnato, **suite frontend 297/297 verde**. In staging, non committato. Vedi la sezione dedicata.
 
 ## Come far girare il backend su questa macchina
@@ -796,6 +798,21 @@ Sessione senza codice. Andrea riporta la conversazione del 26 novembre con Edoar
 **Non verificato in browser**: colori con obiettivi direzionali su dati reali (tutti i pazienti con più visite hanno "Mantenimento"; Dimagrimento e Aumento peso provati simulando la risposta solo nel browser, nessun dato cambiato); piano in sola lettura senza barra azioni (solo per codice, `v-if`).
 
 ## Prossimo passo consigliato
+
+**Aggiornato il 27 novembre 2026, notte (handoff) — Correzione dei bug del collaudo** (prevale sulle voci sotto):
+
+Andrea ha scelto di correggere i bug del collaudo prima di "Sostituisci alimento". Piano in sei gruppi e dettaglio di ogni correzione e prova in [collaudo-bug](collaudo-bug.md#piano-di-correzione-deciso-il-27-novembre-2026).
+
+Fatto in questa sessione (tutto **in staging, non committato**, lo committa Andrea):
+- **Gruppo 1** (21, 22, 18): `V35__piano_attivo_unico_e_versione.sql` (indice unico parziale sul piano `ATTIVO`, colonna `versione`), `@Version` su `PianoAlimentare`, `versione` facoltativa nel `PUT` (assente = nessun controllo, per non toccare i test esistenti), 409 con `codice` (`PIANO_MODIFICATO_ALTROVE`, `PIANO_GIA_ATTIVO`) letti da `ConflittoPianoError` in `api/pianiAlimentari.ts` e mostrati nel toast dell'editor; advisory lock per professionista in `AgendaService.crea`/`aggiorna`. Adattato il dato di partenza di `PianoAlimentareSpecificationsTest`.
+- **Piano con inizio futuro** (deciso da Andrea): non si attiva finché la data non arriva, 409 `PIANO_NON_ATTIVABILE`, "Attiva piano" disabilitato con "Dal …". Insieme il **bug 09** (si attivano solo le bozze).
+- **Gruppo 2** (19, ruolo): `V36__versione_sessione.sql`, claim `sv` nel JWT, `VerificaSessione` nel filtro, `cambiaPassword` nel reset; `hasRole("PROFESSIONISTA")` su `/piani-alimentari/**`.
+- **Gruppo 3** (03, 12): ordine delle visite (data, `creato_il`) in backend e nel riepilogo di `VisitaFormView.vue`. Nessuna migrazione.
+- Verifiche: suite backend verde a ogni gruppo; frontend `vue-tsc` pulito, vitest 307/307 dopo il gruppo 1 e poi le aree toccate (piani 49/49, pazienti 157/157). Prove a mano: gruppi 1 e 2 sul backend di prova (`hexis_test`, porta 8081), gruppi 1 e 3 sull'ambiente di Andrea, che è **già riavviato con V35 e V36** (non serve riavviare di nuovo).
+
+Da decidere: chi scrive i test di regressione per 18, 19, 21, 22 (Claude o Andrea; per ora nessun test nuovo).
+
+**Prossimo passo: gruppo 4**, validazioni backend e vincoli `CHECK` in una nuova migrazione (V37): 10 (fine prima dell'inizio, obiettivo calorico ≤ 0), 11 (`fatto` obbligatorio), 14 (link senza host), 15 (durata decimale), 16 (`@Size(max=100)` su nome e cognome in modifica), 02 (macronutrienti oltre la quantità di riferimento), 07 (porzione 0), 17 (vincoli DB). Poi gruppo 5 (form del frontend, con il 13 come guardia di rotta comune) e gruppo 6 (stampa PDF); il 20 resta rimandato. Prima della V37 controllare che i dati in `hexis` rispettino i nuovi `CHECK` (altrimenti la migrazione fallisce).
 
 **Aggiornato il 27 novembre 2026, chiusura — Bug del collaudo** (prevale sulle voci sotto per le priorità):
 

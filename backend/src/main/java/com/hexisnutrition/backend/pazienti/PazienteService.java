@@ -147,7 +147,7 @@ public class PazienteService {
         }
         return visitaRepository.findAllByPazienteIdIn(pazienteIds).stream()
                 .collect(Collectors.toMap(Visita::getPazienteId, v -> v,
-                        (v1, v2) -> v1.getDataVisita().isAfter(v2.getDataVisita()) ? v1 : v2));
+                        (v1, v2) -> Visita.ORDINE_CRONOLOGICO.compare(v1, v2) > 0 ? v1 : v2));
     }
 
     /**
@@ -167,7 +167,7 @@ public class PazienteService {
         Map<UUID, LocalDate> risultato = new HashMap<>();
         for (Map.Entry<UUID, List<Visita>> voce : visitePerPaziente.entrySet()) {
             List<Visita> visiteOrdinate = voce.getValue().stream()
-                    .sorted(Comparator.comparing(Visita::getDataVisita))
+                    .sorted(Visita.ORDINE_CRONOLOGICO)
                     .toList();
             Visita ultima = visiteOrdinate.get(visiteOrdinate.size() - 1);
             LocalDate dataInizio = ultima.getDataVisita();
@@ -293,7 +293,7 @@ public class PazienteService {
 
     public List<VisitaResponse> visite(UUID professionistaId, UUID pazienteId) {
         dettaglio(professionistaId, pazienteId);
-        return visitaRepository.findAllByPazienteIdOrderByDataVisitaAsc(pazienteId).stream()
+        return visitaRepository.findAllByPazienteIdOrderByDataVisitaAscCreatoIlAsc(pazienteId).stream()
                 .map(v -> VisitaResponse.da(v, plicometriaRepository.findByVisitaId(v.getId()).orElse(null)))
                 .toList();
     }
@@ -302,14 +302,15 @@ public class PazienteService {
     public VisiteStoricoPaginaResponse storicoVisite(UUID professionistaId, UUID pazienteId, int pagina, int dimensione) {
         dettaglio(professionistaId, pazienteId);
         Page<Visita> risultati = visitaRepository.findAllByPazienteId(pazienteId,
-                PageRequest.of(pagina, dimensione, Sort.by(Sort.Direction.DESC, "dataVisita")));
+                PageRequest.of(pagina, dimensione, Sort.by(Sort.Direction.DESC, "dataVisita", "creatoIl")));
         List<Visita> visite = risultati.getContent();
         Map<UUID, Plicometria> plicometrie = new HashMap<>();
         visite.forEach(v -> plicometriaRepository.findByVisitaId(v.getId()).ifPresent(p -> plicometrie.put(v.getId(), p)));
 
         Visita precedenteDellUltima = visite.isEmpty() ? null
-                : visitaRepository.findFirstByPazienteIdAndDataVisitaLessThanOrderByDataVisitaDesc(
-                        pazienteId, visite.get(visite.size() - 1).getDataVisita()).orElse(null);
+                : visitaRepository.precedentiDi(pazienteId, visite.get(visite.size() - 1).getDataVisita(),
+                        visite.get(visite.size() - 1).getCreatoIl(),
+                        PageRequest.of(0, 1)).stream().findFirst().orElse(null);
         Plicometria plicometriaPrecedenteDellUltima = precedenteDellUltima == null ? null
                 : plicometriaRepository.findByVisitaId(precedenteDellUltima.getId()).orElse(null);
 

@@ -22,11 +22,20 @@ public class JwtService {
         this.expirationMinutes = expirationMinutes;
     }
 
+    /** Claim con la versione di sessione dell'utente: un token con versione diversa da quella nel DB non vale più. */
+    public static final String CLAIM_VERSIONE_SESSIONE = "sv";
+
+    /** Token con versione di sessione 0, quella di un utente che non ha mai reimpostato la password. */
     public String generateToken(UUID userId, Ruolo ruolo) {
+        return generateToken(userId, ruolo, 0);
+    }
+
+    public String generateToken(UUID userId, Ruolo ruolo, int versioneSessione) {
         Instant now = Instant.now();
         return Jwts.builder()
                 .subject(userId.toString())
                 .claim("ruolo", ruolo.name())
+                .claim(CLAIM_VERSIONE_SESSIONE, versioneSessione)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(expirationMinutes, ChronoUnit.MINUTES)))
                 .signWith(key)

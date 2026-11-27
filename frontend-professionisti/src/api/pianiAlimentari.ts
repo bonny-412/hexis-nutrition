@@ -1,4 +1,4 @@
-import { apiRequest } from './client'
+import { ApiError, apiRequest } from './client'
 
 export type ModalitaPiano = 'PASTI' | 'MACRO' | 'ESEMPI'
 /** CONCLUSO = piano terminato a mano o con data di fine passata: per il professionista sono la stessa cosa. */
@@ -71,6 +71,8 @@ export interface PianoAlimentare {
   pasti: Pasto[]
   giorniMacroTarget: GiornoMacroTarget[]
   esempi: Esempio[]
+  /** Blocco ottimistico: va rimandata nel PUT, il backend risponde 409 se nel frattempo è cambiata. */
+  versione: number
 }
 
 export interface CreaPianoAlimentareRequest {
@@ -128,6 +130,8 @@ export interface AggiornaPianoAlimentareRequest {
   pasti: PastoRequest[] | null
   giorniMacroTarget: GiornoMacroTargetRequest[] | null
   esempi: EsempioRequest[] | null
+  /** Versione del piano letta dal client (vedi `PianoAlimentare.versione`). */
+  versione?: number
 }
 
 export interface CriteriRicercaPianiAlimentari {
@@ -179,12 +183,47 @@ export function dettaglio(id: string): Promise<PianoAlimentare> {
   return apiRequest<PianoAlimentare>(`/piani-alimentari/${id}`)
 }
 
+/**
+ * Conflitto di concorrenza sul piano: un'altra scheda l'ha salvato dopo che lo si è letto
+ * (`PIANO_MODIFICATO_ALTROVE`) o nel frattempo è stato attivato un altro piano dello stesso
+ * paziente (`PIANO_GIA_ATTIVO`), o il piano non si può attivare, ad esempio perché inizia in una data
+ * futura (`PIANO_NON_ATTIVABILE`). Il messaggio arriva dal backend, pronto da mostrare.
+ */
+export class ConflittoPianoError extends Error {
+  readonly codice: 'PIANO_MODIFICATO_ALTROVE' | 'PIANO_GIA_ATTIVO' | 'PIANO_NON_ATTIVABILE'
+
+  constructor(codice: ConflittoPianoError['codice'], messaggio: string) {
+    super(messaggio)
+    this.codice = codice
+  }
+}
+
+async function intercettaConflitto<T>(chiamata: Promise<T>): Promise<T> {
+  try {
+    return await chiamata
+  } catch (errore) {
+    if (errore instanceof ApiError && errore.status === 409) {
+      let corpo: { codice?: string; message?: string } = {}
+      try {
+        corpo = JSON.parse(errore.message)
+      } catch {
+        // corpo non JSON: è un altro 409 (piano non modificabile), lo si lascia passare
+      }
+      if (corpo.codice === 'PIANO_MODIFICATO_ALTROVE' || corpo.codice === 'PIANO_GIA_ATTIVO'
+        || corpo.codice === 'PIANO_NON_ATTIVABILE') {
+        throw new ConflittoPianoError(corpo.codice, corpo.message ?? 'Il piano è cambiato nel frattempo.')
+      }
+    }
+    throw errore
+  }
+}
+
 export function aggiorna(id: string, request: AggiornaPianoAlimentareRequest): Promise<PianoAlimentare> {
-  return apiRequest<PianoAlimentare>(`/piani-alimentari/${id}`, { method: 'PUT', body: request })
+  return intercettaConflitto(apiRequest<PianoAlimentare>(`/piani-alimentari/${id}`, { method: 'PUT', body: request }))
 }
 
 export function attiva(id: string): Promise<void> {
-  return apiRequest<void>(`/piani-alimentari/${id}/attiva`, { method: 'POST' })
+  return intercettaConflitto(apiRequest<void>(`/piani-alimentari/${id}/attiva`, { method: 'POST' }))
 }
 
 export interface NotaPiano {

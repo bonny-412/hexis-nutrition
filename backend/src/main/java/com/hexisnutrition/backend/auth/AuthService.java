@@ -53,14 +53,16 @@ public class AuthService {
         var professionista = professionistaRepository.findByEmail(email);
         if (professionista.isPresent()
                 && passwordEncoder.matches(password, professionista.get().getPasswordHash())) {
-            String token = jwtService.generateToken(professionista.get().getId(), Ruolo.PROFESSIONISTA);
+            String token = jwtService.generateToken(professionista.get().getId(), Ruolo.PROFESSIONISTA,
+                    professionista.get().getVersioneSessione());
             return new LoginResponse(token, Ruolo.PROFESSIONISTA.name());
         }
 
         var paziente = pazienteRepository.findByEmailAndStatoAccount(email, StatoAccountPaziente.ATTIVO);
         if (paziente.isPresent() && paziente.get().getPasswordHash() != null
                 && passwordEncoder.matches(password, paziente.get().getPasswordHash())) {
-            String token = jwtService.generateToken(paziente.get().getId(), Ruolo.PAZIENTE);
+            String token = jwtService.generateToken(paziente.get().getId(), Ruolo.PAZIENTE,
+                    paziente.get().getVersioneSessione());
             return new LoginResponse(token, Ruolo.PAZIENTE.name());
         }
 
@@ -109,12 +111,12 @@ public class AuthService {
         if (tokenAzione.getProfessionistaId() != null) {
             Professionista professionista = professionistaRepository.findById(tokenAzione.getProfessionistaId())
                     .orElseThrow(TokenNonValidoException::new);
-            professionista.setPasswordHash(hash);
+            professionista.cambiaPassword(hash);
             professionistaRepository.save(professionista);
         } else {
             Paziente paziente = pazienteRepository.findById(tokenAzione.getPazienteId())
                     .orElseThrow(TokenNonValidoException::new);
-            paziente.setPasswordHash(hash);
+            paziente.cambiaPassword(hash);
             pazienteRepository.save(paziente);
         }
 
