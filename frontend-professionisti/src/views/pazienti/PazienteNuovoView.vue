@@ -11,6 +11,8 @@ import AppShell from '@/components/AppShell.vue'
 import DatiVisitaForm from '@/components/pazienti/DatiVisitaForm.vue'
 import BarraAzioniForm from '@/components/form/BarraAzioniForm.vue'
 import { crea } from '@/api/pazienti'
+import { nuovaChiaveIdempotenza } from '@/utils/chiaveIdempotenza'
+import { messaggioErroreSalvataggio } from '@/utils/erroreSalvataggio'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -73,6 +75,8 @@ const eta = computed(() => calcolaEta(dataNascita.value))
 const datiVisitaForm = ref<InstanceType<typeof DatiVisitaForm>>()
 
 const inCorso = ref(false)
+// Una chiave per tutta la pagina: un nuovo tentativo dopo una risposta persa non crea un secondo paziente.
+const chiaveCreazione = nuovaChiaveIdempotenza()
 const errori = ref<Record<string, string>>({})
 
 const router = useRouter()
@@ -195,6 +199,7 @@ function validaCampi(): boolean {
 }
 
 async function onSubmit() {
+  if (inCorso.value) return
   const campiValidi = validaCampi()
   const visitaValida = datiVisitaForm.value?.valida() ?? false
   if (!campiValidi || !visitaValida) {
@@ -219,12 +224,12 @@ async function onSubmit() {
       note: note.value || undefined,
       trattamenti: trattamenti.value || undefined,
       visita: datiVisitaForm.value!.ottieniDati(),
-    })
+    }, chiaveCreazione)
     toast.success('Paziente creato.')
     consentiUscita()
     router.push(`/pazienti/${paziente.id}`)
-  } catch {
-    toast.error('Non è stato possibile creare il paziente. Controlla i dati e riprova.')
+  } catch (errore) {
+    toast.error(messaggioErroreSalvataggio(errore, 'Non è stato possibile creare il paziente. Controlla i dati e riprova.'))
   } finally {
     inCorso.value = false
   }

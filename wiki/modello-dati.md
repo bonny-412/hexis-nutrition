@@ -3,7 +3,7 @@ title: Modello dati
 tags: [dati]
 stato: in-discussione
 creato: 2026-08-08
-aggiornato: 2026-11-27
+aggiornato: 2026-11-28
 fonti: [docs/superpowers/specs/2026-11-27-blocco-su-piu-giorni-design.md, sorgenti/2026-11-19-alimenti-bda-json/, docs/superpowers/specs/2026-11-10-agenda-design.md, sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, sorgenti/2026-09-05-brainstorming-alimenti-design.md, docs/superpowers/plans/2026-09-05-alimenti.md, docs/superpowers/specs/2026-09-12-piano-alimentare-design.md]
 ---
 
@@ -53,6 +53,14 @@ Le invarianti che l'API già controlla valgono anche per le scritture dirette ne
 - `piani_alimentari`: `data_fine >= data_inizio` se presente (`chk_piani_alimentari_intervallo`), `obiettivo_kcal > 0` se presente.
 - `piano_alimento_righe`: `grammi > 0`, valori nutrizionali `>= 0`. `piano_giorno_macro_target`: target `>= 0`.
 - `appuntamenti`: `durata_minuti` tra 5 e 480 se presente; un `BLOCCO` ha sempre `data_fine >= data` e, se non è a giornate intere, orari presenti con la fine dopo l'inizio (`chk_appuntamenti_intervallo_blocco`).
+
+## `richieste_idempotenti` (V38, 2026-11-28, verifica 3)
+
+Risposte già date ai `POST` con `Idempotency-Key`, per evitare doppioni quando una creazione viene ripetuta (vedi [api-contracts](api-contracts.md#creazioni-ripetute-header-idempotency-key-dal-2026-11-28-verifica-3)).
+
+- Colonne: `utente_id`, `chiave` (chiave primaria insieme), `metodo`, `percorso`, `stato_http` (`NULL` = in corso), `content_type`, `corpo`, `creata_il`.
+- Nessuna chiave esterna: vale per qualunque utente autenticato.
+- Si svuota da sola (`PuliziaRichiesteIdempotenti`, ogni ora, righe più vecchie di 24 ore). È nel `TRUNCATE` dei test.
 
 ## Entità previste ma non ancora progettate (sotto-progetti successivi)
 

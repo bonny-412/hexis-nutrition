@@ -5,6 +5,7 @@ import { LoaderCircle } from '@lucide/vue'
 import { Toaster } from '@/components/ui/sonner'
 import { segnalaErroreConnessione } from '@/composables/useErroreConnessione'
 import ErroreConnessioneView from '@/views/ErroreConnessioneView.vue'
+import SessioneScadutaDialog from '@/components/auth/SessioneScadutaDialog.vue'
 
 const props = defineProps<{ ripristinaSessione?: () => Promise<boolean> }>()
 const route = useRoute()
@@ -40,6 +41,7 @@ onMounted(() => {
     <LoaderCircle aria-hidden="true" class="size-7 motion-safe:animate-spin" />
     <span class="sr-only">Caricamento dell’area professionisti</span>
   </main>
+  <SessioneScadutaDialog />
   <Teleport to="body">
     <Toaster rich-colors close-button close-button-position="top-right" position="top-right" :duration="5000" />
   </Teleport>

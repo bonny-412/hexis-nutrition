@@ -70,8 +70,8 @@ export function dettaglio(id: string): Promise<Alimento> {
   return apiRequest<Alimento>(`/alimenti/${id}`)
 }
 
-export function crea(request: CreaAlimentoRequest): Promise<Alimento> {
-  return apiRequest<Alimento>('/alimenti', { method: 'POST', body: request })
+export function crea(request: CreaAlimentoRequest, chiaveIdempotenza?: string): Promise<Alimento> {
+  return apiRequest<Alimento>('/alimenti', { method: 'POST', body: request, chiaveIdempotenza })
 }
 
 export function aggiorna(id: string, request: AggiornaAlimentoRequest): Promise<Alimento> {
@@ -82,6 +82,6 @@ export function elimina(id: string): Promise<void> {
   return apiRequest<void>(`/alimenti/${id}`, { method: 'DELETE' })
 }
 
-export function duplica(id: string): Promise<Alimento> {
-  return apiRequest<Alimento>(`/alimenti/${id}/duplica`, { method: 'POST' })
+export function duplica(id: string, chiaveIdempotenza?: string): Promise<Alimento> {
+  return apiRequest<Alimento>(`/alimenti/${id}/duplica`, { method: 'POST', chiaveIdempotenza })
 }

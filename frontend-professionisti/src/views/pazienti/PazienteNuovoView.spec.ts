@@ -101,7 +101,7 @@ describe('PazienteNuovoView', () => {
         circonferenzaToraceCm: undefined, circonferenzaBraccioContrattoCm: undefined,
         note: undefined, obiettivo: 'MANTENIMENTO', plicometria: undefined,
       },
-    })
+    }, expect.any(String))
     expect(router.currentRoute.value.path).toBe('/pazienti/42')
     expect(toast.success).toHaveBeenCalledWith('Paziente creato.')
   })
@@ -152,7 +152,7 @@ describe('PazienteNuovoView', () => {
         circonferenzaToraceCm: 97.8, circonferenzaBraccioContrattoCm: 98.9,
         note: undefined, obiettivo: 'MANTENIMENTO', plicometria: undefined,
       },
-    })
+    }, expect.any(String))
   })
 
   it('mostra un errore se la creazione fallisce', async () => {
@@ -424,7 +424,7 @@ describe('PazienteNuovoView', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
-    expect(pazientiApi.crea).toHaveBeenCalledWith(expect.objectContaining({ stileDiVita: undefined }))
+    expect(pazientiApi.crea).toHaveBeenCalledWith(expect.objectContaining({ stileDiVita: undefined }), expect.any(String))
   })
 
   it('annulla con form vuoto naviga subito senza chiedere conferma', async () => {

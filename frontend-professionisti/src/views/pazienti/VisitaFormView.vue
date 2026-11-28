@@ -21,6 +21,8 @@ import {
 import { cerca as cercaPiani, noteDelPiano } from '@/api/pianiAlimentari'
 import { pianiNellIntervallo, type PianoConNote } from '@/utils/pianoAlimentare'
 import { ApiError } from '@/api/client'
+import { nuovaChiaveIdempotenza } from '@/utils/chiaveIdempotenza'
+import { messaggioErroreSalvataggio } from '@/utils/erroreSalvataggio'
 import { Button } from '@/components/ui/button'
 import BarraAzioniForm from '@/components/form/BarraAzioniForm.vue'
 import {
@@ -52,6 +54,8 @@ const ultimaVisita = ref<Visita | null>(null)
 const caricamento = ref(true)
 const erroreCaricamento = ref<string | null>(null)
 const inCorso = ref(false)
+// Una chiave per tutta la pagina: un nuovo tentativo dopo una risposta persa non registra la visita due volte.
+const chiaveCreazione = nuovaChiaveIdempotenza()
 
 const datiVisitaForm = ref<InstanceType<typeof DatiVisitaForm>>()
 
@@ -207,7 +211,7 @@ function onAnnullaClick() {
 }
 
 async function onSubmit() {
-  if (!paziente.value) return
+  if (!paziente.value || inCorso.value) return
   const valido = datiVisitaForm.value?.valida() ?? false
   if (!valido) {
     scorriAlPrimoErrore()
@@ -221,7 +225,7 @@ async function onSubmit() {
       await aggiornaVisita(paziente.value.id, visitaId, dati)
       toast.success('Visita aggiornata.')
     } else {
-      await creaVisita(paziente.value.id, dati, appuntamentoId)
+      await creaVisita(paziente.value.id, dati, appuntamentoId, chiaveCreazione)
       toast.success('Visita registrata.')
     }
     consentiUscita()
@@ -230,7 +234,7 @@ async function onSubmit() {
     if (appuntamentoId && errore instanceof ApiError && (errore.status === 400 || errore.status === 404)) {
       toast.error("L'appuntamento non è più valido: la visita non è stata salvata. Riapri la visita dall'agenda o dalla scheda paziente.")
     } else {
-      toast.error('Non è stato possibile salvare la visita. Controlla i dati e riprova.')
+      toast.error(messaggioErroreSalvataggio(errore, 'Non è stato possibile salvare la visita. Controlla i dati e riprova.'))
     }
   } finally {
     inCorso.value = false

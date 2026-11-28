@@ -79,9 +79,9 @@ export function elenco(da: string, a: string): Promise<Appuntamento[]> {
   return apiRequest<Appuntamento[]>(`/agenda?da=${encodeURIComponent(da)}&a=${encodeURIComponent(a)}`)
 }
 
-export function crea(richiesta: AppuntamentoRichiesta, conferma = false): Promise<Appuntamento> {
+export function crea(richiesta: AppuntamentoRichiesta, conferma = false, chiaveIdempotenza?: string): Promise<Appuntamento> {
   const query = conferma ? '?confermaSovrapposizione=true' : ''
-  return intercettaSovrapposizione(apiRequest<Appuntamento>(`/agenda${query}`, { method: 'POST', body: richiesta }))
+  return intercettaSovrapposizione(apiRequest<Appuntamento>(`/agenda${query}`, { method: 'POST', body: richiesta, chiaveIdempotenza }))
 }
 
 export function aggiorna(id: string, richiesta: AppuntamentoRichiesta, conferma = false): Promise<Appuntamento> {

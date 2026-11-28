@@ -13,7 +13,7 @@ const online = useOnline()
   <main class="grid min-h-dvh place-items-center bg-background px-6 py-12 text-center text-foreground">
     <div class="w-full">
       <div class="mb-10 flex items-center justify-center gap-3">
-        <img src="@/assets/hexis-logo.svg" alt="" class="size-10 rounded-xl bg-(--side) p-1.5" />
+        <img src="@/assets/hexis-logo.svg" alt="" class="size-11 rounded-lg bg-(--side) p-0.5" />
         <span class="font-heading text-xl font-semibold">Hexis Nutrition</span>
       </div>
 

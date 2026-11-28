@@ -185,8 +185,8 @@ export function dettaglio(id: string): Promise<Paziente> {
   return apiRequest<Paziente>(`/pazienti/${id}`)
 }
 
-export function crea(request: CreaPazienteRequest): Promise<Paziente> {
-  return apiRequest<Paziente>('/pazienti', { method: 'POST', body: request })
+export function crea(request: CreaPazienteRequest, chiaveIdempotenza?: string): Promise<Paziente> {
+  return apiRequest<Paziente>('/pazienti', { method: 'POST', body: request, chiaveIdempotenza })
 }
 
 export function aggiorna(id: string, request: AggiornaPazienteRequest): Promise<Paziente> {
@@ -248,9 +248,14 @@ export function visite(id: string): Promise<Visita[]> {
   return apiRequest<Visita[]>(`/pazienti/${id}/visite`)
 }
 
-export function creaVisita(pazienteId: string, request: CreaVisitaRequest, appuntamentoId?: string): Promise<Visita> {
+export function creaVisita(
+  pazienteId: string,
+  request: CreaVisitaRequest,
+  appuntamentoId?: string,
+  chiaveIdempotenza?: string,
+): Promise<Visita> {
   const query = appuntamentoId ? `?appuntamentoId=${encodeURIComponent(appuntamentoId)}` : ''
-  return apiRequest<Visita>(`/pazienti/${pazienteId}/visite${query}`, { method: 'POST', body: request })
+  return apiRequest<Visita>(`/pazienti/${pazienteId}/visite${query}`, { method: 'POST', body: request, chiaveIdempotenza })
 }
 
 export function dettaglioVisita(pazienteId: string, visitaId: string): Promise<Visita> {

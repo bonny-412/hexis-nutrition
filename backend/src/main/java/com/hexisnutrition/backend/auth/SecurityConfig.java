@@ -1,6 +1,8 @@
 package com.hexisnutrition.backend.auth;
 
 import jakarta.servlet.http.HttpServletResponse;
+import com.hexisnutrition.backend.idempotenza.IdempotenzaFilter;
+import com.hexisnutrition.backend.idempotenza.RegistroIdempotenza;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,6 +14,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -40,7 +43,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(frontendUrl));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", IdempotenzaFilter.HEADER));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
@@ -48,7 +51,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtService jwtService,
-                                                   VerificaSessione verificaSessione) throws Exception {
+                                                   VerificaSessione verificaSessione,
+                                                   RegistroIdempotenza registroIdempotenza) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .cors(Customizer.withDefaults())
@@ -67,7 +71,9 @@ public class SecurityConfig {
                         .requestMatchers("/piani-alimentari/**").hasRole("PROFESSIONISTA")
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtAuthenticationFilter(jwtService, verificaSessione), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtAuthenticationFilter(jwtService, verificaSessione), UsernamePasswordAuthenticationFilter.class)
+                // Dopo l'autorizzazione: l'utente è noto e le richieste rifiutate non lasciano chiavi prenotate.
+                .addFilterAfter(new IdempotenzaFilter(registroIdempotenza), AuthorizationFilter.class);
         return http.build();
     }
 }

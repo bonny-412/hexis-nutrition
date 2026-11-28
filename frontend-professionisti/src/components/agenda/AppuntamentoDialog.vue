@@ -14,6 +14,8 @@ import {
   type TipoAppuntamento,
 } from '@/api/agenda'
 import { dettaglio, type Paziente } from '@/api/pazienti'
+import { nuovaChiaveIdempotenza } from '@/utils/chiaveIdempotenza'
+import { messaggioErroreSalvataggio } from '@/utils/erroreSalvataggio'
 import { ANTICIPI_NOTIFICA, ANTICIPO_NOTIFICA_DEFAULT, minutiDaOra } from '@/utils/agenda'
 import { formattaDataBreve } from '@/utils/data'
 import { trattoNelGiorno } from '@/utils/blocchi'
@@ -144,8 +146,12 @@ let sequenza = 0
 let inizializzando = false
 const pazienteInCaricamento = ref(false)
 
+// Nuova a ogni apertura: un nuovo tentativo dopo una risposta persa non crea l'appuntamento due volte.
+let chiaveCreazione = nuovaChiaveIdempotenza()
+
 async function inizializza() {
   const token = ++sequenza
+  chiaveCreazione = nuovaChiaveIdempotenza()
   inizializzando = true
   const a = props.appuntamento ?? null
   tipo.value = a ? a.tipo : props.tipoIniziale
@@ -384,7 +390,7 @@ async function invia(richiesta: AppuntamentoRichiesta, conferma: boolean) {
   try {
     const salvato = appuntamento
       ? await aggiorna(appuntamento.id, richiesta, conferma)
-      : await crea(richiesta, conferma)
+      : await crea(richiesta, conferma, chiaveCreazione)
     const evento = richiesta.tipo === 'PROMEMORIA' ? 'Promemoria' : 'Appuntamento'
     if (richiesta.tipo === 'BLOCCO') toast.success(appuntamento ? 'Indisponibilità aggiornata.' : 'Indisponibilità aggiunta.')
     else toast.success(`${evento} ${appuntamento ? 'aggiornato' : 'creato'}.`)
@@ -396,9 +402,9 @@ async function invia(richiesta: AppuntamentoRichiesta, conferma: boolean) {
       richiestaInAttesa.value = richiesta
       sovrapposizioneAperta.value = true
     } else {
-      toast.error(richiesta.tipo === 'BLOCCO'
+      toast.error(messaggioErroreSalvataggio(errore, richiesta.tipo === 'BLOCCO'
         ? "Non è stato possibile salvare l'indisponibilità."
-        : "Non è stato possibile salvare l'appuntamento.")
+        : "Non è stato possibile salvare l'appuntamento."))
     }
   } finally {
     inCorso.value = false

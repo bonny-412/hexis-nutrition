@@ -31,6 +31,9 @@ import {
   crea, dettaglio, aggiorna, attiva as attivaApi, ConflittoPianoError, elimina as eliminaApi, cerca as cercaPiani, noteDelPiano,
   type PianoAlimentare, type NotaPiano, type StatoPiano, type ModalitaPiano, type GiornoSettimana, type TipoPasto,
 } from '@/api/pianiAlimentari'
+import { ErroreRete } from '@/api/client'
+import { nuovaChiaveIdempotenza } from '@/utils/chiaveIdempotenza'
+import { messaggioErroreSalvataggio } from '@/utils/erroreSalvataggio'
 import {
   filtraDecimaleItaliano, numeroItalianoOpzionale, bloccaTastoNonNumerico,
   erroreDataInizioPiano, erroreDataFinePiano, erroreObiettivoKcal, erroreGrammiPorzione,
@@ -588,11 +591,18 @@ function applicaPiano(risultato: PianoAlimentare) {
 
 // Modifiche non salvate: stato corrente dei campi confrontato con quello dell'ultimo caricamento/salvataggio.
 // La data di partenza conta solo prima del primo salvataggio (dopo non è più modificabile).
-const firmaCorrente = computed(() => JSON.stringify([
-  modalitaScelta.value, nome.value, obiettivoKcalInput.value, dataFineInput.value,
-  piano.value ? null : dataInizioInput.value,
-  pastiLocali.value, giorniMacroLocali.value, esempiLocali.value,
-]))
+function firma(dataInizio: string | null, contenuto: unknown[]) {
+  const [modalita, nomePiano, kcal, dataFine, ...resto] = contenuto
+  return JSON.stringify([modalita, nomePiano, kcal, dataFine, dataInizio, ...resto])
+}
+/** Tutto quello che "Salva" invia, tranne la data di partenza (che dopo il primo salvataggio non cambia più). */
+function contenutoLocale(): unknown[] {
+  return [
+    modalitaScelta.value, nome.value, obiettivoKcalInput.value, dataFineInput.value,
+    pastiLocali.value, giorniMacroLocali.value, esempiLocali.value,
+  ]
+}
+const firmaCorrente = computed(() => firma(piano.value ? null : dataInizioInput.value, contenutoLocale()))
 const firmaBase = ref<string | null>(null)
 const modificato = computed(() => firmaBase.value !== null && firmaCorrente.value !== firmaBase.value)
 function fissaBase() {
@@ -1033,11 +1043,36 @@ function validaCampi(): boolean {
   return valido
 }
 
+// Una sola chiave per la creazione del piano: se la risposta di "crea" va persa, il nuovo tentativo riceve lo
+// stesso piano invece di crearne un secondo (bug S4 della verifica 3).
+const chiaveCreazione = nuovaChiaveIdempotenza()
+// L'ultimo salvataggio è finito senza risposta (rete o timeout): il server potrebbe averlo applicato lo stesso,
+// e allora la versione locale è vecchia di uno (bug S2 della verifica 3).
+let esitoIncerto = false
+
+/**
+ * Dopo un salvataggio senza risposta, la versione da mandare: se sul server il piano è avanzato esattamente di una
+ * versione, quella modifica è quasi certamente il salvataggio di cui si è persa la risposta, e si riparte da lì.
+ * Più di una versione vuol dire un'altra scheda: si lascia la versione locale e il backend segnala il conflitto.
+ */
+async function versioneDopoEsitoIncerto(id: string, versioneLocale: number | undefined) {
+  if (!esitoIncerto || versioneLocale === undefined) return versioneLocale
+  const sulServer = await dettaglio(id)
+  esitoIncerto = false
+  if (sulServer.versione === versioneLocale + 1) {
+    piano.value = { ...piano.value!, versione: sulServer.versione, stato: sulServer.stato, aggiornatoIl: sulServer.aggiornatoIl }
+    return sulServer.versione
+  }
+  return versioneLocale
+}
+
 async function salva(): Promise<boolean> {
-  if (solaLettura.value) return false
+  if (solaLettura.value || salvataggioInCorso.value) return false
   if (!piano.value && !pazienteSelezionato.value) return false
   if (!validaCampi()) return false
   salvataggioInCorso.value = true
+  // Quello che si invia, per capire alla risposta se nel frattempo è stato modificato qualcosa (bug S3).
+  const contenutoInviato = JSON.parse(JSON.stringify(contenutoLocale())) as unknown[]
   try {
     let id = piano.value?.id
     let versione = piano.value?.versione
@@ -1049,12 +1084,17 @@ async function salva(): Promise<boolean> {
         nome: nome.value.trim(),
         modalita: modalitaAttiva.value,
         dataInizio: dataInizioInput.value || undefined,
-      })
+      }, chiaveCreazione)
       id = creato.id
       versione = creato.versione
+      // Da qui il piano esiste: se l'aggiornamento sotto non riesce, il prossimo "Salva" lo aggiorna invece di
+      // crearne un altro (bug S1 della verifica 3). Il contenuto locale resta com'è, non è ancora sul server.
+      piano.value = creato
       // Stessa pagina, nuovo indirizzo: non è un'uscita, anche se le modifiche non sono ancora salvate.
       consentiUscita()
       router.replace(`/piani-alimentari/${id}`)
+    } else {
+      versione = await versioneDopoEsitoIncerto(id, versione)
     }
     const aggiornato = await aggiorna(id, {
       versione,
@@ -1090,13 +1130,23 @@ async function salva(): Promise<boolean> {
           }))
         : null,
     })
-    applicaPiano(aggiornato)
+    if (JSON.stringify(contenutoLocale()) === JSON.stringify(contenutoInviato)) {
+      applicaPiano(aggiornato)
+    } else {
+      // Modificato durante il salvataggio (bug S3): si prende dal server solo lo stato del piano (versione, data
+      // dell'ultimo salvataggio…) e si lasciano i campi come sono, che restano "Modifiche non salvate".
+      piano.value = aggiornato
+      firmaBase.value = firma(null, contenutoInviato)
+    }
     toast.success('Piano salvato.')
     return true
   } catch (errore) {
+    if (errore instanceof ErroreRete) esitoIncerto = true
     // Conflitto con un'altra scheda: il messaggio del backend dice di ricaricare; le modifiche
     // restano nei campi, così si possono ricopiare dopo aver ricaricato.
-    toast.error(errore instanceof ConflittoPianoError ? errore.message : 'Non è stato possibile salvare il piano.')
+    toast.error(errore instanceof ConflittoPianoError
+      ? errore.message
+      : messaggioErroreSalvataggio(errore, 'Non è stato possibile salvare il piano. Controlla i dati e riprova.'))
     return false
   } finally {
     salvataggioInCorso.value = false
@@ -1167,7 +1217,24 @@ async function attivaPiano() {
     applicaPiano(await dettaglio(piano.value.id))
     toast.success('Piano attivato.')
   } catch (errore) {
-    toast.error(errore instanceof ConflittoPianoError ? errore.message : 'Non è stato possibile attivare il piano.')
+    // Senza risposta l'attivazione potrebbe essere avvenuta lo stesso: si controlla prima di dare l'errore.
+    if (errore instanceof ErroreRete && piano.value) {
+      esitoIncerto = true
+      try {
+        const sulServer = await dettaglio(piano.value.id)
+        esitoIncerto = false
+        if (sulServer.stato === 'ATTIVO') {
+          applicaPiano(sulServer)
+          toast.success('Piano attivato.')
+          return
+        }
+      } catch {
+        // Ancora senza rete: resta l'errore sotto, e il prossimo salvataggio ricontrolla la versione.
+      }
+    }
+    toast.error(errore instanceof ConflittoPianoError
+      ? errore.message
+      : messaggioErroreSalvataggio(errore, 'Non è stato possibile attivare il piano.'))
   } finally {
     attivazioneInCorso.value = false
   }

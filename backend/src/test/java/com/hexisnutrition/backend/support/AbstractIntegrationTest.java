@@ -31,6 +31,6 @@ public abstract class AbstractIntegrationTest {
     @BeforeEach
     void svuotaDatabase() {
         jdbcTemplate.execute("TRUNCATE TABLE notifiche, push_subscriptions, appuntamenti,piano_note, piano_alimento_righe, piano_esempi, piano_giorno_macro_target, pasti, " +
-                "piani_alimentari, token_azione, plicometrie, visite, pazienti, professionisti RESTART IDENTITY CASCADE");
+                "piani_alimentari, token_azione, richieste_idempotenti, plicometrie, visite, pazienti, professionisti RESTART IDENTITY CASCADE");
     }
 }

@@ -136,7 +136,7 @@ describe('AlimentoFormDialog', () => {
       proteineG: 2.5,
       grassiG: 7,
       carboidratiG: 18.25,
-    }))
+    }), expect.any(String))
   })
 
   it('l\'errore di un campo obbligatorio sparisce non appena diventa valido', async () => {

@@ -177,8 +177,8 @@ export interface PaginaPianiAlimentari {
   totalePagine: number
 }
 
-export function crea(request: CreaPianoAlimentareRequest): Promise<PianoAlimentare> {
-  return apiRequest<PianoAlimentare>('/piani-alimentari', { method: 'POST', body: request })
+export function crea(request: CreaPianoAlimentareRequest, chiaveIdempotenza?: string): Promise<PianoAlimentare> {
+  return apiRequest<PianoAlimentare>('/piani-alimentari', { method: 'POST', body: request, chiaveIdempotenza })
 }
 
 export function dettaglio(id: string): Promise<PianoAlimentare> {
@@ -242,8 +242,12 @@ export function noteDelPiano(pianoId: string): Promise<NotaPiano[]> {
   return apiRequest<NotaPiano[]>(`/piani-alimentari/${pianoId}/note`)
 }
 
-export function aggiungiNota(pianoId: string, richiesta: { data: string; testo: string }): Promise<NotaPiano> {
-  return apiRequest<NotaPiano>(`/piani-alimentari/${pianoId}/note`, { method: 'POST', body: richiesta })
+export function aggiungiNota(
+  pianoId: string,
+  richiesta: { data: string; testo: string },
+  chiaveIdempotenza?: string,
+): Promise<NotaPiano> {
+  return apiRequest<NotaPiano>(`/piani-alimentari/${pianoId}/note`, { method: 'POST', body: richiesta, chiaveIdempotenza })
 }
 
 export function eliminaNota(pianoId: string, notaId: string): Promise<void> {

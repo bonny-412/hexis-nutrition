@@ -7,7 +7,7 @@ import VisitaFormView from './VisitaFormView.vue'
 import SelezionaPazienteCombobox from '@/components/pazienti/SelezionaPazienteCombobox.vue'
 import DatiVisitaForm from '@/components/pazienti/DatiVisitaForm.vue'
 import * as pazientiApi from '@/api/pazienti'
-import { ApiError } from '@/api/client'
+import { ApiError, ErroreRete } from '@/api/client'
 import type { Paziente, Visita } from '@/api/pazienti'
 
 vi.mock('@/api/pazienti')
@@ -184,8 +184,34 @@ describe('VisitaFormView', () => {
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
-    expect(pazientiApi.creaVisita).toHaveBeenCalledWith('1', expect.objectContaining({ altezzaCm: 178, pesoKg: 82.5 }), undefined)
+    expect(pazientiApi.creaVisita).toHaveBeenCalledWith('1', expect.objectContaining({ altezzaCm: 178, pesoKg: 82.5 }), undefined, expect.any(String))
     expect(toast.success).toHaveBeenCalled()
+    expect(router.currentRoute.value.fullPath).toBe('/pazienti/1')
+  })
+
+  // Verifica 3 prima del rilascio (28/11/2026), bug S4 e S7: se la risposta va persa, il nuovo tentativo manda la
+  // stessa chiave (il backend restituisce la visita già creata invece di un doppione) e il messaggio parla di rete.
+  it('dopo un errore di rete riprova con la stessa chiave di idempotenza e dice che le modifiche sono ancora lì', async () => {
+    vi.mocked(pazientiApi.dettaglio).mockResolvedValue(pazienteEsempio())
+    vi.mocked(pazientiApi.visite).mockResolvedValue([])
+    vi.mocked(pazientiApi.creaVisita).mockReset()
+    vi.mocked(pazientiApi.creaVisita)
+      .mockRejectedValueOnce(new ErroreRete(new TypeError('Failed to fetch')))
+      .mockResolvedValueOnce(visitaEsempio())
+    const { wrapper, router } = await monta('/pazienti/1/visite/nuova')
+    await wrapper.find('#altezza').setValue('178')
+    await wrapper.find('#peso').setValue('82,5')
+
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+    expect(toast.error).toHaveBeenCalledWith('Connessione al server non riuscita. Le modifiche sono ancora qui: riprova tra poco.')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+
+    const chiavi = vi.mocked(pazientiApi.creaVisita).mock.calls.map((c) => c[3])
+    expect(chiavi).toHaveLength(2)
+    expect(chiavi[0]).toEqual(expect.any(String))
+    expect(chiavi[1]).toBe(chiavi[0])
     expect(router.currentRoute.value.fullPath).toBe('/pazienti/1')
   })
 

@@ -47,15 +47,16 @@ const route = useRoute()
     :class="['flex shrink-0 flex-col justify-between bg-(--side) p-[18px_14px_14px] text-(--side-fg)', isCollapsed ? 'w-16 px-2' : 'w-61.5', props.class]"
   >
     <div>
-      <div class="mb-5 flex items-center gap-2.5 px-1.5" :class="{ 'justify-center px-0': isCollapsed }">
-        <img src="@/assets/hexis-logo.svg" alt="Hexis" class="h-10 w-10 flex-none rounded-[6px]" />
+      <!-- Da compressa niente padding: con px-1.5 la colonna resta di 34px e il logo si deforma. -->
+      <div class="mb-5 flex items-center gap-2.5" :class="isCollapsed ? 'justify-center' : 'px-1.5'">
+        <img src="@/assets/hexis-logo.svg" alt="Hexis" class="flex-none rounded-[6px]" :class="isCollapsed ? 'size-9' : 'size-11'" />
         <div v-if="!isCollapsed" class="flex flex-col gap-px overflow-hidden whitespace-nowrap">
-          <span class="font-heading text-base font-semibold leading-tight text-white">Hexis</span>
-          <span class="text-[10px] uppercase tracking-[0.14em] text-(--side-fg2)">Professionisti</span>
+          <span class="font-heading font-semibold leading-tight text-white text-xl">Hexis</span>
+          <span class="text-xs uppercase tracking-widest text-(--side-fg2)">Professionisti</span>
         </div>
       </div>
 
-      <nav class="flex flex-col gap-0.5">
+      <nav class="flex flex-col gap-1">
         <component
           :is="voce.routeName ? RouterLink : 'span'"
           v-for="voce in voci"
@@ -68,17 +69,17 @@ const route = useRoute()
           :title="voce.routeName ? (isCollapsed ? voce.nome : undefined) : `${voce.nome}: in arrivo`"
           :aria-disabled="voce.routeName ? undefined : 'true'"
           :role="voce.routeName ? undefined : 'link'"
-          class="relative flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium transition-colors"
+          class="relative flex items-center gap-2.5 rounded-[9px] text-sm font-medium transition-colors"
           :class="[
-            isCollapsed ? 'justify-center px-0' : '',
+            isCollapsed ? 'h-10 justify-center' : 'px-2.5 py-2',
             voce.routeNamesAttivi?.includes(route.name as string)
-              ? 'bg-(--side-act-bg) text-white before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-(--lime)'
+              ? 'bg-(--side-act-bg) text-white before:absolute before:inset-y-1.5 before:left-0 before:w-0.75 before:rounded-full before:bg-(--lime)'
               : voce.routeName
                 ? 'text-(--side-fg) hover:bg-(--side-act-bg)/50'
                 : 'cursor-not-allowed text-(--side-fg2)',
           ]"
         >
-          <component :is="voce.icona" :size="16" :stroke-width="1.8" />
+          <component :is="voce.icona" :size="isCollapsed ? 19 : 16" :stroke-width="1.8" />
           <span v-if="!isCollapsed" class="truncate">{{ voce.nome }}</span>
           <!-- Funzioni non ancora disponibili: visibili per far sapere che arriveranno, col lucchetto e non cliccabili. -->
           <Lock
@@ -103,18 +104,18 @@ const route = useRoute()
 
     <div class="flex flex-col gap-2">
       <div>
-        <div v-if="!isCollapsed" class="mb-1.5 px-2.5 text-[10px] uppercase tracking-[0.14em] text-(--side-fg2)">Risorse</div>
+        <div v-if="!isCollapsed" class="mb-1.5 px-2.5 text-xs uppercase tracking-widest text-(--side-fg2)">Risorse</div>
         <RouterLink
             :to="{ name: 'alimenti' }"
             :title="isCollapsed ? 'Alimenti' : undefined"
             :aria-label="isCollapsed ? 'Alimenti' : undefined"
-            class="relative flex items-center gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium transition-colors"
+            class="relative flex items-center gap-2.5 rounded-[9px] text-sm font-medium transition-colors"
             :class="[
-              isCollapsed ? 'justify-center px-0' : '',
-              route.name === 'alimenti' ? 'bg-(--side-act-bg) text-white before:absolute before:inset-y-1.5 before:left-0 before:w-[3px] before:rounded-full before:bg-(--lime)' : 'text-(--side-fg) hover:bg-(--side-act-bg)/50',
+              isCollapsed ? 'h-10 justify-center' : 'px-2.5 py-2',
+              route.name === 'alimenti' ? 'bg-(--side-act-bg) text-white before:absolute before:inset-y-1.5 before:left-0 before:w-0.75 before:rounded-full before:bg-(--lime)' : 'text-(--side-fg) hover:bg-(--side-act-bg)/50',
             ]"
           >
-            <Apple :size="16" :stroke-width="1.8" class="shrink-0" />
+            <Apple :size="isCollapsed ? 19 : 16" :stroke-width="1.8" class="shrink-0" />
             <span v-if="!isCollapsed" class="truncate">Alimenti</span>
           </RouterLink>
       </div>
@@ -165,14 +166,15 @@ const route = useRoute()
         @click="toggleSidebar"
         :title="isCollapsed ? 'Espandi sidebar' : 'Rimpicciolisci sidebar'"
         :aria-label="isCollapsed ? 'Espandi sidebar' : 'Comprimi sidebar'"
-        class="hidden h-auto justify-start gap-2.5 rounded-[9px] px-2.5 py-2 text-[13.5px] font-medium text-(--side-fg2) hover:bg-(--side-act-bg) hover:text-white active:translate-y-0 lg:flex dark:hover:bg-(--side-act-bg)"
-        :class="{ 'lg:justify-center lg:px-0': isCollapsed }"
+        class="hidden h-auto justify-start gap-2.5 rounded-[9px] px-2.5 py-2 text-sm font-medium text-(--side-fg2) hover:bg-(--side-act-bg) hover:text-white active:translate-y-0 lg:flex dark:hover:bg-(--side-act-bg)"
+        :class="{ 'lg:h-10 lg:justify-center lg:px-0 lg:py-0': isCollapsed }"
       >
+        <!-- La misura passa da classe: il Button di shadcn forza size-4 sulle icone senza una classe size-*. -->
         <component
           :is="isCollapsed ? PanelLeftOpen : PanelLeftClose"
-          :size="16"
           :stroke-width="1.8"
           class="shrink-0"
+          :class="isCollapsed ? 'size-[19px]' : 'size-4'"
         />
         <span class="truncate" :class="{ 'lg:hidden': isCollapsed }">Comprimi</span>
       </Button>

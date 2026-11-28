@@ -61,6 +61,8 @@ Sessione del 25 novembre 2026 (seconda parte): **barra azioni flottante** nei fo
 
 Sessione del 28 novembre 2026: **verifiche prima del rilascio, permessi e stampa**. Due professionisti di prova su `hexis` (Giulia `a.bonaiuti.datapos@gmail.com` e Marco `marco.prova@hexis.test`, credenziali in `.superpowers/credenziali-prova.md`): due agenti, uno per ciascuno, hanno attaccato le risorse dell'altro, senza trovare falle. Stampa PDF controllata con PDF reali in tutte e tre le modalità, anche con casi limite: il titolo del giorno o del pasto ora si ripete sui fogli successivi (`PianoStampa.vue`). Provato solo con Chrome. Poi, su decisione di Andrea: nome del PDF e puntini di guida, **data di fine obbligatoria per attivare**, conferma unica prima di attivare (piano attivo che si conclude con la fine di oggi, piano vuoto), barra del piano con "Salvato alle …" e solo "Chiudi" senza modifiche; test scritti e attivazione provata dal vivo. Evolutiva segnata: attivazione programmata. Vedi "Prossimo passo consigliato" e [collaudo-bug](collaudo-bug.md#verifiche-da-fare-prima-del-rilascio).
 
+Sessione del 28 novembre 2026 (seconda parte): **verifica 3 prima del rilascio, errori durante il salvataggio**. Prove nel browser con un intercettore di `fetch`: sette problemi (S1-S7), tutti corretti su scelta di Andrea. Backend: header `Idempotency-Key` sui `POST` di creazione, filtro e migrazione **V38** (`richieste_idempotenti`). Frontend: timeout di 30 s, messaggi distinti tra errori di rete e di dati, piano che non si duplica e non dà falsi conflitti, modifiche fatte durante il salvataggio conservate, finestra "Sessione scaduta" sopra la pagina invece del redirect al login. Correzioni riprovate su `hexis_test`. Test di regressione scritti da Claude, con controprova: backend **252**, vitest **369/369** con codice 0 (stub di `scrollIntoView` in `src/test/setup.ts`). **Non committato; riavviare il backend (V38).** Vedi "Prossimo passo consigliato" e [collaudo-bug](collaudo-bug.md#verifiche-da-fare-prima-del-rilascio).
+
 ## Come far girare il backend su questa macchina
 
 - **Database**: PostgreSQL 13 locale (servizio `postgresql-x64-13`). Due database creati a mano con pgAdmin, tabelle generate da Flyway: `hexis` per l'applicazione, `hexis_test` per la suite. Credenziali note ad Andrea.
@@ -802,6 +804,18 @@ Sessione senza codice. Andrea riporta la conversazione del 26 novembre con Edoar
 **Non verificato in browser**: colori con obiettivi direzionali su dati reali (tutti i pazienti con più visite hanno "Mantenimento"; Dimagrimento e Aumento peso provati simulando la risposta solo nel browser, nessun dato cambiato); piano in sola lettura senza barra azioni (solo per codice, `v-if`).
 
 ## Prossimo passo consigliato
+
+**Aggiornato il 28 novembre 2026, terza parte — Verifica 3 (errori durante il salvataggio)** (prevale sulle voci sotto): provata nel browser, nessun codice cambiato. Doppio clic e rete interrotta sono gestiti bene. Sono emersi sette problemi (S1-S7): piano duplicato, falso conflitto, modifiche sovrascritte durante il salvataggio, visita duplicata, sessione scaduta che fa perdere il lavoro, nessun timeout, messaggi poco chiari. Dettagli in [collaudo-bug](collaudo-bug.md#verifiche-da-fare-prima-del-rilascio).
+
+**Correzioni fatte nella stessa sessione** (Andrea: "tutte, come proposto"):
+- Backend: header `Idempotency-Key` con `IdempotenzaFilter` e migrazione V38 `richieste_idempotenti`. **Riavviare il backend (V38).**
+- Frontend: timeout di 30 s, messaggi distinti per errori di rete e di dati, piano che non si duplica e non dà falsi conflitti, modifiche fatte durante il salvataggio conservate, finestra "Sessione scaduta" sopra la pagina.
+- Verifiche: provato nel browser su `hexis_test`. Backend 242 senza errori, vitest 341/341, `vue-tsc` pulito.
+- Test di regressione scritti su richiesta di Andrea: 10 backend (`IdempotenzaFilterTest`) e 28 frontend. Con la controprova falliscono senza le correzioni. Suite: backend 252, vitest 369/369. Adattati anche 5 test esistenti per il nuovo argomento delle creazioni e Pinia in `App.spec.ts`.
+- Non committato. Dettagli in [collaudo-bug](collaudo-bug.md#verifiche-da-fare-prima-del-rilascio).
+
+**Prossimo passo:** le richieste di Edoardo ("Sostituisci alimento", Google Calendar). L'errore non gestito di `scrollIntoView` nei test è stato tolto con `src/test/setup.ts`: vitest ora esce con codice 0.
+
 
 **Aggiornato il 28 novembre 2026, seconda parte — Attivazione dei piani, salvataggio, stampa** (prevale sulle voci sotto). Decisioni di Andrea dopo la sua prova di stampa, tutte implementate:
 

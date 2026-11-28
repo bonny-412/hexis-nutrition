@@ -5,6 +5,7 @@ import { nextTick, ref, watch, type Ref } from 'vue'
 import type { AcceptableValue } from 'reka-ui'
 import { toast } from 'vue-sonner'
 import { aggiorna, type Paziente } from '@/api/pazienti'
+import { messaggioErroreSalvataggio } from '@/utils/erroreSalvataggio'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -166,7 +167,7 @@ function validaCampi(): boolean {
 }
 
 async function onSubmit() {
-  if (!validaCampi()) return
+  if (inCorso.value || !validaCampi()) return
 
   inCorso.value = true
   try {
@@ -188,8 +189,8 @@ async function onSubmit() {
     toast.success('Dati anagrafici aggiornati.')
     emit('aggiornato', aggiornato)
     emit('update:open', false)
-  } catch {
-    toast.error('Non è stato possibile aggiornare i dati anagrafici. Controlla i dati e riprova.')
+  } catch (errore) {
+    toast.error(messaggioErroreSalvataggio(errore, 'Non è stato possibile aggiornare i dati anagrafici. Controlla i dati e riprova.'))
   } finally {
     inCorso.value = false
   }

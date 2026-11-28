@@ -3,7 +3,7 @@ title: Contratti API
 tags: [api]
 stato: in-discussione
 creato: 2026-08-08
-aggiornato: 2026-11-27
+aggiornato: 2026-11-28
 fonti: [docs/superpowers/specs/2026-11-27-blocco-su-piu-giorni-design.md, docs/superpowers/specs/2026-11-10-agenda-design.md, decisioni/0007-appuntamenti-e-visite-registrate.md, sorgenti/2026-08-08-scope-e-stack-iniziali.md, sorgenti/2026-08-08-brainstorming-fondamenta-e-scope-funzionale.md, sorgenti/2026-08-09-migrazione-a-repo-unico.md, log.md#2026-09-03-handoff--modifica-anagrafica-paziente-e-creazionemodifica-visita, decisioni/0005-alimenti-bda-e-custom.md, docs/superpowers/specs/2026-09-12-piano-alimentare-design.md]
 ---
 
@@ -155,6 +155,18 @@ Vedi [decisioni/0008](decisioni/0008-notifiche-agenda.md). Solo ruolo PROFESSION
 - **`senzaProssimaVisita=true`** su `GET /pazienti/ricerca`: esclude prima della paginazione i pazienti con una visita in studio o un videoconsulto `PROGRAMMATA` da adesso in poi, senza limite di giorni. Si combina in AND con gli altri filtri. Omesso o `false`, lascia invariati i risultati. La Dashboard lo combina con `dataUltimaVisitaA` (oggi meno 42 giorni, incluso) per la card «Pazienti da richiamare».
 - **`POST /pazienti/{id}/visite?appuntamentoId=`**: parametro opzionale. Se presente, il servizio valida **in quest'ordine** prima di creare la visita: 404 se il paziente è di un altro professionista; 404 se l'appuntamento non esiste o è di un altro professionista; 400 se l'appuntamento è di un altro paziente; 400 se non è una visita (studio/videoconsulto); 400 se non è `PROGRAMMATA`. Se una validazione fallisce **la visita non viene creata**. Altrimenti la visita è salvata e l'appuntamento diventa `CONCLUSA` con `visitaId` valorizzato, nella stessa transazione. Se la visita registrata viene poi eliminata, l'appuntamento resta `CONCLUSA` con `visitaId` nullo (`ON DELETE SET NULL`).
 - **`POST /pazienti/{id}/archivia`**: oltre ad archiviare, elimina dall'agenda le visite `PROGRAMMATA` e i promemoria del paziente **da adesso in avanti** (data futura, oppure oggi con ora di inizio >= adesso o promemoria senza ora). Restano le concluse, le annullate, i blocchi, le visite e i promemoria passati. De-archiviare non ripristina nulla.
+
+## Creazioni ripetute: header `Idempotency-Key` (dal 2026-11-28, verifica 3)
+
+Un `POST` con l'header `Idempotency-Key` (al massimo 100 caratteri) viene eseguito una volta sola per utente e chiave (`IdempotenzaFilter`, tabella `richieste_idempotenti`). Così, se la risposta va persa e il frontend riprova, non si crea un doppione.
+
+- **Stessa chiave, stessa richiesta, prima già riuscita**: risponde con lo stato e il corpo salvati della prima, senza eseguirla di nuovo.
+- **Prima richiesta ancora in corso**: `409` con corpo `RICHIESTA_IN_CORSO`. Dopo 5 minuti senza risposta la prenotazione si considera abbandonata.
+- **Stessa chiave su un altro metodo o percorso** (query compresa): `422`.
+- **Chiave vuota o troppo lunga**: `400`.
+- Si salvano solo le risposte 2xx. Dopo un errore la chiave si libera e un nuovo tentativo viene eseguito davvero. Le righe si cancellano dopo 24 ore.
+- Senza header nulla cambia. Il frontend lo manda su: nuovo paziente, nuova visita, nuovo piano, nota del piano, nuovo appuntamento, nuovo alimento, duplica alimento. La chiave resta la stessa finché la creazione non riesce (`utils/chiaveIdempotenza.ts`).
+- Il CORS ammette l'header.
 
 ## Limiti dei campi (dal 2026-11-27, collaudo gruppo 4)
 

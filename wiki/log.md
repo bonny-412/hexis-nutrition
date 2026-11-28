@@ -1092,3 +1092,43 @@ Su proposta di Claude accettata da Andrea (al posto di una riga "Ultima modifica
 ## [2026-11-28] handoff | Chiusura: popup di benvenuto messo da parte
 
 Andrea ha chiesto se esiste un popup di benvenuto (no) e ha iniziato a progettarlo, poi ha deciso di rimandarlo. Idea e proposta segnate in [domande-aperte](domande-aperte.md#prossime-evolutive-2026-11-28). Tutto il lavoro del 28/11 è in staging, lo committa Andrea; `frontend-professionisti/vite.config.ts` (tunnel di Andrea) resta fuori.
+
+## [2026-11-28] query | Verifica 3: errori durante il salvataggio
+
+Provata nel browser sull'ambiente di Andrea con l'account di Giulia, simulando rete interrotta, risposta persa, risposta lenta e 401 con un intercettore di `fetch`. Doppio clic e Invio con risposta lenta: una sola richiesta, ok. Rete interrotta: dati conservati, ok. Problemi: piano duplicato se il primo salvataggio si ferma tra `crea` e `aggiorna` (S1), falso conflitto di versione dopo una risposta persa (S2), modifiche fatte durante il salvataggio sovrascritte (S3), visita duplicata riprovando dopo una risposta persa (S4), sessione scaduta che fa perdere il lavoro (S5), nessun timeout (S6), messaggi "Controlla i dati" anche per errori di rete (S7). Dettagli in [collaudo-bug](collaudo-bug.md#verifiche-da-fare-prima-del-rilascio). Nessun codice cambiato; correzioni da decidere con Andrea. Restano sull'account di Giulia due bozze "Mantenimento · fase 1" e due visite in più di Stampa Prova.
+
+## [2026-11-28] handoff | Verifica 3: correzioni S1-S7
+
+Su scelta di Andrea ("tutte, come proposto"):
+- **Backend**: `Idempotency-Key` sui `POST` di creazione (`idempotenza/IdempotenzaFilter`, `RegistroIdempotenza`, pulizia oraria, V38 `richieste_idempotenti`, header nel CORS).
+- **Frontend**:
+  - `apiRequest` con timeout di 30 s e chiave opzionale; `messaggioErroreSalvataggio` per i messaggi.
+  - Piano: id tenuto dopo `crea`, versione ricontrollata dopo un esito incerto, modifiche fatte durante il salvataggio conservate.
+  - `SessioneScadutaDialog` al posto del redirect al login con il lavoro in corso.
+- **Prove**: rifatte nel browser su `hexis_test` (8081/5174) con un account usa e getta, poi `launch.json` ripristinato e segreti cancellati. S4 provato sull'API, anche in parallelo.
+- **Suite**: backend 242 senza errori, vitest 341/341 (più l'errore non gestito già presente di `scrollIntoView`), `vue-tsc` pulito.
+- **Stato**: non committato. **Riavviare il backend (V38).**
+
+## [2026-11-28] handoff | Test di regressione per la verifica 3
+
+Su richiesta di Andrea:
+- **Test scritti**: `IdempotenzaFilterTest` (10 test backend) e 28 frontend, in `client.spec`, `erroreSalvataggio.spec`, `auth.spec`, `SessioneScadutaDialog.spec`, `PianoAlimentareFormView.salvataggio.spec` e `VisitaFormView.spec`.
+- **Controprova** togliendo le correzioni: falliscono 4 test backend e 6 frontend. Il codice è stato poi ripristinato e ricompilato.
+- **Suite**: backend 252 senza errori, vitest 369/369, `vue-tsc` pulito.
+- **Stato**: non committato.
+
+## [2026-11-28] handoff | Test: stub di scrollIntoView
+
+Su richiesta di Andrea: jsdom non ha `scrollIntoView`, e `scorriAlPrimoErrore` lo chiamava dopo un `nextTick` nei test dei form non validi. Ne usciva un errore non gestito che faceva terminare vitest con codice 1 anche a test verdi. Aggiunto `src/test/setup.ts` con lo stub, collegato da `setupFiles` in `vite.config.ts`. Vitest 369/369 con codice 0, `vue-tsc` pulito. Non committato.
+
+## [2026-11-28] handoff | Fine sessione: verifica 3 chiusa
+
+- **Fatto**: verifica 3 prima del rilascio (errori durante il salvataggio) provata; sette problemi trovati e corretti. Dettagli in [collaudo-bug](collaudo-bug.md#verifiche-da-fare-prima-del-rilascio).
+- **Codice**: idempotenza nel backend (V38) e nel frontend; timeout; messaggi; piano (S1-S3); finestra "Sessione scaduta".
+- **Test**: scritti con controprova e stub di `scrollIntoView`. Backend 252, vitest 369/369 con codice 0, `vue-tsc` pulito.
+- **Stato**: niente committato (lo fa Andrea). Riavviare il backend per V38.
+- **Da sapere**:
+  - `AppSidebar.vue`, `ErroreConnessioneView.vue` e `PaginaNonTrovataView.vue` risultano modificati, ma non da questa sessione: lasciati come sono.
+  - Restano sull'account di Giulia, su `hexis`, due bozze "Mantenimento · fase 1" e due visite in più di "Stampa Prova", create durante le prove prima delle correzioni.
+- **Domanda di Andrea sul toast dopo il salvataggio del piano**: il toast "Piano salvato." c'è già, in alto a destra. In attesa di sapere se da lui non compare.
+- **Prossimo**: le richieste di Edoardo ("Sostituisci alimento", Google Calendar).

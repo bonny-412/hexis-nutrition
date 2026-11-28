@@ -4,6 +4,8 @@ import ContatoreCaratteri from '@/components/form/ContatoreCaratteri.vue'
 import { ref, computed, watch, nextTick, type Ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { crea, aggiorna, elimina, duplica, type Alimento, type CreaAlimentoRequest } from '@/api/alimenti'
+import { nuovaChiaveIdempotenza } from '@/utils/chiaveIdempotenza'
+import { messaggioErroreSalvataggio } from '@/utils/erroreSalvataggio'
 import {
   filtraDecimaleItaliano,
   numeroItaliano,
@@ -82,6 +84,10 @@ const valori = ref<Record<ChiaveNutriente, string>>({
 })
 const inCorso = ref(false)
 const confermaEliminaAperta = ref(false)
+// Una chiave per creazione e una per duplicazione, nuove a ogni apertura e dopo ogni successo: un nuovo
+// tentativo dopo una risposta persa non crea un doppione.
+let chiaveCreazione = nuovaChiaveIdempotenza()
+let chiaveDuplicazione = nuovaChiaveIdempotenza()
 const errori = ref<Record<string, string>>({})
 
 const modo = computed<'create' | 'view' | 'edit'>(() => {
@@ -96,6 +102,8 @@ function valoreOVuoto(valore: number | null | undefined): string {
 }
 
 function inizializza() {
+  chiaveCreazione = nuovaChiaveIdempotenza()
+  chiaveDuplicazione = nuovaChiaveIdempotenza()
   alimentoCorrente.value = props.alimento
   const a = props.alimento
   nome.value = a?.nome ?? ''
@@ -233,11 +241,12 @@ function costruisciRichiesta(): CreaAlimentoRequest {
 }
 
 async function onSubmit() {
-  if (!valida()) return
+  if (inCorso.value || !valida()) return
   inCorso.value = true
   try {
     if (modo.value === 'create') {
-      await crea(costruisciRichiesta())
+      await crea(costruisciRichiesta(), chiaveCreazione)
+      chiaveCreazione = nuovaChiaveIdempotenza()
       toast.success('Alimento creato.')
     } else {
       await aggiorna(alimentoCorrente.value!.id, costruisciRichiesta())
@@ -245,18 +254,19 @@ async function onSubmit() {
     }
     emit('salvato')
     emit('update:open', false)
-  } catch {
-    toast.error("Non è stato possibile salvare l'alimento.")
+  } catch (errore) {
+    toast.error(messaggioErroreSalvataggio(errore, "Non è stato possibile salvare l'alimento. Controlla i dati e riprova."))
   } finally {
     inCorso.value = false
   }
 }
 
 async function onDuplica() {
-  if (!alimentoCorrente.value) return
+  if (!alimentoCorrente.value || inCorso.value) return
   inCorso.value = true
   try {
-    const copia = await duplica(alimentoCorrente.value.id)
+    const copia = await duplica(alimentoCorrente.value.id, chiaveDuplicazione)
+    chiaveDuplicazione = nuovaChiaveIdempotenza()
     alimentoCorrente.value = copia
     nome.value = copia.nome
     categoria.value = copia.categoria
@@ -276,8 +286,8 @@ async function onDuplica() {
     errori.value = {}
     toast.success('Alimento duplicato come personalizzato.')
     emit('duplicato')
-  } catch {
-    toast.error("Non è stato possibile duplicare l'alimento.")
+  } catch (errore) {
+    toast.error(messaggioErroreSalvataggio(errore, "Non è stato possibile duplicare l'alimento."))
   } finally {
     inCorso.value = false
   }

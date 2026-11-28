@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createRouter, createMemoryHistory } from 'vue-router'
+import { createPinia } from 'pinia'
 import App from './App.vue'
 
 describe('App', () => {
@@ -11,7 +12,7 @@ describe('App', () => {
     })
 
     const wrapper = mount(App, {
-      global: { plugins: [router] },
+      global: { plugins: [router, createPinia()] },
     })
     await router.isReady()
 
@@ -33,7 +34,7 @@ describe('App', () => {
       .mockResolvedValueOnce(true)
     const wrapper = mount(App, {
       props: { ripristinaSessione },
-      global: { plugins: [router] },
+      global: { plugins: [router, createPinia()] },
     })
     await flushPromises()
 

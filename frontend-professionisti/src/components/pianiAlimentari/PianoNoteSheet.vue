@@ -4,6 +4,8 @@ import ContatoreCaratteri from '@/components/form/ContatoreCaratteri.vue'
 import { ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { aggiungiNota, eliminaNota, type NotaPiano } from '@/api/pianiAlimentari'
+import { nuovaChiaveIdempotenza } from '@/utils/chiaveIdempotenza'
+import { messaggioErroreSalvataggio } from '@/utils/erroreSalvataggio'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -47,6 +49,8 @@ function oggiIso(): string {
 const data = ref(oggiIso())
 const testo = ref('')
 const salvataggioInCorso = ref(false)
+// Nuova dopo ogni nota aggiunta: un nuovo tentativo dopo una risposta persa non aggiunge la nota due volte.
+let chiaveNota = nuovaChiaveIdempotenza()
 const notaDaEliminare = ref<NotaPiano | null>(null)
 
 // A ogni apertura il modulo riparte pulito, con la data di oggi.
@@ -69,12 +73,13 @@ async function aggiungi() {
   if (!testo.value.trim() || !data.value || salvataggioInCorso.value) return
   salvataggioInCorso.value = true
   try {
-    const nota = await aggiungiNota(props.pianoId, { data: data.value, testo: testo.value.trim() })
+    const nota = await aggiungiNota(props.pianoId, { data: data.value, testo: testo.value.trim() }, chiaveNota)
+    chiaveNota = nuovaChiaveIdempotenza()
     emit('aggiunta', nota)
     testo.value = ''
     toast.success('Nota aggiunta.')
-  } catch {
-    toast.error('Non è stato possibile aggiungere la nota.')
+  } catch (errore) {
+    toast.error(messaggioErroreSalvataggio(errore, 'Non è stato possibile aggiungere la nota.'))
   } finally {
     salvataggioInCorso.value = false
   }
