@@ -1,6 +1,7 @@
 package com.hexisnutrition.backend.pianialimentari;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +27,8 @@ public record PianoAlimentareResponse(
         List<PastoResponse> pasti,
         List<GiornoMacroTargetResponse> giorniMacroTarget,
         List<EsempioResponse> esempi,
-        long versione
+        long versione,
+        /** Ultimo salvataggio o attivazione: la barra del piano dice "Salvato il … alle …" (dal 28/11/2026). */
+        Instant aggiornatoIl
 ) {
 }

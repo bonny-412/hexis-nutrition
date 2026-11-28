@@ -138,28 +138,40 @@ function valoreMacro(testo: string, unita: string) {
 
       <p v-if="vuoto" class="sp-vuoto">Il piano non contiene ancora alimenti.</p>
 
-      <!-- Pasti: un blocco per giorno, alimenti con la quantità allineata a destra su una linea di puntini. -->
+      <!-- Pasti: un blocco per giorno, alimenti con la quantità allineata a destra su una linea di puntini.
+           Il blocco è una tabella solo per la stampa: il titolo del giorno sta nel <thead>, che il browser
+           ripete in cima a ogni foglio su cui il giorno continua (vedi .sp-blocco nello stile). -->
       <template v-else-if="modalita === 'PASTI'">
-        <section v-for="giorno in giorniPasti" :key="giorno.chiave" class="sp-sezione">
-          <h2 class="sp-giorno">
-            <span>{{ giorno.etichetta }}</span>
-            <span class="sp-kcal">{{ intero.format(giorno.kcal) }} kcal</span>
-          </h2>
-          <div v-for="pasto in giorno.pasti" :key="pasto.clientId" class="sp-pasto">
-            <h3 class="sp-pasto-nome">
-              <span>{{ pasto.nome }}</span>
-              <span v-if="pasto.righe.length" class="sp-kcal">{{ intero.format(kcal(pasto.righe)) }} kcal</span>
-            </h3>
-            <ul class="sp-righe">
-              <li v-for="riga in pasto.righe" :key="riga.clientId" class="sp-riga">
-                <span class="sp-alimento">{{ nomeAlimentoLeggibile(riga.nome) }}</span>
-                <span class="sp-puntini" aria-hidden="true" />
-                <span class="sp-grammi">{{ grammi(riga) }}</span>
-              </li>
-            </ul>
-            <p v-if="pasto.nota" class="sp-nota">{{ pasto.nota }}</p>
-          </div>
-        </section>
+        <table v-for="giorno in giorniPasti" :key="giorno.chiave" class="sp-sezione sp-blocco">
+          <thead>
+            <tr>
+              <th>
+                <h2 class="sp-giorno">
+                  <span>{{ giorno.etichetta }}</span>
+                  <span class="sp-kcal">{{ intero.format(giorno.kcal) }} kcal</span>
+                </h2>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="pasto in giorno.pasti" :key="pasto.clientId">
+              <td class="sp-pasto">
+                <h3 class="sp-pasto-nome">
+                  <span>{{ pasto.nome }}</span>
+                  <span v-if="pasto.righe.length" class="sp-kcal">{{ intero.format(kcal(pasto.righe)) }} kcal</span>
+                </h3>
+                <ul class="sp-righe">
+                  <li v-for="riga in pasto.righe" :key="riga.clientId" class="sp-riga">
+                    <span class="sp-alimento">{{ nomeAlimentoLeggibile(riga.nome) }}</span>
+                    <span class="sp-puntini" aria-hidden="true" />
+                    <span class="sp-grammi">{{ grammi(riga) }}</span>
+                  </li>
+                </ul>
+                <p v-if="pasto.nota" class="sp-nota">{{ pasto.nota }}</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </template>
 
       <!-- Macronutrienti: obiettivi del giorno in tabella, le note sotto. -->
@@ -184,26 +196,37 @@ function valoreMacro(testo: string, unita: string) {
         </div>
       </template>
 
-      <!-- Esempi intercambiabili: per ogni pasto della giornata, gli esempi tra cui scegliere. -->
+      <!-- Esempi intercambiabili: per ogni pasto della giornata, gli esempi tra cui scegliere.
+           Stessa tabella dei giorni: il nome del pasto si ripete sul foglio dopo se gli esempi continuano. -->
       <template v-else>
-        <section v-for="categoria in categorieEsempi" :key="categoria.tipo" class="sp-sezione">
-          <h2 class="sp-giorno"><span>{{ categoria.etichetta }}</span></h2>
-          <p v-if="categoria.esempi.length > 1" class="sp-scelta">Scegli uno degli esempi.</p>
-          <div v-for="esempio in categoria.esempi" :key="esempio.clientId" class="sp-pasto">
-            <h3 class="sp-pasto-nome">
-              <span>{{ esempio.nome }}</span>
-              <span v-if="esempio.righe.length" class="sp-kcal">{{ intero.format(kcal(esempio.righe)) }} kcal</span>
-            </h3>
-            <ul class="sp-righe">
-              <li v-for="riga in esempio.righe" :key="riga.clientId" class="sp-riga">
-                <span class="sp-alimento">{{ nomeAlimentoLeggibile(riga.nome) }}</span>
-                <span class="sp-puntini" aria-hidden="true" />
-                <span class="sp-grammi">{{ grammi(riga) }}</span>
-              </li>
-            </ul>
-            <p v-if="esempio.nota" class="sp-nota">{{ esempio.nota }}</p>
-          </div>
-        </section>
+        <table v-for="categoria in categorieEsempi" :key="categoria.tipo" class="sp-sezione sp-blocco">
+          <thead>
+            <tr>
+              <th>
+                <h2 class="sp-giorno"><span>{{ categoria.etichetta }}</span></h2>
+                <p v-if="categoria.esempi.length > 1" class="sp-scelta">Scegli uno degli esempi.</p>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="esempio in categoria.esempi" :key="esempio.clientId">
+              <td class="sp-pasto">
+                <h3 class="sp-pasto-nome">
+                  <span>{{ esempio.nome }}</span>
+                  <span v-if="esempio.righe.length" class="sp-kcal">{{ intero.format(kcal(esempio.righe)) }} kcal</span>
+                </h3>
+                <ul class="sp-righe">
+                  <li v-for="riga in esempio.righe" :key="riga.clientId" class="sp-riga">
+                    <span class="sp-alimento">{{ nomeAlimentoLeggibile(riga.nome) }}</span>
+                    <span class="sp-puntini" aria-hidden="true" />
+                    <span class="sp-grammi">{{ grammi(riga) }}</span>
+                  </li>
+                </ul>
+                <p v-if="esempio.nota" class="sp-nota">{{ esempio.nota }}</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </template>
 
       <footer class="sp-piede">Stampato il {{ stampatoIl }}</footer>
@@ -279,6 +302,30 @@ function valoreMacro(testo: string, unita: string) {
 .sp-sezione + .sp-sezione {
   margin-top: 16pt;
 }
+/* Giorno (o pasto degli esempi) come tabella: il <thead> col titolo si ripete in cima a ogni foglio su cui il
+   blocco continua, così un foglio non parte mai da un pasto senza dire di che giorno è (verifica del 28/11/2026).
+   Si spezza solo tra un pasto e l'altro. Tenere il giorno intero con break-inside: avoid non bastava: un giorno
+   più lungo di un foglio veniva spinto al foglio dopo, lasciando vuoto il primo, e poi si spezzava lo stesso. */
+.sp-blocco {
+  width: 100%;
+  table-layout: fixed;
+  /* Bordi separati: con "collapse" il filetto del pasto mandato al foglio dopo restava anche in fondo al foglio prima. */
+  border-collapse: separate;
+  border-spacing: 0;
+}
+/* Solo il th: il padding delle celle dei pasti lo dà .sp-pasto, che un ".sp-blocco td" scavalcherebbe. */
+.sp-blocco th {
+  padding: 0;
+  text-align: left;
+  font-weight: inherit;
+}
+.sp-blocco td {
+  text-align: left;
+  vertical-align: top;
+}
+.sp-blocco tr {
+  break-inside: avoid;
+}
 .sp-giorno {
   display: flex;
   align-items: baseline;
@@ -322,11 +369,22 @@ function valoreMacro(testo: string, unita: string) {
   align-items: baseline;
   gap: 4pt;
 }
+/* Puntini di guida fatti di caratteri, tagliati alla larghezza disponibile. Non un bordo "dotted", che la stampa
+   dalla finestra di Chrome trasformava in trattini (prova di Andrea del 28/11/2026), né uno sfondo a gradiente o
+   SVG, che Chrome mette nel PDF come immagine su ogni riga (file quattro volte più pesante). */
 .sp-puntini {
   flex: 1;
   min-width: 12pt;
-  border-bottom: 1pt dotted var(--sp-puntini);
-  transform: translateY(-3pt);
+  /* La fila di caratteri non deve contare nella larghezza: allargherebbe la tabella e Chrome rimpicciolirebbe il foglio. */
+  contain: inline-size;
+  overflow: hidden;
+  white-space: nowrap;
+  color: var(--sp-puntini);
+  font-size: 8pt;
+  letter-spacing: 1.6pt;
+}
+.sp-puntini::before {
+  content: '................................................................................................................................................................................................................................';
 }
 .sp-grammi {
   font-weight: 600;

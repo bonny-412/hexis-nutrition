@@ -90,3 +90,18 @@ export function formattaDataBreve(data: string | number, conAnno = false): strin
     const testo = `${Number(giorno)} ${MESI_BREVI_ITALIANI[Number(mese) - 1]}`
     return conAnno ? `${testo} ${anno.slice(2)}` : testo
 }
+
+/**
+ * Frase dell'ultimo salvataggio per la barra del piano (dal 28/11/2026): "Salvato alle 11:57" se è di oggi,
+ * "Salvato il 20 nov alle 16:30" se no, con l'anno solo se diverso da quello corrente. È un istante (non una
+ * data del calendario), quindi qui si usano giorno e ora locali del browser.
+ */
+export function fraseUltimoSalvataggio(istante: string, adesso: Date = new Date()): string {
+    const quando = new Date(istante)
+    const ora = new Intl.DateTimeFormat('it-IT', { hour: '2-digit', minute: '2-digit' }).format(quando)
+    const stessoGiorno = quando.getFullYear() === adesso.getFullYear()
+        && quando.getMonth() === adesso.getMonth() && quando.getDate() === adesso.getDate()
+    if (stessoGiorno) return `Salvato alle ${ora}`
+    const anno = quando.getFullYear() === adesso.getFullYear() ? '' : ` ${quando.getFullYear()}`
+    return `Salvato il ${quando.getDate()} ${MESI_BREVI_ITALIANI[quando.getMonth()]}${anno} alle ${ora}`
+}

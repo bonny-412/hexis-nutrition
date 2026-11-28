@@ -187,6 +187,9 @@ describe('PianoAlimentareFormView', () => {
 
     await apriMenuOpzioni(wrapper)
     document.querySelector<HTMLElement>('[data-test="attiva-piano"]')?.click()
+    // Il piano di prova è vuoto: dal 28/11/2026 si chiede conferma prima di attivarlo.
+    await vi.waitFor(() => expect(document.querySelector('[data-test="avviso-piano-vuoto"]')).not.toBeNull())
+    document.querySelector<HTMLElement>('[data-test="conferma-attiva-piano"]')?.click()
     await vi.waitFor(() => expect(api.attiva).toHaveBeenCalledWith('piano1'))
 
     expect(api.aggiorna).toHaveBeenCalled()
@@ -201,6 +204,8 @@ describe('PianoAlimentareFormView', () => {
 
     await apriMenuOpzioni(wrapper)
     document.querySelector<HTMLElement>('[data-test="attiva-piano"]')?.click()
+    await vi.waitFor(() => expect(document.querySelector('[data-test="conferma-attiva-piano"]')).not.toBeNull())
+    document.querySelector<HTMLElement>('[data-test="conferma-attiva-piano"]')?.click()
     await vi.waitFor(() => expect(api.aggiorna).toHaveBeenCalled())
     await flushPromises()
 
@@ -223,5 +228,118 @@ describe('PianoAlimentareFormView', () => {
     await flushPromises()
 
     await vi.waitFor(() => expect(api.elimina).toHaveBeenCalledWith('piano1'))
+  })
+  // --- Attivazione, salvataggio e stampa: decisioni di Andrea del 28/11/2026 ---
+
+  const pianoConAlimenti = {
+    ...pianoVuoto,
+    pasti: [{
+      id: 'pasto1', giornoSettimana: 'LUNEDI', nome: 'Colazione', tipo: 'COLAZIONE', nota: null, ordine: 0,
+      righe: [{
+        alimentoId: 'a1', nome: 'Avena in fiocchi', kcal100g: 372, proteine100g: 12.9, carboidrati100g: 65,
+        grassi100g: 6.5, zuccheri100g: 1.1, fibre100g: null, ferro100mg: null, calcio100mg: null, acqua100g: null, grammi: 60,
+      }],
+    }],
+  }
+  const paginaPiani = (contenuto: unknown[]) =>
+    ({ contenuto, paginaCorrente: 0, dimensionePagina: 5, totaleElementi: contenuto.length, totalePagine: 1 }) as never
+
+  async function montaPiano(piano: unknown) {
+    vi.mocked(api.dettaglio).mockResolvedValue(piano as never)
+    vi.mocked(api.aggiorna).mockResolvedValue(piano as never)
+    const router = await creaRouter('/piani-alimentari/piano1')
+    const wrapper = mount(PianoAlimentareFormView, { global: { plugins: [router] }, attachTo: document.body })
+    await vi.waitFor(() => expect(api.dettaglio).toHaveBeenCalled())
+    await wrapper.vm.$nextTick()
+    return wrapper
+  }
+
+  it('se il paziente ha già un piano attivo chiede conferma, dicendo che quello passerà a Concluso', async () => {
+    vi.mocked(api.attiva).mockResolvedValue(undefined as never)
+    vi.mocked(api.cerca).mockResolvedValue(paginaPiani([
+      { id: 'altro', nome: 'Fase 0', stato: 'ATTIVO', dataInizio: '2026-08-01', dataFine: '2026-10-01' },
+    ]))
+    const wrapper = await montaPiano(pianoConAlimenti)
+
+    await apriMenuOpzioni(wrapper)
+    document.querySelector<HTMLElement>('[data-test="attiva-piano"]')?.click()
+    await vi.waitFor(() => expect(document.querySelector('[data-test="avviso-piano-attivo"]')).not.toBeNull())
+
+    const avviso = document.querySelector('[data-test="avviso-piano-attivo"]')!.textContent ?? ''
+    expect(avviso).toContain('Fase 0')
+    expect(avviso).toContain('passerà a Concluso')
+    expect(avviso).toContain('Ipertrofia · fase 1')
+    expect(document.querySelector('[data-test="avviso-piano-vuoto"]')).toBeNull()
+    expect(api.cerca).toHaveBeenCalledWith(expect.objectContaining({ pazienteId: 'p1', stato: 'ATTIVO' }))
+    expect(api.attiva).not.toHaveBeenCalled()
+
+    document.querySelector<HTMLElement>('[data-test="conferma-attiva-piano"]')?.click()
+    await vi.waitFor(() => expect(api.attiva).toHaveBeenCalledWith('piano1'))
+  })
+
+  it('un piano con alimenti e nessun altro piano attivo si attiva senza conferma', async () => {
+    vi.mocked(api.attiva).mockResolvedValue(undefined as never)
+    vi.mocked(api.cerca).mockResolvedValue(paginaPiani([]))
+    const wrapper = await montaPiano(pianoConAlimenti)
+
+    await apriMenuOpzioni(wrapper)
+    document.querySelector<HTMLElement>('[data-test="attiva-piano"]')?.click()
+
+    await vi.waitFor(() => expect(api.attiva).toHaveBeenCalledWith('piano1'))
+    expect(document.querySelector('[data-test="conferma-attivazione"]')).toBeNull()
+  })
+
+  it('senza data di fine non apre la conferma né attiva, e dice che la data di fine è obbligatoria', async () => {
+    vi.mocked(api.cerca).mockResolvedValue(paginaPiani([]))
+    const wrapper = await montaPiano({ ...pianoConAlimenti, dataFine: null })
+
+    await apriMenuOpzioni(wrapper)
+    document.querySelector<HTMLElement>('[data-test="attiva-piano"]')?.click()
+    await flushPromises()
+
+    expect(wrapper.find('#piano-errore-data-fine').text()).toBe('La data di fine è obbligatoria.')
+    expect(api.cerca).not.toHaveBeenCalled()
+    expect(api.attiva).not.toHaveBeenCalled()
+    expect(document.querySelector('[data-test="conferma-attivazione"]')).toBeNull()
+  })
+
+  it('senza modifiche la barra mostra solo "Chiudi"; dopo il salvataggio dice "Salvato alle" e nasconde "Salva"', async () => {
+    const wrapper = await montaPiano({ ...pianoConAlimenti, aggiornatoIl: '2026-11-20T12:00:00Z' })
+    vi.mocked(api.aggiorna).mockResolvedValue({ ...pianoConAlimenti, aggiornatoIl: new Date().toISOString() } as never)
+    const barra = () => wrapper.find('[data-test="barra-azioni-form"]')
+
+    expect(barra().find('[data-test="btn-salva"]').exists()).toBe(false)
+    expect(barra().find('[data-test="annulla-modifiche"]').text()).toBe('Chiudi')
+    // Riaprendo il piano la barra dice già quando è stato salvato l'ultima volta (un altro giorno).
+    expect(barra().find('[data-test="salvato-alle"]').text()).toMatch(/^Salvato il 20 nov alle \d{2}:\d{2}$/)
+
+    await wrapper.find('[data-test="obiettivo-kcal-input"]').setValue('2500')
+    expect(barra().find('[data-test="btn-salva"]').exists()).toBe(true)
+    expect(barra().find('[data-test="annulla-modifiche"]').text()).toBe('Annulla')
+
+    await barra().find('[data-test="btn-salva"]').trigger('click')
+    await vi.waitFor(() => expect(api.aggiorna).toHaveBeenCalled())
+    await flushPromises()
+
+    expect(barra().find('[data-test="salvato-alle"]').text()).toMatch(/^Salvato alle \d{2}:\d{2}$/)
+    expect(barra().find('[data-test="btn-salva"]').exists()).toBe(false)
+    expect(barra().find('[data-test="annulla-modifiche"]').text()).toBe('Chiudi')
+  })
+
+  it('durante la stampa il titolo della pagina, cioè il nome del PDF, è "Piano alimentare - Paziente - Nome piano"', async () => {
+    let titoloInStampa = ''
+    const stampa = vi.spyOn(window, 'print').mockImplementation(() => { titoloInStampa = document.title })
+    document.title = 'Hexis Nutrition'
+    const wrapper = await montaPiano(pianoConAlimenti)
+
+    await apriMenuOpzioni(wrapper)
+    document.querySelector<HTMLElement>('[data-test="stampa-pdf"]')?.click()
+    await flushPromises()
+
+    expect(stampa).toHaveBeenCalled()
+    expect(titoloInStampa).toBe('Piano alimentare - Mario Bianchi - Ipertrofia · fase 1')
+    window.dispatchEvent(new Event('afterprint'))
+    expect(document.title).toBe('Hexis Nutrition')
+    stampa.mockRestore()
   })
 })

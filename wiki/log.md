@@ -1052,3 +1052,43 @@ Bug 04: la stampa del piano ora è un documento A4 dedicato (`PianoStampa.vue`, 
 ## [2026-11-27] handoff | Fine sessione: bug del collaudo, gruppi 4-6
 
 Chiusi i gruppi 4 (validazioni backend e V37), 5 (form del frontend) e 6 (stampa PDF). In più: limiti di lunghezza su tutti i campi con contatore (proposta di Andrea), contatori doppi sotto le textarea tolti, stampa sempre bianca con logo (richieste di Andrea). Test di regressione scritti da Claude, anche per 18, 19, 21 e 22: backend 226/226, frontend 326/326. Provato nel browser sull'ambiente di Andrea senza salvare nulla. Tutto in staging, non committato (lo fa Andrea); V37 si applica al riavvio di STS. Da provare a mano: anteprima di stampa vera (Ctrl+P, chiaro e scuro). Prossimo: verifiche prima del rilascio (permessi sulle singole risorse, errori durante il salvataggio), poi richieste di Edoardo.
+
+## [2026-11-28] query | Verifica dei permessi sulle singole risorse e della stampa PDF
+
+Creati sul DB `hexis` due professionisti di prova, Giulia Prova (`a.bonaiuti.datapos@gmail.com`, scelta di Andrea) e Marco Prova (`marco.prova@hexis.test`), con le credenziali in `.superpowers/credenziali-prova.md`, che git ignora. Primo login fallito perché l'hash era stato salvato con un `\r` finale, preso dall'output di Java su Windows: corretto. Su richiesta di Andrea sono stati usati due agenti per i permessi, uno per professionista: ognuno ha creato i propri dati e attaccato quelli dell'altro. Nessuna falla: tutti 404 o 401, dati intatti, dati di Andrea invariati (backup `pg_dump` fatto prima). Un terzo agente ha generato PDF reali della stampa (tre modalità, tema chiaro e scuro): tutto corretto tranne il giorno che continua sul foglio dopo senza intestazione, che non è stato corretto. Dettagli in [collaudo-bug](collaudo-bug.md#verifiche-da-fare-prima-del-rilascio). Restano sul DB i dati di prova dei due account (pazienti "Permessi Giulia", "Permessi Marco", "Stampa Prova" con piani, note e appuntamenti).
+
+## [2026-11-28] handoff | Stampa: un giorno per foglio
+
+Su richiesta di Andrea, nella stampa del piano a pasti un giorno non si divide più su due fogli (`break-inside: avoid` su `.sp-giorno-intero` in `PianoStampa.vue`): prima il foglio nuovo partiva da un pasto senza il nome del giorno. PDF rigenerati con Chrome headless (pasti 7 fogli, macro 1, esempi 3, chiaro e scuro) e controllati: un giorno per foglio con il titolo, carta bianca. `PianoStampa.spec.ts` 4/4, `vue-tsc` pulito. Non committato.
+
+## [2026-11-28] handoff | Stampa: controllo di tutte le modalità e titolo ripetuto
+
+Su richiesta di Andrea, controllate con PDF reali anche le stampe a macronutrienti ed esempi, più casi limite (giorno più lungo di un foglio, 9 esempi per pasto, note lunghe). Gli esempi avevano lo stesso difetto dei pasti; il giorno troppo lungo mostrava che `break-inside: avoid` sul giorno lasciava il primo foglio vuoto. Sostituito con una tabella per blocco (`.sp-blocco`) col titolo nel `<thead>`, che Chrome ripete su ogni foglio. Macronutrienti già corretti. Test dei piani 8/8, `vue-tsc` pulito. Non committato. Restano sul DB, per l'account di Giulia, anche i piani "Limite PASTI/MACRO/ESEMPI".
+
+## [2026-11-28] handoff | Fine sessione: permessi verificati, stampa PDF sistemata
+
+Verifica 2 prima del rilascio chiusa: nessuna falla sui permessi delle singole risorse (due agenti, Giulia e Marco). Stampa PDF controllata in tutte e tre le modalità e corretta (titolo ripetuto sui fogli successivi). Codice: solo `PianoStampa.vue`. In staging con la wiki, lo committa Andrea. Restano sul DB `hexis` i due account di prova e i loro dati (pazienti "Permessi Giulia", "Permessi Marco", "Stampa Prova" con piani "Stampa Prova …" e "Limite …"), utili per le prossime prove. Prossimo: verifica 3 (errori durante il salvataggio), poi le richieste di Edoardo.
+
+## [2026-11-28] handoff | Attivazione dei piani, salvataggio e stampa (decisioni di Andrea)
+
+Dopo la prova di stampa di Andrea: nome del PDF dal piano e puntini di guida a caratteri (`PianoAlimentareFormView.stampaPdf`, `PianoStampa.vue`). Attivazione: `dataFine` obbligatoria nel backend (409 `PIANO_NON_ATTIVABILE`, 400 se la si toglie a un piano attivo), il precedente piano attivo prende la fine di oggi, conferma unica nel frontend per piano attivo esistente e piano vuoto. Barra azioni: "Salvato alle …" e solo "Chiudi" senza modifiche (`BarraAzioniForm`, opzioni `salvatoAlle` e `soloChiudiSeNonModificato`). Evolutiva segnata in domande-aperte: attivazione programmata. Suite verdi (4 test backend e 2 frontend adattati), prova nel browser con l'account di Giulia; la fine del precedente non provata dal vivo (backend di Andrea non riavviato). Non committato.
+
+## [2026-11-28] handoff | Test per attivazione, barra azioni e stampa
+
+Su richiesta di Andrea: `PianoAlimentareAttivazioneTest` (7 test backend), 5 casi nuovi in `PianoAlimentareFormView.spec.ts`, `BarraAzioniForm.spec.ts` (6). Controprova togliendo la logica nuova: 5 test backend su 7 falliscono (gli altri due provano casi in cui la regola non cambia nulla). Suite: backend 241 senza errori, frontend 337/337, `vue-tsc` pulito. Non committato.
+
+## [2026-11-28] query | Attivazione provata dal vivo dopo il riavvio del backend
+
+Backend di Andrea riavviato. Con l'account di Giulia: `POST /attiva` senza fine → 409 "Inserisci la data di fine per attivare il piano."; dal browser, bozza "Prova attivazione 28-11" con fine 31/12, conferma con i due avvisi (piano attivo e piano vuoto), attivata; il precedente "Piano Bozza Permessi Giulia" è `TERMINATO` con `data_fine` portata dal 31/12/2026 al 28/11/2026. Barra: "Salvato alle 11:57 / Chiudi".
+
+## [2026-11-28] handoff | Fine sessione: verifiche, stampa, attivazione dei piani
+
+Sessione del 28/11: permessi sulle singole risorse verificati (nessuna falla, due agenti Giulia/Marco); stampa PDF controllata in tutte le modalità e corretta (titolo ripetuto, nome del file, puntini); regole di attivazione dei piani decise da Andrea e implementate (fine obbligatoria, conferma unica, fine del precedente a oggi), barra "Salvato alle"/"Chiudi"; test scritti (backend 241, frontend 337/337) e prova dal vivo dopo il riavvio. Evolutiva segnata: attivazione programmata. In staging, lo committa Andrea; `vite.config.ts` (tunnel di Andrea) lasciato fuori. Prossimo: verifica 3 (errori durante il salvataggio), poi richieste di Edoardo.
+
+## [2026-11-28] handoff | "Salvato il … alle …" anche riaprendo il piano
+
+Su proposta di Claude accettata da Andrea (al posto di una riga "Ultima modifica il …" che appesantiva l'intestazione): `aggiornatoIl` nella risposta del dettaglio del piano, `fraseUltimoSalvataggio` in `utils/data.ts` ("Salvato alle …" se di oggi, "Salvato il 20 nov alle …" se no, con l'anno se diverso), prop `ultimoSalvataggio` di `BarraAzioniForm` (prima `salvatoAlle`). Icona: spunta verde su cerchio `--mint` (richiesta di Andrea). Test: 4 in `data.spec.ts`, uno backend, test dell'editor adattato. Suite: backend 242, frontend 341/341. Serve il riavvio del backend per vederlo dal vivo. Non committato.
+
+## [2026-11-28] handoff | Chiusura: popup di benvenuto messo da parte
+
+Andrea ha chiesto se esiste un popup di benvenuto (no) e ha iniziato a progettarlo, poi ha deciso di rimandarlo. Idea e proposta segnate in [domande-aperte](domande-aperte.md#prossime-evolutive-2026-11-28). Tutto il lavoro del 28/11 è in staging, lo committa Andrea; `frontend-professionisti/vite.config.ts` (tunnel di Andrea) resta fuori.

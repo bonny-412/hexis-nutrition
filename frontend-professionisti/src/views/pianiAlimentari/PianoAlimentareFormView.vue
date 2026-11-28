@@ -35,7 +35,7 @@ import {
   filtraDecimaleItaliano, numeroItalianoOpzionale, bloccaTastoNonNumerico,
   erroreDataInizioPiano, erroreDataFinePiano, erroreObiettivoKcal, erroreGrammiPorzione,
 } from '@/utils/validators'
-import { formattaDataItalianaConMese } from '@/utils/data'
+import { formattaDataItalianaConMese, fraseUltimoSalvataggio } from '@/utils/data'
 import { ArrowLeft, CalendarRange, CircleCheck, Copy, CopyCheck, LogOut, MoreHorizontal, Pencil, Plus, Printer, Repeat, StickyNote, Trash2, X } from '@lucide/vue'
 import PianoNoteSheet from '@/components/pianiAlimentari/PianoNoteSheet.vue'
 import PianoStampa from '@/components/pianiAlimentari/PianoStampa.vue'
@@ -1004,6 +1004,13 @@ function validaGrammi(): boolean {
 }
 
 const salvataggioInCorso = ref(false)
+// Dopo "Salva" si resta sulla pagina (il piano si costruisce in più passaggi): la barra in fondo dice quando è
+// stato salvato l'ultima volta, anche riaprendo il piano ("Salvato il 20 nov alle 16:30"), e finché non si
+// modifica nulla mostra solo "Chiudi" (deciso il 28/11/2026). L'istante è aggiornatoIl del piano, che cambia
+// anche con l'attivazione.
+const ultimoSalvataggio = computed(() =>
+  piano.value?.aggiornatoIl ? fraseUltimoSalvataggio(piano.value.aggiornatoIl) : null,
+)
 
 // Data di partenza validata solo prima del primo salvataggio: dopo diventa immutabile e non
 // è più mostrata come campo modificabile (vedi il v-else nel template).
@@ -1100,6 +1107,56 @@ async function salva(): Promise<boolean> {
 const inizioFuturo = computed(() => (piano.value?.dataInizio ?? dataInizioInput.value) > oggiIso())
 
 const attivazioneInCorso = ref(false)
+
+// Prima di attivare si chiede conferma (deciso il 28/11/2026) se il paziente ha già un piano attivo, che
+// verrà concluso, o se il piano non contiene ancora nulla. Una sola finestra per entrambi i casi.
+const pianoVuoto = computed(() => {
+  if (modalitaAttiva.value === 'PASTI') return !pastiLocali.value.some((p) => p.righe.length > 0)
+  if (modalitaAttiva.value === 'MACRO') {
+    return !giorniMacroLocali.value.some((g) => g.kcalTarget || g.proteineTarget || g.carboidratiTarget || g.grassiTarget)
+  }
+  return !esempiLocali.value.some((e) => e.righe.length > 0)
+})
+const CONTENUTO_MANCANTE: Record<ModalitaPiano, string> = {
+  PASTI: 'Il piano non contiene ancora alimenti.',
+  MACRO: 'Il piano non contiene ancora obiettivi di macronutrienti.',
+  ESEMPI: 'Il piano non contiene ancora esempi con alimenti.',
+}
+const pianoAttivoDaConcludere = ref<{ nome: string; dataInizio: string; dataFine: string | null } | null>(null)
+const confermaAttivazioneAperta = ref(false)
+
+async function richiediAttivazione() {
+  if (!piano.value || attivazioneInCorso.value) return
+  // Prima i controlli del form (data di fine obbligatoria compresa): la conferma arriva solo se si può salvare.
+  if (!validaCampi()) return
+  attivazioneInCorso.value = true
+  pianoAttivoDaConcludere.value = null
+  try {
+    const attivi = await cercaPiani({ pazienteId: piano.value.pazienteId, stato: 'ATTIVO', dimensione: 5 })
+    const altro = attivi.contenuto.find((p) => p.id !== piano.value?.id)
+    if (altro) pianoAttivoDaConcludere.value = { nome: altro.nome, dataInizio: altro.dataInizio, dataFine: altro.dataFine }
+  } catch {
+    // Senza l'elenco si chiede comunque conferma: il backend conclude il precedente in ogni caso.
+  } finally {
+    attivazioneInCorso.value = false
+  }
+  if (pianoAttivoDaConcludere.value || pianoVuoto.value) {
+    confermaAttivazioneAperta.value = true
+    return
+  }
+  await attivaPiano()
+}
+
+function periodoPiano(p: { dataInizio: string; dataFine: string | null }) {
+  const dal = formattaDataItalianaConMese(p.dataInizio)
+  return p.dataFine ? `dal ${dal} al ${formattaDataItalianaConMese(p.dataFine)}` : `dal ${dal}`
+}
+
+async function confermaAttivazione() {
+  confermaAttivazioneAperta.value = false
+  await attivaPiano()
+}
+
 async function attivaPiano() {
   if (!piano.value) return
   attivazioneInCorso.value = true
@@ -1153,7 +1210,13 @@ const auth = useAuthStore()
 const professionistaStampa = computed(() =>
   auth.professionista ? `${auth.professionista.nome} ${auth.professionista.cognome}` : null,
 )
+// Il browser usa il titolo della pagina come nome del PDF e nell'intestazione del foglio: durante la stampa
+// diventa "Piano alimentare - Paziente - Nome piano" (prima tutti i file si chiamavano "Hexis Nutrition").
+// Si ripristina su "afterprint", che arriva anche se la finestra di stampa viene annullata.
 function stampaPdf() {
+  const titoloPagina = document.title
+  document.title = ['Piano alimentare', nomePazienteVisualizzato.value, nome.value.trim()].filter(Boolean).join(' - ')
+  window.addEventListener('afterprint', () => { document.title = titoloPagina }, { once: true })
   window.print()
 }
 </script>
@@ -1227,7 +1290,7 @@ function stampaPdf() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" class="w-56">
-                <DropdownMenuItem v-if="statoPagina === 'BOZZA'" data-test="attiva-piano" class="cursor-pointer" :disabled="attivazioneInCorso || inizioFuturo" @click="attivaPiano">
+                <DropdownMenuItem v-if="statoPagina === 'BOZZA'" data-test="attiva-piano" class="cursor-pointer" :disabled="attivazioneInCorso || inizioFuturo" @click="richiediAttivazione">
                   <CircleCheck />
                   <span class="flex flex-col">
                     Attiva piano
@@ -1846,6 +1909,8 @@ function stampaPdf() {
         :in-corso="salvataggioInCorso"
         etichetta-salva="Salva"
         :salva-disabilitato="!nome.trim()"
+        :ultimo-salvataggio="ultimoSalvataggio"
+        :solo-chiudi-se-non-modificato="!!piano"
         tipo-salva="button"
         data-test-annulla="annulla-modifiche"
         @annulla="annulla"
@@ -1908,6 +1973,28 @@ function stampaPdf() {
           <AlertDialogAction data-test="conferma-elimina-piano" variant="destructive" @click="confermaElimina">
             <Trash2 />
             Elimina piano
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <AlertDialog v-model:open="confermaAttivazioneAperta">
+      <AlertDialogContent data-test="conferma-attivazione">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Attivare questo piano?</AlertDialogTitle>
+          <AlertDialogDescription as="div" class="space-y-2">
+            <p v-if="pianoAttivoDaConcludere" data-test="avviso-piano-attivo">
+              Il piano «{{ pianoAttivoDaConcludere.nome }}» ({{ periodoPiano(pianoAttivoDaConcludere) }}) passerà a Concluso
+              e da oggi sarà attivo «{{ nome.trim() || 'Piano alimentare' }}».
+            </p>
+            <p v-if="pianoVuoto" data-test="avviso-piano-vuoto">{{ CONTENUTO_MANCANTE[modalitaAttiva] }}</p>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel variant="neutral"><X /> Annulla</AlertDialogCancel>
+          <AlertDialogAction data-test="conferma-attiva-piano" @click="confermaAttivazione">
+            <CircleCheck />
+            Attiva piano
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

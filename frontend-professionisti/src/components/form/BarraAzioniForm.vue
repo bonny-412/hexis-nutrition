@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button'
-import { Save, X } from '@lucide/vue'
+import { Check, Save, X } from '@lucide/vue'
 
 // Barra "Annulla / Salva" dei form lunghi (nuovo paziente, visita, piano): resta in fondo all'area
 // che scorre (sticky dentro il <main> di AppShell) e a fine pagina si appoggia sotto l'ultimo contenuto.
@@ -15,8 +15,18 @@ withDefaults(
     salvaDisabilitato?: boolean
     tipoSalva?: 'submit' | 'button'
     dataTestAnnulla?: string
+    /** Frase dell'ultimo salvataggio ("Salvato alle 11:42", "Salvato il 20 nov alle 16:30"), mostrata senza modifiche in sospeso. */
+    ultimoSalvataggio?: string | null
+    /**
+     * Per le pagine su cui si resta dopo il salvataggio (piano alimentare): senza modifiche "Salva" sparisce e
+     * "Annulla" diventa "Chiudi", perché non c'è niente da salvare né da annullare (deciso il 28/11/2026).
+     */
+    soloChiudiSeNonModificato?: boolean
   }>(),
-  { salvaDisabilitato: false, tipoSalva: 'submit', dataTestAnnulla: 'btn-annulla' },
+  {
+    salvaDisabilitato: false, tipoSalva: 'submit', dataTestAnnulla: 'btn-annulla', ultimoSalvataggio: null,
+    soloChiudiSeNonModificato: false,
+  },
 )
 
 const emit = defineEmits<{ annulla: []; salva: [] }>()
@@ -32,6 +42,12 @@ const emit = defineEmits<{ annulla: []; salva: [] }>()
         <span class="size-2 shrink-0 rounded-full bg-(--lime) ring-1 ring-(--green)/30" aria-hidden="true" />
         Modifiche non salvate
       </template>
+      <template v-else-if="ultimoSalvataggio">
+        <span class="flex size-5 shrink-0 items-center justify-center rounded-full bg-(--mint) text-(--green)" aria-hidden="true">
+          <Check :size="12" :stroke-width="3" />
+        </span>
+        <span data-test="salvato-alle">{{ ultimoSalvataggio }}</span>
+      </template>
     </p>
     <div class="flex items-center gap-2">
       <Button
@@ -44,9 +60,10 @@ const emit = defineEmits<{ annulla: []; salva: [] }>()
         @click="emit('annulla')"
       >
         <X :size="16" />
-        Annulla
+        {{ soloChiudiSeNonModificato && !modificato ? 'Chiudi' : 'Annulla' }}
       </Button>
       <Button
+        v-if="!soloChiudiSeNonModificato || modificato || inCorso"
         :type="tipoSalva"
         size="lg"
         class="flex-1 rounded-xl sm:flex-none"

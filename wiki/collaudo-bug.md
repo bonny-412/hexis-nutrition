@@ -3,7 +3,7 @@ title: Bug del collaudo del 27 novembre 2026
 tags: [bug, collaudo, rilascio]
 stato: in-discussione
 creato: 2026-11-27
-aggiornato: 2026-11-27
+aggiornato: 2026-11-28
 fonti: [sorgenti/2026-11-27-collaudo-bug.md]
 ---
 
@@ -37,6 +37,12 @@ Verificati nel codice il 27/11: tutti confermati; il 13 è più ampio (nessuna g
    - Il documento riflette ciò che è a schermo, comprese le modifiche non salvate.
    - Il logo accanto a "Hexis" l'ha chiesto Andrea.
    - Test: `PianoStampa.spec.ts` (4 casi). Provato nel browser rendendo visibile il documento con uno stile temporaneo: piano a pasti, piano a macronutrienti e tema scuro. Una settimana piena (stato locale riempito per prova, non salvato) occupa circa quattro fogli e mezzo. L'anteprima di stampa vera di Chrome non è stata aperta da Claude.
+   - **Verificato il 28/11 con PDF reali** da un agente, con Chrome headless e `Page.printToPDF` in A4. Sono stati provati i piani a pasti (7 giorni × 5 pasti × 4 alimenti, 6 fogli), a macronutrienti (1 foglio) e a esempi (3 fogli), ciascuno col tema chiaro e scuro. Esito:
+     - nessun comando dell'app, contenuto completo e nessun pasto spezzato;
+     - carta bianca anche col tema scuro (i PDF chiaro e scuro hanno la stessa dimensione);
+     - intestazione e "Stampato il …" presenti.
+   - **Difetto trovato (minore)**: quando un giorno continua sul foglio dopo, il nuovo foglio parte da un pasto senza dire di che giorno è (es. "Spuntino mattina" di Sabato in cima al foglio 5). Ci sono due correzioni possibili: `break-inside: avoid` sul giorno intero, che ha senso perché un giorno pieno occupa circa 0,8 fogli, oppure un'intestazione "Sabato (segue)". **Corretto il 28/11** su richiesta di Andrea. Un primo tentativo (`break-inside: avoid` sul giorno intero) è stato scartato dopo la prova con un giorno più lungo di un foglio: lasciava vuoto il primo foglio e il titolo mancava lo stesso. Soluzione finale: in `PianoStampa.vue` ogni giorno (piano a pasti) e ogni pasto (piano a esempi) è una tabella `.sp-blocco` con il titolo nel `<thead>`, che Chrome ripete in cima a ogni foglio su cui il blocco continua; si spezza solo tra un pasto e l'altro (`break-inside: avoid` sulle righe), bordi `separate` perché con `collapse` il filetto del pasto spostato restava in fondo al foglio prima.
+   - **Controllo di tutte e tre le modalità il 28/11** (PDF reali, chiaro e scuro), anche con casi limite creati apposta ("Limite PASTI/MACRO/ESEMPI" del paziente Stampa Prova): un giorno con 5 pasti × 8 alimenti e note lunghe, un pasto degli esempi con 9 opzioni, note lunghe su tutti i giorni dei macronutrienti e un valore mancante. Pasti ed esempi: il titolo si ripete sul foglio dopo ("Lunedì", "Pranzo"), nessun foglio vuoto, settimana normale in 6 fogli. Macronutrienti: già corretto (tabella su un foglio, note per giorno intere, valore mancante come "—"), nessuna modifica. Altre note solo estetiche: filetto del pasto in cima al foglio, spazio vuoto in fondo al primo foglio.
 
 Rimandato il **20** (inviti nascosti). **Test di regressione: li scrive Claude** (deciso da Andrea il 27/11). Scritti il 27/11, 30 test nuovi, suite 226/226:
 
@@ -90,7 +96,11 @@ Rimandato il **20** (inviti nascosti). **Test di regressione: li scrive Claude**
 Dal report:
 
 1. ~~Test di regressione ripetibili per i casi 18, 19, 21 e 22 dopo le correzioni.~~ Fatti il 27/11 (vedi sopra).
-2. Permessi sulle **singole risorse** (lettura e modifica di pazienti, visite, piani e note di un altro professionista): finora sono provate solo le liste.
+2. ~~Permessi sulle **singole risorse**~~ **Verificati il 28/11, nessuna falla.**
+   - **Codice**: ogni servizio carica la risorsa e confronta il `professionistaId`, con 404 identico per "inesistente" e "di un altro". I servizi sono `PazienteService.dettaglio`, `visitaDelPaziente`, `PianoAlimentareService.pianoDiProprieta`, `PianoNotaService.pianoDiProprieta` + `findByIdAndPianoId`, `AgendaService.trova`, `AlimentoService.dettaglio`; i BDA non sono modificabili. Le liste filtrano per professionista con le `Specifications`.
+   - **Prove reali**: due agenti, uno per ciascun professionista di prova (Giulia e Marco sul DB `hexis`, backend di Andrea su 8080). Ognuno ha creato i propri dati, poi ha attaccato quelli dell'altro con corpi di richiesta validi. Gli attacchi coprono tutti gli endpoint con ID (GET, PUT, azioni, DELETE) e i casi incrociati: nota altrui con il proprio `pianoId`, visita altrui con il proprio `pazienteId`, `appuntamentoId` altrui su una propria visita, piano o appuntamento per un paziente altrui, ricerche con `pazienteId` altrui. Sono stati verificati anche i token mancanti, alterati o con `sub` cambiato.
+   - **Esito**: tutti 404 o 401, nessun dato altrui nelle liste. I dati di entrambi sono rimasti intatti, e quelli di Andrea pure (conteggi uguali a prima).
+   - **Limite**: `POST /notifiche/lette` con ID altrui risponde 204, ma il codice filtra per professionista (`NotificheService.segnaLette`). Non è stato provato con ID di notifiche vere.
 3. Errori durante il salvataggio: rete interrotta, risposta lenta, doppio clic su "Salva" (al massimo un salvataggio, dati recuperabili).
 4. Consegna reale degli inviti, quando la funzione sarà riattivata.
 

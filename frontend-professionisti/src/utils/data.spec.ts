@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, afterEach } from 'vitest'
 import {
   calcolaEta,
+  fraseUltimoSalvataggio,
   formattaDataItaliana,
   formattaDataItalianaConMese,
   formattaDataItalianaEstesa,
@@ -157,5 +158,26 @@ describe('calcolaEta', () => {
   it('restituisce null se la data di nascita è nel futuro', () => {
     vi.setSystemTime(new Date('2026-09-01'))
     expect(calcolaEta('2030-01-01')).toBeNull()
+  })
+})
+
+// Istanti costruiti con l'ora locale: la frase usa giorno e ora del browser, qualunque sia il fuso.
+describe('fraseUltimoSalvataggio', () => {
+  const adesso = new Date(2026, 10, 28, 12, 0)
+
+  it('se è di oggi dice solo l\'ora', () => {
+    expect(fraseUltimoSalvataggio(new Date(2026, 10, 28, 9, 5).toISOString(), adesso)).toBe('Salvato alle 09:05')
+  })
+
+  it('se è di un altro giorno dell\'anno dice giorno e mese', () => {
+    expect(fraseUltimoSalvataggio(new Date(2026, 10, 20, 16, 30).toISOString(), adesso)).toBe('Salvato il 20 nov alle 16:30')
+  })
+
+  it('ieri a tarda sera non è "oggi"', () => {
+    expect(fraseUltimoSalvataggio(new Date(2026, 10, 27, 23, 59).toISOString(), adesso)).toBe('Salvato il 27 nov alle 23:59')
+  })
+
+  it('se è di un altro anno aggiunge l\'anno', () => {
+    expect(fraseUltimoSalvataggio(new Date(2025, 11, 31, 8, 0).toISOString(), adesso)).toBe('Salvato il 31 dic 2025 alle 08:00')
   })
 })

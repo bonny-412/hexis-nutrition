@@ -73,6 +73,8 @@ export interface PianoAlimentare {
   esempi: Esempio[]
   /** Blocco ottimistico: va rimandata nel PUT, il backend risponde 409 se nel frattempo è cambiata. */
   versione: number
+  /** Ultimo salvataggio o attivazione (ISO, dal 28/11/2026): "Salvato il … alle …" nella barra del piano. */
+  aggiornatoIl: string
 }
 
 export interface CreaPianoAlimentareRequest {

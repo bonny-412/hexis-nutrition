@@ -62,6 +62,14 @@ class PianoAlimentareRegressioniCollaudoTest extends AbstractIntegrationTest {
                 ObiettivoVisita.IPERTROFIA));
     }
 
+    /** Dal 28/11/2026 si attiva solo un piano con la data di fine: la si dà qui, prima di "/attiva". */
+    private UUID conDataFine(UUID pianoId) {
+        PianoAlimentare piano = pianoAlimentareRepository.findById(pianoId).orElseThrow();
+        piano.setDataFine(piano.getDataInizio().plusDays(30));
+        pianoAlimentareRepository.saveAndFlush(piano);
+        return pianoId;
+    }
+
     private UUID creaBozza(String nome) throws Exception {
         String risposta = mockMvc.perform(post("/piani-alimentari")
                         .header("Authorization", "Bearer " + token)
@@ -125,8 +133,8 @@ class PianoAlimentareRegressioniCollaudoTest extends AbstractIntegrationTest {
 
     @RepeatedTest(5)
     void dueAttivazioniSimultaneeLascianoUnSoloPianoAttivo() throws Exception {
-        UUID primo = creaBozza("Primo");
-        UUID secondo = creaBozza("Secondo");
+        UUID primo = conDataFine(creaBozza("Primo"));
+        UUID secondo = conDataFine(creaBozza("Secondo"));
 
         List<Integer> esiti = inParallelo(
                 () -> mockMvc.perform(post("/piani-alimentari/" + primo + "/attiva")

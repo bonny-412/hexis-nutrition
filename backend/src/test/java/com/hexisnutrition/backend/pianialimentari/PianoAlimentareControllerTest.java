@@ -34,6 +34,8 @@ class PianoAlimentareControllerTest extends AbstractIntegrationTest {
     @Autowired
     private ProfessionistaRepository professionistaRepository;
     @Autowired
+    private PianoAlimentareRepository pianoAlimentareRepository;
+    @Autowired
     private JwtService jwtService;
 
     private Professionista professionista;
@@ -267,6 +269,14 @@ class PianoAlimentareControllerTest extends AbstractIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    /** Dal 28/11/2026 si attiva solo un piano con la data di fine: la si dà qui, prima di "/attiva". */
+    private UUID conDataFine(UUID pianoId) {
+        PianoAlimentare piano = pianoAlimentareRepository.findById(pianoId).orElseThrow();
+        piano.setDataFine(piano.getDataInizio().plusDays(30));
+        pianoAlimentareRepository.saveAndFlush(piano);
+        return pianoId;
+    }
+
     @Test
     void attivaDisattivaIlPianoPrecedenteDelloStessoPazienteEDiventaTerminato() throws Exception {
         String bodyPrimoPiano = """
@@ -277,7 +287,7 @@ class PianoAlimentareControllerTest extends AbstractIntegrationTest {
                         .content(bodyPrimoPiano))
                 .andReturn().getResponse().getContentAsString();
         UUID primoPianoId = UUID.fromString(objectMapper.readTree(rispostaPrimoPiano).get("id").asText());
-        mockMvc.perform(post("/piani-alimentari/" + primoPianoId + "/attiva")
+        mockMvc.perform(post("/piani-alimentari/" + conDataFine(primoPianoId) + "/attiva")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNoContent());
 
@@ -289,7 +299,7 @@ class PianoAlimentareControllerTest extends AbstractIntegrationTest {
                         .content(bodySecondoPiano))
                 .andReturn().getResponse().getContentAsString();
         UUID secondoPianoId = UUID.fromString(objectMapper.readTree(rispostaSecondoPiano).get("id").asText());
-        mockMvc.perform(post("/piani-alimentari/" + secondoPianoId + "/attiva")
+        mockMvc.perform(post("/piani-alimentari/" + conDataFine(secondoPianoId) + "/attiva")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNoContent());
 
@@ -309,7 +319,7 @@ class PianoAlimentareControllerTest extends AbstractIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
         UUID pianoId = UUID.fromString(objectMapper.readTree(risposta).get("id").asText());
 
-        mockMvc.perform(post("/piani-alimentari/" + pianoId + "/attiva").header("Authorization", "Bearer " + token))
+        mockMvc.perform(post("/piani-alimentari/" + conDataFine(pianoId) + "/attiva").header("Authorization", "Bearer " + token))
                 .andExpect(status().isNoContent());
         mockMvc.perform(delete("/piani-alimentari/" + pianoId).header("Authorization", "Bearer " + token))
                 .andExpect(status().isConflict());
@@ -345,7 +355,7 @@ class PianoAlimentareControllerTest extends AbstractIntegrationTest {
                         .content(bodyAttivo))
                 .andReturn().getResponse().getContentAsString();
         UUID pianoAttivoId = UUID.fromString(objectMapper.readTree(rispostaAttivo).get("id").asText());
-        mockMvc.perform(post("/piani-alimentari/" + pianoAttivoId + "/attiva")
+        mockMvc.perform(post("/piani-alimentari/" + conDataFine(pianoAttivoId) + "/attiva")
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNoContent());
 

@@ -187,7 +187,7 @@ public class PianoAlimentareService {
                 piano.statoEffettivo(), piano.getDataInizio(), piano.getDataFine(), piano.getObiettivoKcal(),
                 piano.getObiettivoKcalSuggerito(), piano.getBmrCalcolato(), piano.getTdeeCalcolato(),
                 piano.getFormulaBmrUsata(), piano.isSottoSogliaSicurezza(), pasti, giorniMacroTarget, esempi,
-                piano.getVersione());
+                piano.getVersione(), piano.getAggiornatoIl());
     }
 
     @Transactional
@@ -201,6 +201,10 @@ public class PianoAlimentareService {
         }
         if (request.dataFine() != null && request.dataFine().isBefore(piano.getDataInizio())) {
             throw new PianoAlimentareNonValidoException("La data di fine non può precedere la data di inizio");
+        }
+        // Un piano attivo ha sempre una data di fine (deciso il 28/11/2026): non la si può togliere modificandolo.
+        if (piano.getStato() == StatoPiano.ATTIVO && request.dataFine() == null) {
+            throw new PianoAlimentareNonValidoException("Un piano attivo deve avere una data di fine");
         }
         if (request.modalita() != null && request.modalita() != piano.getModalita()) {
             // Solo la struttura della modalità attiva è persistita: quella lasciata va svuotata, poi sotto
@@ -276,10 +280,20 @@ public class PianoAlimentareService {
         if (piano.getDataInizio().isAfter(LocalDate.now())) {
             throw new PianoNonAttivabileException("Il piano inizia in una data futura: potrai attivarlo da quel giorno.");
         }
+        // Deciso il 28/11/2026: si attiva solo un piano con la data di fine (resta facoltativa nelle bozze).
+        if (piano.getDataFine() == null) {
+            throw new PianoNonAttivabileException("Inserisci la data di fine per attivare il piano.");
+        }
         try {
+            LocalDate oggi = LocalDate.now();
             pianoAlimentareRepository.findAllByPazienteIdAndStato(piano.getPazienteId(), StatoPiano.ATTIVO)
                     .forEach(precedente -> {
                         precedente.setStato(StatoPiano.TERMINATO);
+                        // Il precedente finisce oggi: nello storico i due periodi non si sovrappongono.
+                        // Mai prima del suo inizio (vincolo V37), né spostando in avanti una fine già passata.
+                        if (precedente.getDataFine() == null || precedente.getDataFine().isAfter(oggi)) {
+                            precedente.setDataFine(precedente.getDataInizio().isAfter(oggi) ? precedente.getDataInizio() : oggi);
+                        }
                         pianoAlimentareRepository.save(precedente);
                     });
             // Gli UPDATE dei precedenti devono arrivare al DB prima di quello che attiva il nuovo piano:
