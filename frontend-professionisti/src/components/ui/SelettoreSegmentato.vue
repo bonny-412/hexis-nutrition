@@ -5,7 +5,7 @@ import { RadioGroupItem, RadioGroupRoot } from 'reka-ui'
 const props = defineProps<{
   modelValue: T
   etichetta: string
-  opzioni: readonly { valore: T; etichetta: string; icona?: Component }[]
+  opzioni: readonly { valore: T; etichetta: string; icona?: Component; disabilitata?: boolean }[]
   prefissoTest: string
 }>()
 const emit = defineEmits<{ 'update:modelValue': [valore: T] }>()
@@ -27,8 +27,9 @@ function seleziona(valore: unknown) {
       v-for="o in opzioni"
       :key="o.valore"
       :value="o.valore"
+      :disabled="o.disabilitata"
       :data-test="`${prefissoTest}-${o.valore}`"
-      class="flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--fg) data-[state=checked]:bg-(--mint) data-[state=checked]:text-(--green-d) focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--green-d)"
+      class="flex h-7 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-xs font-semibold text-(--fg3) transition-colors hover:text-(--fg) data-[state=checked]:bg-(--mint) data-[state=checked]:text-(--green-d) focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-(--green-d) data-disabled:cursor-not-allowed data-disabled:opacity-40 data-disabled:hover:text-(--fg3)"
     >
       <component :is="o.icona" v-if="o.icona" :size="14" aria-hidden="true" />
       {{ o.etichetta }}

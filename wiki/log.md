@@ -1132,3 +1132,35 @@ Su richiesta di Andrea: jsdom non ha `scrollIntoView`, e `scorriAlPrimoErrore` l
   - Restano sull'account di Giulia, su `hexis`, due bozze "Mantenimento · fase 1" e due visite in più di "Stampa Prova", create durante le prove prima delle correzioni.
 - **Domanda di Andrea sul toast dopo il salvataggio del piano**: il toast "Piano salvato." c'è già, in alto a destra. In attesa di sapere se da lui non compare.
 - **Prossimo**: le richieste di Edoardo ("Sostituisci alimento", Google Calendar).
+
+## [2026-11-28] handoff | Sostituisci alimento
+
+- **Fatto**: brainstorming con Andrea (sostituisce la riga, popup con valore da mantenere, casella per tutte le righe con lo stesso alimento spenta di default), spec e piano, esecuzione con agenti Sonnet per task e revisione finale su Opus (7 rifiniture corrette e ricontrollate).
+- **Modifiche di Andrea dopo la prova**: "Mantieni uguale" spostato nelle intestazioni delle colonne del riquadro di confronto (al posto del selettore separato), con lo stesso controllo segmentato di "Tabella/Schede" (`SelettoreSegmentato`, ora con opzioni disattivate); nei risultati solo i grammi, senza ripetere il valore mantenuto.
+- **Codice**: `utils/sostituzioneAlimento.ts`, `composables/useRicercaAlimenti.ts` (anche con le risposte fuori ordine scartate), `SostituisciAlimentoDialog.vue`, pulsante sulle righe in `PianoAlimentareFormView.vue`. Nessuna API nuova.
+- **Prove**: nel browser su `hexis_test` (8081/5174), desktop e 375 px: calcolo con carboidrati e kcal, conferma e totali, casella su sette giorni con grammi diversi. Tema scuro non provato.
+- **Suite**: vitest 369/369, `vue-tsc` pulito; nessun test nuovo.
+- **Stato**: in staging, non committato. Prossimo: Google Calendar.
+- **Pulsanti della riga** (Andrea): "Sostituisci" è `ghost` come le altre icone delle tabelle; la variante `rimuovi` non è più grigia chiara a riposo ma ha lo stesso colore di `ghost`, e diventa rossa solo al passaggio. Vale per tutte le X `rimuovi` (editor del piano e file della BIA).
+
+## [2026-11-28] handoff | Test di "Sostituisci alimento"
+
+Su richiesta di Andrea:
+- **Test scritti** (23): `utils/sostituzioneAlimento.spec.ts` (11: grammi equivalenti, minimo 1 g, zeri, valori a 100 g, differenze, stesso alimento, sostituzione sul posto), `SostituisciAlimentoDialog.spec.ts` (8: valori disattivati, grammi nei risultati, sostituto e differenze, conferma, deselezione cambiando valore, casella, riga a 0 g, risposte di ricerca fuori ordine, riapertura pulita), `PianoAlimentareFormView.sostituzione.spec.ts` (4: popup sulla riga giusta, sostituzione al suo posto con il campo grammi aggiornato anche dopo un valore decimale digitato, casella su due giorni con grammi ricalcolati riga per riga, niente pulsante sui piani conclusi).
+- **Controprova** togliendo sette correzioni una alla volta (minimo 1 g, stesso alimento manuale/database, risposte fuori ordine, deselezione, reset alla riapertura, pulizia del campo grammi, casella): ognuna fa fallire almeno un test. Il test del campo grammi all'inizio non se ne accorgeva (scriveva lo stesso valore già presente): corretto con "62,5".
+- **Suite**: vitest 392/392 con codice 0, `vue-tsc` pulito.
+- **Stato**: in staging, non committato.
+
+## [2026-11-28] ingest | Accesso a due fattori
+
+Segnato da Andrea: accesso a due fattori, impostato da una pagina di impostazioni. Salvato in [sorgenti](sorgenti/2026-11-28-accesso-due-fattori.md) e aggiunto a [domande-aperte](domande-aperte.md) tra le cose da fare per la messa online, da discutere. Nessun codice.
+
+## [2026-11-28] handoff | Fine sessione: "Sostituisci alimento"
+
+- **Fatto**: "Sostituisci alimento" (richiesta di Edoardo) progettato con Andrea, implementato con agenti Sonnet e revisione finale su Opus, rifinito con Andrea dopo le prove: "Mantieni uguale" come selettore segmentato nelle intestazioni del confronto, risultati con i soli grammi, pulsanti della riga `ghost` con la X `rimuovi` dello stesso colore a riposo.
+- **Prove**: nel browser su `hexis_test` in chiaro, scuro e a 375 px. 23 test scritti con controprova; vitest 392/392, `vue-tsc` pulito.
+- **Stato**: tutto in staging, niente commit. Nessuna migrazione, nessun riavvio del backend necessario.
+- **Segnato**: accesso a due fattori con pagina di impostazioni, da discutere.
+- **Da sapere**: il professionista di prova `prof-vincoli@test.it` su `hexis_test` ha una password usa e getta non salvata da nessuna parte; per riprovare se ne genera una nuova.
+- **Prossimo**: Google Calendar, l'ultima richiesta di Edoardo.
+

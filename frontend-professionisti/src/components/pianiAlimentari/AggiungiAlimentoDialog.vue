@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { Plus, X } from '@lucide/vue'
-import { ref, watch, nextTick, onUnmounted } from 'vue'
-import { cerca as cercaAlimenti, type Alimento } from '@/api/alimenti'
+import { ref, watch, nextTick } from 'vue'
+import type { Alimento } from '@/api/alimenti'
+import { useRicercaAlimenti } from '@/composables/useRicercaAlimenti'
+import { datiRigaDaAlimento } from '@/utils/sostituzioneAlimento'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -38,9 +40,7 @@ const LINGUETTE: { valore: Modo; etichetta: string }[] = [
   { valore: 'manuale', etichetta: 'Alimento manuale' },
 ]
 const modo = ref<Modo>('cerca')
-const query = ref('')
-const risultati = ref<Alimento[]>([])
-let debounceHandle: ReturnType<typeof setTimeout> | undefined
+const { query, risultati, azzera } = useRicercaAlimenti()
 
 const inputCerca = ref<{ $el: HTMLInputElement } | null>(null)
 
@@ -53,26 +53,9 @@ watch(modo, (valore) => {
   if (valore === 'cerca') focusRicerca()
 })
 
-async function eseguiRicerca(testo: string) {
-  const ricerca = testo.trim()
-  if (!ricerca) {
-    risultati.value = []
-    return
-  }
-  // Il server ordina per pertinenza: prima i nomi che iniziano col testo, ultimi i match sulla sola categoria.
-  const pagina = await cercaAlimenti({ ricerca, ordinaPer: 'pertinenza', dimensione: 30 })
-  risultati.value = pagina.contenuto
-}
-
 function kcalPer100g(alimento: Alimento): string {
   return formattaNumero((alimento.kcal * 100) / alimento.quantitaG, 0)
 }
-
-watch(query, (valore) => {
-  clearTimeout(debounceHandle)
-  debounceHandle = setTimeout(() => eseguiRicerca(valore), 300)
-})
-onUnmounted(() => clearTimeout(debounceHandle))
 
 const manualeNome = ref('')
 const manualeGrammi = ref('100')
@@ -89,8 +72,7 @@ const errori = ref<Record<string, string | undefined>>({})
 
 function resetStato() {
   modo.value = 'cerca'
-  query.value = ''
-  risultati.value = []
+  azzera()
   manualeNome.value = ''
   manualeGrammi.value = '100'
   manualeKcal.value = ''
@@ -111,21 +93,7 @@ function chiudi() {
 }
 
 function selezionaRisultato(alimento: Alimento) {
-  const fattore = 100 / alimento.quantitaG
-  emit('aggiunto', {
-    alimentoId: alimento.id,
-    nome: alimento.nome,
-    kcal100g: alimento.kcal * fattore,
-    proteine100g: alimento.proteineG * fattore,
-    carboidrati100g: alimento.carboidratiG * fattore,
-    grassi100g: alimento.grassiG * fattore,
-    zuccheri100g: alimento.zuccheriG !== null ? alimento.zuccheriG * fattore : null,
-    fibre100g: alimento.fibreG !== null ? alimento.fibreG * fattore : null,
-    ferro100mg: alimento.ferroMg !== null ? alimento.ferroMg * fattore : null,
-    calcio100mg: alimento.calcioMg !== null ? alimento.calcioMg * fattore : null,
-    acqua100g: alimento.acquaG !== null ? alimento.acquaG * fattore : null,
-    grammi: 100,
-  })
+  emit('aggiunto', { ...datiRigaDaAlimento(alimento), grammi: 100 })
   chiudi()
 }
 

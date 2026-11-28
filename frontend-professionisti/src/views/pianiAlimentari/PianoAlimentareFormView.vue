@@ -9,6 +9,7 @@ import { toast } from 'vue-sonner'
 import AppShell from '@/components/AppShell.vue'
 import SelezionaPazienteCombobox from '@/components/pazienti/SelezionaPazienteCombobox.vue'
 import AggiungiAlimentoDialog from '@/components/pianiAlimentari/AggiungiAlimentoDialog.vue'
+import SostituisciAlimentoDialog from '@/components/pianiAlimentari/SostituisciAlimentoDialog.vue'
 import { Button } from '@/components/ui/button'
 import BarraAzioniForm from '@/components/form/BarraAzioniForm.vue'
 import { Input } from '@/components/ui/input'
@@ -39,12 +40,14 @@ import {
   erroreDataInizioPiano, erroreDataFinePiano, erroreObiettivoKcal, erroreGrammiPorzione,
 } from '@/utils/validators'
 import { formattaDataItalianaConMese, fraseUltimoSalvataggio } from '@/utils/data'
-import { ArrowLeft, CalendarRange, CircleCheck, Copy, CopyCheck, LogOut, MoreHorizontal, Pencil, Plus, Printer, Repeat, StickyNote, Trash2, X } from '@lucide/vue'
+import { ArrowLeft, ArrowLeftRight, CalendarRange, CircleCheck, Copy, CopyCheck, LogOut, MoreHorizontal, Pencil, Plus, Printer, Repeat, StickyNote, Trash2, X } from '@lucide/vue'
 import PianoNoteSheet from '@/components/pianiAlimentari/PianoNoteSheet.vue'
 import PianoStampa from '@/components/pianiAlimentari/PianoStampa.vue'
 import { useAuthStore } from '@/stores/auth'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { nomeAlimentoLeggibile } from '@/utils/testo'
+import { applicaSostituzione, stessoAlimento } from '@/utils/sostituzioneAlimento'
+import type { DatiAlimentoRiga, ValoreMantenuto } from '@/utils/sostituzioneAlimento'
 import { inizialiPaziente } from '@/utils/paziente'
 import { TONI_STATO } from '@/utils/toniStato'
 import { useConfermaUscita } from '@/composables/useConfermaUscita'
@@ -941,6 +944,48 @@ function rimuoviRiga(pastoClientId: string, rigaClientId: string) {
   const pasto = pastiLocali.value.find((p) => p.clientId === pastoClientId)
   if (!pasto) return
   pasto.righe = pasto.righe.filter((r) => r.clientId !== rigaClientId)
+}
+
+// Sostituzione di un alimento: il dialog lavora su una riga dei pasti (non degli esempi).
+const sostituzioneAperta = ref(false)
+const rigaInSostituzione = ref<{ pastoClientId: string; rigaClientId: string } | null>(null)
+
+function apriSostituisci(pastoClientId: string, rigaClientId: string) {
+  // La riga va impostata prima di aprire: il dialog legge `riga` nel momento in cui si apre.
+  rigaInSostituzione.value = { pastoClientId, rigaClientId }
+  sostituzioneAperta.value = true
+}
+const rigaDaSostituire = computed<RigaLocale | undefined>(() => {
+  const target = rigaInSostituzione.value
+  if (!target) return undefined
+  return pastiLocali.value
+    .find((p) => p.clientId === target.pastoClientId)
+    ?.righe.find((r) => r.clientId === target.rigaClientId)
+})
+// Le altre righe con lo stesso alimento, in tutti i giorni del piano.
+const altreRigheUguali = computed<RigaLocale[]>(() => {
+  const base = rigaDaSostituire.value
+  if (!base) return []
+  return pastiLocali.value
+    .flatMap((p) => p.righe)
+    .filter((r) => r !== base && stessoAlimento(r, base))
+})
+function onSostituito(sostituto: DatiAlimentoRiga, mantenuto: ValoreMantenuto, ancheAltreRighe: boolean) {
+  const base = rigaDaSostituire.value
+  if (!base) return
+  // Si raccolgono le righe bersaglio prima di modificarne una: dopo la sostituzione la riga di partenza non coincide più.
+  const bersagli = ancheAltreRighe ? [base, ...altreRigheUguali.value] : [base]
+  const nuoviErrori = { ...erroriGrammi.value }
+  const nuoviInput = { ...grammiInputPerRiga.value }
+  for (const riga of bersagli) {
+    if (!applicaSostituzione(riga, sostituto, mantenuto)) continue
+    // I grammi sono stati ricalcolati: il testo digitato e gli errori della riga non valgono più.
+    delete nuoviInput[riga.clientId]
+    delete nuoviErrori[riga.clientId]
+    grammiNegativi.delete(riga.clientId)
+  }
+  grammiInputPerRiga.value = nuoviInput
+  erroriGrammi.value = nuoviErrori
 }
 // Buffer di visualizzazione per il campo grammi: tenere il valore digitato come stringa
 // (con virgola) finché l'utente scrive, invece di rimbalzare sul numero parsato a ogni
@@ -1855,6 +1900,14 @@ function stampaPdf() {
                     <span class="text-xs text-(--fg3)">g</span>
                   </span>
                   <Button
+                    v-if="!solaLettura" variant="ghost" size="icon-sm"
+                    data-test="sostituisci-alimento"
+                    :aria-label="`Sostituisci ${nomeAlimentoLeggibile(riga.nome)}`" title="Sostituisci alimento"
+                    @click="apriSostituisci(pasto.clientId, riga.clientId)"
+                  >
+                    <ArrowLeftRight :size="14" />
+                  </Button>
+                  <Button
                     v-if="!solaLettura" variant="rimuovi" size="icon-sm" class="-mr-1.5"
                     aria-label="Rimuovi alimento" title="Rimuovi alimento"
                     @click="rimuoviRiga(pasto.clientId, riga.clientId)"
@@ -1890,7 +1943,7 @@ function stampaPdf() {
                     <th class="px-2 pb-1.5 pt-2 text-right text-xs font-medium text-(--fg3)">Fibra g</th>
                     <th class="px-2 pb-1.5 pt-2 text-right text-xs font-medium text-(--fg3)">Ferro mg</th>
                     <th class="px-4 pb-1.5 pt-2 text-right text-xs font-medium text-(--fg3)">Calcio mg</th>
-                    <th class="w-10"></th>
+                    <th class="w-20"></th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-(--div)">
@@ -1919,6 +1972,14 @@ function stampaPdf() {
                     <td class="p-2 text-right text-xs text-(--fg2)">{{ Math.round(macroRiga(riga).ferro) }}</td>
                     <td class="p-2 pr-4 text-right text-xs text-(--fg2)">{{ Math.round(macroRiga(riga).calcio) }}</td>
                     <td class="p-2 text-center">
+                      <Button
+                        v-if="!solaLettura" variant="ghost" size="icon-sm"
+                        data-test="sostituisci-alimento"
+                        :aria-label="`Sostituisci ${nomeAlimentoLeggibile(riga.nome)}`" title="Sostituisci alimento"
+                        @click="apriSostituisci(pasto.clientId, riga.clientId)"
+                      >
+                        <ArrowLeftRight :size="14" />
+                      </Button>
                       <Button v-if="!solaLettura" variant="rimuovi" size="icon-sm" aria-label="Rimuovi alimento" title="Rimuovi alimento" @click="rimuoviRiga(pasto.clientId, riga.clientId)">
                         <X :size="14" />
                       </Button>
@@ -1987,6 +2048,12 @@ function stampaPdf() {
     </div>
 
     <AggiungiAlimentoDialog v-model:open="addModalAperto" @aggiunto="onAlimentoAggiunto" />
+    <SostituisciAlimentoDialog
+      v-model:open="sostituzioneAperta"
+      :riga="rigaDaSostituire ?? null"
+      :altre-righe-uguali="altreRigheUguali.length"
+      @sostituito="onSostituito"
+    />
 
     <PianoStampa
       v-if="pronto"
